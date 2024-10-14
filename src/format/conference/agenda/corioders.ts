@@ -320,7 +320,7 @@ function parseSpeaker(speakerName: string): Speaker {
   // TODO
   return {
     name: speakerName,
-    photoURL: "not todo anymore",
+    photoURL: "TODO",
     role: "TODO",
   };
 }
