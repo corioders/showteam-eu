@@ -35,6 +35,7 @@ export async function downloadSpreadsheetLatestRevision(spreadsheetID: Spreadshe
   return await downloadSpreadsheetRevision(googleAuth, spreadsheetID, latestRevision.revisionID);
 }
 
+// TODO: handle when there is no deploy
 export async function downloadSpreadsheetLatestDeployRevision(
   spreadsheetID: SpreadsheetID
 ): Promise<Spreadsheet> {
