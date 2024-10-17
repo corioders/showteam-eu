@@ -168,7 +168,6 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, isDevel
 
 		// Sort merges according to their row starting position, as the !merges property stores them in their creation order.
 		daySheet['!merges'].sort((a, b) => a.s.r - b.s.r);
-		console.log(daySheet['!merges']);
 		for (const merge of daySheet['!merges']) {
 			if (merge.s.c !== merge.e.c) {
 				throw 'merge.s.c !== merge.e.c';
