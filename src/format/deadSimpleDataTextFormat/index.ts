@@ -68,17 +68,17 @@ KeyTwo:::test4 test5 test6
 // This parses to only one key, as there is no space after key's two ":::"
 // We could also error on every occurrence of ":::" except in the keys.
 
-const a = `
+// const a = `
 
 
-kkkkkuppppaaa
-`;
-try {
-	const [parsed, err] = parseDSDTF(a);
-	console.log(err.message);
-} catch (e) {
-	console.log(e);
-}
+// kkkkkuppppaaa
+// `;
+// try {
+// 	const [parsed, err] = parseDSDTF(a);
+// 	console.log(err.message);
+// } catch (e) {
+// 	console.log(e);
+// }
 
 export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 	const dsdtfTimed = dsdtfRaw.trim();
