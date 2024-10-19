@@ -315,7 +315,7 @@ function parseActivityDSDTF(DSDTF: ParsedDSDTF, startTime: DateTime, endTime: Da
 	throw 'Invalid activity type';
 }
 
-function parseSpeaker(speakerName: string): Speaker {
+export function parseSpeaker(speakerName: string): Speaker {
 	// TODO
 	return {
 		name: speakerName,
