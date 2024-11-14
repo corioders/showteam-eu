@@ -3,89 +3,77 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
-import { createAPIRequest, GaxiosResponse, GoogleAuth } from "googleapis-common";
+import { type GaxiosResponse, type GoogleAuth, createAPIRequest } from 'googleapis-common';
 
-import { WorkBook as XlsxWorkBook, read as xlsxRead } from "xlsx";
+import { type WorkBook as XlsxWorkBook, read as xlsxRead } from 'xlsx';
 
-import { downloadFileRevision, FileID, MIME_TYPE, RevisionID } from "./drive";
+import { MIMEType, type ResourceID, type RevisionID, downloadFile } from './drive';
 
-export type SpreadsheetID = (string & { readonly "": unique symbol }) & FileID;
+export type SpreadsheetID = (string & { readonly '': unique symbol }) & ResourceID;
 
 export interface Spreadsheet {
-  workbook: XlsxWorkBook;
+	workbook: XlsxWorkBook;
 
-  spreadsheetID: SpreadsheetID;
+	spreadsheetID: SpreadsheetID;
 }
 
-export async function downloadSpreadsheetRevision(
-  googleAuth: GoogleAuth,
-  spreadsheetId: SpreadsheetID,
-  revisionID: RevisionID
-): Promise<Spreadsheet> {
-  const spreadsheetAsExcel = await downloadFileRevision(
-    googleAuth,
-    spreadsheetId,
-    revisionID,
-    MIME_TYPE.excel
-  );
+export async function downloadSpreadsheetRevision(googleAuth: GoogleAuth, spreadsheetId: SpreadsheetID, revisionID: RevisionID): Promise<Spreadsheet> {
+	const spreadsheetAsExcel = await downloadFile(googleAuth, spreadsheetId, revisionID, MIMEType.excel);
 
-  const spreadsheetAsExcelBlob = spreadsheetAsExcel as Blob;
-  const excelFile = await spreadsheetAsExcelBlob.arrayBuffer();
-  return {
-    workbook: xlsxRead(excelFile),
+	const spreadsheetAsExcelBlob = spreadsheetAsExcel as Blob;
+	const excelFile = await spreadsheetAsExcelBlob.arrayBuffer();
+	return {
+		workbook: xlsxRead(excelFile),
 
-    spreadsheetID: spreadsheetId,
-  };
+		spreadsheetID: spreadsheetId,
+	};
 }
 
 export interface SheetRevision {
-  name?: string;
-  revisionID: RevisionID;
+	name?: string;
+	revisionID: RevisionID;
 }
 
 // TODO: Make sure this function has a file-safe
 // TODO: Download ALL revisions: Look at the url: "revisionBatchSize"
-export async function getSheetRevisions(
-  googleAuth: GoogleAuth,
-  spreadsheetId: SpreadsheetID
-): Promise<SheetRevision[]> {
-  const response: GaxiosResponse<string> = await createAPIRequest({
-    options: {
-      url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/revisions/tiles?id=${spreadsheetId}&start=1&revisionBatchSize=1500&showDetailedRevisions=false&loadType=0&includes_info_params=true&cros_files=false`,
-      method: "GET",
-    },
-    params: {},
-    requiredParams: [],
-    pathParams: [],
-    context: { _options: { auth: googleAuth } },
-  });
+export async function getSheetRevisions(googleAuth: GoogleAuth, spreadsheetId: SpreadsheetID): Promise<SheetRevision[]> {
+	const response: GaxiosResponse<string> = await createAPIRequest({
+		options: {
+			url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/revisions/tiles?id=${spreadsheetId}&start=1&revisionBatchSize=1500&showDetailedRevisions=false&loadType=0&includes_info_params=true&cros_files=false`,
+			method: 'GET',
+		},
+		params: {},
+		requiredParams: [],
+		pathParams: [],
+		context: { _options: { auth: googleAuth } },
+	});
 
-  interface ResponseJson {
-    firstRev: number;
-    tileInfo: {
-      // start: number,
-      end: number; // RevisionID
-      // endMillis: 1728041024168,
-      // users: [Array],
-      // systemRevs: [],
-      name?: string;
-      // expandable: false,
-      // revisionMac: "VKrkaCV8b4GjzA",
-    }[];
-  }
+	interface ResponseJson {
+		firstRev: number;
+		tileInfo: {
+			// start: number,
+			end: number; // RevisionID
+			// endMillis: 1728041024168,
+			// users: [Array],
+			// systemRevs: [],
+			name?: string;
+			// expandable: false,
+			// revisionMac: "VKrkaCV8b4GjzA",
+		}[];
+	}
 
-  const jsonDataString = response.data.split("\n")[1];
-  const responseJson = JSON.parse(jsonDataString) as ResponseJson;
+	const jsonDataString = response.data.split('\n')[1];
+	const responseJson = JSON.parse(jsonDataString) as ResponseJson;
 
-  const sheetRevisions: SheetRevision[] = [];
-  for (const responseRevision of responseJson.tileInfo) {
-    sheetRevisions.push({
-      revisionID: responseRevision.end as RevisionID,
-      name: responseRevision.name,
-    });
-  }
+	const sheetRevisions: SheetRevision[] = [];
+	for (const responseRevision of responseJson.tileInfo) {
+		sheetRevisions.push({
+			revisionID: responseRevision.end as RevisionID,
+			name: responseRevision.name,
+		});
+	}
 
-  return sheetRevisions;
+	return sheetRevisions;
 }
 
 // import { parse as csvParse } from "csv/sync";

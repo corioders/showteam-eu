@@ -1,0 +1,60 @@
+{
+	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"ignoreUnknown": false,
+		"maxSize": 2097152
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"lineWidth": 170,
+		"formatWithErrors": true
+	},
+	"organizeImports": {
+		"enabled": true
+	},
+	"linter": {
+		"enabled": true,
+
+		"rules": {
+			"all": true,
+			"suspicious": {
+				"noReactSpecificProps": "off"
+			},
+			"style": {
+				"noDefaultExport": "off",
+				"useFilenamingConvention": {
+					"level": "warn",
+					"options": { "strictCase": false }
+				},
+				"useNamingConvention": {
+					"level": "warn",
+					"options": { "strictCase": false }
+				}
+			},
+			"complexity": {
+				// This rule interferes with the noPropertyAccessFromIndexSignature typescript compiler flag
+				"useLiteralKeys": "off"
+			},
+			"correctness": {
+				"useImportExtensions": {
+					"level": "off",
+					"options": {}
+				}
+			},
+			"nursery": {
+				// TODO: Follow this issue: https://github.com/biomejs/biome/issues/1274
+				"useSortedClasses": { "level": "error", "fix": "safe", "options": {} }
+			}
+		}
+	},
+	"javascript": {
+		"jsxRuntime": "reactClassic",
+		"formatter": { "quoteStyle": "single" }
+	}
+}
