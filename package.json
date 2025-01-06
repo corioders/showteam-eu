@@ -1,28 +1,31 @@
 {
-  "name": "cstd-ts",
-  "version": "0.0.0",
-  "packageManager": "pnpm@9.10.0+sha512.73a29afa36a0d092ece5271de5177ecbf8318d454ecd701343131b8ebc0c1a91c487da46ab77c8e596d6acf1461e3594ced4becedf8921b074fbd8653ed7051c",
-  "exports": {
-    "./*": "./build/*"
-  },
-  "scripts": {
-    "postinstall": "pnpm run build",
-    "check": "tsc --noEmit",
-    "build": "tsc && tsc-alias",
-    "watch": "concurrently \"tsc --watch\" \"tsc-alias --watch\""
-  },
-  "dependencies": {
-    "buffer-image-size": "^0.6.4",
-    "googleapis": "^144.0.0",
-    "googleapis-common": "^7.2.0",
-    "luxon": "^3.5.0",
-    "xlsx": "^0.18.5"
-  },
-  "devDependencies": {
-    "@types/luxon": "^3.4.2",
-    "@types/node": "^22.7.5",
-    "concurrently": "^9.0.1",
-    "tsc-alias": "^1.8.10",
-    "typescript": "^5.6.2"
-  }
+	"name": "cstd-ts",
+	"version": "0.0.0",
+	"packageManager": "pnpm@9.10.0+sha512.73a29afa36a0d092ece5271de5177ecbf8318d454ecd701343131b8ebc0c1a91c487da46ab77c8e596d6acf1461e3594ced4becedf8921b074fbd8653ed7051c",
+	"exports": {
+		"./*": "./build/*"
+	},
+	"scripts": {
+		"postinstall": "pnpm run build",
+		"check": "tsc --noEmit",
+		"build": "tsc && tsc-alias",
+		"watch": "concurrently \"tsc --watch\" \"tsc-alias --watch\""
+	},
+	"dependencies": {
+		"@textlint/markdown-to-ast": "^14.4.2",
+		"buffer-image-size": "^0.6.4",
+		"googleapis": "^144.0.0",
+		"googleapis-common": "^7.2.0",
+		"luxon": "^3.5.0",
+		"xlsx": "^0.18.5"
+	},
+	"devDependencies": {
+		"@textlint/ast-node-types": "^14.4.2",
+		"@types/luxon": "^3.4.2",
+		"@types/node": "^22.7.5",
+		"@types/textract": "^2.4.5",
+		"concurrently": "^9.0.1",
+		"tsc-alias": "^1.8.10",
+		"typescript": "^5.6.2"
+	}
 }

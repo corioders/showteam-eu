@@ -3,4 +3,4 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
-export const SPREADSHEET_DEPLOY_REVISION_NAME = "deploy";
+export const DEPLOY_REVISION_NAME = 'deploy';

@@ -3,11 +3,11 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
-import { type GaxiosResponse, type GoogleAuth, createAPIRequest } from 'googleapis-common';
+import type { GoogleAuth } from 'googleapis-common';
 
 import { type WorkBook as XlsxWorkBook, read as xlsxRead } from 'xlsx';
 
-import { MIMEType, type ResourceID, type RevisionID, downloadFile } from './drive';
+import { MIMEType, type ResourceID, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive';
 
 export type SpreadsheetID = (string & { readonly '': unique symbol }) & ResourceID;
 
@@ -29,51 +29,17 @@ export async function downloadSpreadsheetRevision(googleAuth: GoogleAuth, spread
 	};
 }
 
-export interface SheetRevision {
-	name?: string;
-	revisionID: RevisionID;
-}
-
-// TODO: Make sure this function has a file-safe
-// TODO: Download ALL revisions: Look at the url: "revisionBatchSize"
-export async function getSheetRevisions(googleAuth: GoogleAuth, spreadsheetId: SpreadsheetID): Promise<SheetRevision[]> {
-	const response: GaxiosResponse<string> = await createAPIRequest({
-		options: {
-			url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}/revisions/tiles?id=${spreadsheetId}&start=1&revisionBatchSize=1500&showDetailedRevisions=false&loadType=0&includes_info_params=true&cros_files=false`,
-			method: 'GET',
-		},
-		params: {},
-		requiredParams: [],
-		pathParams: [],
-		context: { _options: { auth: googleAuth } },
-	});
-
-	interface ResponseJson {
-		firstRev: number;
-		tileInfo: {
-			// start: number,
-			end: number; // RevisionID
-			// endMillis: 1728041024168,
-			// users: [Array],
-			// systemRevs: [],
-			name?: string;
-			// expandable: false,
-			// revisionMac: "VKrkaCV8b4GjzA",
-		}[];
+// TODO: Corioders errors
+export async function getSheetRevisions(googleAuth: GoogleAuth, spreadsheetId: SpreadsheetID): Promise<Revision[]> {
+	const [revisions, err] = await getRevisionsFromUndocumentedAPI(
+		googleAuth,
+		`https://docs.google.com/spreadsheets/d/${spreadsheetId}/revisions/tiles?id=${spreadsheetId}&start=1&revisionBatchSize=1500&showDetailedRevisions=false&loadType=0&includes_info_params=true&cros_files=false`,
+	);
+	if (err !== null) {
+		throw err;
 	}
 
-	const jsonDataString = response.data.split('\n')[1];
-	const responseJson = JSON.parse(jsonDataString) as ResponseJson;
-
-	const sheetRevisions: SheetRevision[] = [];
-	for (const responseRevision of responseJson.tileInfo) {
-		sheetRevisions.push({
-			revisionID: responseRevision.end as RevisionID,
-			name: responseRevision.name,
-		});
-	}
-
-	return sheetRevisions;
+	return revisions;
 }
 
 // import { parse as csvParse } from "csv/sync";
