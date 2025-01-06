@@ -10,7 +10,7 @@ import type { TxtDocumentNode } from '@textlint/ast-node-types';
 import { parse } from '@textlint/markdown-to-ast';
 import type { GoogleAuth } from 'googleapis-common';
 
-export type DocID = (string & { readonly '': unique symbol }) & ResourceID;
+export type DocID =  ResourceID & { readonly __docTag: unique symbol };
 
 export interface Doc {
 	docAST: TxtDocumentNode;

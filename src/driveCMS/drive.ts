@@ -10,9 +10,9 @@ import { type GaxiosPromise, type GaxiosResponse, type GoogleAuth, createAPIRequ
 import { DEPLOY_REVISION_NAME } from './const';
 
 // ResourceID is an ID of Folder or File
-export type ResourceID = string & { readonly '': unique symbol };
+export type ResourceID = string & { readonly __resourceTag: unique symbol };
 
-export type RevisionID = number & { readonly '': unique symbol };
+export type RevisionID = number & { readonly __revisionTag: unique symbol };
 
 // https://developers.google.com/drive/api/guides/ref-export-formats
 export type MIMETypeT = ValueOf<typeof MIMEType>;

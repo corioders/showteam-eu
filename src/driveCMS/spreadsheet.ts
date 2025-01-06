@@ -9,7 +9,7 @@ import { type WorkBook as XlsxWorkBook, read as xlsxRead } from 'xlsx';
 
 import { MIMEType, type ResourceID, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive';
 
-export type SpreadsheetID = (string & { readonly '': unique symbol }) & ResourceID;
+export type SpreadsheetID = ResourceID & { readonly __spreadsheetTag: unique symbol };
 
 export interface Spreadsheet {
 	workbook: XlsxWorkBook;
