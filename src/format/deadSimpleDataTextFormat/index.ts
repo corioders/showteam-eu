@@ -2,8 +2,9 @@
 // Unauthorized copying of this file, via any medium is strictly prohibited
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
-import { imitateNeighborhoodAfterString, imitateNeighborhoodBeforeString, ParsingDSDTFError } from './error';
-import { ErrorReturn } from '@/error';
+
+import type { ErrorReturn } from '@/error';
+import { ParsingDSDTFError } from './error';
 
 /* 
 ### Specification:
@@ -39,21 +40,21 @@ const ARRAY_SEPARATOR = ',';
 
 const COMMENT_KEY = 'Comment';
 
-export class ParsedDSDTF {
+export interface ParsedDSDTF {
 	readonly mapping: Map<string, string>;
+}
 
-	constructor(mapping: Map<string, string>) {
-		this.mapping = mapping;
+function newParsedDSDTF(mapping: Map<string, string>): ParsedDSDTF {
+	return { mapping: mapping };
+}
+
+export function getAsArray(parsedDSDTF: ParsedDSDTF, key: string): string[] | undefined {
+	const value = parsedDSDTF.mapping.get(key);
+	if (value === undefined) {
+		return undefined;
 	}
 
-	getAsArray(key: string): string[] | undefined {
-		const value = this.mapping.get(key);
-		if (value === undefined) {
-			return undefined;
-		}
-
-		return value.split(ARRAY_SEPARATOR);
-	}
+	return value.split(ARRAY_SEPARATOR);
 }
 
 // TODO(0):
@@ -70,8 +71,7 @@ KeyTwo:::test4 test5 test6
 
 // const a = `
 
-
-// kkkkkuppppaaa
+// mleko
 // `;
 // try {
 // 	const [parsed, err] = parseDSDTF(a);
@@ -86,14 +86,12 @@ export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 
 	// The string provided is empty.
 	if (dsdtfNewLineSplit.length === 0) {
-		return [new ParsedDSDTF(new Map()), null];
+		return [newParsedDSDTF(new Map()), null];
 	}
 
 	const firstToken = dsdtfNewLineSplit[0].split(WHITESPACE)[0];
 	if (!isTokenAKey(firstToken)) {
 		return [null, new ParsingDSDTFError('First text line is not a valid key', `Try adding ${KEY_SUFFIX} here.`)];
-		console.log({ a: imitateNeighborhoodAfterString(dsdtfNewLineSplit, 0) });
-		throw 'First token must be a valid key';
 	}
 
 	const keyValueMapping = new Map<string, string>();
@@ -109,8 +107,8 @@ export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 	}
 
 	let currentKey: string | null = null;
-	let currentValue: string = '';
-	let currentValueFirstIteration: boolean = false;
+	let currentValue = '';
+	let currentValueFirstIteration = false;
 
 	for (let i = 0; i < dsdtfNewLineSplit.length; i++) {
 		currentValue += NEW_LINE;
@@ -164,7 +162,7 @@ export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 		addKeyValuePairToMapping(currentKey, currentValue);
 	}
 
-	return [new ParsedDSDTF(keyValueMapping), null];
+	return [newParsedDSDTF(keyValueMapping), null];
 }
 
 function isTokenAKey(token: string): boolean {
