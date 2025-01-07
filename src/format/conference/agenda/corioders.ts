@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 import { Activity, ACTIVITY_TYPE, Agenda, isACTIVITY_TYPE_T, Speaker } from '.';
-import { ParsedDSDTF, parseDSDTF } from '@/format/deadSimpleDataTextFormat';
+import { getAsArray, ParsedDSDTF, parseDSDTF } from '@/format/deadSimpleDataTextFormat';
 import { DateTime } from 'luxon';
 import { CellAddress, WorkBook as XlsxWorkBook, utils as xlsxUtils } from 'xlsx';
 
@@ -280,7 +280,7 @@ function parseActivityDSDTF(DSDTF: ParsedDSDTF, startTime: DateTime, endTime: Da
 	}
 
 	if (Type === 'Panel') {
-		const SpeakerNames = DSDTF.getAsArray('Speakers');
+		const SpeakerNames =  getAsArray(DSDTF, 'Speakers');
 		if (SpeakerNames === undefined) {
 			throw `Activity of type: ${Type} requires the field 'Speakers'`;
 		}
