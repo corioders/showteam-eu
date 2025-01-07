@@ -1,3 +1,8 @@
+// Copyright (C) Corioders <corioders@gmail.com> - All Rights Reserved
+// Unauthorized copying of this file, via any medium is strictly prohibited
+// Proprietary and confidential
+// Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
+
 import { ErrorIs, type ErrorReturnPromise } from '@/error';
 import { google } from 'googleapis';
 import { type Doc, type DocID, downloadDocRevision, getDocRevisions } from './docs';
@@ -20,29 +25,6 @@ const googleAuth = new google.auth.GoogleAuth({
 
 // const driveAPI = google.drive({ version: "v3", auth: googleAuth });
 // const sheetsAPI = google.sheets({ version: "v4", auth: googleAuth });
-
-// async function main() {
-// 	const r = await listFolder('1uCiWYoPY-0r3SAR0z1OgqvB4QptgfxnC' as ResourceID);
-// 	const docID = r[0].id as DocID;
-
-// 	const a = await getDocRevisions(googleAuth, docID);
-// 	console.log(a);
-
-// 	// const [, err] = await downloadDocRevision(googleAuth, docID, undefined);
-// 	// if (err !== null) {
-// 	// 	console.log(err);
-// 	// }
-
-// 	// const b = r.filter((r) => r.mimeType.includes('image'));
-// 	// const cc = await getFileDownloadURL(googleAuth, b[0].id);
-// 	// console.log(cc);
-// 	// const a = await fetch(
-// 	// 	'https://drive.google.com/drive-viewer/AKGpiha-SV4pKQ2mYb5Y8b7q-HKzn6SrrQaJ5QeuvNhT8Mx4H9vqYxmIYKmXTXsTS-ljgD_hSJ9XGETyPovbZZHjFq9OZs6kK_qERI4=w2322-h1420-rw-v1',
-// 	// );
-// 	// console.log(a);
-// }
-
-// main();
 
 export function listFolder(folderID: ResourceID): Promise<Resource[]> {
 	return internalListFolder(googleAuth, folderID);
