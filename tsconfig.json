@@ -1,6 +1,7 @@
 {
 	"compilerOptions": {
 		"outDir": "build",
+		"sourceMap": true,
 		"incremental": true,
 		"declaration": true,
 		"declarationMap": true,

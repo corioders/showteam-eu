@@ -3,21 +3,18 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
-import { ErrorIs, type ErrorReturnPromise } from '@/error';
+import type { ErrorReturnPromise } from '@/error';
 import { google } from 'googleapis';
 import { type Doc, type DocID, downloadDocRevision, getDocRevisions } from './docs';
-import {
-	ERR_UNABLE_TO_GET_LATEST_DEPLOY_REVISION,
-	type Resource,
-	type ResourceID,
-	getLatestDeployRevision,
-	getLatestRevision,
-	listFolder as internalListFolder,
-} from './drive';
+import { type FolderID, type Resource, getLatestDeployRevision, getLatestRevision, internalListFolder } from './drive';
 import { type Spreadsheet, type SpreadsheetID, downloadSpreadsheetRevision, getSheetRevisions } from './spreadsheet';
 
-// TODO: make this initialization better.
-// TODO: Make sure CORIODERS_DRIVE_CMS_KEY is populated and valid.
+if (typeof process.env.CORIODERS_DRIVE_CMS_KEY !== 'string') {
+	throw new Error(
+		'Unable to initialize drive cms, missing the `CORIODERS_DRIVE_CMS_KEY` environment variable. See https://medium.com/@matheodaly.md/using-google-drive-api-with-python-and-a-service-account-d6ae1f6456c2',
+	);
+}
+
 const googleAuth = new google.auth.GoogleAuth({
 	credentials: JSON.parse(process.env.CORIODERS_DRIVE_CMS_KEY as string),
 	scopes: ['https://www.googleapis.com/auth/drive'],
@@ -26,40 +23,48 @@ const googleAuth = new google.auth.GoogleAuth({
 // const driveAPI = google.drive({ version: "v3", auth: googleAuth });
 // const sheetsAPI = google.sheets({ version: "v4", auth: googleAuth });
 
-export function listFolder(folderID: ResourceID): Promise<Resource[]> {
+export function listFolder(folderID: FolderID): ErrorReturnPromise<Resource[]> {
 	return internalListFolder(googleAuth, folderID);
 }
 
 export async function downloadDocLatestRevision(docID: DocID): ErrorReturnPromise<Doc> {
-	const revisions = await getDocRevisions(googleAuth, docID);
-	const [latestRevision, err] = getLatestRevision(revisions);
-	if (err !== null) {
-		throw err;
+	const [revisions, errorGetRevisions] = await getDocRevisions(googleAuth, docID);
+	if (errorGetRevisions !== null) {
+		return [null, errorGetRevisions];
 	}
-	return await downloadDocRevision(googleAuth, docID, latestRevision.revisionID);
+
+	const [latestRevision, errorGetLatestRevision] = getLatestRevision(revisions);
+	if (errorGetLatestRevision !== null) {
+		return [null, errorGetLatestRevision];
+	}
+
+	return downloadDocRevision(googleAuth, docID, latestRevision.revisionID);
 }
 
-export async function downloadSpreadsheetLatestRevision(spreadsheetID: SpreadsheetID): Promise<Spreadsheet> {
-	const revisions = await getSheetRevisions(googleAuth, spreadsheetID);
-	const [latestRevision, err] = getLatestRevision(revisions);
-	if (err !== null) {
-		throw err;
+export async function downloadSpreadsheetLatestRevision(spreadsheetID: SpreadsheetID): ErrorReturnPromise<Spreadsheet> {
+	const [revisions, errorGetRevisions] = await getSheetRevisions(googleAuth, spreadsheetID);
+	if (errorGetRevisions !== null) {
+		return [null, errorGetRevisions];
 	}
 
-	return await downloadSpreadsheetRevision(googleAuth, spreadsheetID, latestRevision.revisionID);
+	const [latestRevision, errorLatestRevision] = getLatestRevision(revisions);
+	if (errorLatestRevision !== null) {
+		return [null, errorLatestRevision];
+	}
+
+	return downloadSpreadsheetRevision(googleAuth, spreadsheetID, latestRevision.revisionID);
 }
 
-// TODO: handle when there is no deploy
-export async function downloadSpreadsheetLatestDeployRevision(spreadsheetID: SpreadsheetID): Promise<Spreadsheet> {
-	const revisions = await getSheetRevisions(googleAuth, spreadsheetID);
-	const [latestDeployRevision, err] = getLatestDeployRevision(revisions);
-	if (err !== null) {
-		if (ErrorIs(err, ERR_UNABLE_TO_GET_LATEST_DEPLOY_REVISION)) {
-			// TODO: handle when there is no deploy
-		}
-
-		throw err;
+export async function downloadSpreadsheetLatestDeployRevision(spreadsheetID: SpreadsheetID): ErrorReturnPromise<Spreadsheet> {
+	const [revisions, errorGetRevisions] = await getSheetRevisions(googleAuth, spreadsheetID);
+	if (errorGetRevisions !== null) {
+		return [null, errorGetRevisions];
 	}
 
-	return await downloadSpreadsheetRevision(googleAuth, spreadsheetID, latestDeployRevision.revisionID);
+	const [latestDeployRevision, errorGetLatestDeployRevision] = getLatestDeployRevision(revisions);
+	if (errorGetLatestDeployRevision !== null) {
+		return [null, errorGetLatestDeployRevision];
+	}
+
+	return downloadSpreadsheetRevision(googleAuth, spreadsheetID, latestDeployRevision.revisionID);
 }

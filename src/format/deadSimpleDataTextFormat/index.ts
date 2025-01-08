@@ -80,6 +80,7 @@ KeyTwo:::test4 test5 test6
 // 	console.log(e);
 // }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: This is a parser. Complexity is unavoidable.
 export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 	const dsdtfTimed = dsdtfRaw.trim();
 	const dsdtfNewLineSplit = dsdtfTimed.split(NEW_LINE);
@@ -95,21 +96,24 @@ export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 	}
 
 	const keyValueMapping = new Map<string, string>();
-	function addKeyValuePairToMapping(key: string, value: string) {
+	function addKeyValuePairToMapping(key: string, value: string): Error {
 		// Store the previous key-value pair. Skip comments.
 		if (key !== null && isKeyACommentKey(key) === false) {
 			if (keyValueMapping.has(key)) {
-				throw `${key} occurred multiple times`;
+				return new Error(`${key} occurred multiple times`);
 			}
 
 			keyValueMapping.set(key, value);
 		}
+
+		return null;
 	}
 
 	let currentKey: string | null = null;
 	let currentValue = '';
 	let currentValueFirstIteration = false;
 
+	// biome-ignore lint/style/useForOf: The iterator will be used after proper errors will be implemented.
 	for (let i = 0; i < dsdtfNewLineSplit.length; i++) {
 		currentValue += NEW_LINE;
 
@@ -119,14 +123,17 @@ export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 			const token = dsdtfLineWhitespaceSplit[j];
 			if (isTokenAKey(token)) {
 				if (j !== 0) {
-					throw 'New keys must start on a new line';
+					return [null, new Error('New keys must start on a new line')];
 				}
 
 				// Remove tailing NEW_LINE character. The outer loop has no way of knowing that this token is a key.
 				currentValue = currentValue.substring(0, currentValue.length - 1);
 
 				if (currentKey !== null) {
-					addKeyValuePairToMapping(currentKey, currentValue);
+					const error = addKeyValuePairToMapping(currentKey, currentValue);
+					if (error !== null) {
+						return [null, error];
+					}
 				}
 
 				currentKey = stripKeySuffix(token);
@@ -159,7 +166,10 @@ export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 
 	if (currentKey !== null) {
 		// Add the last key-value pair.
-		addKeyValuePairToMapping(currentKey, currentValue);
+		const error = addKeyValuePairToMapping(currentKey, currentValue);
+		if (error !== null) {
+			return [null, error];
+		}
 	}
 
 	return [newParsedDSDTF(keyValueMapping), null];

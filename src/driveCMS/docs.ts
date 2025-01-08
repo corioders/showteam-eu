@@ -4,13 +4,13 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, January 2025
 
 import { CSE, type ErrorReturnPromise } from '@/error';
-import { MIMEType, type ResourceID, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive';
+import { type FileID, MIMEType, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive';
 
 import type { TxtDocumentNode } from '@textlint/ast-node-types';
 import { parse } from '@textlint/markdown-to-ast';
 import type { GoogleAuth } from 'googleapis-common';
 
-export type DocID =  ResourceID & { readonly __docTag: unique symbol };
+export type DocID = FileID & { readonly __docTag: unique symbol };
 
 export interface Doc {
 	docAST: TxtDocumentNode;
@@ -39,15 +39,14 @@ export async function downloadDocRevision(googleAuth: GoogleAuth, docID: DocID, 
 	}
 }
 
-// TODO: Corioders errors
-export async function getDocRevisions(googleAuth: GoogleAuth, docID: DocID): Promise<Revision[]> {
+export async function getDocRevisions(googleAuth: GoogleAuth, docID: DocID): ErrorReturnPromise<Revision[]> {
 	const [revisions, err] = await getRevisionsFromUndocumentedAPI(
 		googleAuth,
 		`https://docs.google.com/document/d/${docID}/revisions/tiles?id=${docID}&start=1&revisionBatchSize=1500&showDetailedRevisions=false&loadType=0&includes_info_params=true&cros_files=false`,
 	);
 	if (err !== null) {
-		throw err;
+		return [null, err];
 	}
 
-	return revisions;
+	return [revisions, null];
 }

@@ -6,11 +6,14 @@
 import { CSE, type ErrorReturn, type ErrorReturnPromise, safe, safePromise } from '@/error';
 import type { ValueOf } from '@/type';
 import { google } from 'googleapis';
-import { type GaxiosPromise, type GaxiosResponse, type GoogleAuth, createAPIRequest } from 'googleapis-common';
+import { type GaxiosPromise, type GoogleAuth, createAPIRequest } from 'googleapis-common';
 import { DEPLOY_REVISION_NAME } from './const';
 
 // ResourceID is an ID of Folder or File
 export type ResourceID = string & { readonly __resourceTag: unique symbol };
+
+export type FolderID = ResourceID & { readonly __folderTag: unique symbol };
+export type FileID = ResourceID & { readonly __fileTag: unique symbol };
 
 export type RevisionID = number & { readonly __revisionTag: unique symbol };
 
@@ -32,17 +35,17 @@ export interface Resource {
 	mimeType: MIMETypeT;
 }
 
-export async function listFolder(googleAuth: GoogleAuth, folderID: ResourceID): Promise<Resource[]> {
+export const ERR_UNABLE_TO_LIST_FILES = new Error('Unable to list files');
+export async function internalListFolder(googleAuth: GoogleAuth, folderID: FolderID): ErrorReturnPromise<Resource[]> {
 	const driveAPI = google.drive({ version: 'v3', auth: googleAuth });
-	const fileOrFolderListResponse = await driveAPI.files.list({ q: `'${folderID}' in parents` });
-	const fileOrFolderList: Resource[] = [];
-
-	if (fileOrFolderListResponse.status !== 200) {
-		throw new Error('fileListResponse.statusText !== 200');
+	const [fileOrFolderListResponse, errorList] = await safePromise(() => driveAPI.files.list({ q: `'${folderID}' in parents` }));
+	if (errorList !== null) {
+		return [null, new Error('Error while listing files', { cause: errorList })];
 	}
 
-	if (fileOrFolderListResponse.data.files === undefined) {
-		throw new Error('fileListResponse.data.files === undefined');
+	const fileOrFolderList: Resource[] = [];
+	if (fileOrFolderListResponse.status !== 200 || fileOrFolderListResponse.data.files === undefined) {
+		return [null, new CSE(ERR_UNABLE_TO_LIST_FILES)];
 	}
 
 	for (const fileOrFolder of fileOrFolderListResponse.data.files) {
@@ -53,30 +56,35 @@ export async function listFolder(googleAuth: GoogleAuth, folderID: ResourceID): 
 		});
 	}
 
-	return fileOrFolderList;
+	return [fileOrFolderList, null];
 }
 
-// TODO: Check if all responses succeeded
-// TODO: Handle the edge case when fileID is actually a folderID. Example: 1W9Ubb6l8zWUEMhmyGaI8K6H7eDQHMOkJ
-export async function downloadFile(googleAuth: GoogleAuth, fileID: ResourceID, revisionID?: RevisionID, mimeType?: MIMETypeT): Promise<unknown> {
-	const downloadURL = await getFileDownloadURL(googleAuth, fileID, revisionID, mimeType);
-	const downloadResponse = await createAPIRequest({
-		options: {
-			url: downloadURL,
-			method: 'GET',
-		},
-		params: {},
-		requiredParams: [],
-		pathParams: [],
-		context: { _options: { auth: googleAuth } },
-	});
+export async function downloadFile(googleAuth: GoogleAuth, fileID: FileID, revisionID?: RevisionID, mimeType?: MIMETypeT): ErrorReturnPromise<unknown> {
+	const [downloadURL, errorGetFileURL] = await getFileDownloadURL(googleAuth, fileID, revisionID, mimeType);
+	if (errorGetFileURL !== null) {
+		return [null, errorGetFileURL];
+	}
 
-	return downloadResponse.data;
+	const [downloadResponse, errorDownloadFile] = await safePromise(() =>
+		createAPIRequest({
+			options: {
+				url: downloadURL,
+				method: 'GET',
+			},
+			params: {},
+			requiredParams: [],
+			pathParams: [],
+			context: { _options: { auth: googleAuth } },
+		}),
+	);
+	if (errorDownloadFile !== null) {
+		return [null, errorDownloadFile];
+	}
+
+	return [downloadResponse.data, null];
 }
 
-// TODO: Check if all responses succeeded
-// TODO: Handle the edge case when fileID is actually a folderID. Example: 1W9Ubb6l8zWUEMhmyGaI8K6H7eDQHMOkJ
-export async function getFileDownloadURL(googleAuth: GoogleAuth, fileID: ResourceID, revisionID?: RevisionID, mimeType?: MIMETypeT): Promise<string> {
+export async function getFileDownloadURL(googleAuth: GoogleAuth, fileID: FileID, revisionID?: RevisionID, mimeType?: MIMETypeT): ErrorReturnPromise<string> {
 	// https://developers.google.com/drive/api/reference/rest/v3/operations#Operation
 	interface Operation {
 		response: {
@@ -84,22 +92,27 @@ export async function getFileDownloadURL(googleAuth: GoogleAuth, fileID: Resourc
 		};
 	}
 
-	const downloadURIResponse: GaxiosResponse<Operation> = await createAPIRequest({
-		options: {
-			url: `https://www.googleapis.com/drive/v3/files/${fileID}/download`,
-			method: 'POST',
-		},
-		params: {
-			revisionId: revisionID,
-			mimeType: mimeType,
-		},
-		requiredParams: [],
-		pathParams: [],
-		context: { _options: { auth: googleAuth } },
+	const [downloadURIResponse, errorGaxios] = await safePromise(() => {
+		return createAPIRequest({
+			options: {
+				url: `https://www.googleapis.com/drive/v3/files/${fileID}/download`,
+				method: 'POST',
+			},
+			params: {
+				revisionId: revisionID,
+				mimeType: mimeType,
+			},
+			requiredParams: [],
+			pathParams: [],
+			context: { _options: { auth: googleAuth } },
+		}) as GaxiosPromise<Operation>;
 	});
-	const downloadURL = downloadURIResponse.data.response.downloadUri;
+	if (errorGaxios !== null) {
+		return [null, new Error('Gaxios API request failed', { cause: errorGaxios })];
+	}
 
-	return downloadURL;
+	const downloadURL = downloadURIResponse.data.response.downloadUri;
+	return [downloadURL, null];
 }
 
 export interface Revision {
@@ -107,8 +120,7 @@ export interface Revision {
 	revisionID: RevisionID;
 }
 
-// TODO: Download ALL revisions: Look at the url: "revisionBatchSize"
-// TODO: We are dependeidng on revisions being returned in order
+// TODO: Consider Download ALL revisions: Look at the url: "revisionBatchSize"
 export async function getRevisionsFromUndocumentedAPI(googleAuth: GoogleAuth, undocumentedRevisionURL: string): ErrorReturnPromise<Revision[]> {
 	const [response, errorGaxios] = await safePromise(() => {
 		return createAPIRequest({
@@ -154,7 +166,8 @@ export async function getRevisionsFromUndocumentedAPI(googleAuth: GoogleAuth, un
 		});
 	}
 
-	return [revisions, null];
+	const sortedRevisions = revisions.sort((a, b) => a.revisionID - b.revisionID);
+	return [sortedRevisions, null];
 }
 
 export const ERR_REVISIONS_LENGTH_IS_ZERO = new Error('Error: revisions.length === 0');

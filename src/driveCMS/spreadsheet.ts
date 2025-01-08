@@ -7,37 +7,51 @@ import type { GoogleAuth } from 'googleapis-common';
 
 import { type WorkBook as XlsxWorkBook, read as xlsxRead } from 'xlsx';
 
-import { MIMEType, type ResourceID, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive';
+import { type ErrorReturnPromise, safe, safePromise } from '@/error';
+import { type FileID, MIMEType, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive';
 
-export type SpreadsheetID = ResourceID & { readonly __spreadsheetTag: unique symbol };
+export type SpreadsheetID = FileID & { readonly __spreadsheetTag: unique symbol };
 
 export interface Spreadsheet {
-	workbook: XlsxWorkBook;
-
 	spreadsheetID: SpreadsheetID;
+
+	workbook: XlsxWorkBook;
 }
 
-export async function downloadSpreadsheetRevision(googleAuth: GoogleAuth, spreadsheetId: SpreadsheetID, revisionID: RevisionID): Promise<Spreadsheet> {
-	const spreadsheetAsExcel = await downloadFile(googleAuth, spreadsheetId, revisionID, MIMEType.excel);
+export async function downloadSpreadsheetRevision(googleAuth: GoogleAuth, spreadsheetID: SpreadsheetID, revisionID: RevisionID): ErrorReturnPromise<Spreadsheet> {
+	const [spreadsheetAsExcel, errorDownloadFile] = await downloadFile(googleAuth, spreadsheetID, revisionID, MIMEType.excel);
+	if (errorDownloadFile !== null) {
+		return [null, errorDownloadFile];
+	}
 
 	const spreadsheetAsExcelBlob = spreadsheetAsExcel as Blob;
-	const excelFile = await spreadsheetAsExcelBlob.arrayBuffer();
-	return {
-		workbook: xlsxRead(excelFile),
+	const [excelFile, errorArrayBuffer] = await safePromise(() => spreadsheetAsExcelBlob.arrayBuffer());
+	if (errorArrayBuffer !== null) {
+		return [null, errorArrayBuffer];
+	}
 
-		spreadsheetID: spreadsheetId,
+	const [workbook, errorXlsxRead] = safe(() => xlsxRead(excelFile));
+	if (errorXlsxRead !== null) {
+		return [null, errorXlsxRead];
+	}
+
+	const spreadsheet = {
+		spreadsheetID: spreadsheetID,
+
+		workbook: workbook,
 	};
+
+	return [spreadsheet, null];
 }
 
-// TODO: Corioders errors
-export async function getSheetRevisions(googleAuth: GoogleAuth, spreadsheetId: SpreadsheetID): Promise<Revision[]> {
+export async function getSheetRevisions(googleAuth: GoogleAuth, spreadsheetId: SpreadsheetID): ErrorReturnPromise<Revision[]> {
 	const [revisions, err] = await getRevisionsFromUndocumentedAPI(
 		googleAuth,
 		`https://docs.google.com/spreadsheets/d/${spreadsheetId}/revisions/tiles?id=${spreadsheetId}&start=1&revisionBatchSize=1500&showDetailedRevisions=false&loadType=0&includes_info_params=true&cros_files=false`,
 	);
 	if (err !== null) {
-		throw err;
+		return [null, err];
 	}
 
-	return revisions;
+	return [revisions, null];
 }
