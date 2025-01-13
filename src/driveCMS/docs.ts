@@ -20,7 +20,11 @@ export interface Doc {
 
 export const ERR_EXPECTED_DOWNLOADED_DOC_STRING = new Error('Expected the downloaded doc to be a string. Because MIME type of markdown was provided.');
 export async function downloadDocRevision(googleAuth: GoogleAuth, docID: DocID, revisionID: RevisionID): ErrorReturnPromise<Doc> {
-	const docAsMarkdown = await downloadFile(googleAuth, docID, revisionID, MIMEType.markdown);
+	const [docAsMarkdown, errorDownloadFile] = await downloadFile(googleAuth, docID, revisionID, MIMEType.markdown);
+	if (errorDownloadFile !== null) {
+		return [null, errorDownloadFile];
+	}
+
 	if (typeof docAsMarkdown !== 'string') {
 		return [null, new CSE(ERR_EXPECTED_DOWNLOADED_DOC_STRING)];
 	}
