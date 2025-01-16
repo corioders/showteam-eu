@@ -6,7 +6,15 @@
 import type { ErrorReturnPromise } from '@/error';
 import { google } from 'googleapis';
 import { type Doc, type DocID, downloadDocRevision, getDocRevisions } from './docs';
-import { type FolderID, type Resource, getLatestDeployRevision, getLatestRevision, internalListFolder } from './drive';
+import {
+	type FileID,
+	type FolderID,
+	type Resource,
+	getLatestDeployRevision,
+	getLatestRevision,
+	internalListFolder,
+	internalUNSAFEChangePermissionsToAnyoneWithLinkReader,
+} from './drive';
 import { type Spreadsheet, type SpreadsheetID, downloadSpreadsheetRevision, getSheetRevisions } from './spreadsheet';
 
 if (typeof process.env.CORIODERS_DRIVE_CMS_KEY !== 'string') {
@@ -22,6 +30,10 @@ const googleAuth = new google.auth.GoogleAuth({
 
 // const driveAPI = google.drive({ version: "v3", auth: googleAuth });
 // const sheetsAPI = google.sheets({ version: "v4", auth: googleAuth });
+
+export function UNSAFEChangePermissionsToAnyoneWithLinkReader(fileID: FileID): ErrorReturnPromise<void> {
+	return internalUNSAFEChangePermissionsToAnyoneWithLinkReader(googleAuth, fileID);
+}
 
 export function listFolder(folderID: FolderID): ErrorReturnPromise<Resource[]> {
 	return internalListFolder(googleAuth, folderID);

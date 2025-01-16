@@ -7,6 +7,7 @@ import { CSE, type ErrorReturn, type ErrorReturnPromise, safe, safePromise } fro
 import type { ValueOf } from '@/type';
 import { google } from 'googleapis';
 import { type GaxiosPromise, type GoogleAuth, createAPIRequest } from 'googleapis-common';
+import { StatusCodes } from 'http-status-codes';
 import { DEPLOY_REVISION_NAME } from './const';
 
 // ResourceID is an ID of Folder or File
@@ -33,6 +34,30 @@ export interface Resource {
 	id: ResourceID;
 	name: string;
 	mimeType: MIMETypeT;
+}
+
+export const ERR_UNABLE_CHANGE_PERMISSION = new Error('Unable change permission');
+export async function internalUNSAFEChangePermissionsToAnyoneWithLinkReader(googleAuth: GoogleAuth, fileID: FileID): ErrorReturnPromise<void> {
+	const driveAPI = google.drive({ version: 'v3', auth: googleAuth });
+
+	const response = await driveAPI.permissions.create(
+		{
+			fileId: fileID,
+			requestBody: {
+				type: 'anyone',
+				role: 'reader',
+				allowFileDiscovery: false,
+			},
+		},
+		null,
+	);
+
+	if (response.status !== StatusCodes.OK) {
+		// biome-ignore lint/suspicious/useErrorMessage: No message required
+		return [null, new AggregateError([ERR_UNABLE_CHANGE_PERMISSION, new Error(response.statusText)])];
+	}
+
+	return [null, null];
 }
 
 export const ERR_UNABLE_TO_LIST_FILES = new Error('Unable to list files');
