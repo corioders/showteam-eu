@@ -20,7 +20,7 @@ export default function LocalImage(props: LocalImageProps) {
 	};
 
 	if (nextImageProps.sizes === undefined) {
-		nextImageProps.sizes = '100vh';
+		nextImageProps.sizes = '100vw';
 	}
 
 	if (nextImageProps.src.blurDataURL !== undefined) {

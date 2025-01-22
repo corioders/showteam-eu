@@ -31,7 +31,7 @@ export default async function RemoteImage(props: RemoteImageProps) {
 	}
 
 	if (nextImageProps.sizes === undefined) {
-		nextImageProps.sizes = '100vh';
+		nextImageProps.sizes = '100vw';
 	}
 
 	nextImageProps.width = size.width;
