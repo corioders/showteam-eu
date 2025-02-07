@@ -53,6 +53,20 @@ export async function downloadDocLatestRevision(docID: DocID): ErrorReturnPromis
 	return downloadDocRevision(googleAuth, docID, latestRevision.revisionID);
 }
 
+export async function downloadDocLatestDeployRevision(docID: DocID): ErrorReturnPromise<Doc> {
+	const [revisions, errorGetRevisions] = await getDocRevisions(googleAuth, docID);
+	if (errorGetRevisions !== null) {
+		return [null, errorGetRevisions];
+	}
+
+	const [latestDeployRevision, errorGetLatestDeployRevision] = getLatestDeployRevision(revisions);
+	if (errorGetLatestDeployRevision !== null) {
+		return [null, errorGetLatestDeployRevision];
+	}
+
+	return downloadDocRevision(googleAuth, docID, latestDeployRevision.revisionID);
+}
+
 export async function downloadSpreadsheetLatestRevision(spreadsheetID: SpreadsheetID): ErrorReturnPromise<Spreadsheet> {
 	const [revisions, errorGetRevisions] = await getSheetRevisions(googleAuth, spreadsheetID);
 	if (errorGetRevisions !== null) {
