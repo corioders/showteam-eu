@@ -17,6 +17,7 @@ export type RemoteImageProps = {
 	src: RemoteImageSource;
 } & Omit<ImagePropsNext, 'src'>;
 
+// TODO: fix error handling
 export default async function RemoteImage(props: RemoteImageProps) {
 	const nextImageProps = { ...props };
 
@@ -24,7 +25,11 @@ export default async function RemoteImage(props: RemoteImageProps) {
 		throw new Error(`RemoteImage: The 'src' prop should be a remote image URL.`);
 	}
 
-	const [size, err] = await imageSize(nextImageProps.src);
+	const remoteImage = await fetch(nextImageProps.src);
+	const remoteImageArrayBuffer = await remoteImage.arrayBuffer();
+	const remoteImageBuffer = Buffer.from(remoteImageArrayBuffer);
+
+	const [size, err] = await imageSize(remoteImageBuffer);
 	if (err !== null) {
 		// TODO: fix error handling
 		throw err;
@@ -36,6 +41,15 @@ export default async function RemoteImage(props: RemoteImageProps) {
 
 	nextImageProps.width = size.width;
 	nextImageProps.height = size.height;
+
+	// In production next-export-optimize-images downloads the images
+	// but in development the nextImageProps.src is used directly,
+	// thus for example for google-drive pictures do not work.
+	if (process.env.NODE_ENV === 'development') {
+		const stringifiedBuffer = Buffer.from(remoteImageBuffer).toString('base64');
+		const imageBase64 = `data:image/${size.type};base64,${stringifiedBuffer}`;
+		nextImageProps.src = imageBase64;
+	}
 
 	return <NextExportOptimizeRemotePicture {...nextImageProps} />;
 }
