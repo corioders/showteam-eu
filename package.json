@@ -11,7 +11,9 @@
 		"build": "tsc && tsc-alias",
 		"watch": "concurrently \"tsc --watch\" \"tsc-alias --watch\""
 	},
-	"dependencies": {},
+	"dependencies": {
+		"cstd-ts": "link:../cstd-ts"
+	},
 	"devDependencies": {
 		"concurrently": "^9.0.1",
 		"tsc-alias": "^1.8.10",
