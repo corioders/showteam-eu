@@ -7,11 +7,12 @@
 		"declarationMap": true,
 		"target": "esnext",
 		"module": "esnext",
+		"jsx": "preserve",
 		"moduleResolution": "bundler",
 		"paths": {
 			"@/*": ["./src/*"]
 		}
 	},
-	"include": ["**/*.ts"],
+	"include": ["**/*.ts", "**/*.tsx"],
 	"exclude": ["node_modules", "build"]
 }
