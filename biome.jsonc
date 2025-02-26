@@ -38,14 +38,14 @@
 				}
 			},
 			"complexity": {
+				"noUselessUndefinedInitialization": "off",
+
 				// This rule interferes with the noPropertyAccessFromIndexSignature typescript compiler flag
 				"useLiteralKeys": "off"
 			},
 			"correctness": {
-				"useImportExtensions": {
-					"level": "off",
-					"options": {}
-				}
+				"noNodejsModules": "off",
+				"useImportExtensions": "off"
 			},
 			"nursery": {
 				// TODO: Follow this issue: https://github.com/biomejs/biome/issues/1274

@@ -12,7 +12,12 @@
 		"watch": "concurrently \"tsc --watch\" \"tsc-alias --watch\""
 	},
 	"dependencies": {
-		"cstd-ts": "link:../cstd-ts"
+		"buffer-image-size": "^0.6.4",
+		"cacheable": "^1.8.8",
+		"cstd-ts": "link:../cstd-ts",
+		"keyv-file": "^5.1.1",
+		"sharp": "^0.33.5",
+		"svgo": "^3.3.2"
 	},
 	"devDependencies": {
 		"concurrently": "^9.0.1",
