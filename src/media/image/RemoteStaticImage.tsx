@@ -8,10 +8,8 @@ import type NodeCryptoType from 'node:crypto';
 import type NodeFsType from 'node:fs/promises';
 import type NodePathType from 'node:path';
 import type KeyvFileType from 'keyv-file';
-import type SharpType from 'sharp'
+import type SharpType from 'sharp';
 import type SvgoType from 'svgo';
-import React from 'react';
-
 
 import readImageInfoFromBuffer from 'buffer-image-size';
 import { Keyv } from 'cacheable';
@@ -72,6 +70,7 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 
 	const [fetchedImage, fetchError] = await fetchRemoteImage(imageURL);
 	if (fetchError !== null) {
+		console.log(fetchError);
 		throw fetchError;
 	}
 
@@ -107,7 +106,7 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 
 	const imageSpecificHash = nodeCrypto.createHash('shake256', { outputLength: 4 }).update(imageURLString).digest('hex');
 
-	console.log(`Optimizing image at ${props.src}`)
+	console.log(`Optimizing image at ${props.src}`);
 	const imageFilename = props.filename ?? props.alt;
 	if (fetchedImage.imageInfo.type === 'svg') {
 		const outputFilename = await optimizeRemoteSVGImageAndWriteToDisk(fetchedImage, imageFilename, imageSpecificHash);
@@ -192,9 +191,17 @@ async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage>
 		cache.delete(cacheKey);
 	}
 
-	const [imageResponse, fetchError] = await safePromise(() => fetch(imageURL));
+	const nextjsFetch = fetch as unknown as { _nextOriginalFetch: typeof fetch };
+	const originalFetchFunction = nextjsFetch._nextOriginalFetch;
+	// console.log(globalThis._nextOriginalFetch)
+	// console.log(originalFetchFunction.toString())
+	// console.log(originalFetchFunction)
+	const [imageResponse, fetchError] = await safePromise(() => originalFetchFunction(imageURL));
+	console.log(`fetched image ${imageURL}`);
 	if (fetchError !== null) {
-		return [null, fetchError];
+		const error = new Error(`Error while fetching image ${imageURL} got: ${imageResponse}`, { cause: fetchError });
+		console.log(error);
+		return [null, error];
 	}
 
 	if (!imageResponse.ok || imageResponse.status !== 200) {
@@ -240,19 +247,17 @@ interface OptimizationSvgInfoCacheEntry {
 }
 
 async function optimizeRemoteSVGImageAndWriteToDisk(fetchedImage: FetchedImage, imageFilename: string, imageSpecificHash: string): Promise<string> {
-	const nodejsRequireFunction_SimilarToWebpackExternalDependency = eval('require') as Function
-	
-	const { optimize: svgoOptimize }: typeof SvgoType = nodejsRequireFunction_SimilarToWebpackExternalDependency('svgo');
-	
+	const nodejsRequireFunctionSimilarToWebpackExternalDependency = eval('require') as Function;
+
+	const { optimize: svgoOptimize }: typeof SvgoType = nodejsRequireFunctionSimilarToWebpackExternalDependency('svgo');
+
 	const nodePath: typeof NodePathType = require('node:path');
 	const nodeFs: typeof NodeFsType = require('node:fs/promises');
-
 
 	if (fetchedImage.imageInfo.type !== 'svg') {
 		throw new Error('This function optimizes only svg images');
 	}
 
-	
 	const unsafeSvg = fetchedImage.imageBuffer.toString();
 
 	const fullFilename = `${imageFilename}.${imageSpecificHash}.svg`;
@@ -289,8 +294,8 @@ async function optimizeRemoteImageAndWriteToDisk(
 	imageFilename: string,
 	imageSpecificHash: string,
 ): Promise<Record<string, OptimizationInfo[]>> {
-	const nodejsRequireFunction_SimilarToWebpackExternalDependency = eval('require') as Function
-	const sharp: typeof SharpType = nodejsRequireFunction_SimilarToWebpackExternalDependency('sharp');
+	const nodejsRequireFunctionSimilarToWebpackExternalDependency = eval('require') as Function;
+	const sharp: typeof SharpType = nodejsRequireFunctionSimilarToWebpackExternalDependency('sharp');
 	const nodePath: typeof NodePathType = require('node:path');
 	const nodeFs: typeof NodeFsType = require('node:fs/promises');
 
@@ -311,7 +316,7 @@ async function optimizeRemoteImageAndWriteToDisk(
 		optimizationInfosPerFormat[format] = [];
 	}
 
-	const optimizationPromises: Promise<void>[] = []
+	const optimizationPromises: Promise<void>[] = [];
 
 	for (const targetWidth of sizesWithMaxWidth) {
 		// Prevent upscaling images
@@ -326,10 +331,10 @@ async function optimizeRemoteImageAndWriteToDisk(
 
 				const fullFilename = `${imageFilename}.${imageSpecificHash}.${targetWidth}.${targetFormat}`;
 				optimizationInfosPerFormat[targetFormat].push({ width: targetWidth, outputFilename: fullFilename });
-	
+
 				const cacheKey = `optimizeRemoteImageAndWriteToDisk:${fullFilename}`;
 				const cacheEntry = await cache.get<OptimizationInfoCacheEntry>(cacheKey);
-	
+
 				let imageBuffer = undefined;
 				if (cacheEntry !== undefined) {
 					imageBuffer = cacheEntry.optimizedImageBuffer;
@@ -338,16 +343,15 @@ async function optimizeRemoteImageAndWriteToDisk(
 					imageBuffer = await imageOptimizationWidthFormat.toBuffer();
 					await cache.set<OptimizationInfoCacheEntry>(cacheKey, { optimizedImageBuffer: imageBuffer });
 				}
-	
+
 				const fileOutputPath = nodePath.join(ASSUMED_NEXTJS_IMAGE_FOLDER, fullFilename);
 				await nodeFs.writeFile(fileOutputPath, imageBuffer);
-		
-			})()
+			})();
 
-			optimizationPromises.push(promise)
+			optimizationPromises.push(promise);
 		}
 	}
 
-	await Promise.all(optimizationPromises)
+	await Promise.all(optimizationPromises);
 	return optimizationInfosPerFormat;
 }

@@ -14,8 +14,10 @@
 	"dependencies": {
 		"buffer-image-size": "^0.6.4",
 		"cacheable": "^1.8.8",
-		"cstd-ts": "link:../cstd-ts",
+		"cstd-ts": "link:./../cstd-ts",
 		"keyv-file": "^5.1.1",
+		"react": "^19.0.0",
+		"server-only": "^0.0.1",
 		"sharp": "^0.33.5",
 		"svgo": "^3.3.2"
 	},
