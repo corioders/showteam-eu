@@ -22,7 +22,7 @@ import { type FormatType, IMAGE_OPTIMIZATION_ATTRIBUTES, type ImageInfo } from '
 const ASSUMED_NEXTJS_IMAGE_FOLDER = './.next/static/media';
 const ASSUMED_NEXTJS_URL_PREFIX = '/_next/static/media';
 
-const SIZES = [10, 20, 30, 640, 750, 828, 1080, 1200, 1920, 2048];
+const SIZES = [640, 750, 828, 1080, 1200, 1920, 2048];
 const FORMATS: FormatType[] = ['avif', 'webp'];
 
 export interface RemoteImageProps extends ImgHTMLAttributes<HTMLImageElement> {
@@ -107,6 +107,7 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 
 	const imageSpecificHash = nodeCrypto.createHash('shake256', { outputLength: 4 }).update(imageURLString).digest('hex');
 
+	console.log(`Optimizing image at ${props.src}`)
 	const imageFilename = props.filename ?? props.alt;
 	if (fetchedImage.imageInfo.type === 'svg') {
 		const outputFilename = await optimizeRemoteSVGImageAndWriteToDisk(fetchedImage, imageFilename, imageSpecificHash);
@@ -310,6 +311,8 @@ async function optimizeRemoteImageAndWriteToDisk(
 		optimizationInfosPerFormat[format] = [];
 	}
 
+	const optimizationPromises: Promise<void>[] = []
+
 	for (const targetWidth of sizesWithMaxWidth) {
 		// Prevent upscaling images
 		if (targetWidth > fetchedImage.imageInfo.width) {
@@ -318,27 +321,33 @@ async function optimizeRemoteImageAndWriteToDisk(
 
 		const imageOptimizationWidth = imageOptimization.clone().resize({ width: targetWidth });
 		for (const targetFormat of FORMATS) {
-			const imageOptimizationWidthFormat = imageOptimizationWidth.clone();
+			const promise = (async () => {
+				const imageOptimizationWidthFormat = imageOptimizationWidth.clone();
 
-			const fullFilename = `${imageFilename}.${imageSpecificHash}.${targetWidth}.${targetFormat}`;
-			optimizationInfosPerFormat[targetFormat].push({ width: targetWidth, outputFilename: fullFilename });
+				const fullFilename = `${imageFilename}.${imageSpecificHash}.${targetWidth}.${targetFormat}`;
+				optimizationInfosPerFormat[targetFormat].push({ width: targetWidth, outputFilename: fullFilename });
+	
+				const cacheKey = `optimizeRemoteImageAndWriteToDisk:${fullFilename}`;
+				const cacheEntry = await cache.get<OptimizationInfoCacheEntry>(cacheKey);
+	
+				let imageBuffer = undefined;
+				if (cacheEntry !== undefined) {
+					imageBuffer = cacheEntry.optimizedImageBuffer;
+				} else {
+					// We can get away with this level of cache, because sharp runs the optimization pipeline only at the end.
+					imageBuffer = await imageOptimizationWidthFormat.toBuffer();
+					await cache.set<OptimizationInfoCacheEntry>(cacheKey, { optimizedImageBuffer: imageBuffer });
+				}
+	
+				const fileOutputPath = nodePath.join(ASSUMED_NEXTJS_IMAGE_FOLDER, fullFilename);
+				await nodeFs.writeFile(fileOutputPath, imageBuffer);
+		
+			})()
 
-			const cacheKey = `optimizeRemoteImageAndWriteToDisk:${fullFilename}`;
-			const cacheEntry = await cache.get<OptimizationInfoCacheEntry>(cacheKey);
-
-			let imageBuffer = undefined;
-			if (cacheEntry !== undefined) {
-				imageBuffer = cacheEntry.optimizedImageBuffer;
-			} else {
-				// We can get away with this level of cache, because sharp runs the optimization pipeline only at the end.
-				imageBuffer = await imageOptimizationWidthFormat.toBuffer();
-				await cache.set<OptimizationInfoCacheEntry>(cacheKey, { optimizedImageBuffer: imageBuffer });
-			}
-
-			const fileOutputPath = nodePath.join(ASSUMED_NEXTJS_IMAGE_FOLDER, fullFilename);
-			await nodeFs.writeFile(fileOutputPath, imageBuffer);
+			optimizationPromises.push(promise)
 		}
 	}
 
+	await Promise.all(optimizationPromises)
 	return optimizationInfosPerFormat;
 }
