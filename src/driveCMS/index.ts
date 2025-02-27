@@ -31,6 +31,7 @@ const googleAuth = new google.auth.GoogleAuth({
 // const driveAPI = google.drive({ version: "v3", auth: googleAuth });
 // const sheetsAPI = google.sheets({ version: "v4", auth: googleAuth });
 
+// Figure out if changing permissions of the folder would work.
 export function UNSAFEChangePermissionsToAnyoneWithLinkReader(fileID: FileID): ErrorReturnPromise<void> {
 	return internalUNSAFEChangePermissionsToAnyoneWithLinkReader(googleAuth, fileID);
 }
