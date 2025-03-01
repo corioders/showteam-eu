@@ -5,6 +5,7 @@
 		"incremental": true,
 		"declaration": true,
 		"declarationMap": true,
+		"skipLibCheck": true,
 		"target": "esnext",
 		"module": "esnext",
 		"moduleResolution": "bundler",
