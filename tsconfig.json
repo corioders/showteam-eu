@@ -8,12 +8,14 @@
 		"skipLibCheck": true,
 		"target": "esnext",
 		"module": "esnext",
+		"jsx": "preserve",
 		"moduleResolution": "bundler",
 		"rootDir": "src",
 		"paths": {
 			"@/*": ["./src/*"]
-		}
+		},
+		"typeRoots": ["./node_modules/@types"]
 	},
-	"include": ["**/*.ts"],
+	"include": ["**/*.ts", "**/*.tsx"],
 	"exclude": ["node_modules", "build"]
 }
