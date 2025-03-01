@@ -33,5 +33,19 @@ export default defineDriver<CacheDriverOptions, CacheDriverOptions['driver']>((o
 
 			return value;
 		},
+		async setItemRaw(key, value, opts) {
+			await Promise.all([baseDriver.setItemRaw(key, value, opts), cache.setItemRaw(key, value, opts)]);
+		},
+		async getItemRaw(key, opts) {
+			let value = await cache.getItemRaw(key, opts);
+			if (value !== null) {
+				return value;
+			}
+
+			value = await baseDriver.getItemRaw(key, opts);
+			cache.setItemRaw(key, value);
+
+			return value;
+		},
 	};
 });
