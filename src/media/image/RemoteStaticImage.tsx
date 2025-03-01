@@ -98,7 +98,6 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 			return cacheEntry;
 		}
 	}
-	console.log('RemoteStaticImage');
 
 	// Make sute that the src provided is a valid URL
 	const imageURL = new URL(props.src);
@@ -225,7 +224,7 @@ async function setFetchRemoteImageCache(cacheKey: string, entry: FetchRemoteImag
 	const metadataCacheKey = FETCH_REMOTE_IMAGE_METADATA_CACHE_KEY(cacheKey);
 	const bufferCacheKey = FETCH_REMOTE_IMAGE_BUFFER_CACHE_KEY(cacheKey);
 
-	if (entry === null) {
+	if (!entry) {
 		await cacheStorage.setItem(metadataCacheKey, null);
 		await cacheStorage.setItemRaw(bufferCacheKey, null);
 		return;
@@ -241,12 +240,12 @@ async function getFetchRemoteImageCache(cacheKey: string): Promise<FetchRemoteIm
 	const bufferCacheKey = FETCH_REMOTE_IMAGE_BUFFER_CACHE_KEY(cacheKey);
 
 	const metadata = await cacheStorage.getItem<FetchRemoteImageMetadataCacheEntry>(metadataCacheKey);
-	if (metadata === null) {
+	if (!metadata) {
 		return null;
 	}
 
 	const buffer = await cacheStorage.getItemRaw(bufferCacheKey);
-	if (buffer === null) {
+	if (!buffer) {
 		return null;
 	}
 
@@ -281,7 +280,7 @@ async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage>
 	// During the build this cache would be used as a de-duplication mechanism.
 	// If the same image would be requested in two routes.
 	const cachedImage = await getFetchRemoteImageCache(cacheKey);
-	if (cachedImage !== null) {
+	if (cachedImage) {
 		// if (cachedImage.lastModified === currentLastModified || currentLastModified === null) {
 		return [cachedImage.fetchedImage, null];
 		// }
@@ -398,7 +397,7 @@ async function optimizeRemoteImageAndWriteToDisk(
 
 				const cacheKey = OPTIMIZE_REMOTE_IMAGE_CACHE_KEY(fullFilename);
 				let imageBuffer = await cacheStorage.getItemRaw<Buffer>(cacheKey);
-				if (imageBuffer === null) {
+				if (!imageBuffer) {
 					// We can get away with caching at this level , because sharp runs the optimization pipeline only at the end.
 					imageBuffer = await imageOptimizationWidthFormat.toBuffer();
 					await cacheStorage.setItemRaw(cacheKey, imageBuffer);
