@@ -101,7 +101,7 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 
 	// Make sute that the src provided is a valid URL
 	const imageURL = new URL(props.src);
-	const imageFilename = props.filename ?? props.alt;
+	const imageFilename = convertToValidFilename(props.filename ?? props.alt);
 
 	const rawImageProps: Partial<RemoteImageProps> = { ...props };
 
@@ -137,7 +137,7 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 			await nodeFs.writeFile(fileOutputPath, fetchedImage.imageBuffer);
 		}
 
-		const unescapedSrc = `${ASSUMED_NEXTJS_URL_PREFIX}/${fullFilename}`
+		const unescapedSrc = `${ASSUMED_NEXTJS_URL_PREFIX}/${fullFilename}`;
 		const returnValue = <img {...imageOptimizationAttributes} {...rawImageProps} src={encodeURI(unescapedSrc)} alt={props.alt} />;
 		devCache.set(devCacheKey, returnValue);
 		return returnValue;
@@ -173,7 +173,7 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 	console.log(`Optimizing image at ${props.src}`);
 	if (fetchedImage.imageInfo.type === 'svg') {
 		const outputFilename = await optimizeRemoteSVGImageAndWriteToDisk(fetchedImage, imageFilename, imageSpecificHash);
-		const unescapedSrc = `${ASSUMED_NEXTJS_URL_PREFIX}/${outputFilename}`
+		const unescapedSrc = `${ASSUMED_NEXTJS_URL_PREFIX}/${outputFilename}`;
 		return <img {...imageOptimizationAttributes} {...rawImageProps} src={encodeURI(unescapedSrc)} alt={props.alt} />;
 	}
 
@@ -184,7 +184,7 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 		const imageInfos = optimizationInfosPerFormat[format].sort((a, b) => a.width - b.width);
 		let srcSet = '';
 		for (const imageInfo of imageInfos) {
-			const unescapedSrc = `${ASSUMED_NEXTJS_URL_PREFIX}/${imageInfo.outputFilename}`
+			const unescapedSrc = `${ASSUMED_NEXTJS_URL_PREFIX}/${imageInfo.outputFilename}`;
 			srcSet += `${encodeURI(unescapedSrc)} ${imageInfo.width}w, `;
 		}
 		srcSet = srcSet.slice(0, srcSet.length - 2);
@@ -430,4 +430,8 @@ function requireWebpackExternalDependency__MakeWebpackNotBundleIt(id: string): a
 	// biome-ignore lint/security/noGlobalEval:
 	const originalNodejsRequire__NotAffectedByWebpackBuild = eval('require') as typeof require;
 	return originalNodejsRequire__NotAffectedByWebpackBuild(id);
+}
+
+function convertToValidFilename(x: string): string {
+	return x.replaceAll(/[\/|\\:*?"<>]/g, ' ').replaceAll('\n', ' ');
 }
