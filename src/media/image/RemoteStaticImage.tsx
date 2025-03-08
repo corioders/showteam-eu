@@ -21,6 +21,9 @@ import { createStorage } from 'unstorage';
 import lruCacheDriver from 'unstorage/drivers/lru-cache';
 import { type FormatType, IMAGE_OPTIMIZATION_ATTRIBUTES, type ImageInfo } from './image';
 
+// 25 MiB
+const MAX_CLOUDFLARE_IMAGE_SIZE = 25 * 2 ** 20;
+
 const ASSUMED_NEXTJS_IMAGE_FOLDER = './.next/static/media';
 const ASSUMED_NEXTJS_URL_PREFIX = '/_next/static/media';
 
@@ -393,21 +396,32 @@ async function optimizeRemoteImageAndWriteToDisk(
 		const imageOptimizationWidth = imageOptimization.clone().resize({ width: targetWidth });
 		for (const targetFormat of FORMATS) {
 			const promise = (async () => {
-				const imageOptimizationWidthFormat = imageOptimizationWidth.clone();
+				// TODO: Follow https://github.com/lovell/sharp/issues/4070
+				const qualityStep = 2;
+				let exportQuality = 100;
+				while (true) {
+					const imageOptimizationWidthFormat = imageOptimizationWidth.clone().toFormat(targetFormat, { quality: exportQuality });
 
-				const fullFilename = `${imageFilename}.${imageSpecificHash}.${targetWidth}.${targetFormat}`;
-				optimizationInfosPerFormat[targetFormat].push({ width: targetWidth, outputFilename: fullFilename });
+					const fullFilename = `${imageFilename}.${imageSpecificHash}.${targetWidth}.${targetFormat}`;
+					optimizationInfosPerFormat[targetFormat].push({ width: targetWidth, outputFilename: fullFilename });
 
-				const cacheKey = OPTIMIZE_REMOTE_IMAGE_CACHE_KEY(fullFilename);
-				let imageBuffer = await cacheStorage.getItemRaw<Buffer>(cacheKey);
-				if (!imageBuffer) {
-					// We can get away with caching at this level , because sharp runs the optimization pipeline only at the end.
-					imageBuffer = await imageOptimizationWidthFormat.toBuffer();
-					await cacheStorage.setItemRaw(cacheKey, imageBuffer);
+					const cacheKey = OPTIMIZE_REMOTE_IMAGE_CACHE_KEY(fullFilename);
+					let imageBuffer = await cacheStorage.getItemRaw<Buffer>(cacheKey);
+					if (!imageBuffer) {
+						// We can get away with caching at this level , because sharp runs the optimization pipeline only at the end.
+						imageBuffer = await imageOptimizationWidthFormat.toBuffer();
+						if (imageBuffer.byteLength > MAX_CLOUDFLARE_IMAGE_SIZE) {
+							exportQuality -= qualityStep;
+							console.log(`Image ${fullFilename} is too big. Reducing quality to ${exportQuality}`);
+							continue;
+						}
+						await cacheStorage.setItemRaw(cacheKey, imageBuffer);
+					}
+
+					const fileOutputPath = nodePath.join(ASSUMED_NEXTJS_IMAGE_FOLDER, fullFilename);
+					await nodeFs.writeFile(fileOutputPath, imageBuffer);
+					break;
 				}
-
-				const fileOutputPath = nodePath.join(ASSUMED_NEXTJS_IMAGE_FOLDER, fullFilename);
-				await nodeFs.writeFile(fileOutputPath, imageBuffer);
 			})();
 
 			optimizationPromises.push(promise);
