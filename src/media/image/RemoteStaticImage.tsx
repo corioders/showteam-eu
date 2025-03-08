@@ -137,7 +137,8 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 			await nodeFs.writeFile(fileOutputPath, fetchedImage.imageBuffer);
 		}
 
-		const returnValue = <img {...imageOptimizationAttributes} {...rawImageProps} src={`${ASSUMED_NEXTJS_URL_PREFIX}/${fullFilename}`} alt={props.alt} />;
+		const unescapedSrc = `${ASSUMED_NEXTJS_URL_PREFIX}/${fullFilename}`
+		const returnValue = <img {...imageOptimizationAttributes} {...rawImageProps} src={encodeURI(unescapedSrc)} alt={props.alt} />;
 		devCache.set(devCacheKey, returnValue);
 		return returnValue;
 	}
@@ -147,7 +148,7 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 		// We are not in the pre-rendering phase. We have been called from a NON static route.
 		// They are expecting us to optimize and save images while we are on the edge. When the static assets have already been deployed to a CND.
 		// This is not how it work baby.
-		console.log('figure out some good warning');
+		console.log('!!WARNING!! figure out some good warning');
 
 		if (fetchedImage.imageInfo.type === 'svg') {
 			// This is the correct MIME type for svg
@@ -172,7 +173,8 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 	console.log(`Optimizing image at ${props.src}`);
 	if (fetchedImage.imageInfo.type === 'svg') {
 		const outputFilename = await optimizeRemoteSVGImageAndWriteToDisk(fetchedImage, imageFilename, imageSpecificHash);
-		return <img {...imageOptimizationAttributes} {...rawImageProps} src={`${ASSUMED_NEXTJS_URL_PREFIX}/${outputFilename}`} alt={props.alt} />;
+		const unescapedSrc = `${ASSUMED_NEXTJS_URL_PREFIX}/${outputFilename}`
+		return <img {...imageOptimizationAttributes} {...rawImageProps} src={encodeURI(unescapedSrc)} alt={props.alt} />;
 	}
 
 	const optimizationInfosPerFormat = await optimizeRemoteImageAndWriteToDisk(fetchedImage, imageFilename, imageSpecificHash);
@@ -182,7 +184,8 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 		const imageInfos = optimizationInfosPerFormat[format].sort((a, b) => a.width - b.width);
 		let srcSet = '';
 		for (const imageInfo of imageInfos) {
-			srcSet += `${ASSUMED_NEXTJS_URL_PREFIX}/${imageInfo.outputFilename} ${imageInfo.width}w, `;
+			const unescapedSrc = `${ASSUMED_NEXTJS_URL_PREFIX}/${imageInfo.outputFilename}`
+			srcSet += `${encodeURI(unescapedSrc)} ${imageInfo.width}w, `;
 		}
 		srcSet = srcSet.slice(0, srcSet.length - 2);
 		srcSetsInfo.push({ srcSet, format });
