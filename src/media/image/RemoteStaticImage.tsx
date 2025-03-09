@@ -27,8 +27,8 @@ const MAX_CLOUDFLARE_IMAGE_SIZE = 25 * 2 ** 20;
 const ASSUMED_NEXTJS_IMAGE_FOLDER = './.next/static/media';
 const ASSUMED_NEXTJS_URL_PREFIX = '/_next/static/media';
 
-const SIZES = [640, 750, 828, 1080, 1200, 1920, 2048];
-const FORMATS: FormatType[] = ['avif', 'webp'];
+const SIZES = [640];
+const FORMATS: FormatType[] = ['avif'];
 
 // The cache should work regardless of the environment we are in:
 // Dev-server: The cache is used while developing to prevent fetching the same images
@@ -48,7 +48,7 @@ if (ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE === undefined) {
 	if (process.env['NEXT_IS_EXPORT_WORKER'] === 'true' || process.env.NODE_ENV === 'development') {
 		const fsDriver: typeof UnstorageFsDriverType = require('unstorage/drivers/fs-lite');
 		ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE = createStorage({
-			driver: cacheDriver({ driver: fsDriver({ base: 'node_modules/.cache/cstd-next-remote-image' }) }),
+			driver: cacheDriver({ cacheDriver: lruCacheDriver({ max: 100 }), driver: fsDriver({ base: 'node_modules/.cache/cstd-next-remote-image' }) }),
 		});
 	} else {
 		ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE = createStorage({ driver: lruCacheDriver(undefined) });
@@ -296,7 +296,7 @@ async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage>
 
 	const nextjsFetch = fetch as unknown as { _nextOriginalFetch: typeof fetch };
 	const originalFetchFunction = nextjsFetch._nextOriginalFetch;
-	const [imageResponse, fetchError] = await safePromise(() => originalFetchFunction(imageURL));
+	const [imageResponse, fetchError] = await safePromise(() => originalFetchFunction(imageURL, { signal: AbortSignal.timeout(60 * 1000) }));
 	if (fetchError !== null) {
 		const error = new Error(`Error while fetching image ${imageURL} got: ${imageResponse}`, { cause: fetchError });
 		return [null, error];
@@ -397,31 +397,31 @@ async function optimizeRemoteImageAndWriteToDisk(
 		for (const targetFormat of FORMATS) {
 			const promise = (async () => {
 				// TODO: Follow https://github.com/lovell/sharp/issues/4070
-				const qualityStep = 2;
-				let exportQuality = 100;
-				while (true) {
-					const imageOptimizationWidthFormat = imageOptimizationWidth.clone().toFormat(targetFormat, { quality: exportQuality });
+				// const qualityStep = 2;
+				// let exportQuality = 100;
+				// while (true) {
+				const imageOptimizationWidthFormat = imageOptimizationWidth.clone().toFormat(targetFormat /* { quality: exportQuality }*/);
 
-					const fullFilename = `${imageFilename}.${imageSpecificHash}.${targetWidth}.${targetFormat}`;
-					optimizationInfosPerFormat[targetFormat].push({ width: targetWidth, outputFilename: fullFilename });
+				const fullFilename = `${imageFilename}.${imageSpecificHash}.${targetWidth}.${targetFormat}`;
+				optimizationInfosPerFormat[targetFormat].push({ width: targetWidth, outputFilename: fullFilename });
 
-					const cacheKey = OPTIMIZE_REMOTE_IMAGE_CACHE_KEY(fullFilename);
-					let imageBuffer = await cacheStorage.getItemRaw<Buffer>(cacheKey);
-					if (!imageBuffer) {
-						// We can get away with caching at this level , because sharp runs the optimization pipeline only at the end.
-						imageBuffer = await imageOptimizationWidthFormat.toBuffer();
-						if (imageBuffer.byteLength > MAX_CLOUDFLARE_IMAGE_SIZE) {
-							exportQuality -= qualityStep;
-							console.log(`Image ${fullFilename} is too big. Reducing quality to ${exportQuality}`);
-							continue;
-						}
-						await cacheStorage.setItemRaw(cacheKey, imageBuffer);
-					}
-
-					const fileOutputPath = nodePath.join(ASSUMED_NEXTJS_IMAGE_FOLDER, fullFilename);
-					await nodeFs.writeFile(fileOutputPath, imageBuffer);
-					break;
+				const cacheKey = OPTIMIZE_REMOTE_IMAGE_CACHE_KEY(fullFilename);
+				let imageBuffer = await cacheStorage.getItemRaw<Buffer>(cacheKey);
+				if (!imageBuffer) {
+					// We can get away with caching at this level , because sharp runs the optimization pipeline only at the end.
+					imageBuffer = await imageOptimizationWidthFormat.toBuffer();
+					// if (imageBuffer.byteLength > MAX_CLOUDFLARE_IMAGE_SIZE) {
+					// 	exportQuality -= qualityStep;
+					// 	console.log(`Image ${fullFilename} is too big. Reducing quality to ${exportQuality}`);
+					// 	continue;
+					// }
+					await cacheStorage.setItemRaw(cacheKey, imageBuffer);
 				}
+
+				const fileOutputPath = nodePath.join(ASSUMED_NEXTJS_IMAGE_FOLDER, fullFilename);
+				await nodeFs.writeFile(fileOutputPath, imageBuffer);
+				// 	break;
+				// }
 			})();
 
 			optimizationPromises.push(promise);
