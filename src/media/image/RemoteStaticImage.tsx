@@ -296,7 +296,12 @@ async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage>
 
 	const nextjsFetch = fetch as unknown as { _nextOriginalFetch: typeof fetch };
 	const originalFetchFunction = nextjsFetch._nextOriginalFetch;
-	const [imageResponse, fetchError] = await safePromise(() => originalFetchFunction(imageURL, { signal: AbortSignal.timeout(60 * 1000) }));
+	
+	const MILLISECOND = 1
+	const SECOND = MILLISECOND * 1000
+	const MINUTE = SECOND * 60
+	const HOUR = MINUTE * 60
+	const [imageResponse, fetchError] = await safePromise(() => originalFetchFunction(imageURL, { signal: AbortSignal.timeout(HOUR) }));
 	if (fetchError !== null) {
 		const error = new Error(`Error while fetching image ${imageURL} got: ${imageResponse}`, { cause: fetchError });
 		return [null, error];
