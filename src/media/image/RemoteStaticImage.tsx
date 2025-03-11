@@ -9,6 +9,7 @@ import type NodeFsType from 'node:fs/promises';
 import type NodePathType from 'node:path';
 import type SharpType from 'sharp';
 import type SvgoType from 'svgo';
+import { Agent, fetch } from 'undici';
 import type { Storage as UnstorageStorage } from 'unstorage';
 import type UnstorageFsDriverType from 'unstorage/drivers/fs-lite';
 
@@ -294,16 +295,19 @@ async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage>
 		// await setFetchRemoteImageCache(cacheKey, null);
 	}
 
-	const nextjsFetch = fetch as unknown as { _nextOriginalFetch: typeof fetch };
-	const originalFetchFunction = nextjsFetch._nextOriginalFetch;
-	
-	const MILLISECOND = 1
-	const SECOND = MILLISECOND * 1000
-	const MINUTE = SECOND * 60
-	const HOUR = MINUTE * 60
-	const [imageResponse, fetchError] = await safePromise(() => originalFetchFunction(imageURL, { signal: AbortSignal.timeout(HOUR) }));
+	// TODO: Move this calculation to cstd-ts
+	const millisecond = 1;
+	const second = millisecond * 1000;
+	const minute = second * 60;
+	const hour = minute * 60;
+	const [imageResponse, fetchError] = await safePromise(() =>
+		fetch(imageURL, {
+			signal: AbortSignal.timeout(hour),
+			dispatcher: new Agent({ connectTimeout: hour }),
+		}),
+	);
 	if (fetchError !== null) {
-		const error = new Error(`Error while fetching image ${imageURL} got: ${imageResponse}`, { cause: fetchError });
+		const error = new Error(`Error while fetching image ${imageURL} response was: ${imageResponse}\n\nThe error was ${fetchError}`, { cause: fetchError });
 		return [null, error];
 	}
 
