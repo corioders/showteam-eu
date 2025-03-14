@@ -28,8 +28,10 @@ const MAX_CLOUDFLARE_IMAGE_SIZE = 25 * 2 ** 20;
 const ASSUMED_NEXTJS_IMAGE_FOLDER = './.next/static/media';
 const ASSUMED_NEXTJS_URL_PREFIX = '/_next/static/media';
 
-const SIZES = [640];
 const FORMATS: FormatType[] = ['avif'];
+
+// TODO: Make this configurable with props + add more sizes
+const SIZES = [640];
 
 // The cache should work regardless of the environment we are in:
 // Dev-server: The cache is used while developing to prevent fetching the same images
@@ -63,6 +65,7 @@ if (ourGlobalThis.__CSTD_NEXT_IMAGES_DEV_CACHE === undefined) {
 const cacheStorage = ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE;
 const devCache = ourGlobalThis.__CSTD_NEXT_IMAGES_DEV_CACHE;
 
+// TODO: When user provides an explicit width and height, we should resize the image ONLY using the width and height provided.
 export interface RemoteImageProps extends ImgHTMLAttributes<HTMLImageElement> {
 	src: string;
 	alt: string;
@@ -307,6 +310,7 @@ async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage>
 		}),
 	);
 	if (fetchError !== null) {
+		console.log(`FetchRemoteImage, fetch failed with error: ${fetchError}`);
 		const error = new Error(`Error while fetching image ${imageURL} response was: ${imageResponse}\n\nThe error was ${fetchError}`, { cause: fetchError });
 		return [null, error];
 	}
