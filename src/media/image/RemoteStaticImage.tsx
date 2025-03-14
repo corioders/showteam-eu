@@ -284,6 +284,8 @@ async function fetchRemoteImageLastModified(imageURL: URL): Promise<string | nul
 }
 
 async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage> {
+	console.log(`Fetching remote image ${imageURL}`);
+
 	// const currentLastModified = await fetchRemoteImageLastModified(imageURL);
 	const cacheKey = hash(imageURL.toString());
 
@@ -291,6 +293,7 @@ async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage>
 	// If the same image would be requested in two routes.
 	const cachedImage = await getFetchRemoteImageCache(cacheKey);
 	if (cachedImage) {
+		console.log(`Fetching remote image cache hit ${imageURL}`);
 		// if (cachedImage.lastModified === currentLastModified || currentLastModified === null) {
 		return [cachedImage.fetchedImage, null];
 		// }
