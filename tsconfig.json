@@ -1,6 +1,7 @@
 {
 	"compilerOptions": {
 		"outDir": "build",
+		"tsBuildInfoFile": "./build/tsconfig.tsbuildinfo",
 		"sourceMap": true,
 		"incremental": true,
 		"declaration": true,
