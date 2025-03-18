@@ -8,8 +8,11 @@ importers:
 
   .:
     dependencies:
+      '@textlint/ast-node-types':
+        specifier: 14.4.2
+        version: 14.4.2
       '@textlint/markdown-to-ast':
-        specifier: ^14.4.2
+        specifier: 14.4.2
         version: 14.4.2
       buffer-image-size:
         specifier: ^0.6.4
@@ -36,9 +39,6 @@ importers:
       '@biomejs/biome':
         specifier: ^1.9.4
         version: 1.9.4
-      '@textlint/ast-node-types':
-        specifier: ^14.4.2
-        version: 14.4.2
       '@types/luxon':
         specifier: ^3.4.2
         version: 3.4.2

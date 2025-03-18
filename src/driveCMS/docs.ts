@@ -12,13 +12,38 @@ import type { GoogleAuth } from 'googleapis-common';
 
 export type DocID = FileID & { readonly __docTag: unique symbol };
 
+export interface DocMd {
+	docMd: string;
+
+	docID: DocID;
+}
+
+export const ERR_EXPECTED_DOWNLOADED_DOC_STRING = new Error('Expected the downloaded doc to be a string. Because MIME type of markdown was provided.');
+export async function downloadDocMarkdownRevision(googleAuth: GoogleAuth, docID: DocID, revisionID: RevisionID): ErrorReturnPromise<DocMd> {
+	const [docAsMarkdown, errorDownloadFile] = await downloadFile(googleAuth, docID, revisionID, MIMEType.markdown);
+	if (errorDownloadFile !== null) {
+		return [null, errorDownloadFile];
+	}
+
+	if (typeof docAsMarkdown !== 'string') {
+		return [null, new CSE(ERR_EXPECTED_DOWNLOADED_DOC_STRING)];
+	}
+
+	const doc: DocMd = {
+		docMd: docAsMarkdown,
+
+		docID: docID,
+	};
+
+	return [doc, null];
+}
+
 export interface Doc {
 	docAST: TxtDocumentNode;
 
 	docID: DocID;
 }
 
-export const ERR_EXPECTED_DOWNLOADED_DOC_STRING = new Error('Expected the downloaded doc to be a string. Because MIME type of markdown was provided.');
 export async function downloadDocRevision(googleAuth: GoogleAuth, docID: DocID, revisionID: RevisionID): ErrorReturnPromise<Doc> {
 	const [docAsMarkdown, errorDownloadFile] = await downloadFile(googleAuth, docID, revisionID, MIMEType.markdown);
 	if (errorDownloadFile !== null) {

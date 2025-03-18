@@ -5,7 +5,7 @@
 
 import type { ErrorReturnPromise } from '@/error';
 import { google } from 'googleapis';
-import { type Doc, type DocID, downloadDocRevision, getDocRevisions } from './docs';
+import { type Doc, type DocID, DocMd, downloadDocMarkdownRevision, downloadDocRevision, getDocRevisions } from './docs';
 import {
 	type FileID,
 	type FolderID,
@@ -38,6 +38,34 @@ export function UNSAFEChangePermissionsToAnyoneWithLinkReader(fileID: FileID): E
 
 export function listFolder(folderID: FolderID): ErrorReturnPromise<Resource[]> {
 	return internalListFolder(googleAuth, folderID);
+}
+
+export async function downloadDocLatestMarkdownRevision(docID: DocID): ErrorReturnPromise<DocMd> {
+	const [revisions, errorGetRevisions] = await getDocRevisions(googleAuth, docID);
+	if (errorGetRevisions !== null) {
+		return [null, errorGetRevisions];
+	}
+
+	const [latestRevision, errorGetLatestRevision] = getLatestRevision(revisions);
+	if (errorGetLatestRevision !== null) {
+		return [null, errorGetLatestRevision];
+	}
+
+	return downloadDocMarkdownRevision(googleAuth, docID, latestRevision.revisionID);
+}
+
+export async function downloadDocLatestMarkdownDeployRevision(docID: DocID): ErrorReturnPromise<DocMd> {
+	const [revisions, errorGetRevisions] = await getDocRevisions(googleAuth, docID);
+	if (errorGetRevisions !== null) {
+		return [null, errorGetRevisions];
+	}
+
+	const [latestDeployRevision, errorGetLatestDeployRevision] = getLatestDeployRevision(revisions);
+	if (errorGetLatestDeployRevision !== null) {
+		return [null, errorGetLatestDeployRevision];
+	}
+
+	return downloadDocMarkdownRevision(googleAuth, docID, latestDeployRevision.revisionID);
 }
 
 export async function downloadDocLatestRevision(docID: DocID): ErrorReturnPromise<Doc> {
