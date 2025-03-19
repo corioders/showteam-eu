@@ -4,34 +4,26 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, January 2025
 import 'server-only';
 
-import type NodeCryptoType from 'node:crypto';
 import type NodeFsType from 'node:fs/promises';
 import type NodePathType from 'node:path';
 import type SharpType from 'sharp';
 import type SvgoType from 'svgo';
-import { Agent, fetch } from 'undici';
-import type { Storage as UnstorageStorage } from 'unstorage';
 import type UnstorageFsDriverType from 'unstorage/drivers/fs-lite';
 
-import type { BinaryLike } from 'node:crypto';
-import readImageInfoFromBuffer from 'buffer-image-size';
 import { type ErrorReturnPromise, safePromise } from 'cstd-ts/error/index.js';
 import cacheDriver from 'cstd-ts/storage/unstorage/cacheDriver.js';
 import type { ImgHTMLAttributes, JSX } from 'react';
-import { createStorage } from 'unstorage';
+import { Agent, fetch } from 'undici';
+import { type Storage as UnstorageStorage, createStorage } from 'unstorage';
 import lruCacheDriver from 'unstorage/drivers/lru-cache';
-import { type FormatType, IMAGE_OPTIMIZATION_ATTRIBUTES, type ImageInfo } from './image';
+import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES, IMAGE_FORMATS, IMAGE_SIZES, type ImageType } from './image.mjs';
+import { type ImageInfo, hash, readImageInfoFromBuffer } from './internal.mjs';
 
 // 25 MiB
 const MAX_CLOUDFLARE_IMAGE_SIZE = 25 * 2 ** 20;
 
 const ASSUMED_NEXTJS_IMAGE_FOLDER = './.next/static/media';
 const ASSUMED_NEXTJS_URL_PREFIX = '/_next/static/media';
-
-const FORMATS: FormatType[] = ['avif'];
-
-// TODO: Make this configurable with props + add more sizes
-const SIZES = [640];
 
 // The cache should work regardless of the environment we are in:
 // Dev-server: The cache is used while developing to prevent fetching the same images
@@ -97,8 +89,8 @@ DESIGN:
 // I mean, a fallback will trigger, but it will not serve the optimized image.
 //
 // TODO: BLUR IMAGE DATA
-export async function RemoteStaticImage(props: RemoteImageProps) {
-	const devCacheKey = hash(JSON.stringify(props));
+export default async function RemoteStaticImage(props: RemoteImageProps) {
+	const devCacheKey = JSON.stringify(props);
 	if (process.env.NODE_ENV === 'development') {
 		const cacheEntry = devCache.get(devCacheKey);
 		if (cacheEntry) {
@@ -126,7 +118,7 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 	}
 
 	const imageOptimizationAttributes = {
-		...IMAGE_OPTIMIZATION_ATTRIBUTES,
+		...IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES,
 		sizes: '100vw',
 		width: fetchedImage.imageInfo.width,
 		height: fetchedImage.imageInfo.height,
@@ -135,8 +127,9 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 	if (process.env.NODE_ENV === 'development') {
 		const nodePath: typeof NodePathType = require('node:path');
 		const nodeFs: typeof NodeFsType = require('node:fs/promises');
+		const nodeCrypto = require('node:crypto');
 
-		const imageSpecificHash = hash(imageURL.toString());
+		const imageSpecificHash = hash(imageURL.toString(), nodeCrypto.createHash);
 		const fullFilename = `${imageFilename}.${imageSpecificHash}.${fetchedImage.imageInfo.type}`;
 		const fileOutputPath = nodePath.join(ASSUMED_NEXTJS_IMAGE_FOLDER, fullFilename);
 		const [_, errorImageAccess] = await safePromise(() => nodeFs.access(fileOutputPath));
@@ -171,12 +164,13 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 
 	// The build-only code
 	const nodeFs: typeof NodeFsType = require('node:fs/promises');
+	const nodeCrypto = require('node:crypto');
+
 	await nodeFs.mkdir(ASSUMED_NEXTJS_IMAGE_FOLDER, { recursive: true });
 
 	// If two images are byte-byte the same, then they are the same image
 	// for performance and SEO purposes it is more optimal to treat them as one image.
-	const imageSpecificHash = hash(fetchedImage.imageBuffer);
-
+	const imageSpecificHash = hash(fetchedImage.imageBuffer, nodeCrypto.createHash);
 	console.log(`Optimizing image at ${props.src}`);
 	if (fetchedImage.imageInfo.type === 'svg') {
 		const outputFilename = await optimizeRemoteSVGImageAndWriteToDisk(fetchedImage, imageFilename, imageSpecificHash);
@@ -186,8 +180,8 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 
 	const optimizationInfosPerFormat = await optimizeRemoteImageAndWriteToDisk(fetchedImage, imageFilename, imageSpecificHash);
 
-	const srcSetsInfo: { srcSet: string; format: FormatType }[] = [];
-	for (const format of FORMATS) {
+	const srcSetsInfo: { srcSet: string; format: ImageType }[] = [];
+	for (const format of IMAGE_FORMATS) {
 		const imageInfos = optimizationInfosPerFormat[format].sort((a, b) => a.width - b.width);
 		let srcSet = '';
 		for (const imageInfo of imageInfos) {
@@ -207,7 +201,7 @@ export async function RemoteStaticImage(props: RemoteImageProps) {
 	return (
 		<picture>
 			{sources}
-			<img {...imageOptimizationAttributes} {...rawImageProps} srcSet={srcSetsInfo[0].srcSet} alt={props.alt} />
+			<img {...imageOptimizationAttributes} {...rawImageProps} alt={props.alt} />
 		</picture>
 	);
 }
@@ -287,7 +281,8 @@ async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage>
 	console.log(`Fetching remote image ${imageURL}`);
 
 	// const currentLastModified = await fetchRemoteImageLastModified(imageURL);
-	const cacheKey = hash(imageURL.toString());
+	const nodeCrypto = require('node:crypto');
+	const cacheKey = hash(imageURL.toString(), nodeCrypto.createHash);
 
 	// During the build this cache would be used as a de-duplication mechanism.
 	// If the same image would be requested in two routes.
@@ -330,7 +325,7 @@ async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage>
 	}
 
 	const imageBuffer = Buffer.from(imageArrayBuffer);
-	const imageInfo = readImageInfoFromBuffer(imageBuffer) as ImageInfo;
+	const imageInfo = readImageInfoFromBuffer(imageBuffer);
 
 	const fetchedImage: FetchedImage = {
 		imageBuffer,
@@ -397,12 +392,12 @@ async function optimizeRemoteImageAndWriteToDisk(
 	imageOptimization = imageOptimization.rotate();
 
 	const optimizationInfosPerFormat: Record<string, OptimizationInfo[]> = {};
-	for (const format of FORMATS) {
+	for (const format of IMAGE_FORMATS) {
 		optimizationInfosPerFormat[format] = [];
 	}
 
 	const optimizationPromises: Promise<void>[] = [];
-	const sizesWithMaxWidth = [...SIZES, fetchedImage.imageInfo.width];
+	const sizesWithMaxWidth = [...IMAGE_SIZES, fetchedImage.imageInfo.width];
 	for (const targetWidth of sizesWithMaxWidth) {
 		// Prevent upscaling images
 		if (targetWidth > fetchedImage.imageInfo.width) {
@@ -410,7 +405,7 @@ async function optimizeRemoteImageAndWriteToDisk(
 		}
 
 		const imageOptimizationWidth = imageOptimization.clone().resize({ width: targetWidth });
-		for (const targetFormat of FORMATS) {
+		for (const targetFormat of IMAGE_FORMATS) {
 			const promise = (async () => {
 				// TODO: Follow https://github.com/lovell/sharp/issues/4070
 				// const qualityStep = 2;
@@ -446,11 +441,6 @@ async function optimizeRemoteImageAndWriteToDisk(
 
 	await Promise.all(optimizationPromises);
 	return optimizationInfosPerFormat;
-}
-
-function hash(data: BinaryLike): string {
-	const nodeCrypto: typeof NodeCryptoType = require('node:crypto');
-	return nodeCrypto.createHash('shake256', { outputLength: 32 }).update(data).digest('hex');
 }
 
 // biome-ignore lint/style/useNamingConvention: This is a hacky function. It's name reflects that.

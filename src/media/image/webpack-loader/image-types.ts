@@ -1,0 +1,94 @@
+interface LocalStaticImageImport {
+	// Hash of the original image. Can be used inside the react key prop.
+	contentHash: string;
+	// Filename of the original image without extension.
+	filename: string;
+}
+
+// declare module '*.svg' {
+// 	/**
+// 	 * Use `any` to avoid conflicts with
+// 	 * `@svgr/webpack` plugin or
+// 	 * `babel-plugin-inline-react-svg` plugin.
+// 	 */
+// 	const content: any;
+
+// 	export default content;
+// }
+
+declare module '*.scaled' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*avif' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*dz' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*fits' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*gif' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*heif' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*input' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*jpeg' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*jpg' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*jp2' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*jxl' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*png' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*ppm' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*raw' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*svg' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*tiff' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*tif' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*v' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*webp' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
