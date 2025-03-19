@@ -5,7 +5,7 @@ export default function CstdError(props: Props) {
 	return (
 		<div>
 			<h1 className="font-extrabold">ERROR:</h1>
-			<p>{String(props.error)}</p>
+			<p className="whitespace-pre-wrap break-words">{String(props.error)}</p>
 		</div>
 	);
 }
