@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
 		}
 
 		if (typeof config.cache !== 'boolean' && config.cache?.type === 'filesystem') {
-			config.cache.cacheDirectory = resolve(process.cwd(), 'node_modules/cache/webpack');
+			config.cache.cacheDirectory = resolve(process.cwd(), 'node_modules/.cache/webpack');
 		}
 
 		config?.module?.rules?.push({

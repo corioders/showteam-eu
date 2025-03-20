@@ -103,6 +103,7 @@ DESIGN:
 // I mean, a fallback will trigger, but the fallback will not serve the optimized image.
 //
 // TODO: BLUR IMAGE DATA
+// TODO: Limit concurrency
 export default async function RemoteStaticImage(props: RemoteImageProps) {
 	const devCacheKey = JSON.stringify(props);
 	if (process.env.NODE_ENV === 'development') {

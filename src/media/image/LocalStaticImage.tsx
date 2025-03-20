@@ -11,6 +11,7 @@ export interface LocalStaticImageProps extends Omit<ImgHTMLAttributes<HTMLImageE
 	alt: string;
 }
 
+// TODO: Error message when the user requested width does not match the actual with of the image at runtime. Bounding box etc...
 export default function LocalStaticImage(props: LocalStaticImageProps) {
 	const src = props.src as INTERNAL_LocalStaticImageImport;
 

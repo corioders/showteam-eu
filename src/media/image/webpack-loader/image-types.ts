@@ -92,3 +92,76 @@ declare module '*webp' {
 	const content: LocalStaticImageImport;
 	export default content;
 }
+
+declare module '*AVIF' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*DZ' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*FITS' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*GIF' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*HEIF' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*INPUT' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*JPEG' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*JPG' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*JP2' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*JXL' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*PNG' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*PPM' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*RAW' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*SVG' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*TIFF' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*TIF' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*V' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
+declare module '*WEBP' {
+	const content: LocalStaticImageImport;
+	export default content;
+}
