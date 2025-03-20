@@ -5,7 +5,6 @@
 import 'server-only';
 
 import type NodeFsType from 'node:fs/promises';
-import type NodePathType from 'node:path';
 import type SharpType from 'sharp';
 import type SvgoType from 'svgo';
 import type UnstorageFsDriverType from 'unstorage/drivers/fs-lite';
@@ -13,17 +12,29 @@ import type UnstorageFsDriverType from 'unstorage/drivers/fs-lite';
 import { type ErrorReturnPromise, safePromise } from 'cstd-ts/error/index.js';
 import cacheDriver from 'cstd-ts/storage/unstorage/cacheDriver.js';
 import type { ImgHTMLAttributes, JSX } from 'react';
-import { Agent, fetch } from 'undici';
+import { Agent, type RequestInit, fetch } from 'undici';
 import { type Storage as UnstorageStorage, createStorage } from 'unstorage';
 import lruCacheDriver from 'unstorage/drivers/lru-cache';
-import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES, IMAGE_FORMATS, IMAGE_SIZES, type ImageType } from './image.mjs';
-import { type ImageInfo, hash, readImageInfoFromBuffer } from './internal.mjs';
+import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from './image.mjs';
+import {
+	type INTERNAL_PictureSource,
+	type INTERNAL_SVGEntry,
+	type ImageInfo,
+	getImageFilepathMeta,
+	getImageUrlMeta,
+	getPictureSourcesNotSvg,
+	getSvgEntry,
+	hash,
+	inferHeight,
+	optimizePictureSources,
+	optimizeSvg,
+	readImageInfoFromBuffer,
+} from './internal.mjs';
 
 // 25 MiB
 const MAX_CLOUDFLARE_IMAGE_SIZE = 25 * 2 ** 20;
 
-const ASSUMED_NEXTJS_IMAGE_FOLDER = './.next/static/media';
-const ASSUMED_NEXTJS_URL_PREFIX = '/_next/static/media';
+const NEXTJS_FILEPATH_PREFIX = './.next/static/media';
 
 // The cache should work regardless of the environment we are in:
 // Dev-server: The cache is used while developing to prevent fetching the same images
@@ -31,7 +42,7 @@ const ASSUMED_NEXTJS_URL_PREFIX = '/_next/static/media';
 // Production(edge / nodejs): While we cannot change the CND static assets
 // we can fallback to responding with base64 encoded image. If we are on the node runtime the cache could provide some speedup.
 interface OurGlobalThis {
-	// biome-ignore lint/style/useNamingConvention: This is a theoretical readonly thing.
+	// biome-ignore lint/style/useNamingConvention: This is a readonly thing.
 	__CSTD_NEXT_IMAGES_CACHE?: UnstorageStorage;
 
 	// biome-ignore lint/style/useNamingConvention: Same as above
@@ -43,7 +54,7 @@ if (ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE === undefined) {
 	if (process.env['NEXT_IS_EXPORT_WORKER'] === 'true' || process.env.NODE_ENV === 'development') {
 		const fsDriver: typeof UnstorageFsDriverType = require('unstorage/drivers/fs-lite');
 		ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE = createStorage({
-			driver: cacheDriver({ cacheDriver: lruCacheDriver({ max: 100 }), driver: fsDriver({ base: 'node_modules/.cache/cstd-next-remote-image' }) }),
+			driver: cacheDriver({ driver: fsDriver({ base: 'node_modules/.cache/cstd-next-remote-static-image' }) }),
 		});
 	} else {
 		ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE = createStorage({ driver: lruCacheDriver(undefined) });
@@ -57,11 +68,13 @@ if (ourGlobalThis.__CSTD_NEXT_IMAGES_DEV_CACHE === undefined) {
 const cacheStorage = ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE;
 const devCache = ourGlobalThis.__CSTD_NEXT_IMAGES_DEV_CACHE;
 
-// TODO: When user provides an explicit width and height, we should resize the image ONLY using the width and height provided.
-export interface RemoteImageProps extends ImgHTMLAttributes<HTMLImageElement> {
+// The height will be inferred form the width attribute (if any).
+export interface RemoteImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'height'> {
 	src: string;
 	alt: string;
+	width?: number;
 	filename?: string;
+	fetchRequestInit?: RequestInit;
 }
 
 /** 
@@ -83,10 +96,11 @@ DESIGN:
 	I think these components are VASTLY different in what they want to achieve. Additionally, we will not pass image paths in the project,
 	but rather the `imported local image` or the `url to remote image`
 */
+
 // THIS COMPONENT WILL WORK ONLY ON STATIC ROUTES
 // Executing this component outside the pre-rendering stage will NOT work.
 //
-// I mean, a fallback will trigger, but it will not serve the optimized image.
+// I mean, a fallback will trigger, but the fallback will not serve the optimized image.
 //
 // TODO: BLUR IMAGE DATA
 export default async function RemoteStaticImage(props: RemoteImageProps) {
@@ -98,9 +112,11 @@ export default async function RemoteStaticImage(props: RemoteImageProps) {
 		}
 	}
 
-	// Make sute that the src provided is a valid URL
+	// Make sure that the src provided is a valid URL
 	const imageURL = new URL(props.src);
 	const imageFilename = convertToValidFilename(props.filename ?? props.alt);
+	const userSpecifiedWidth = props.width;
+	const isDevelopment = process.env.NODE_ENV === 'development';
 
 	const rawImageProps: Partial<RemoteImageProps> = { ...props };
 
@@ -110,92 +126,94 @@ export default async function RemoteStaticImage(props: RemoteImageProps) {
 	delete rawImageProps.alt;
 	// biome-ignore lint/performance/noDelete: Delete is required here
 	delete rawImageProps.filename;
+	// biome-ignore lint/performance/noDelete: Delete is required here
+	delete rawImageProps.width;
 
-	const [fetchedImage, fetchError] = await fetchRemoteImage(imageURL);
+	const [fetchedImage, fetchError] = await fetchRemoteImage(imageURL, props.fetchRequestInit);
 	if (fetchError !== null) {
-		console.log(fetchError);
+		console.log(`Unable to fetch: ${fetchError}`);
 		throw fetchError;
+	}
+
+	const imageBuffer = fetchedImage.imageBuffer;
+	const imageInfo = fetchedImage.imageInfo;
+
+	let { width, height } = imageInfo;
+	if (userSpecifiedWidth) {
+		width = userSpecifiedWidth;
+		height = inferHeight(width, height, userSpecifiedWidth);
 	}
 
 	const imageOptimizationAttributes = {
 		...IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES,
+		// TODO: Figure out correct sizes
 		sizes: '100vw',
-		width: fetchedImage.imageInfo.width,
-		height: fetchedImage.imageInfo.height,
+		width: width,
+		height: height,
 	};
 
-	if (process.env.NODE_ENV === 'development') {
-		const nodePath: typeof NodePathType = require('node:path');
-		const nodeFs: typeof NodeFsType = require('node:fs/promises');
-		const nodeCrypto = require('node:crypto');
-
-		const imageSpecificHash = hash(imageURL.toString(), nodeCrypto.createHash);
-		const fullFilename = `${imageFilename}.${imageSpecificHash}.${fetchedImage.imageInfo.type}`;
-		const fileOutputPath = nodePath.join(ASSUMED_NEXTJS_IMAGE_FOLDER, fullFilename);
-		const [_, errorImageAccess] = await safePromise(() => nodeFs.access(fileOutputPath));
-		if (errorImageAccess !== null) {
-			await nodeFs.writeFile(fileOutputPath, fetchedImage.imageBuffer);
-		}
-
-		const unescapedSrc = `${ASSUMED_NEXTJS_URL_PREFIX}/${fullFilename}`;
-		const returnValue = <img {...imageOptimizationAttributes} {...rawImageProps} src={encodeURI(unescapedSrc)} alt={props.alt} />;
-		devCache.set(devCacheKey, returnValue);
-		return returnValue;
-	}
-
-	if (process.env['NEXT_IS_EXPORT_WORKER'] !== 'true') {
+	if (process.env['NEXT_IS_EXPORT_WORKER'] !== 'true' && !isDevelopment) {
 		// Warn the user that they really should not be doing this
 		// We are not in the pre-rendering phase. We have been called from a NON static route.
 		// They are expecting us to optimize and save images while we are on the edge. When the static assets have already been deployed to a CND.
 		// This is not how it work baby.
-		console.log('!!WARNING!! figure out some good warning');
+		console.log('!!WARNING!! You are trying to optimize images in a non-static route. This is not how it works. You should be doing this in the static route.');
 
-		if (fetchedImage.imageInfo.type === 'svg') {
+		if (imageInfo.type === 'svg') {
 			// This is the correct MIME type for svg
-			fetchedImage.imageInfo.type += '+xml';
+			imageInfo.type += '+xml';
 		}
 
-		const stringifiedBuffer = Buffer.from(fetchedImage.imageBuffer).toString('base64');
-		const imageBase64 = `data:image/${fetchedImage.imageInfo.type};base64,${stringifiedBuffer}`;
+		const stringifiedBuffer = Buffer.from(imageBuffer).toString('base64');
+		const imageBase64 = `data:image/${imageInfo.type};base64,${stringifiedBuffer}`;
 
 		// Return the base64 version because we cannot add more images via fs.writeSync into the nextjs's static directory
 		return <img {...imageOptimizationAttributes} {...rawImageProps} src={imageBase64} alt={props.alt} />;
 	}
 
-	// The build-only code
-	const nodeFs: typeof NodeFsType = require('node:fs/promises');
-	const nodeCrypto = require('node:crypto');
-
-	await nodeFs.mkdir(ASSUMED_NEXTJS_IMAGE_FOLDER, { recursive: true });
+	// We can use nodejs dependencies because this code will only be run during either buildtime or development time
 
 	// If two images are byte-byte the same, then they are the same image
 	// for performance and SEO purposes it is more optimal to treat them as one image.
-	const imageSpecificHash = hash(fetchedImage.imageBuffer, nodeCrypto.createHash);
-	console.log(`Optimizing image at ${props.src}`);
-	if (fetchedImage.imageInfo.type === 'svg') {
-		const outputFilename = await optimizeRemoteSVGImageAndWriteToDisk(fetchedImage, imageFilename, imageSpecificHash);
-		const unescapedSrc = `${ASSUMED_NEXTJS_URL_PREFIX}/${outputFilename}`;
-		return <img {...imageOptimizationAttributes} {...rawImageProps} src={encodeURI(unescapedSrc)} alt={props.alt} />;
-	}
+	const nodeFs: typeof NodeFsType = require('node:fs/promises');
 
-	const optimizationInfosPerFormat = await optimizeRemoteImageAndWriteToDisk(fetchedImage, imageFilename, imageSpecificHash);
+	const imageSpecificHash = hash(imageURL.toString(), require('node:crypto').createHash);
 
-	const srcSetsInfo: { srcSet: string; format: ImageType }[] = [];
-	for (const format of IMAGE_FORMATS) {
-		const imageInfos = optimizationInfosPerFormat[format].sort((a, b) => a.width - b.width);
-		let srcSet = '';
-		for (const imageInfo of imageInfos) {
-			const unescapedSrc = `${ASSUMED_NEXTJS_URL_PREFIX}/${imageInfo.outputFilename}`;
-			srcSet += `${encodeURI(unescapedSrc)} ${imageInfo.width}w, `;
+	if (isDevelopment) {
+		const filepath = getImageFilepathMeta(imageFilename, imageSpecificHash, NEXTJS_FILEPATH_PREFIX)(imageInfo.width, imageInfo.type);
+		const [_, errorImageAccess] = await safePromise(() => nodeFs.access(filepath));
+		if (errorImageAccess !== null) {
+			await nodeFs.writeFile(filepath, fetchedImage.imageBuffer);
 		}
-		srcSet = srcSet.slice(0, srcSet.length - 2);
-		srcSetsInfo.push({ srcSet, format });
+
+		const imageUrl = getImageUrlMeta(imageFilename, imageSpecificHash)(imageInfo.width, imageInfo.type);
+		const returnValue = <img {...imageOptimizationAttributes} {...rawImageProps} src={imageUrl} alt={props.alt} />;
+		devCache.set(devCacheKey, returnValue);
+		return returnValue;
 	}
+
+	await nodeFs.mkdir(NEXTJS_FILEPATH_PREFIX, { recursive: true });
+
+	console.log(`Optimizing remote static image: ${props.src}`);
+	if (imageInfo.type === 'svg') {
+		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo);
+		await optimizeSvgAndWriteToDisk(svgEntry, imageBuffer, imageInfo);
+		return <img {...imageOptimizationAttributes} {...rawImageProps} src={svgEntry.src} alt={props.alt} />;
+	}
+
+	const pictureSources = getPictureSourcesNotSvg(false, imageFilename, imageSpecificHash, imageInfo, NEXTJS_FILEPATH_PREFIX, userSpecifiedWidth);
+	await optimizeImageAndWriteToDisk(pictureSources, imageBuffer, imageInfo, height, userSpecifiedWidth);
 
 	const sources: JSX.Element[] = [];
-	for (const srcSetInfo of srcSetsInfo) {
-		const source = <source srcSet={srcSetInfo.srcSet} type={`image/${srcSetInfo.format}`} />;
-		sources.push(source);
+	for (const source of pictureSources) {
+		const sourceKey = `${imageSpecificHash}${source.type}`;
+
+		if (userSpecifiedWidth) {
+			sources.push(<source key={sourceKey} src={source.srcSetORsrc} type={source.type} />);
+			continue;
+		}
+
+		sources.push(<source key={sourceKey} srcSet={source.srcSetORsrc} type={source.type} />);
 	}
 
 	return (
@@ -277,12 +295,11 @@ async function fetchRemoteImageLastModified(imageURL: URL): Promise<string | nul
 	return lastModified;
 }
 
-async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage> {
+async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): ErrorReturnPromise<FetchedImage> {
 	console.log(`Fetching remote image ${imageURL}`);
 
 	// const currentLastModified = await fetchRemoteImageLastModified(imageURL);
-	const nodeCrypto = require('node:crypto');
-	const cacheKey = hash(imageURL.toString(), nodeCrypto.createHash);
+	const cacheKey = hash(imageURL.toString(), require('node:crypto').createHash);
 
 	// During the build this cache would be used as a de-duplication mechanism.
 	// If the same image would be requested in two routes.
@@ -305,6 +322,7 @@ async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage>
 		fetch(imageURL, {
 			signal: AbortSignal.timeout(hour),
 			dispatcher: new Agent({ connectTimeout: hour }),
+			...fetchRequestInit,
 		}),
 	);
 	if (fetchError !== null) {
@@ -314,7 +332,6 @@ async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage>
 	}
 
 	if (!imageResponse.ok || imageResponse.status !== 200) {
-		// TODO: Create a function in cstd-ts errors to auto-create this error
 		return [null, new Error(`Unable to fetch image ${imageResponse.statusText}`)];
 	}
 
@@ -338,109 +355,61 @@ async function fetchRemoteImage(imageURL: URL): ErrorReturnPromise<FetchedImage>
 
 const OPTIMIZE_REMOTE_SVG_IMAGE_CACHE_KEY = (x: string) => `OPTIMIZE_REMOTE_SVG_IMAGE_CACHE_KEY:${x}`;
 
-async function optimizeRemoteSVGImageAndWriteToDisk(fetchedImage: FetchedImage, imageFilename: string, imageSpecificHash: string): Promise<string> {
-	const { optimize: svgoOptimize }: typeof SvgoType = requireWebpackExternalDependency__MakeWebpackNotBundleIt('svgo');
-	const nodePath: typeof NodePathType = require('node:path');
-	const nodeFs: typeof NodeFsType = require('node:fs/promises');
-
-	if (fetchedImage.imageInfo.type !== 'svg') {
+async function optimizeSvgAndWriteToDisk(svgEntry: INTERNAL_SVGEntry, imageBuffer: Buffer, imageInfo: ImageInfo): Promise<void> {
+	if (imageInfo.type !== 'svg') {
 		throw new Error('This function optimizes only svg images');
 	}
 
-	const unsafeSvg = fetchedImage.imageBuffer.toString();
-	const fullFilename = `${imageFilename}.${imageSpecificHash}.svg`;
+	const svgo: typeof SvgoType = requireWebpackExternalDependency__MakeWebpackNotBundleIt('svgo');
+	const nodeFs: typeof NodeFsType = require('node:fs/promises');
 
-	const cacheKey = OPTIMIZE_REMOTE_SVG_IMAGE_CACHE_KEY(fullFilename);
+	const cacheKey = OPTIMIZE_REMOTE_SVG_IMAGE_CACHE_KEY(svgEntry.filepath);
 	let optimizedSvg = await cacheStorage.getItem<string>(cacheKey);
 	if (optimizedSvg === null) {
-		// TODO: Fix, escape svg
-		const safeSvg = unsafeSvg;
-		optimizedSvg = svgoOptimize(safeSvg, { multipass: true }).data;
+		optimizedSvg = optimizeSvg(imageBuffer.toString(), svgo);
 		await cacheStorage.setItem(cacheKey, optimizedSvg);
 	}
 
-	const fileOutputPath = nodePath.join(ASSUMED_NEXTJS_IMAGE_FOLDER, fullFilename);
-	await nodeFs.writeFile(fileOutputPath, optimizedSvg);
-
-	return fullFilename;
-}
-
-interface OptimizationInfo {
-	width: number;
-	outputFilename: string;
+	await nodeFs.writeFile(svgEntry.filepath, optimizedSvg);
 }
 
 const OPTIMIZE_REMOTE_IMAGE_CACHE_KEY = (x: string) => `OPTIMIZE_REMOTE_IMAGE_CACHE_KEY:${x}`;
 
-async function optimizeRemoteImageAndWriteToDisk(
-	fetchedImage: FetchedImage,
-	imageFilename: string,
-	imageSpecificHash: string,
-): Promise<Record<string, OptimizationInfo[]>> {
+async function optimizeImageAndWriteToDisk(
+	pictureSources: INTERNAL_PictureSource[],
+	imageBuffer: Buffer,
+	imageInfo: ImageInfo,
+	inferredHeight: number,
+	userSpecifiedWidth?: number,
+): Promise<void> {
 	const sharp: typeof SharpType = requireWebpackExternalDependency__MakeWebpackNotBundleIt('sharp');
-	const nodePath: typeof NodePathType = require('node:path');
 	const nodeFs: typeof NodeFsType = require('node:fs/promises');
 
-	if (fetchedImage.imageInfo.type === 'svg') {
+	if (imageInfo.type === 'svg') {
 		throw new Error('This function can NOT optimize svg');
 	}
 
-	let imageOptimization = sharp(fetchedImage.imageBuffer, { animated: true, sequentialRead: true });
-
-	// By default sharp strips all of the image metadata that includes the correct rotation.
-	// To preserve the correct rotation *actually* rotate the image.
-	imageOptimization = imageOptimization.rotate();
-
-	const optimizationInfosPerFormat: Record<string, OptimizationInfo[]> = {};
-	for (const format of IMAGE_FORMATS) {
-		optimizationInfosPerFormat[format] = [];
-	}
-
-	const optimizationPromises: Promise<void>[] = [];
-	const sizesWithMaxWidth = [...IMAGE_SIZES, fetchedImage.imageInfo.width];
-	for (const targetWidth of sizesWithMaxWidth) {
-		// Prevent upscaling images
-		if (targetWidth > fetchedImage.imageInfo.width) {
-			continue;
+	const exportFunction = async (optimizedImageBuffer: Buffer, filepath: string, targetImageInfo?: ImageInfo) => {
+		if (userSpecifiedWidth && targetImageInfo && targetImageInfo.height !== inferredHeight) {
+			throw new Error(
+				`THIS SHOULD NOT HAPPEN! The user specified the width of the image is ${userSpecifiedWidth} and the inferred hight is ${inferredHeight}. BUT sharp thinks that the correct height should be ${targetImageInfo.height}. If you see this error contact the owner of this code and provide them with this error message.`,
+			);
 		}
 
-		const imageOptimizationWidth = imageOptimization.clone().resize({ width: targetWidth });
-		for (const targetFormat of IMAGE_FORMATS) {
-			const promise = (async () => {
-				// TODO: Follow https://github.com/lovell/sharp/issues/4070
-				// const qualityStep = 2;
-				// let exportQuality = 100;
-				// while (true) {
-				const imageOptimizationWidthFormat = imageOptimizationWidth.clone().toFormat(targetFormat /* { quality: exportQuality }*/);
+		await nodeFs.writeFile(filepath, optimizedImageBuffer);
+	};
 
-				const fullFilename = `${imageFilename}.${imageSpecificHash}.${targetWidth}.${targetFormat}`;
-				optimizationInfosPerFormat[targetFormat].push({ width: targetWidth, outputFilename: fullFilename });
+	const getCacheFunction = async (cacheKey: string): Promise<Buffer | null> => {
+		const localCacheKey = OPTIMIZE_REMOTE_IMAGE_CACHE_KEY(cacheKey);
+		return await cacheStorage.getItemRaw<Buffer>(localCacheKey);
+	};
 
-				const cacheKey = OPTIMIZE_REMOTE_IMAGE_CACHE_KEY(fullFilename);
-				let imageBuffer = await cacheStorage.getItemRaw<Buffer>(cacheKey);
-				if (!imageBuffer) {
-					// We can get away with caching at this level , because sharp runs the optimization pipeline only at the end.
-					imageBuffer = await imageOptimizationWidthFormat.toBuffer();
-					// if (imageBuffer.byteLength > MAX_CLOUDFLARE_IMAGE_SIZE) {
-					// 	exportQuality -= qualityStep;
-					// 	console.log(`Image ${fullFilename} is too big. Reducing quality to ${exportQuality}`);
-					// 	continue;
-					// }
-					await cacheStorage.setItemRaw(cacheKey, imageBuffer);
-				}
+	const setCacheFunction = async (cacheKey: string, optimizedImageBuffer: Buffer): Promise<void> => {
+		const localCacheKey = OPTIMIZE_REMOTE_IMAGE_CACHE_KEY(cacheKey);
+		await cacheStorage.setItem(localCacheKey, optimizedImageBuffer);
+	};
 
-				const fileOutputPath = nodePath.join(ASSUMED_NEXTJS_IMAGE_FOLDER, fullFilename);
-				await nodeFs.writeFile(fileOutputPath, imageBuffer);
-				// 	break;
-				// }
-			})();
-
-			optimizationPromises.push(promise);
-		}
-	}
-
-	await Promise.all(optimizationPromises);
-	return optimizationInfosPerFormat;
+	await optimizePictureSources(imageBuffer, pictureSources, exportFunction, getCacheFunction, setCacheFunction, sharp);
 }
 
 // biome-ignore lint/style/useNamingConvention: This is a hacky function. It's name reflects that.

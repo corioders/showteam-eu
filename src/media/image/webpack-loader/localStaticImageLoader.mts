@@ -3,7 +3,17 @@ import path from 'node:path';
 import sharp from 'sharp';
 import svgo from 'svgo';
 import type { LoaderDefinitionFunction } from 'webpack';
-import { type PictureSource, getImageSourcesNotSvg, getSvgEntry, hash, readImageInfoFromBuffer } from '../internal.mjs';
+import {
+	type ImageInfo,
+	type PictureSource,
+	getPictureSourcesNotSvg,
+	getSvgEntry,
+	hash,
+	inferHeight,
+	optimizePictureSources,
+	optimizeSvg,
+	readImageInfoFromBuffer,
+} from '../internal.mjs';
 
 export interface LocalStaticImageImport {
 	// Hash of the original image. Can be used inside the react key prop.
@@ -50,7 +60,7 @@ const NEXTJS_FILEPATH_PREFIX = 'static/media';
 
 // TODO: BLUUUR
 const localStaticImageLoader: LoaderDefinitionFunction = async function localStaticImageLoader(this, contentNotRawType) {
-	const content = contentNotRawType as unknown as Buffer;
+	const imageBuffer = contentNotRawType as unknown as Buffer;
 	const options = this.getOptions() as Options;
 	const isDevelopmentMode = options.isDev;
 
@@ -60,21 +70,17 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		userSpecifiedWidth = Number(matchedResourceQuery?.groups?.width);
 	}
 
-	const imageSpecificHash = hash(content, createHash);
+	const imageSpecificHash = hash(imageBuffer, createHash);
 	const imageFilename = path.basename(this.resourcePath);
-	const imageInfo = readImageInfoFromBuffer(content);
+	const imageInfo = readImageInfoFromBuffer(imageBuffer);
 	if (!options.isServer && !isDevelopmentMode) {
 		console.log(`Optimizing local static image: ${imageFilename}`);
 	}
 
 	let { width, height } = imageInfo;
 	if (userSpecifiedWidth) {
-		// https://github.com/lovell/sharp/blob/7c631c0787915416e20a567a039516e99c81c42d/src/pipeline.cc#L176-L184
-		const xFactor = imageInfo.width / userSpecifiedWidth;
-		const targetHeight = Math.round(imageInfo.height / xFactor);
-
 		width = userSpecifiedWidth;
-		height = targetHeight;
+		height = inferHeight(width, height, userSpecifiedWidth);
 	}
 
 	if (imageInfo.type === 'svg') {
@@ -95,21 +101,17 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 
 		// Skip optimization in development mode
 		if (isDevelopmentMode) {
-			this.emitFile(svgEntry.filepath, content);
+			this.emitFile(svgEntry.filepath, imageBuffer);
 			return importReturnString;
 		}
 
-		const unsafeSvg = content.toString();
-		// TODO: Fix, escape svg
-		const safeSvg = unsafeSvg;
-
-		const { data: optimizedSvg } = svgo.optimize(safeSvg, { multipass: true });
+		const optimizedSvg = optimizeSvg(imageBuffer.toString(), svgo);
 		this.emitFile(svgEntry.filepath, optimizedSvg);
 
 		return importReturnString;
 	}
 
-	const pictureSources = getImageSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, userSpecifiedWidth, NEXTJS_FILEPATH_PREFIX);
+	const pictureSources = getPictureSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, NEXTJS_FILEPATH_PREFIX, userSpecifiedWidth);
 	const loPictureSources: INTERNAL_LowOverheadPictureSource[] = pictureSources.map((ps) => ({ s: ps.srcSetORsrc, t: ps.type }));
 
 	const importReturn: INTERNAL_LocalStaticImageImport = {
@@ -133,35 +135,29 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		}
 
 		const theOnlySharpEntry = pictureSources[0].__sharpEntries[0];
-		this.emitFile(theOnlySharpEntry.filepath, content);
+		this.emitFile(theOnlySharpEntry.filepath, imageBuffer);
 		return importReturnString;
 	}
 
-	let imageOptimization = sharp(content, { animated: true, sequentialRead: true });
-
-	// By default sharp strips all of the image metadata that includes the correct rotation.
-	// To preserve the correct rotation *actually* rotate the image.
-	imageOptimization = imageOptimization.rotate();
-
-	const optimizationPromises: Promise<void>[] = [];
-	for (const pictureSource of pictureSources) {
-		for (const sharpEntry of pictureSource.__sharpEntries) {
-			const optimizationPromise = (async () => {
-				let localImageOptimization = imageOptimization.clone();
-				localImageOptimization = localImageOptimization.resize({ width: sharpEntry.targetWidth }).toFormat(sharpEntry.targetFormat);
-				const { data: optimizedImageBuffer, info } = await localImageOptimization.toBuffer({ resolveWithObject: true });
-				if (userSpecifiedWidth && info.height !== height) {
-					throw new Error(
-						`THIS SHOULD NOT HAPPEN! The user specified the width of the image is ${userSpecifiedWidth} and the inferred hight is ${height}. BUT sharp thinks that the correct height should be ${info.height}. If you see this error contact the owner of this code and provide them with this error message.`,
-					);
-				}
-				this.emitFile(sharpEntry.filepath, optimizedImageBuffer);
-			})();
-			optimizationPromises.push(optimizationPromise);
+	const exportFunction = (optimizedImageBuffer: Buffer, filepath: string, targetImageInfo?: ImageInfo) => {
+		if (userSpecifiedWidth && targetImageInfo && targetImageInfo.height !== height) {
+			throw new Error(
+				`THIS SHOULD NOT HAPPEN! The user specified the width of the image is ${userSpecifiedWidth} and the inferred hight is ${height}. BUT sharp thinks that the correct height should be ${targetImageInfo.height}. If you see this error contact the owner of this code and provide them with this error message.`,
+			);
 		}
-	}
 
-	await Promise.all(optimizationPromises);
+		this.emitFile(filepath, optimizedImageBuffer);
+		return Promise.resolve();
+	};
+
+	await optimizePictureSources(
+		imageBuffer,
+		pictureSources,
+		exportFunction,
+		() => Promise.resolve(null),
+		() => Promise.resolve(),
+		sharp,
+	);
 
 	return importReturnString;
 };
