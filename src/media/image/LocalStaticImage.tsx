@@ -1,7 +1,9 @@
 import type { ImgHTMLAttributes, JSX } from 'react';
 
 import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from './image.mjs';
-import type { INTERNAL_LocalStaticImageImport, LocalStaticImageImport } from './webpack-loader/localStaticImageLoader.mjs';
+import type { INTERNAL_LocalStaticImageImport, LocalStaticImageImport as LocalStaticImageImportInternal } from './webpack-loader/localStaticImageLoader.mjs';
+
+export type LocalStaticImageImport = LocalStaticImageImportInternal;
 
 // If user would like to provide with, the query parameter `?w=<number>` is the approach. Height is then inferred
 export interface LocalStaticImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'width' | 'height'> {
