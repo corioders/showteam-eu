@@ -25,4 +25,5 @@ export const IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES: { loading: 'lazy'; decoding:
 };
 
 export const IMAGE_FORMATS: ImageType[] = ['avif', 'webp'];
-export const IMAGE_SIZES = [640, 750, 828, 1080, 1200, 1920, 2048];
+// export const IMAGE_SIZES = [640, 750, 828, 1080, 1200, 1920, 2048];
+export const IMAGE_SIZES = [2048];

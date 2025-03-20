@@ -3,6 +3,7 @@ import path from 'node:path';
 import pLimit from 'p-limit';
 import sharp from 'sharp';
 import svgo from 'svgo';
+import { createStorage } from 'unstorage';
 import type { LoaderDefinitionFunction } from 'webpack';
 import {
 	type ImageInfo,
@@ -51,6 +52,10 @@ interface INTERNAL_LowOverheadPictureSource {
 	t: PictureSource['type'];
 }
 
+import cacheDriver from 'cstd-ts/storage/unstorage/cacheDriver.mjs';
+import fsDriver from 'unstorage/drivers/fs-lite';
+
+const cache = createStorage({ driver: cacheDriver({ driver: fsDriver({ base: 'node_modules/.cache/cstd-next-local-static-image' }) }) });
 interface Options {
 	isDev: boolean;
 	isServer: boolean;
@@ -162,14 +167,16 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 			return Promise.resolve();
 		};
 
-		await optimizePictureSources(
-			imageBuffer,
-			pictureSources,
-			exportFunction,
-			() => Promise.resolve(null),
-			() => Promise.resolve(),
-			sharp,
-		);
+		const getCacheFunction = async (cacheKey: string) => {
+			const optimizedImageBuffer = await cache.getItemRaw<Buffer>(cacheKey);
+			return optimizedImageBuffer;
+		};
+
+		const setCacheFunction = async (cacheKey: string, optimizedImageBuffer: Buffer) => {
+			await cache.setItemRaw(cacheKey, optimizedImageBuffer);
+		};
+
+		await optimizePictureSources(imageBuffer, pictureSources, exportFunction, getCacheFunction, setCacheFunction, sharp);
 		reportTime();
 
 		return importReturnString;
