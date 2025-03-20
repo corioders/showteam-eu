@@ -10,7 +10,7 @@ import type SvgoType from 'svgo';
 import type UnstorageFsDriverType from 'unstorage/drivers/fs-lite';
 
 import { type ErrorReturnPromise, safePromise } from 'cstd-ts/error/index.js';
-import cacheDriver from 'cstd-ts/storage/unstorage/cacheDriver.js';
+import cacheDriver from 'cstd-ts/storage/unstorage/cacheDriver.mjs';
 import type { ImgHTMLAttributes, JSX } from 'react';
 import { Agent, type RequestInit, fetch } from 'undici';
 import { type Storage as UnstorageStorage, createStorage } from 'unstorage';
