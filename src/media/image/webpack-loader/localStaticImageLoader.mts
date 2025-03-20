@@ -62,17 +62,23 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const imageFilename = path.basename(this.resourcePath);
 	const imageInfo = readImageInfoFromBuffer(content);
 
-	if (imageInfo.type === 'svg') {
-		if (userSpecifiedWidth) {
-			throw new Error('Specifying a width while importing an svg image does not make sense.');
-		}
+	let { width, height } = imageInfo;
+	if (userSpecifiedWidth) {
+		// https://github.com/lovell/sharp/blob/7c631c0787915416e20a567a039516e99c81c42d/src/pipeline.cc#L176-L184
+		const xFactor = imageInfo.width / userSpecifiedWidth;
+		const targetHeight = Math.round(imageInfo.height / xFactor);
 
+		width = userSpecifiedWidth;
+		height = targetHeight;
+	}
+
+	if (imageInfo.type === 'svg') {
 		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo);
 		const importReturn: INTERNAL_LocalStaticImageImport = {
 			contentHash: imageSpecificHash,
 			filename: imageFilename,
-			w: imageInfo.width,
-			h: imageInfo.height,
+			w: width,
+			h: height,
 			g: svgEntry.src,
 		};
 		const importReturnString = `export default ${JSON.stringify(importReturn)}`;
@@ -92,16 +98,6 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 
 	const pictureSources = getImageSourcesNotSvg(imageFilename, imageSpecificHash, imageInfo, userSpecifiedWidth, 'static/media');
 	const loPictureSources: INTERNAL_LowOverheadPictureSource[] = pictureSources.map((ps) => ({ s: ps.srcSetORsrc, t: ps.type }));
-
-	let { width, height } = imageInfo;
-	if (userSpecifiedWidth) {
-		// https://github.com/lovell/sharp/blob/7c631c0787915416e20a567a039516e99c81c42d/src/pipeline.cc#L176-L184
-		const xFactor = imageInfo.width / userSpecifiedWidth;
-		const targetHeight = Math.round(imageInfo.height / xFactor);
-
-		width = userSpecifiedWidth;
-		height = targetHeight;
-	}
 
 	const importReturn: INTERNAL_LocalStaticImageImport = {
 		contentHash: imageSpecificHash,
