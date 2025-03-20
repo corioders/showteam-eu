@@ -51,11 +51,9 @@ interface INTERNAL_LowOverheadPictureSource {
 	// Type of the picture source.
 	t: PictureSource['type'];
 }
-
-import cacheDriver from 'cstd-ts/storage/unstorage/cacheDriver.mjs';
 import fsDriver from 'unstorage/drivers/fs-lite';
 
-const cache = createStorage({ driver: cacheDriver({ driver: fsDriver({ base: 'node_modules/.cache/cstd-next-local-static-image' }) }) });
+const cache = createStorage({ driver: fsDriver({ base: 'node_modules/.cache/cstd-next-local-static-image' }) });
 interface Options {
 	isDev: boolean;
 	isServer: boolean;
@@ -64,11 +62,13 @@ interface Options {
 const RESOURCE_QUERY_REGEX = /\?w=(?<width>\d+)\.scaled/;
 const NEXTJS_FILEPATH_PREFIX = 'static/media';
 
-const CONCURRENCY_LIMIT = 3;
+const CONCURRENCY_LIMIT = 1;
 const concurrencyLimit = pLimit(CONCURRENCY_LIMIT);
 
 // TODO: BLUUUR
 const localStaticImageLoader: LoaderDefinitionFunction = async function localStaticImageLoader(this, contentNotRawType) {
+	this.cacheable(true);
+
 	const imageBuffer = contentNotRawType as unknown as Buffer;
 	const options = this.getOptions() as Options;
 	const isDevelopmentMode = options.isDev;
