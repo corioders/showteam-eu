@@ -63,6 +63,10 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const imageInfo = readImageInfoFromBuffer(content);
 
 	if (imageInfo.type === 'svg') {
+		if (userSpecifiedWidth) {
+			throw new Error('Specifying a width while importing an svg image does not make sense.');
+		}
+
 		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo);
 		const importReturn: INTERNAL_LocalStaticImageImport = {
 			contentHash: imageSpecificHash,
