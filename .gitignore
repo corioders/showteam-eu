@@ -1,3 +1,6 @@
+# Operating in pnpm-workspaces requires that
+pnpm-lock.yaml 
+
 build
 
 # Created by https://www.toptal.com/developers/gitignore/api/node,macos,windows,linux

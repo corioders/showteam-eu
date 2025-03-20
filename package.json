@@ -13,10 +13,11 @@
 		"watch": "concurrently \"tsc --watch\" \"tsc-alias --watch\""
 	},
 	"dependencies": {
+		"cstd-ts": "link:./../cstd-ts",
 		"buffer-image-size": "^0.6.4",
 		"cacheable": "^1.8.8",
-		"cstd-ts": "link:./../cstd-ts",
-		"react": "^19.0.0",
+		"react-markdown": "^10.1.0",
+		"remark-gfm": "^4.0.1",
 		"server-only": "^0.0.1",
 		"sharp": "^0.33.5",
 		"svgo": "^3.3.2",
@@ -24,11 +25,13 @@
 		"unstorage": "^1.15.0"
 	},
 	"devDependencies": {
-		"@types/loader-utils": "^2.0.6",
 		"concurrently": "^9.0.1",
-		"loader-utils": "^3.3.1",
 		"tsc-alias": "^1.8.10",
-		"typescript": "^5.6.2",
-		"webpack": "^5.98.0"
+		"typescript": "^5.6.2"
+	},
+	"peerDependencies": {
+		"webpack": "*",
+		"react": "*",
+		"next": "*"
 	}
 }
