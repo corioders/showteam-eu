@@ -1,3 +1,10 @@
+import { createHash } from 'node:crypto';
+import path from 'node:path';
+import sharp from 'sharp';
+import svgo from 'svgo';
+import type { LoaderDefinitionFunction } from 'webpack';
+import { type PictureSource, getImageSourcesNotSvg, getSvgEntry, hash, readImageInfoFromBuffer } from '../internal.mjs';
+
 export interface LocalStaticImageImport {
 	// Hash of the original image. Can be used inside the react key prop.
 	contentHash: string;
@@ -7,16 +14,21 @@ export interface LocalStaticImageImport {
 
 // biome-ignore lint/style/useNamingConvention: We want to emphasize this is an internal interface
 export interface INTERNAL_LocalStaticImageImport extends LocalStaticImageImport {
-	// Is size specified by the user in the loader query.
-	i: boolean;
-
 	// Width of the image. Width is specified by user in the import query or taken from the original image.
 	w: number;
 	// Height of the image. Height is either inferred from the user specified width or or taken from the original image.
 	h: number;
 
+	// Either i and s are present OR g is present. Never both
+
+	// Is size specified by the user in the loader query.
+	i?: boolean;
+
 	// Optimized sources of the image.
-	s: INTERNAL_LowOverheadPictureSource[];
+	s?: INTERNAL_LowOverheadPictureSource[];
+
+	// src of the svG image
+	g?: string;
 }
 
 // biome-ignore lint/style/useNamingConvention: We want to emphasize this is an internal interface
@@ -32,12 +44,6 @@ interface Options {
 	isDev: boolean;
 	isServer: boolean;
 }
-
-import { createHash } from 'node:crypto';
-import path from 'node:path';
-import sharp from 'sharp';
-import type { LoaderDefinitionFunction } from 'webpack';
-import { type PictureSource, getImageSourcesNotSvg, hash, readImageInfoFromBuffer } from '../internal.mjs';
 
 const RESOURCE_QUERY_REGEX = /\?w=(?<width>\d+)\.scaled/;
 
@@ -55,6 +61,30 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const imageSpecificHash = hash(content, createHash);
 	const imageFilename = path.basename(this.resourcePath);
 	const imageInfo = readImageInfoFromBuffer(content);
+
+	if (imageInfo.type === 'svg') {
+		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo);
+		const importReturn: INTERNAL_LocalStaticImageImport = {
+			contentHash: imageSpecificHash,
+			filename: imageFilename,
+			w: imageInfo.width,
+			h: imageInfo.height,
+			g: svgEntry.src,
+		};
+		const importReturnString = `export default ${JSON.stringify(importReturn)}`;
+
+		// We are optimizing images only while building client.
+		if (options.isServer) {
+			return importReturnString;
+		}
+
+		const unsafeSvg = content.toString();
+		// TODO: Fix, escape svg
+		const safeSvg = unsafeSvg;
+
+		const { data: optimizedSvg } = svgo.optimize(safeSvg, { multipass: true });
+		this.emitFile(svgEntry.filepath, optimizedSvg);
+	}
 
 	const pictureSources = getImageSourcesNotSvg(imageFilename, imageSpecificHash, imageInfo, userSpecifiedWidth, 'static/media');
 	const loPictureSources: INTERNAL_LowOverheadPictureSource[] = pictureSources.map((ps) => ({ s: ps.srcSetORsrc, t: ps.type }));
@@ -77,7 +107,6 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		h: height,
 		s: loPictureSources,
 	};
-
 	const importReturnString = `export default ${JSON.stringify(importReturn)}`;
 
 	// We are optimizing images only while building client.

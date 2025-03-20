@@ -37,6 +37,15 @@ export interface INTERNAL_SharpEntry {
 const NEXTJS_IMAGE_FOLDER = '.next/static/media';
 const NEXTJS_URL_PREFIX = '/_next/static/media';
 
+function getImageFilenameMeta(imageFilename: string, imageSpecificHash: string) {
+	return (width: number, format: ImageType) => `${imageFilename}.${imageSpecificHash}.${width.toString()}.${format}`;
+}
+function getImageUrlMeta(imageFilename: string, imageSpecificHash: string, baseURL: string) {
+	return (width: number, format: ImageType) => encodeURI(`${baseURL}/${getImageFilenameMeta(imageFilename, imageSpecificHash)(width, format)}`);
+}
+function getImageFilepathMeta(imageFilename: string, imageSpecificHash: string, baseFilePath: string) {
+	return (width: number, format: ImageType) => `${baseFilePath}/${getImageFilenameMeta(imageFilename, imageSpecificHash)(width, format)}`;
+}
 export function getImageSourcesNotSvg(
 	imageFilename: string,
 	imageSpecificHash: string,
@@ -45,9 +54,8 @@ export function getImageSourcesNotSvg(
 	baseFilePath: string = NEXTJS_IMAGE_FOLDER,
 	baseURL: string = NEXTJS_URL_PREFIX,
 ): INTERNAL_PictureSource[] {
-	const getImageFilename = (width: number, format: ImageType) => `${imageFilename}.${imageSpecificHash}.${width.toString()}.${format}`;
-	const getImageUrl = (width: number, format: ImageType) => encodeURI(`${baseURL}/${getImageFilename(width, format)}`);
-	const getImageFilepath = (width: number, format: ImageType) => `${baseFilePath}/${getImageFilename(width, format)}`;
+	const getImageUrl = getImageUrlMeta(imageFilename, imageSpecificHash, baseURL);
+	const getImageFilepath = getImageFilepathMeta(imageFilename, imageSpecificHash, baseFilePath);
 
 	if (imageInfo.type === 'svg') {
 		throw new Error('Svg image cannot be treated as a regular image');
@@ -97,4 +105,26 @@ export function getImageSourcesNotSvg(
 	}
 
 	return sources;
+}
+
+// biome-ignore lint/style/useNamingConvention: <explanation>
+export interface INTERNAL__SVGEntry {
+	src: string;
+	filepath: string;
+}
+
+export function getSvgEntry(
+	imageFilename: string,
+	imageSpecificHash: string,
+	imageInfo: ImageInfo,
+	baseFilePath: string = NEXTJS_IMAGE_FOLDER,
+	baseURL: string = NEXTJS_URL_PREFIX,
+): INTERNAL__SVGEntry {
+	const getImageUrl = getImageUrlMeta(imageFilename, imageSpecificHash, baseURL);
+	const getImageFilepath = getImageFilepathMeta(imageFilename, imageSpecificHash, baseFilePath);
+
+	return {
+		src: getImageUrl(imageInfo.width, 'svg'),
+		filepath: getImageFilepath(imageInfo.width, 'svg'),
+	};
 }
