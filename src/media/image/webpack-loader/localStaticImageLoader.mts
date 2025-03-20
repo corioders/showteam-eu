@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import pLimit from 'p-limit';
 import sharp from 'sharp';
 import svgo from 'svgo';
 import type { LoaderDefinitionFunction } from 'webpack';
@@ -58,6 +59,9 @@ interface Options {
 const RESOURCE_QUERY_REGEX = /\?w=(?<width>\d+)\.scaled/;
 const NEXTJS_FILEPATH_PREFIX = 'static/media';
 
+const CONCURRENCY_LIMIT = 3;
+const concurrencyLimit = pLimit(CONCURRENCY_LIMIT);
+
 // TODO: BLUUUR
 const localStaticImageLoader: LoaderDefinitionFunction = async function localStaticImageLoader(this, contentNotRawType) {
 	const imageBuffer = contentNotRawType as unknown as Buffer;
@@ -73,9 +77,11 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const imageSpecificHash = hash(imageBuffer, createHash);
 	const imageFilename = path.basename(this.resourcePath);
 	const imageInfo = readImageInfoFromBuffer(imageBuffer);
-	if (!options.isServer && !isDevelopmentMode) {
-		console.log(`Optimizing local static image: ${imageFilename}`);
-	}
+	let startTime = Date.now();
+	const reportTime = () => {
+		const endTime = Date.now();
+		console.log(`Optimizing image took ${Math.round((endTime - startTime) / 1000)} seconds: ${imageFilename}`);
+	};
 
 	let { width, height } = imageInfo;
 	if (userSpecifiedWidth) {
@@ -106,6 +112,8 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		}
 
 		const optimizedSvg = optimizeSvg(imageBuffer.toString(), svgo);
+		reportTime();
+
 		this.emitFile(svgEntry.filepath, optimizedSvg);
 
 		return importReturnString;
@@ -139,27 +147,33 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		return importReturnString;
 	}
 
-	const exportFunction = (optimizedImageBuffer: Buffer, filepath: string, targetImageInfo?: ImageInfo) => {
-		if (userSpecifiedWidth && targetImageInfo && targetImageInfo.height !== height) {
-			throw new Error(
-				`THIS SHOULD NOT HAPPEN! The user specified the width of the image is ${userSpecifiedWidth} and the inferred hight is ${height}. BUT sharp thinks that the correct height should be ${targetImageInfo.height}. If you see this error contact the owner of this code and provide them with this error message.`,
-			);
-		}
+	return await concurrencyLimit(async () => {
+		// We are queuing the requests. We do not want to count this queueing time.
+		startTime = Date.now();
 
-		this.emitFile(filepath, optimizedImageBuffer);
-		return Promise.resolve();
-	};
+		const exportFunction = (optimizedImageBuffer: Buffer, filepath: string, targetImageInfo?: ImageInfo) => {
+			if (userSpecifiedWidth && targetImageInfo && targetImageInfo.height !== height) {
+				throw new Error(
+					`THIS SHOULD NOT HAPPEN! The user specified the width of the image is ${userSpecifiedWidth} and the inferred hight is ${height}. BUT sharp thinks that the correct height should be ${targetImageInfo.height}. If you see this error contact the owner of this code and provide them with this error message.`,
+				);
+			}
 
-	await optimizePictureSources(
-		imageBuffer,
-		pictureSources,
-		exportFunction,
-		() => Promise.resolve(null),
-		() => Promise.resolve(),
-		sharp,
-	);
+			this.emitFile(filepath, optimizedImageBuffer);
+			return Promise.resolve();
+		};
 
-	return importReturnString;
+		await optimizePictureSources(
+			imageBuffer,
+			pictureSources,
+			exportFunction,
+			() => Promise.resolve(null),
+			() => Promise.resolve(),
+			sharp,
+		);
+		reportTime();
+
+		return importReturnString;
+	});
 };
 
 export const raw = true;

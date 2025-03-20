@@ -194,15 +194,21 @@ export default async function RemoteStaticImage(props: RemoteImageProps) {
 
 	await nodeFs.mkdir(NEXTJS_FILEPATH_PREFIX, { recursive: true });
 
-	console.log(`Optimizing remote static image: ${props.src}`);
+	const startTime = Date.now();
+	const reportTime = () => {
+		console.log(`Optimizing image took ${Math.round((Date.now() - startTime) / 1000)} seconds: ${imageFilename}`);
+	};
+
 	if (imageInfo.type === 'svg') {
 		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo);
 		await optimizeSvgAndWriteToDisk(svgEntry, imageBuffer, imageInfo);
+		reportTime();
 		return <img {...imageOptimizationAttributes} {...rawImageProps} src={svgEntry.src} alt={props.alt} />;
 	}
 
 	const pictureSources = getPictureSourcesNotSvg(false, imageFilename, imageSpecificHash, imageInfo, NEXTJS_FILEPATH_PREFIX, userSpecifiedWidth);
 	await optimizeImageAndWriteToDisk(pictureSources, imageBuffer, imageInfo, height, userSpecifiedWidth);
+	reportTime();
 
 	const sources: JSX.Element[] = [];
 	for (const source of pictureSources) {
