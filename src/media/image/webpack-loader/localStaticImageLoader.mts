@@ -53,7 +53,7 @@ interface INTERNAL_LowOverheadPictureSource {
 }
 import fsDriver from 'unstorage/drivers/fs-lite';
 
-const cache = createStorage({ driver: fsDriver({ base: 'node_modules/.cache/cstd-next-local-static-image' }) });
+const cache = createStorage({ driver: fsDriver({ base: '.next/cache/cstd-next-local-static-image' }) });
 interface Options {
 	isDev: boolean;
 	isServer: boolean;

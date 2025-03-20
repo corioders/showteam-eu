@@ -1,10 +1,8 @@
 import type { NextConfig } from 'next';
-import type { Configuration } from 'webpack';
-
-import { resolve } from 'node:path';
 import { nextImageLoaderRegex } from 'next/dist/build/webpack-config.js';
 import { regexLikeCss } from 'next/dist/build/webpack/config/blocks/css/index.js';
 import { WEBPACK_RESOURCE_QUERIES } from 'next/dist/lib/constants.js';
+import type { Configuration } from 'webpack';
 
 const nextConfig: NextConfig = {
 	images: {
@@ -14,10 +12,6 @@ const nextConfig: NextConfig = {
 	webpack(config: Configuration, { dev, isServer }) {
 		if (dev && config.output) {
 			config.output.devtoolModuleFilenameTemplate = (info: { resourcePath: string }) => info.resourcePath.replace(/\\/g, '/');
-		}
-
-		if (typeof config.cache !== 'boolean' && config.cache?.type === 'filesystem') {
-			config.cache.cacheDirectory = resolve(process.cwd(), 'node_modules/.cache/webpack');
 		}
 
 		config?.module?.rules?.push({
@@ -31,6 +25,29 @@ const nextConfig: NextConfig = {
 			options: {
 				isDev: dev,
 				isServer: isServer,
+			},
+		});
+
+		config.resolve?.plugins?.push({
+			apply: (resolver) => {
+				resolver.hooks.resolve.tap({ name: 'jsToJsxResolver', stage: 100 }, (resolveRequest) => {
+					const originalRequest = resolveRequest.request;
+					if (!originalRequest) {
+						return undefined as unknown as null;
+					}
+
+					if (originalRequest?.startsWith('cstd-next') || originalRequest?.startsWith('cstd-ts')) {
+						if (originalRequest.endsWith('.js')) {
+							const originalRequestWithoutExtension = originalRequest.slice(0, originalRequest.length - 3);
+							const resolvedWithJsxExtension = import.meta.resolve(`${originalRequestWithoutExtension}.jsx`).replace('file://', '');
+							if (resolvedWithJsxExtension) {
+								return { ...resolveRequest, path: resolvedWithJsxExtension };
+							}
+						}
+					}
+
+					return undefined as unknown as null;
+				});
 			},
 		});
 
