@@ -46,11 +46,13 @@ interface Options {
 }
 
 const RESOURCE_QUERY_REGEX = /\?w=(?<width>\d+)\.scaled/;
+const NEXTJS_FILEPATH_PREFIX = 'static/media';
 
 // TODO: BLUUUR
 const localStaticImageLoader: LoaderDefinitionFunction = async function localStaticImageLoader(this, contentNotRawType) {
 	const content = contentNotRawType as unknown as Buffer;
 	const options = this.getOptions() as Options;
+	const isDevelopmentMode = options.isDev;
 
 	let userSpecifiedWidth: number | undefined = undefined;
 	const matchedResourceQuery = this.resourceQuery.match(RESOURCE_QUERY_REGEX);
@@ -61,6 +63,9 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const imageSpecificHash = hash(content, createHash);
 	const imageFilename = path.basename(this.resourcePath);
 	const imageInfo = readImageInfoFromBuffer(content);
+	if (!options.isServer && !isDevelopmentMode) {
+		console.log(`Optimizing local static image: ${imageFilename}`);
+	}
 
 	let { width, height } = imageInfo;
 	if (userSpecifiedWidth) {
@@ -73,7 +78,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	}
 
 	if (imageInfo.type === 'svg') {
-		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo);
+		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo, NEXTJS_FILEPATH_PREFIX);
 		const importReturn: INTERNAL_LocalStaticImageImport = {
 			contentHash: imageSpecificHash,
 			filename: imageFilename,
@@ -88,15 +93,23 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 			return importReturnString;
 		}
 
+		// Skip optimization in development mode
+		if (isDevelopmentMode) {
+			this.emitFile(svgEntry.filepath, content);
+			return importReturnString;
+		}
+
 		const unsafeSvg = content.toString();
 		// TODO: Fix, escape svg
 		const safeSvg = unsafeSvg;
 
 		const { data: optimizedSvg } = svgo.optimize(safeSvg, { multipass: true });
 		this.emitFile(svgEntry.filepath, optimizedSvg);
+
+		return importReturnString;
 	}
 
-	const pictureSources = getImageSourcesNotSvg(imageFilename, imageSpecificHash, imageInfo, userSpecifiedWidth, 'static/media');
+	const pictureSources = getImageSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, userSpecifiedWidth, NEXTJS_FILEPATH_PREFIX);
 	const loPictureSources: INTERNAL_LowOverheadPictureSource[] = pictureSources.map((ps) => ({ s: ps.srcSetORsrc, t: ps.type }));
 
 	const importReturn: INTERNAL_LocalStaticImageImport = {
@@ -111,6 +124,16 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 
 	// We are optimizing images only while building client.
 	if (options.isServer) {
+		return importReturnString;
+	}
+
+	if (isDevelopmentMode) {
+		if (pictureSources.length !== 1 || pictureSources[0].__sharpEntries.length !== 1) {
+			throw new Error('Expected only one source and one sharpEntry while in the development mode.');
+		}
+
+		const theOnlySharpEntry = pictureSources[0].__sharpEntries[0];
+		this.emitFile(theOnlySharpEntry.filepath, content);
 		return importReturnString;
 	}
 

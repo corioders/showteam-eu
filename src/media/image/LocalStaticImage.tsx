@@ -25,6 +25,14 @@ export default function LocalStaticImage(props: LocalStaticImageProps) {
 		height: src.h,
 	};
 
+	if (src.g) {
+		return <img {...imageOptimizationAttributes} {...rawImageProps} src={src.g} alt={props.alt} />;
+	}
+
+	if (!src.s) {
+		throw new Error('Either src.g OR src.s is required');
+	}
+
 	const sources: JSX.Element[] = [];
 	for (const source of src.s) {
 		const sourceKey = `${src.contentHash}${source.t}`;

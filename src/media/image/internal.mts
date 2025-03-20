@@ -47,6 +47,7 @@ function getImageFilepathMeta(imageFilename: string, imageSpecificHash: string, 
 	return (width: number, format: ImageType) => `${baseFilePath}/${getImageFilenameMeta(imageFilename, imageSpecificHash)(width, format)}`;
 }
 export function getImageSourcesNotSvg(
+	isDevelopmentMode: boolean,
 	imageFilename: string,
 	imageSpecificHash: string,
 	imageInfo: ImageInfo,
@@ -61,13 +62,14 @@ export function getImageSourcesNotSvg(
 		throw new Error('Svg image cannot be treated as a regular image');
 	}
 
+	const imageFormats = isDevelopmentMode ? [imageInfo.type] : IMAGE_FORMATS;
 	if (userSpecifiedWidth) {
 		if (userSpecifiedWidth > imageInfo.width) {
 			throw new Error(`User specified width of ${userSpecifiedWidth}. This requires upscaling of the image. The original image has width of ${imageInfo.width}.`);
 		}
 
 		const sources: INTERNAL_PictureSource[] = [];
-		for (const targetFormat of IMAGE_FORMATS) {
+		for (const targetFormat of imageFormats) {
 			sources.push({
 				srcSetORsrc: getImageUrl(userSpecifiedWidth, targetFormat),
 				type: `image/${targetFormat}`,
@@ -80,8 +82,8 @@ export function getImageSourcesNotSvg(
 	}
 
 	const sources: INTERNAL_PictureSource[] = [];
-	const targetWidths = [...IMAGE_SIZES, imageInfo.width].sort((a, b) => a - b);
-	for (const targetFormat of IMAGE_FORMATS) {
+	const targetWidths = isDevelopmentMode ? [imageInfo.width] : [...IMAGE_SIZES, imageInfo.width].sort((a, b) => a - b);
+	for (const targetFormat of imageFormats) {
 		let srcSetPerFormat = '';
 
 		const sharpEntries: INTERNAL_SharpEntry[] = [];
@@ -120,11 +122,17 @@ export function getSvgEntry(
 	baseFilePath: string = NEXTJS_IMAGE_FOLDER,
 	baseURL: string = NEXTJS_URL_PREFIX,
 ): INTERNAL__SVGEntry {
+	if (imageInfo.type !== 'svg') {
+		throw new Error('getSvgEntry works only for svg images');
+	}
+
 	const getImageUrl = getImageUrlMeta(imageFilename, imageSpecificHash, baseURL);
 	const getImageFilepath = getImageFilepathMeta(imageFilename, imageSpecificHash, baseFilePath);
 
+	// We can't depend on width. If the width changed the filename also changes and the browser invalidates the cache. Even tough only the js changed.
+	const fakeWidth = 0;
 	return {
-		src: getImageUrl(imageInfo.width, 'svg'),
-		filepath: getImageFilepath(imageInfo.width, 'svg'),
+		src: getImageUrl(fakeWidth, 'svg'),
+		filepath: getImageFilepath(fakeWidth, 'svg'),
 	};
 }
