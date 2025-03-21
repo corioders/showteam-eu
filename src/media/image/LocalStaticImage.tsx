@@ -1,3 +1,10 @@
+// Copyright (C) Corioders <corioders@gmail.com> - All Rights Reserved
+// Unauthorized copying of this file, via any medium is strictly prohibited
+// Proprietary and confidential
+// Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
+
+import './../../../src/media/image/picture-display-style.css';
+
 import type { ImgHTMLAttributes, JSX } from 'react';
 
 import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from './image.mjs';

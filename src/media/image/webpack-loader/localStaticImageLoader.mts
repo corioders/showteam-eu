@@ -1,3 +1,8 @@
+// Copyright (C) Corioders <corioders@gmail.com> - All Rights Reserved
+// Unauthorized copying of this file, via any medium is strictly prohibited
+// Proprietary and confidential
+// Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
+
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import pLimit from 'p-limit';
@@ -61,6 +66,7 @@ interface Options {
 
 const RESOURCE_QUERY_REGEX = /\?w=(?<width>\d+)\.scaled/;
 const NEXTJS_FILEPATH_PREFIX = 'static/media';
+const OPTIMIZE_IMAGES_ENV_FLAG = 'CORIODERS_OPTIMIZE_IMAGES';
 
 const CONCURRENCY_LIMIT = 1;
 const concurrencyLimit = pLimit(CONCURRENCY_LIMIT);
@@ -71,7 +77,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 
 	const imageBuffer = contentNotRawType as unknown as Buffer;
 	const options = this.getOptions() as Options;
-	const isDevelopmentMode = options.isDev;
+	const isDevelopmentMode = options.isDev || process.env[OPTIMIZE_IMAGES_ENV_FLAG] === 'false';
 
 	let userSpecifiedWidth: number | undefined = undefined;
 	const matchedResourceQuery = this.resourceQuery.match(RESOURCE_QUERY_REGEX);
@@ -83,9 +89,17 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const imageFilename = path.basename(this.resourcePath);
 	const imageInfo = readImageInfoFromBuffer(imageBuffer);
 	let startTime = Date.now();
-	const reportTime = () => {
+	const reportTime = (wasCacheHit?: boolean) => {
+		let cacheHitMessage = '(cache miss)';
+		if (wasCacheHit === true) {
+			cacheHitMessage = ' (cache hit)';
+		}
+
 		const endTime = Date.now();
-		console.log(`Optimizing image took ${Math.round((endTime - startTime) / 1000)} seconds: ${imageFilename}`);
+		const timeItTook = Math.round((endTime - startTime) / 1000)
+			.toString()
+			.padEnd(3);
+		console.log(`Optimizing image took ${timeItTook} seconds ${cacheHitMessage}: ${imageFilename}`);
 	};
 
 	let { width, height } = imageInfo;
@@ -142,6 +156,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		return importReturnString;
 	}
 
+	// TODO: Figure out if we'd like to rescale the images as the user requested in the ?w query.
 	if (isDevelopmentMode) {
 		if (pictureSources.length !== 1 || pictureSources[0].__sharpEntries.length !== 1) {
 			throw new Error('Expected only one source and one sharpEntry while in the development mode.');
@@ -167,8 +182,12 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 			return Promise.resolve();
 		};
 
+		let wasThereACacheHit = false;
 		const getCacheFunction = async (cacheKey: string) => {
 			const optimizedImageBuffer = await cache.getItemRaw<Buffer>(cacheKey);
+			if (optimizedImageBuffer) {
+				wasThereACacheHit = true;
+			}
 			return optimizedImageBuffer;
 		};
 
@@ -177,7 +196,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		};
 
 		await optimizePictureSources(imageBuffer, pictureSources, exportFunction, getCacheFunction, setCacheFunction, sharp);
-		reportTime();
+		reportTime(wasThereACacheHit);
 
 		return importReturnString;
 	});

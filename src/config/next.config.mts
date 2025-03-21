@@ -1,3 +1,8 @@
+// Copyright (C) Corioders <corioders@gmail.com> - All Rights Reserved
+// Unauthorized copying of this file, via any medium is strictly prohibited
+// Proprietary and confidential
+// Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
+
 import type { NextConfig } from 'next';
 import { nextImageLoaderRegex } from 'next/dist/build/webpack-config.js';
 import { regexLikeCss } from 'next/dist/build/webpack/config/blocks/css/index.js';
@@ -9,8 +14,9 @@ const nextConfig: NextConfig = {
 		disableStaticImages: true,
 	},
 
-	webpack(config: Configuration, { dev, isServer }) {
-		if (dev && config.output) {
+	webpack(config: Configuration, { dev: isDev, isServer }) {
+		// Fix devtool source mapping
+		if (isDev && config.output) {
 			config.output.devtoolModuleFilenameTemplate = (info: { resourcePath: string }) => info.resourcePath.replace(/\\/g, '/');
 		}
 
@@ -23,7 +29,7 @@ const nextConfig: NextConfig = {
 				not: [new RegExp(WEBPACK_RESOURCE_QUERIES.metadata), new RegExp(WEBPACK_RESOURCE_QUERIES.metadataRoute), new RegExp(WEBPACK_RESOURCE_QUERIES.metadataImageMeta)],
 			},
 			options: {
-				isDev: dev,
+				isDev: isDev,
 				isServer: isServer,
 			},
 		});
