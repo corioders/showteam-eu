@@ -77,7 +77,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 
 	const imageBuffer = contentNotRawType as unknown as Buffer;
 	const options = this.getOptions() as Options;
-	const isDevelopmentMode = options.isDev || process.env[OPTIMIZE_IMAGES_ENV_FLAG] === 'false';
+	const isDevelopmentMode = options.isDev || (process.env[OPTIMIZE_IMAGES_ENV_FLAG] === 'false' && process.env['IS_CLOUDFLARE'] !== 'true');
 
 	let userSpecifiedWidth: number | undefined = undefined;
 	const matchedResourceQuery = this.resourceQuery.match(RESOURCE_QUERY_REGEX);
