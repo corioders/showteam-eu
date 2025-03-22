@@ -65,7 +65,11 @@ interface Options {
 }
 
 const RESOURCE_QUERY_REGEX = /\?w=(?<width>\d+)\.scaled/;
-const NEXTJS_FILEPATH_PREFIX = 'static/media';
+
+const NEXTJS_CLIENT_BUILD_FILEPATH_PREFIX = 'static/media';
+const NEXTJS_SERVER_BUILD_FILEPATH_PREFIX = '../../static/media';
+const NEXTJS_SERVER_DEV_FILEPATH_PREFIX = '../static/media';
+
 const OPTIMIZE_IMAGES_ENV_FLAG = 'CORIODERS_OPTIMIZE_IMAGES';
 
 const CONCURRENCY_LIMIT = 1;
@@ -83,6 +87,26 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const matchedResourceQuery = this.resourceQuery.match(RESOURCE_QUERY_REGEX);
 	if (matchedResourceQuery?.groups?.width) {
 		userSpecifiedWidth = Number(matchedResourceQuery?.groups?.width);
+	}
+
+	// Hear me out. For some reason nextjs does not run this loader
+	// during client side compilation when the resourceQuery is provided.
+	// That's all I know.
+	//
+	// https://discord.com/channels/752553802359505017/1352705911210377257/1352705911210377257
+	// https://github.com/vercel/next.js/issues/77413
+	//
+	let skipOptimization = false;
+	if (options.isServer && !userSpecifiedWidth) {
+		skipOptimization = true;
+	}
+
+	let pathPrefix = NEXTJS_CLIENT_BUILD_FILEPATH_PREFIX;
+	if (options.isServer && !skipOptimization) {
+		pathPrefix = NEXTJS_SERVER_BUILD_FILEPATH_PREFIX;
+	}
+	if (options.isServer && !skipOptimization && isDevelopmentMode) {
+		pathPrefix = NEXTJS_SERVER_DEV_FILEPATH_PREFIX;
 	}
 
 	const imageSpecificHash = hash(imageBuffer, createHash);
@@ -104,12 +128,12 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 
 	let { width, height } = imageInfo;
 	if (userSpecifiedWidth) {
-		width = userSpecifiedWidth;
 		height = inferHeight(width, height, userSpecifiedWidth);
+		width = userSpecifiedWidth;
 	}
 
 	if (imageInfo.type === 'svg') {
-		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo, NEXTJS_FILEPATH_PREFIX);
+		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo, pathPrefix);
 		const importReturn: INTERNAL_LocalStaticImageImport = {
 			contentHash: imageSpecificHash,
 			filename: imageFilename,
@@ -120,7 +144,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		const importReturnString = `export default ${JSON.stringify(importReturn)}`;
 
 		// We are optimizing images only while building client.
-		if (options.isServer) {
+		if (skipOptimization) {
 			return importReturnString;
 		}
 
@@ -138,7 +162,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		return importReturnString;
 	}
 
-	const pictureSources = getPictureSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, NEXTJS_FILEPATH_PREFIX, userSpecifiedWidth);
+	const pictureSources = getPictureSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, pathPrefix, userSpecifiedWidth);
 	const loPictureSources: INTERNAL_LowOverheadPictureSource[] = pictureSources.map((ps) => ({ s: ps.srcSetORsrc, t: ps.type }));
 
 	const importReturn: INTERNAL_LocalStaticImageImport = {
@@ -152,7 +176,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const importReturnString = `export default ${JSON.stringify(importReturn)}`;
 
 	// We are optimizing images only while building client.
-	if (options.isServer) {
+	if (skipOptimization) {
 		return importReturnString;
 	}
 

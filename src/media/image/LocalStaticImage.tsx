@@ -57,10 +57,15 @@ export default function LocalStaticImage(props: LocalStaticImageProps) {
 		sources.push(<source key={sourceKey} srcSet={source.s} type={source.t} />);
 	}
 
+	let imageElement = <img {...imageOptimizationAttributes} {...rawImageProps} srcSet={src.s[0].s} alt={props.alt} />;
+	if (src.i) {
+		imageElement = <img {...imageOptimizationAttributes} {...rawImageProps} src={src.s[0].s} alt={props.alt} />;
+	}
+
 	return (
 		<picture>
 			{sources}
-			<img {...imageOptimizationAttributes} {...rawImageProps} alt={props.alt} />
+			{imageElement}
 		</picture>
 	);
 }
