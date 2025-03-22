@@ -155,7 +155,7 @@ export async function optimizePictureSources(
 			const cachedOptimizedImageBuffer = await getCacheFunction(cacheKey);
 			if (cachedOptimizedImageBuffer) {
 				await exportFunction(cachedOptimizedImageBuffer, sharpEntry.filepath);
-				return;
+				continue;
 			}
 
 			const imageOptimization = sharp(imageBuffer, { animated: true, sequentialRead: true });

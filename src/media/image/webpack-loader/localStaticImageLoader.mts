@@ -105,7 +105,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	if (options.isServer && !skipOptimization) {
 		pathPrefix = NEXTJS_SERVER_BUILD_FILEPATH_PREFIX;
 	}
-	if (options.isServer && !skipOptimization && isDevelopmentMode) {
+	if (options.isServer && !skipOptimization && options.isDev) {
 		pathPrefix = NEXTJS_SERVER_DEV_FILEPATH_PREFIX;
 	}
 
