@@ -130,39 +130,38 @@ export async function optimizePictureSources(
 	setCacheFunction: SetCacheFunction,
 	sharp: typeof SharpType,
 ) {
-	let imageOptimization = sharp(imageBuffer, { animated: true, sequentialRead: true });
-
-	// By default sharp strips all of the image metadata that includes the correct rotation.
-	// To preserve the correct rotation *actually* rotate the image.
-	imageOptimization = imageOptimization.rotate();
-
-	const optimizationPromises: Promise<void>[] = [];
+	// const optimizationPromises: Promise<void>[] = [];
 	for (const pictureSource of pictureSources) {
 		for (const sharpEntry of pictureSource.__sharpEntries) {
-			const optimizationPromise = (async () => {
-				const cacheKey = sharpEntry.filepath.toLocaleLowerCase();
-				const cachedOptimizedImageBuffer = await getCacheFunction(cacheKey);
-				if (cachedOptimizedImageBuffer) {
-					await exportFunction(cachedOptimizedImageBuffer, sharpEntry.filepath);
-					return
-				}
+			// const optimizationPromise = (async () => {
+			const cacheKey = sharpEntry.filepath.toLocaleLowerCase();
+			const cachedOptimizedImageBuffer = await getCacheFunction(cacheKey);
+			if (cachedOptimizedImageBuffer) {
+				await exportFunction(cachedOptimizedImageBuffer, sharpEntry.filepath);
+				return;
+			}
 
-				let localImageOptimization = imageOptimization.clone();
-				localImageOptimization = localImageOptimization.resize({ width: sharpEntry.targetWidth }).toFormat(sharpEntry.targetFormat);
-				const { data: optimizedImageBuffer, info } = await localImageOptimization.toBuffer({ resolveWithObject: true });
+			const imageOptimization = sharp(imageBuffer, { animated: true, sequentialRead: true });
 
-				await setCacheFunction(cacheKey, optimizedImageBuffer);
-				await exportFunction(optimizedImageBuffer, sharpEntry.filepath, {
-					width: info.width,
-					height: info.height,
-					type: sharpEntry.targetFormat,
-				});
-			})();
-			optimizationPromises.push(optimizationPromise);
+			// By default sharp strips all of the image metadata that includes the correct rotation.
+			// To preserve the correct rotation *actually* rotate the image.
+			const imageOptimizationRotated = imageOptimization.rotate();
+
+			const localImageOptimizationFinal = imageOptimizationRotated.resize({ width: sharpEntry.targetWidth }).toFormat(sharpEntry.targetFormat);
+			const { data: optimizedImageBuffer, info } = await localImageOptimizationFinal.toBuffer({ resolveWithObject: true });
+
+			await setCacheFunction(cacheKey, optimizedImageBuffer);
+			await exportFunction(optimizedImageBuffer, sharpEntry.filepath, {
+				width: info.width,
+				height: info.height,
+				type: sharpEntry.targetFormat,
+			});
+			// })();
+			// optimizationPromises.push(optimizationPromise);
 		}
 	}
 
-	await Promise.all(optimizationPromises);
+	// await Promise.all(optimizationPromises);
 }
 
 // biome-ignore lint/style/useNamingConvention: <explanation>
