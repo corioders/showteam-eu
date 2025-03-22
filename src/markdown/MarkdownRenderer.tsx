@@ -5,13 +5,13 @@
 
 import 'server-only';
 
+import type { JSX } from 'react';
 import { MarkdownAsync, type Options, defaultUrlTransform as reactMarkdownDefaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 export type Props = Options;
 
-
-export default function MarkdownRenderer({ urlTransform, remarkPlugins, ...props }: Props) {
+export default function MarkdownRenderer({ urlTransform, remarkPlugins, ...props }: Props): JSX.Element {
 	return <MarkdownAsync remarkPlugins={[remarkGfm, ...(remarkPlugins ?? [])]} urlTransform={urlTransform ?? defaultUrlTransform} {...props} />;
 }
 

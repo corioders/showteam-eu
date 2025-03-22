@@ -33,6 +33,7 @@
 	"peerDependencies": {
 		"next": "*",
 		"react": "*",
+		"@types/react": "*",
 		"webpack": "*"
 	}
 }

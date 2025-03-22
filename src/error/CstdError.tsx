@@ -3,10 +3,12 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
+import type { JSX } from 'react';
+
 interface Props {
 	error: Error | string;
 }
-export default function CstdError(props: Props) {
+export default function CstdError(props: Props): JSX.Element {
 	return (
 		<div>
 			<h1 className="font-extrabold">ERROR:</h1>

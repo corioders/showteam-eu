@@ -40,6 +40,9 @@ export interface INTERNAL_SharpEntry {
 	targetFormat: ImageType;
 	targetWidth: number;
 	filepath: string;
+
+	// Must be unique per image
+	cacheKey: string;
 }
 
 const NEXTJS_IMAGE_FOLDER = '.next/static/media';
@@ -82,7 +85,15 @@ export function getPictureSourcesNotSvg(
 				srcSetORsrc: getImageUrl(userSpecifiedWidth, targetFormat),
 				type: `image/${targetFormat}`,
 
-				__sharpEntries: [{ targetFormat: targetFormat, targetWidth: userSpecifiedWidth, filepath: getImageFilepath(userSpecifiedWidth, targetFormat) }],
+				__sharpEntries: [
+					{
+						targetFormat: targetFormat,
+						targetWidth: userSpecifiedWidth,
+						filepath: getImageFilepath(userSpecifiedWidth, targetFormat),
+
+						cacheKey: `${imageSpecificHash}.${userSpecifiedWidth}.${targetFormat}`,
+					},
+				],
 			});
 		}
 
@@ -103,7 +114,13 @@ export function getPictureSourcesNotSvg(
 
 			// TODO: Figure out correct srcSet numbers. ${targetWidth}w,
 			srcSetPerFormat += `${getImageUrl(targetWidth, targetFormat)} ${targetWidth}w, `;
-			sharpEntries.push({ targetFormat: targetFormat, targetWidth: targetWidth, filepath: getImageFilepath(targetWidth, targetFormat) });
+			sharpEntries.push({
+				targetFormat: targetFormat,
+				targetWidth: targetWidth,
+				filepath: getImageFilepath(targetWidth, targetFormat),
+
+				cacheKey: `${imageSpecificHash}.${targetWidth}.${targetFormat}`,
+			});
 		}
 
 		// Remove the last ", "
@@ -134,7 +151,7 @@ export async function optimizePictureSources(
 	for (const pictureSource of pictureSources) {
 		for (const sharpEntry of pictureSource.__sharpEntries) {
 			// const optimizationPromise = (async () => {
-			const cacheKey = sharpEntry.filepath.toLocaleLowerCase();
+			const cacheKey = sharpEntry.cacheKey;
 			const cachedOptimizedImageBuffer = await getCacheFunction(cacheKey);
 			if (cachedOptimizedImageBuffer) {
 				await exportFunction(cachedOptimizedImageBuffer, sharpEntry.filepath);

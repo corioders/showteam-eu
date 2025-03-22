@@ -11,6 +11,7 @@ import MarkdownRenderer, { type Props as MarkdownRendererProps } from '@/markdow
 import type { DocID, DocMd } from 'cstd-ts/driveCMS/docs.js';
 import { downloadDocLatestMarkdownDeployRevision, downloadDocLatestMarkdownRevision } from 'cstd-ts/driveCMS/index.js';
 import type { ErrorReturn } from 'cstd-ts/error/index.js';
+import type { JSX } from 'react';
 
 interface Props extends Omit<MarkdownRendererProps, 'children'> {
 	docID: string;
@@ -18,7 +19,7 @@ interface Props extends Omit<MarkdownRendererProps, 'children'> {
 	IS_PREVIEW_ENV_NAME: string;
 }
 
-export default async function DocRenderer(props: Props) {
+export default async function DocRenderer(props: Props): Promise<JSX.Element> {
 	const usePreviewRevision = process.env[props.IS_PREVIEW_ENV_NAME] === 'true';
 
 	let mdDownload: ErrorReturn<DocMd>;
