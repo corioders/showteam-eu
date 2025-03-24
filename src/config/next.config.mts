@@ -20,7 +20,17 @@ const nextConfig: NextConfig = {
 			config.output.devtoolModuleFilenameTemplate = (info: { resourcePath: string }) => info.resourcePath.replace(/\\/g, '/');
 		}
 
-		config?.module?.rules?.push({
+		if (!config.name) {
+			throw new Error('config.name is empty');
+		}
+
+		const isEdgeServer = config.name === 'edge-server';
+
+		if (!config?.module?.rules) {
+			throw new Error('config?.module?.rules not defined');
+		}
+
+		config.module.rules.push({
 			test: nextImageLoaderRegex,
 			loader: 'cstd-next/media/image/webpack-loader/localStaticImageLoader.mjs',
 			issuer: { not: regexLikeCss },
@@ -31,10 +41,18 @@ const nextConfig: NextConfig = {
 			options: {
 				isDev: isDev,
 				isServer: isServer,
+				isEdgeServer: isEdgeServer,
+
+				// Make our loader env dependent.
+				__env: process.env,
 			},
 		});
 
-		config.resolve?.plugins?.push({
+		if (!config.resolve?.plugins) {
+			throw new Error('config.resolve?.plugins not defined');
+		}
+
+		config.resolve.plugins.push({
 			apply: (resolver) => {
 				resolver.hooks.resolve.tap({ name: 'jsToJsxResolver', stage: 100 }, (resolveRequest) => {
 					const originalRequest = resolveRequest.request;
@@ -42,7 +60,7 @@ const nextConfig: NextConfig = {
 						return undefined as unknown as null;
 					}
 
-					if (originalRequest?.startsWith('cstd-next') || originalRequest?.startsWith('cstd-ts')) {
+					if (originalRequest.startsWith('cstd-next') || originalRequest.startsWith('cstd-ts')) {
 						if (originalRequest.endsWith('.js')) {
 							const originalRequestWithoutExtension = originalRequest.slice(0, originalRequest.length - 3);
 							const resolvedWithJsxExtension = import.meta.resolve(`${originalRequestWithoutExtension}.jsx`).replace('file://', '');

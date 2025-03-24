@@ -23,6 +23,7 @@ import {
 	type INTERNAL_PictureSource,
 	type INTERNAL_SVGEntry,
 	type ImageInfo,
+	type UserSpecifiedWidthInferenceCheck,
 	getImageFilepathMeta,
 	getImageUrlMeta,
 	getPictureSourcesNotSvg,
@@ -32,6 +33,8 @@ import {
 	optimizePictureSources,
 	optimizeSvg,
 	readImageInfoFromBuffer,
+	shouldOptimizeImages,
+	validateInferredWidth,
 } from './internal.mjs';
 
 // 25 MiB
@@ -106,10 +109,13 @@ DESIGN:
 // I mean, a fallback will trigger, but the fallback will not serve the optimized image.
 //
 // TODO: BLUR IMAGE DATA
-// TODO: Limit concurrency
+// TODO: Maybe make the skip-optimization at build time when the user wants to logic more similar to the local loader... idk
 export default async function RemoteStaticImage(props: RemoteImageProps) {
-	const devCacheKey = JSON.stringify(props);
-	if (process.env.NODE_ENV === 'development') {
+	const isRealDevelopmentMode = process.env.NODE_ENV === 'development';
+	const shouldOptimizeImage = shouldOptimizeImages();
+
+	const devCacheKey = isRealDevelopmentMode ? JSON.stringify(props) : '';
+	if (isRealDevelopmentMode) {
 		const cacheEntry = devCache.get(devCacheKey);
 		if (cacheEntry) {
 			return cacheEntry;
@@ -120,7 +126,6 @@ export default async function RemoteStaticImage(props: RemoteImageProps) {
 	const imageURL = new URL(props.src);
 	const imageFilename = convertToValidFilename(props.filename ?? props.alt);
 	const userSpecifiedWidth = props.width;
-	const isDevelopment = process.env.NODE_ENV === 'development';
 
 	const rawImageProps: Partial<RemoteImageProps> = { ...props };
 
@@ -156,7 +161,7 @@ export default async function RemoteStaticImage(props: RemoteImageProps) {
 		height: height,
 	};
 
-	if (process.env['NEXT_IS_EXPORT_WORKER'] !== 'true' && !isDevelopment) {
+	if (process.env['NEXT_IS_EXPORT_WORKER'] !== 'true' && !isRealDevelopmentMode) {
 		// Warn the user that they really should not be doing this
 		// We are not in the pre-rendering phase. We have been called from a NON static route.
 		// They are expecting us to optimize and save images while we are on the edge. When the static assets have already been deployed to a CND.
@@ -183,7 +188,7 @@ export default async function RemoteStaticImage(props: RemoteImageProps) {
 
 	const imageSpecificHash = hash(imageURL.toString(), require('node:crypto').createHash);
 
-	if (isDevelopment) {
+	if (isRealDevelopmentMode || shouldOptimizeImage) {
 		const filepath = getImageFilepathMeta(imageFilename, imageSpecificHash, NEXTJS_FILEPATH_PREFIX)(imageInfo.width, imageInfo.type);
 		const [_, errorImageAccess] = await safePromise(() => nodeFs.access(filepath));
 		if (errorImageAccess !== null) {
@@ -198,21 +203,14 @@ export default async function RemoteStaticImage(props: RemoteImageProps) {
 
 	await nodeFs.mkdir(NEXTJS_FILEPATH_PREFIX, { recursive: true });
 
-	const startTime = Date.now();
-	const reportTime = () => {
-		console.log(`Optimizing image took ${Math.round((Date.now() - startTime) / 1000)} seconds: ${imageFilename}`);
-	};
-
 	if (imageInfo.type === 'svg') {
 		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo);
-		await optimizeSvgAndWriteToDisk(svgEntry, imageBuffer, imageInfo);
-		reportTime();
+		await optimizeSvgAndWriteToDisk(svgEntry, imageBuffer);
 		return <img {...imageOptimizationAttributes} {...rawImageProps} src={svgEntry.src} alt={props.alt} />;
 	}
 
 	const pictureSources = getPictureSourcesNotSvg(false, imageFilename, imageSpecificHash, imageInfo, NEXTJS_FILEPATH_PREFIX, userSpecifiedWidth);
-	await optimizeImageAndWriteToDisk(pictureSources, imageBuffer, imageInfo, height, userSpecifiedWidth);
-	reportTime();
+	await optimizeImageAndWriteToDisk(pictureSources, imageBuffer, imageFilename, { userSpecifiedWidth: userSpecifiedWidth, inferredHeight: height });
 
 	const sources: JSX.Element[] = [];
 	for (const source of pictureSources) {
@@ -365,11 +363,7 @@ async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): 
 
 const OPTIMIZE_REMOTE_SVG_IMAGE_CACHE_KEY = (x: string) => `OPTIMIZE_REMOTE_SVG_IMAGE_CACHE_KEY:${x}`;
 
-async function optimizeSvgAndWriteToDisk(svgEntry: INTERNAL_SVGEntry, imageBuffer: Buffer, imageInfo: ImageInfo): Promise<void> {
-	if (imageInfo.type !== 'svg') {
-		throw new Error('This function optimizes only svg images');
-	}
-
+async function optimizeSvgAndWriteToDisk(svgEntry: INTERNAL_SVGEntry, imageBuffer: Buffer): Promise<void> {
 	const svgo: typeof SvgoType = requireWebpackExternalDependency__MakeWebpackNotBundleIt('svgo');
 	const nodeFs: typeof NodeFsType = require('node:fs/promises');
 
@@ -388,22 +382,15 @@ const OPTIMIZE_REMOTE_IMAGE_CACHE_KEY = (x: string) => `OPTIMIZE_REMOTE_IMAGE_CA
 async function optimizeImageAndWriteToDisk(
 	pictureSources: INTERNAL_PictureSource[],
 	imageBuffer: Buffer,
-	imageInfo: ImageInfo,
-	inferredHeight: number,
-	userSpecifiedWidth?: number,
+	imageFilenameToReport: string,
+	userSpecifiedWidthInferenceCheck?: UserSpecifiedWidthInferenceCheck,
 ): Promise<void> {
 	const sharp: typeof SharpType = requireWebpackExternalDependency__MakeWebpackNotBundleIt('sharp');
 	const nodeFs: typeof NodeFsType = require('node:fs/promises');
 
-	if (imageInfo.type === 'svg') {
-		throw new Error('This function can NOT optimize svg');
-	}
-
 	const exportFunction = async (optimizedImageBuffer: Buffer, filepath: string, targetImageInfo?: ImageInfo) => {
-		if (userSpecifiedWidth && targetImageInfo && targetImageInfo.height !== inferredHeight) {
-			throw new Error(
-				`THIS SHOULD NOT HAPPEN! The user specified the width of the image is ${userSpecifiedWidth} and the inferred hight is ${inferredHeight}. BUT sharp thinks that the correct height should be ${targetImageInfo.height}. If you see this error contact the owner of this code and provide them with this error message.`,
-			);
+		if (userSpecifiedWidthInferenceCheck && targetImageInfo) {
+			validateInferredWidth(userSpecifiedWidthInferenceCheck, targetImageInfo.height);
 		}
 
 		await nodeFs.writeFile(filepath, optimizedImageBuffer);
@@ -419,7 +406,7 @@ async function optimizeImageAndWriteToDisk(
 		await cacheStorage.setItem(localCacheKey, optimizedImageBuffer);
 	};
 
-	await optimizePictureSources(imageBuffer, pictureSources, exportFunction, getCacheFunction, setCacheFunction, sharp);
+	await optimizePictureSources(imageBuffer, pictureSources, exportFunction, getCacheFunction, setCacheFunction, sharp, imageFilenameToReport);
 }
 
 // biome-ignore lint/style/useNamingConvention: This is a hacky function. It's name reflects that.

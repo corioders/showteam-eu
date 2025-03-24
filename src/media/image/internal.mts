@@ -7,8 +7,28 @@ import type { BinaryLike, createHash as createHashType } from 'node:crypto';
 import type SharpType from 'sharp';
 import type SvgoType from 'svgo';
 
-import readImageInfoFromBufferInternal from 'buffer-image-size';
 import { IMAGE_FORMATS, IMAGE_SIZES, type ImageType } from './image.mjs';
+
+// TODO: Check if buffer-image-size works in the browser
+import readImageInfoFromBufferInternal from 'buffer-image-size';
+
+// Importing p-limit works on browser.
+import pLimit from 'p-limit';
+
+const SKIP_IMAGE_OPTIMIZATION_FLAG = 'CORIODERS_SKIP_IMAGE_OPTIMIZATION';
+const FORCE_IMAGE_OPTIMIZATION_FLAG = 'CORIODERS_FORCE_IMAGE_OPTIMIZATION';
+
+export function shouldOptimizeImages(): boolean {
+	if (process.env[FORCE_IMAGE_OPTIMIZATION_FLAG]) {
+		return true;
+	}
+
+	if (process.env[SKIP_IMAGE_OPTIMIZATION_FLAG]) {
+		return false;
+	}
+
+	return true;
+}
 
 export function hash(data: BinaryLike, createHash: typeof createHashType): string {
 	return createHash('shake256', { outputLength: 32 }).update(data).digest('hex');
@@ -57,6 +77,7 @@ export function getImageUrlMeta(imageFilename: string, imageSpecificHash: string
 export function getImageFilepathMeta(imageFilename: string, imageSpecificHash: string, baseFilePath: string) {
 	return (width: number, format: ImageType) => `${baseFilePath}/${getImageFilenameMeta(imageFilename, imageSpecificHash)(width, format)}`;
 }
+
 export function getPictureSourcesNotSvg(
 	isDevelopmentMode: boolean,
 	imageFilename: string,
@@ -139,6 +160,22 @@ export type ExportFunction = (optimizedImageBuffer: Buffer, filepath: string, ta
 export type GetCacheFunction = (cacheKey: string) => Promise<Buffer | null>;
 export type SetCacheFunction = (cacheKey: string, optimizedImageBuffer: Buffer) => Promise<void>;
 
+const CONCURRENCY_LIMIT = 1;
+const concurrencyLimit = pLimit(CONCURRENCY_LIMIT);
+
+function reportTime(startTime: number, wasCacheHit: boolean, imageFilenameToReport: string) {
+	let cacheHitMessage = '(cache miss)';
+	if (wasCacheHit === true) {
+		cacheHitMessage = ' (cache hit)';
+	}
+
+	const endTime = Date.now();
+	const timeItTook = Math.round((endTime - startTime) / 1000)
+		.toString()
+		.padEnd(3);
+	console.log(`Optimizing image took ${timeItTook} seconds ${cacheHitMessage}: ${imageFilenameToReport}`);
+}
+
 export async function optimizePictureSources(
 	imageBuffer: Buffer,
 	pictureSources: INTERNAL_PictureSource[],
@@ -146,39 +183,46 @@ export async function optimizePictureSources(
 	getCacheFunction: GetCacheFunction,
 	setCacheFunction: SetCacheFunction,
 	sharp: typeof SharpType,
+	imageFilenameToReport: string,
 ) {
-	// const optimizationPromises: Promise<void>[] = [];
-	for (const pictureSource of pictureSources) {
-		for (const sharpEntry of pictureSource.__sharpEntries) {
-			// const optimizationPromise = (async () => {
-			const cacheKey = sharpEntry.cacheKey;
-			const cachedOptimizedImageBuffer = await getCacheFunction(cacheKey);
-			if (cachedOptimizedImageBuffer) {
-				await exportFunction(cachedOptimizedImageBuffer, sharpEntry.filepath);
-				continue;
+	// Include an internal concurrency limit so that we are optimizing one image at the time.
+	//
+	// When using cloudflare, running more than one sharp instance at once usually causes segfaults.
+	await concurrencyLimit(async () => {
+		const startTime = Date.now();
+		let wasCacheHit = false;
+
+		for (const pictureSource of pictureSources) {
+			for (const sharpEntry of pictureSource.__sharpEntries) {
+				const cacheKey = sharpEntry.cacheKey;
+				const cachedOptimizedImageBuffer = await getCacheFunction(cacheKey);
+				if (cachedOptimizedImageBuffer) {
+					await exportFunction(cachedOptimizedImageBuffer, sharpEntry.filepath);
+					wasCacheHit = true;
+					continue;
+				}
+
+				const imageOptimization = sharp(imageBuffer, { animated: true, sequentialRead: true });
+
+				// By default sharp strips all of the image metadata that includes the correct rotation.
+				// To preserve the correct rotation *actually* rotate the image.
+				const imageOptimizationRotated = imageOptimization.rotate();
+
+				const localImageOptimizationFinal = imageOptimizationRotated.resize({ width: sharpEntry.targetWidth }).toFormat(sharpEntry.targetFormat);
+				const { data: optimizedImageBuffer, info } = await localImageOptimizationFinal.toBuffer({ resolveWithObject: true });
+
+				await exportFunction(optimizedImageBuffer, sharpEntry.filepath, {
+					width: info.width,
+					height: info.height,
+					type: sharpEntry.targetFormat,
+				});
+
+				await setCacheFunction(cacheKey, optimizedImageBuffer);
 			}
-
-			const imageOptimization = sharp(imageBuffer, { animated: true, sequentialRead: true });
-
-			// By default sharp strips all of the image metadata that includes the correct rotation.
-			// To preserve the correct rotation *actually* rotate the image.
-			const imageOptimizationRotated = imageOptimization.rotate();
-
-			const localImageOptimizationFinal = imageOptimizationRotated.resize({ width: sharpEntry.targetWidth }).toFormat(sharpEntry.targetFormat);
-			const { data: optimizedImageBuffer, info } = await localImageOptimizationFinal.toBuffer({ resolveWithObject: true });
-
-			await setCacheFunction(cacheKey, optimizedImageBuffer);
-			await exportFunction(optimizedImageBuffer, sharpEntry.filepath, {
-				width: info.width,
-				height: info.height,
-				type: sharpEntry.targetFormat,
-			});
-			// })();
-			// optimizationPromises.push(optimizationPromise);
 		}
-	}
 
-	// await Promise.all(optimizationPromises);
+		reportTime(startTime, wasCacheHit, imageFilenameToReport);
+	});
 }
 
 // biome-ignore lint/style/useNamingConvention: <explanation>
@@ -219,7 +263,26 @@ export function optimizeSvg(unsafeSvg: string, svgo: typeof SvgoType): string {
 // https://github.com/lovell/sharp/blob/7c631c0787915416e20a567a039516e99c81c42d/src/pipeline.cc#L176-L184
 export function inferHeight(currentWidth: number, currentHeight: number, newWidth: number): number {
 	const xFactor = currentWidth / newWidth;
-	const newHeight = Math.round(currentHeight / xFactor);
-
+	const newHeightNotRounded = currentHeight / xFactor;
+	const newHeight = Math.round(newHeightNotRounded);
 	return newHeight;
+}
+
+export interface UserSpecifiedWidthInferenceCheck {
+	userSpecifiedWidth?: number;
+	inferredHeight?: number;
+}
+
+export function validateInferredWidth({ userSpecifiedWidth, inferredHeight }: UserSpecifiedWidthInferenceCheck, actualHeight: number) {
+	if (!(userSpecifiedWidth && inferredHeight)) {
+		return;
+	}
+
+	if (inferredHeight === actualHeight) {
+		return;
+	}
+
+	const errorMessage = `THIS SHOULD NOT HAPPEN! The user specified the width of the image is ${userSpecifiedWidth} and the inferred height is ${inferredHeight}. BUT sharp thinks that the correct height should be ${actualHeight}. If you see this error contact the owner of this code and provide them with this error message.`;
+	console.log(errorMessage);
+	// throw new Error(errorMessage);
 }

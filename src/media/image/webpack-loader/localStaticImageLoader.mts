@@ -5,7 +5,6 @@
 
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import pLimit from 'p-limit';
 import sharp from 'sharp';
 import svgo from 'svgo';
 import { createStorage } from 'unstorage';
@@ -20,6 +19,8 @@ import {
 	optimizePictureSources,
 	optimizeSvg,
 	readImageInfoFromBuffer,
+	shouldOptimizeImages,
+	validateInferredWidth,
 } from '../internal.mjs';
 
 export interface LocalStaticImageImport {
@@ -62,6 +63,7 @@ const cache = createStorage({ driver: fsDriver({ base: '.next/cache/cstd-next-lo
 interface Options {
 	isDev: boolean;
 	isServer: boolean;
+	isEdgeServer: boolean;
 }
 
 const RESOURCE_QUERY_REGEX = /\?w=(?<width>\d+)\.scaled/;
@@ -70,24 +72,26 @@ const NEXTJS_CLIENT_BUILD_FILEPATH_PREFIX = 'static/media';
 const NEXTJS_SERVER_BUILD_FILEPATH_PREFIX = '../../static/media';
 const NEXTJS_SERVER_DEV_FILEPATH_PREFIX = '../static/media';
 
-const OPTIMIZE_IMAGES_ENV_FLAG = 'CORIODERS_OPTIMIZE_IMAGES';
-
-const CONCURRENCY_LIMIT = 1;
-const concurrencyLimit = pLimit(CONCURRENCY_LIMIT);
-
 // TODO: BLUUUR
+//
+// TODO: If the resourceQuery issue will not be resolved
+// move all of the optim to be done during the server-phase.
+// Having a split mind is not a good thing.
 const localStaticImageLoader: LoaderDefinitionFunction = async function localStaticImageLoader(this, contentNotRawType) {
 	this.cacheable(true);
 
 	const imageBuffer = contentNotRawType as unknown as Buffer;
 	const options = this.getOptions() as Options;
-	const isDevelopmentMode = options.isDev || (process.env[OPTIMIZE_IMAGES_ENV_FLAG] === 'false' && process.env['IS_CLOUDFLARE'] !== 'true');
+	const isDevelopmentMode = options.isDev || !shouldOptimizeImages();
 
 	let userSpecifiedWidth: number | undefined = undefined;
 	const matchedResourceQuery = this.resourceQuery.match(RESOURCE_QUERY_REGEX);
 	if (matchedResourceQuery?.groups?.width) {
 		userSpecifiedWidth = Number(matchedResourceQuery?.groups?.width);
 	}
+
+	// ==================================================
+	// ==================================================
 
 	// Hear me out. For some reason nextjs does not run this loader
 	// during client side compilation when the resourceQuery is provided.
@@ -96,35 +100,36 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	// https://discord.com/channels/752553802359505017/1352705911210377257/1352705911210377257
 	// https://github.com/vercel/next.js/issues/77413
 	//
-	let skipOptimization = false;
+	let shouldSkipEmittingTheFile = false;
 	if (options.isServer && !userSpecifiedWidth) {
-		skipOptimization = true;
+		shouldSkipEmittingTheFile = true;
+	}
+
+	// Okay, this is even funnier. When the image with a resourceQuery is used on
+	// a 'use client' route, then it is webpack loaded by both the server-phase and the client-phase.
+	// For now let's say we stick to the server-phase so we skip the optim while we're on the client.
+	if (!options.isServer && userSpecifiedWidth) {
+		shouldSkipEmittingTheFile = true;
+	}
+
+	if (options.isEdgeServer) {
+		shouldSkipEmittingTheFile = true;
 	}
 
 	let pathPrefix = NEXTJS_CLIENT_BUILD_FILEPATH_PREFIX;
-	if (options.isServer && !skipOptimization) {
+	if (options.isServer && !shouldSkipEmittingTheFile) {
 		pathPrefix = NEXTJS_SERVER_BUILD_FILEPATH_PREFIX;
 	}
-	if (options.isServer && !skipOptimization && options.isDev) {
+	if (options.isServer && !shouldSkipEmittingTheFile && options.isDev) {
 		pathPrefix = NEXTJS_SERVER_DEV_FILEPATH_PREFIX;
 	}
+
+	// ==================================================
+	// ==================================================
 
 	const imageSpecificHash = hash(imageBuffer, createHash);
 	const imageFilename = path.basename(this.resourcePath);
 	const imageInfo = readImageInfoFromBuffer(imageBuffer);
-	let startTime = Date.now();
-	const reportTime = (wasCacheHit?: boolean) => {
-		let cacheHitMessage = '(cache miss)';
-		if (wasCacheHit === true) {
-			cacheHitMessage = ' (cache hit)';
-		}
-
-		const endTime = Date.now();
-		const timeItTook = Math.round((endTime - startTime) / 1000)
-			.toString()
-			.padEnd(3);
-		console.log(`Optimizing image took ${timeItTook} seconds ${cacheHitMessage}: ${imageFilename}`);
-	};
 
 	let { width, height } = imageInfo;
 	if (userSpecifiedWidth) {
@@ -144,7 +149,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		const importReturnString = `export default ${JSON.stringify(importReturn)}`;
 
 		// We are optimizing images only while building client.
-		if (skipOptimization) {
+		if (shouldSkipEmittingTheFile) {
 			return importReturnString;
 		}
 
@@ -155,8 +160,6 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		}
 
 		const optimizedSvg = optimizeSvg(imageBuffer.toString(), svgo);
-		reportTime();
-
 		this.emitFile(svgEntry.filepath, optimizedSvg);
 
 		return importReturnString;
@@ -176,7 +179,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const importReturnString = `export default ${JSON.stringify(importReturn)}`;
 
 	// We are optimizing images only while building client.
-	if (skipOptimization) {
+	if (shouldSkipEmittingTheFile) {
 		return importReturnString;
 	}
 
@@ -191,39 +194,26 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		return importReturnString;
 	}
 
-	return await concurrencyLimit(async () => {
-		// We are queuing the requests. We do not want to count this queueing time.
-		startTime = Date.now();
+	const exportFunction = (optimizedImageBuffer: Buffer, filepath: string, targetImageInfo?: ImageInfo) => {
+		if (targetImageInfo) {
+			validateInferredWidth({ userSpecifiedWidth, inferredHeight: height }, targetImageInfo.height);
+		}
 
-		const exportFunction = (optimizedImageBuffer: Buffer, filepath: string, targetImageInfo?: ImageInfo) => {
-			if (userSpecifiedWidth && targetImageInfo && targetImageInfo.height !== height) {
-				throw new Error(
-					`THIS SHOULD NOT HAPPEN! The user specified the width of the image is ${userSpecifiedWidth} and the inferred hight is ${height}. BUT sharp thinks that the correct height should be ${targetImageInfo.height}. If you see this error contact the owner of this code and provide them with this error message.`,
-				);
-			}
+		this.emitFile(filepath, optimizedImageBuffer);
+		return Promise.resolve();
+	};
 
-			this.emitFile(filepath, optimizedImageBuffer);
-			return Promise.resolve();
-		};
+	const getCacheFunction = (cacheKey: string) => {
+		return cache.getItemRaw<Buffer>(cacheKey);
+	};
 
-		let wasThereACacheHit = false;
-		const getCacheFunction = async (cacheKey: string) => {
-			const optimizedImageBuffer = await cache.getItemRaw<Buffer>(cacheKey);
-			if (optimizedImageBuffer) {
-				wasThereACacheHit = true;
-			}
-			return optimizedImageBuffer;
-		};
+	const setCacheFunction = async (cacheKey: string, optimizedImageBuffer: Buffer) => {
+		await cache.setItemRaw(cacheKey, optimizedImageBuffer);
+	};
 
-		const setCacheFunction = async (cacheKey: string, optimizedImageBuffer: Buffer) => {
-			await cache.setItemRaw(cacheKey, optimizedImageBuffer);
-		};
+	await optimizePictureSources(imageBuffer, pictureSources, exportFunction, getCacheFunction, setCacheFunction, sharp, imageFilename);
 
-		await optimizePictureSources(imageBuffer, pictureSources, exportFunction, getCacheFunction, setCacheFunction, sharp);
-		reportTime(wasThereACacheHit);
-
-		return importReturnString;
-	});
+	return importReturnString;
 };
 
 export const raw = true;
