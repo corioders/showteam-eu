@@ -23,13 +23,14 @@ import {
 	type INTERNAL_PictureSource,
 	type INTERNAL_SVGEntry,
 	type ImageInfo,
-	type UserSpecifiedWidthInferenceCheck,
+	type ImageSize,
+	type UserSpecifiedInferenceCheck,
 	getImageFilepathMeta,
 	getImageUrlMeta,
 	getPictureSourcesNotSvg,
 	getSvgEntry,
 	hash,
-	inferHeight,
+	inferDimensions,
 	optimizePictureSources,
 	optimizeSvg,
 	readImageInfoFromBuffer,
@@ -75,10 +76,11 @@ const cacheStorage = ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE;
 const devCache = ourGlobalThis.__CSTD_NEXT_IMAGES_DEV_CACHE;
 
 // The height will be inferred form the width attribute (if any).
-export interface RemoteImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'height'> {
+export interface RemoteImageProps extends ImgHTMLAttributes<HTMLImageElement> {
 	src: string;
 	alt: string;
 	width?: number;
+	height?: number;
 	filename?: string;
 	fetchRequestInit?: RequestInit;
 }
@@ -125,7 +127,7 @@ export default async function RemoteStaticImage(props: RemoteImageProps) {
 	// Make sure that the src provided is a valid URL
 	const imageURL = new URL(props.src);
 	const imageFilename = convertToValidFilename(props.filename ?? props.alt);
-	const userSpecifiedWidth = props.width;
+	const userSpecified = { width: props.width, height: props.height };
 
 	const rawImageProps: Partial<RemoteImageProps> = { ...props };
 
@@ -137,6 +139,8 @@ export default async function RemoteStaticImage(props: RemoteImageProps) {
 	delete rawImageProps.filename;
 	// biome-ignore lint/performance/noDelete: Delete is required here
 	delete rawImageProps.width;
+	// biome-ignore lint/performance/noDelete: Delete is required here
+	delete rawImageProps.height;
 
 	const [fetchedImage, fetchError] = await fetchRemoteImage(imageURL, props.fetchRequestInit);
 	if (fetchError !== null) {
@@ -147,11 +151,11 @@ export default async function RemoteStaticImage(props: RemoteImageProps) {
 	const imageBuffer = fetchedImage.imageBuffer;
 	const imageInfo = fetchedImage.imageInfo;
 
-	let { width, height } = imageInfo;
-	if (userSpecifiedWidth) {
-		width = userSpecifiedWidth;
-		height = inferHeight(width, height, userSpecifiedWidth);
+	let imageSize: ImageSize = imageInfo;
+	if (userSpecified) {
+		imageSize = inferDimensions(imageInfo, userSpecified);
 	}
+	const { width, height } = imageSize;
 
 	const imageOptimizationAttributes = {
 		...IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES,
@@ -209,14 +213,14 @@ export default async function RemoteStaticImage(props: RemoteImageProps) {
 		return <img {...imageOptimizationAttributes} {...rawImageProps} src={svgEntry.src} alt={props.alt} />;
 	}
 
-	const pictureSources = getPictureSourcesNotSvg(false, imageFilename, imageSpecificHash, imageInfo, NEXTJS_FILEPATH_PREFIX, userSpecifiedWidth);
-	await optimizeImageAndWriteToDisk(pictureSources, imageBuffer, imageFilename, { userSpecifiedWidth: userSpecifiedWidth, inferredHeight: height });
+	const pictureSources = getPictureSourcesNotSvg(false, imageFilename, imageSpecificHash, imageInfo, NEXTJS_FILEPATH_PREFIX, userSpecified);
+	await optimizeImageAndWriteToDisk(pictureSources, imageBuffer, imageFilename, { userSpecified: userSpecified, inferredSize: imageSize });
 
 	const sources: JSX.Element[] = [];
 	for (const source of pictureSources) {
 		const sourceKey = `${imageSpecificHash}${source.type}`;
 
-		if (userSpecifiedWidth) {
+		if (userSpecified) {
 			sources.push(<source key={sourceKey} src={source.srcSetORsrc} type={source.type} />);
 			continue;
 		}
@@ -383,14 +387,14 @@ async function optimizeImageAndWriteToDisk(
 	pictureSources: INTERNAL_PictureSource[],
 	imageBuffer: Buffer,
 	imageFilenameToReport: string,
-	userSpecifiedWidthInferenceCheck?: UserSpecifiedWidthInferenceCheck,
+	userSpecifiedWidthInferenceCheck?: UserSpecifiedInferenceCheck,
 ): Promise<void> {
 	const sharp: typeof SharpType = requireWebpackExternalDependency__MakeWebpackNotBundleIt('sharp');
 	const nodeFs: typeof NodeFsType = require('node:fs/promises');
 
 	const exportFunction = async (optimizedImageBuffer: Buffer, filepath: string, targetImageInfo?: ImageInfo) => {
 		if (userSpecifiedWidthInferenceCheck && targetImageInfo) {
-			validateInferredWidth(userSpecifiedWidthInferenceCheck, targetImageInfo.height);
+			validateInferredWidth(userSpecifiedWidthInferenceCheck, targetImageInfo);
 		}
 
 		await nodeFs.writeFile(filepath, optimizedImageBuffer);

@@ -11,11 +11,13 @@ import { createStorage } from 'unstorage';
 import type { LoaderDefinitionFunction } from 'webpack';
 import {
 	type ImageInfo,
+	type ImageSize,
 	type PictureSource,
+	type UserSpecified,
 	getPictureSourcesNotSvg,
 	getSvgEntry,
 	hash,
-	inferHeight,
+	inferDimensions,
 	optimizePictureSources,
 	optimizeSvg,
 	readImageInfoFromBuffer,
@@ -66,7 +68,8 @@ interface Options {
 	isEdgeServer: boolean;
 }
 
-const RESOURCE_QUERY_REGEX = /\?w=(?<width>\d+)\.scaled/;
+const RESOURCE_QUERY_WIDTH_REGEX = /\?w=(?<width>\d+)\.scaled/;
+const RESOURCE_QUERY_HEIGHT_REGEX = /\?h=(?<height>\d+)\.scaled/;
 
 const NEXTJS_CLIENT_BUILD_FILEPATH_PREFIX = 'static/media';
 const NEXTJS_SERVER_BUILD_FILEPATH_PREFIX = '../../static/media';
@@ -84,10 +87,19 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const options = this.getOptions() as Options;
 	const isDevelopmentMode = options.isDev || !shouldOptimizeImages();
 
-	let userSpecifiedWidth: number | undefined = undefined;
-	const matchedResourceQuery = this.resourceQuery.match(RESOURCE_QUERY_REGEX);
-	if (matchedResourceQuery?.groups?.width) {
-		userSpecifiedWidth = Number(matchedResourceQuery?.groups?.width);
+	let userSpecified: undefined | UserSpecified = undefined;
+	if (this.resourceQuery) {
+		const widthSpecified = this.resourceQuery.match(RESOURCE_QUERY_WIDTH_REGEX)?.groups?.width;
+		const heightSpecified = this.resourceQuery.match(RESOURCE_QUERY_HEIGHT_REGEX)?.groups?.height;
+
+		if (widthSpecified || heightSpecified) {
+			userSpecified = {
+				height: heightSpecified ? Number(heightSpecified) : undefined,
+				width: widthSpecified ? Number(widthSpecified) : undefined,
+			};
+		} else {
+			throw new Error(`Cannot parse resourceQuery: ${this.resourceQuery}`);
+		}
 	}
 
 	// ==================================================
@@ -101,14 +113,14 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	// https://github.com/vercel/next.js/issues/77413
 	//
 	let shouldSkipEmittingTheFile = false;
-	if (options.isServer && !userSpecifiedWidth) {
+	if (options.isServer && !userSpecified) {
 		shouldSkipEmittingTheFile = true;
 	}
 
 	// Okay, this is even funnier. When the image with a resourceQuery is used on
 	// a 'use client' route, then it is webpack loaded by both the server-phase and the client-phase.
 	// For now let's say we stick to the server-phase so we skip the optim while we're on the client.
-	if (!options.isServer && userSpecifiedWidth) {
+	if (!options.isServer && userSpecified) {
 		shouldSkipEmittingTheFile = true;
 	}
 
@@ -131,11 +143,11 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const imageFilename = path.basename(this.resourcePath);
 	const imageInfo = readImageInfoFromBuffer(imageBuffer);
 
-	let { width, height } = imageInfo;
-	if (userSpecifiedWidth) {
-		height = inferHeight(width, height, userSpecifiedWidth);
-		width = userSpecifiedWidth;
+	let imageSize: ImageSize = imageInfo;
+	if (userSpecified) {
+		imageSize = inferDimensions(imageInfo, userSpecified);
 	}
+	const { width, height } = imageSize;
 
 	if (imageInfo.type === 'svg') {
 		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo, pathPrefix);
@@ -165,13 +177,13 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		return importReturnString;
 	}
 
-	const pictureSources = getPictureSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, pathPrefix, userSpecifiedWidth);
+	const pictureSources = getPictureSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, pathPrefix, userSpecified);
 	const loPictureSources: INTERNAL_LowOverheadPictureSource[] = pictureSources.map((ps) => ({ s: ps.srcSetORsrc, t: ps.type }));
 
 	const importReturn: INTERNAL_LocalStaticImageImport = {
 		contentHash: imageSpecificHash,
 		filename: imageFilename,
-		i: !!userSpecifiedWidth,
+		i: !!userSpecified,
 		w: width,
 		h: height,
 		s: loPictureSources,
@@ -196,7 +208,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 
 	const exportFunction = (optimizedImageBuffer: Buffer, filepath: string, targetImageInfo?: ImageInfo) => {
 		if (targetImageInfo) {
-			validateInferredWidth({ userSpecifiedWidth, inferredHeight: height }, targetImageInfo.height);
+			validateInferredWidth({ inferredSize: imageSize, userSpecified }, targetImageInfo);
 		}
 
 		this.emitFile(filepath, optimizedImageBuffer);

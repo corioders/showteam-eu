@@ -3,20 +3,20 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
-import type { BinaryLike, createHash as createHashType } from "node:crypto";
-import type SharpType from "sharp";
-import type SvgoType from "svgo";
+import type { BinaryLike, createHash as createHashType } from 'node:crypto';
+import type SharpType from 'sharp';
+import type SvgoType from 'svgo';
 
-import { IMAGE_FORMATS, IMAGE_SIZES, type ImageType } from "./image.mjs";
+import { IMAGE_FORMATS, IMAGE_SIZES, type ImageType } from './image.mjs';
 
 // TODO: Check if buffer-image-size works in the browser
-import readImageInfoFromBufferInternal from "buffer-image-size";
+import readImageInfoFromBufferInternal from 'buffer-image-size';
 
 // Importing p-limit works on browser.
-import pLimit from "p-limit";
+import pLimit from 'p-limit';
 
-const SKIP_IMAGE_OPTIMIZATION_FLAG = "CORIODERS_SKIP_IMAGE_OPTIMIZATION";
-const FORCE_IMAGE_OPTIMIZATION_FLAG = "CORIODERS_FORCE_IMAGE_OPTIMIZATION";
+const SKIP_IMAGE_OPTIMIZATION_FLAG = 'CORIODERS_SKIP_IMAGE_OPTIMIZATION';
+const FORCE_IMAGE_OPTIMIZATION_FLAG = 'CORIODERS_FORCE_IMAGE_OPTIMIZATION';
 
 export function shouldOptimizeImages(): boolean {
 	if (process.env[FORCE_IMAGE_OPTIMIZATION_FLAG]) {
@@ -30,13 +30,8 @@ export function shouldOptimizeImages(): boolean {
 	return true;
 }
 
-export function hash(
-	data: BinaryLike,
-	createHash: typeof createHashType,
-): string {
-	return createHash("shake256", { outputLength: 32 })
-		.update(data)
-		.digest("hex");
+export function hash(data: BinaryLike, createHash: typeof createHashType): string {
+	return createHash('shake256', { outputLength: 32 }).update(data).digest('hex');
 }
 
 export interface ImageInfo {
@@ -63,40 +58,51 @@ export interface INTERNAL_PictureSource extends PictureSource {
 // biome-ignore lint/style/useNamingConvention: <explanation>
 export interface INTERNAL_SharpEntry {
 	targetFormat: ImageType;
-	targetWidth: number;
+	targetSizeScaled: number;
+	targetSizeIsWidth: boolean;
 	filepath: string;
 
 	// Must be unique per image
 	cacheKey: string;
 }
 
-const NEXTJS_IMAGE_FOLDER = ".next/static/media";
-const NEXTJS_URL_PREFIX = "/_next/static/media";
+export interface UserSpecified {
+	width?: number;
+	height?: number;
+}
 
-function getImageFilenameMeta(
-	imageFilename: string,
-	imageSpecificHash: string,
-) {
-	return (width: number, format: ImageType) =>
-		`${imageFilename}.${imageSpecificHash}.${width.toString()}.${format}`;
+export interface ImageSize {
+	width: number;
+	height: number;
 }
-export function getImageUrlMeta(
-	imageFilename: string,
-	imageSpecificHash: string,
-	baseURL: string = NEXTJS_URL_PREFIX,
-) {
-	return (width: number, format: ImageType) =>
-		encodeURI(
-			`${baseURL}/${getImageFilenameMeta(imageFilename, imageSpecificHash)(width, format)}`,
-		);
+
+function validateUserSpecified(userSpecified: UserSpecified) {
+	if (userSpecified.width && userSpecified.height) {
+		throw new Error('You have specified both width and height. Only one is supported, the other one is inferred while kipping the image ratio.');
+	}
+
+	if (!(userSpecified.width || userSpecified.height)) {
+		throw new Error('THIS SHOULD NOT HAPPEN. The UserSpecified object was passed without height and width.');
+	}
 }
-export function getImageFilepathMeta(
-	imageFilename: string,
-	imageSpecificHash: string,
-	baseFilePath: string,
-) {
-	return (width: number, format: ImageType) =>
-		`${baseFilePath}/${getImageFilenameMeta(imageFilename, imageSpecificHash)(width, format)}`;
+
+// This function scaled the size by a factor so that the image presents itself as the original
+// size but in reality it's *factor bigger. This results in higher quality images.
+function getScaledWidthOrHeight(widthOrHeight: number): number {
+	return widthOrHeight * 2;
+}
+
+const NEXTJS_IMAGE_FOLDER = '.next/static/media';
+const NEXTJS_URL_PREFIX = '/_next/static/media';
+
+function getImageFilenameMeta(imageFilename: string, imageSpecificHash: string) {
+	return (width: number, format: ImageType) => `${imageFilename}.${imageSpecificHash}.${width.toString()}.${format}`;
+}
+export function getImageUrlMeta(imageFilename: string, imageSpecificHash: string, baseURL: string = NEXTJS_URL_PREFIX) {
+	return (width: number, format: ImageType) => encodeURI(`${baseURL}/${getImageFilenameMeta(imageFilename, imageSpecificHash)(width, format)}`);
+}
+export function getImageFilepathMeta(imageFilename: string, imageSpecificHash: string, baseFilePath: string) {
+	return (width: number, format: ImageType) => `${baseFilePath}/${getImageFilenameMeta(imageFilename, imageSpecificHash)(width, format)}`;
 }
 
 export function getPictureSourcesNotSvg(
@@ -105,45 +111,63 @@ export function getPictureSourcesNotSvg(
 	imageSpecificHash: string,
 	imageInfo: ImageInfo,
 	baseFilePath: string,
-	userSpecifiedWidth?: number,
+	userSpecified?: UserSpecified,
 	baseURL: string = NEXTJS_URL_PREFIX,
 ): INTERNAL_PictureSource[] {
-	const getImageUrl = getImageUrlMeta(
-		imageFilename,
-		imageSpecificHash,
-		baseURL,
-	);
-	const getImageFilepath = getImageFilepathMeta(
-		imageFilename,
-		imageSpecificHash,
-		baseFilePath,
-	);
+	const getImageUrl = getImageUrlMeta(imageFilename, imageSpecificHash, baseURL);
+	const getImageFilepath = getImageFilepathMeta(imageFilename, imageSpecificHash, baseFilePath);
 
-	if (imageInfo.type === "svg") {
-		throw new Error("Svg image cannot be treated as a regular image");
+	if (imageInfo.type === 'svg') {
+		throw new Error('Svg image cannot be treated as a regular image');
 	}
 
 	const imageFormats = isDevelopmentMode ? [imageInfo.type] : IMAGE_FORMATS;
-	if (userSpecifiedWidth) {
-		if (userSpecifiedWidth > imageInfo.width) {
-			throw new Error(
-				`User specified width of ${userSpecifiedWidth}. This requires upscaling of the image. The original image has width of ${imageInfo.width}.`,
+	if (userSpecified) {
+		validateUserSpecified(userSpecified);
+		const inferredDimensions = inferDimensions(imageInfo, userSpecified);
+
+		if (getScaledWidthOrHeight(inferredDimensions.width) > imageInfo.width || getScaledWidthOrHeight(inferredDimensions.height) > imageInfo.height) {
+			console.log(
+				`WARNING ${imageFilename}: The user specified width or height is too big for the image. The minimal image size should be ${getScaledWidthOrHeight(inferredDimensions.width)}x${getScaledWidthOrHeight(inferredDimensions.height)}. This image will be upscaled by the browser.`,
 			);
+		}
+
+		let targetSize = undefined;
+		let targetSizeIsWidth = true;
+		if (userSpecified.width) {
+			targetSize = getScaledWidthOrHeight(userSpecified.width);
+			targetSizeIsWidth = true;
+			if (targetSize > imageInfo.width) {
+				targetSize = imageInfo.width;
+			}
+		}
+		if (userSpecified.height) {
+			targetSize = getScaledWidthOrHeight(userSpecified.height);
+			targetSizeIsWidth = false;
+			if (targetSize > imageInfo.height) {
+				targetSize = imageInfo.width;
+				targetSizeIsWidth = true;
+			}
+		}
+
+		if (!targetSize) {
+			throw new Error(`THIS SHOULD NOT HAPPENED: User did not specify either width or height but we still ended up here. ${userSpecified}`);
 		}
 
 		const sources: INTERNAL_PictureSource[] = [];
 		for (const targetFormat of imageFormats) {
 			sources.push({
-				srcSetORsrc: getImageUrl(userSpecifiedWidth, targetFormat),
+				srcSetORsrc: getImageUrl(inferredDimensions.width, targetFormat),
 				type: `image/${targetFormat}`,
 
 				__sharpEntries: [
 					{
 						targetFormat: targetFormat,
-						targetWidth: userSpecifiedWidth,
-						filepath: getImageFilepath(userSpecifiedWidth, targetFormat),
+						targetSizeScaled: targetSize,
+						targetSizeIsWidth,
+						filepath: getImageFilepath(inferredDimensions.width, targetFormat),
 
-						cacheKey: `${imageSpecificHash}.${userSpecifiedWidth}.${targetFormat}`,
+						cacheKey: `${imageSpecificHash}.${inferredDimensions.width}.${targetFormat}`,
 					},
 				],
 			});
@@ -153,11 +177,9 @@ export function getPictureSourcesNotSvg(
 	}
 
 	const sources: INTERNAL_PictureSource[] = [];
-	const targetWidths = isDevelopmentMode
-		? [imageInfo.width]
-		: [...IMAGE_SIZES, imageInfo.width].sort((a, b) => a - b);
+	const targetWidths = isDevelopmentMode ? [imageInfo.width] : [...IMAGE_SIZES, imageInfo.width].sort((a, b) => a - b);
 	for (const targetFormat of imageFormats) {
-		let srcSetPerFormat = "";
+		let srcSetPerFormat = '';
 
 		const sharpEntries: INTERNAL_SharpEntry[] = [];
 		for (const targetWidth of targetWidths) {
@@ -170,7 +192,8 @@ export function getPictureSourcesNotSvg(
 			srcSetPerFormat += `${getImageUrl(targetWidth, targetFormat)} ${targetWidth}w, `;
 			sharpEntries.push({
 				targetFormat: targetFormat,
-				targetWidth: targetWidth,
+				targetSizeScaled: targetWidth,
+				targetSizeIsWidth: true,
 				filepath: getImageFilepath(targetWidth, targetFormat),
 
 				cacheKey: `${imageSpecificHash}.${targetWidth}.${targetFormat}`,
@@ -189,37 +212,24 @@ export function getPictureSourcesNotSvg(
 	return sources;
 }
 
-export type ExportFunction = (
-	optimizedImageBuffer: Buffer,
-	filepath: string,
-	targetImageInfo?: ImageInfo,
-) => Promise<void>;
+export type ExportFunction = (optimizedImageBuffer: Buffer, filepath: string, targetImageInfo?: ImageInfo) => Promise<void>;
 export type GetCacheFunction = (cacheKey: string) => Promise<Buffer | null>;
-export type SetCacheFunction = (
-	cacheKey: string,
-	optimizedImageBuffer: Buffer,
-) => Promise<void>;
+export type SetCacheFunction = (cacheKey: string, optimizedImageBuffer: Buffer) => Promise<void>;
 
 const CONCURRENCY_LIMIT = 1;
 const concurrencyLimit = pLimit(CONCURRENCY_LIMIT);
 
-function reportTime(
-	startTime: number,
-	wasCacheHit: boolean,
-	imageFilenameToReport: string,
-) {
-	let cacheHitMessage = "(cache miss)";
+function reportTime(startTime: number, wasCacheHit: boolean, imageFilenameToReport: string) {
+	let cacheHitMessage = '(cache miss)';
 	if (wasCacheHit === true) {
-		cacheHitMessage = " (cache hit)";
+		cacheHitMessage = ' (cache hit)';
 	}
 
 	const endTime = Date.now();
 	const timeItTook = Math.round((endTime - startTime) / 1000)
 		.toString()
 		.padEnd(3);
-	console.log(
-		`Optimizing image took ${timeItTook} seconds ${cacheHitMessage}: ${imageFilenameToReport}`,
-	);
+	console.log(`Optimizing image took ${timeItTook} seconds ${cacheHitMessage}: ${imageFilenameToReport}`);
 }
 
 export async function optimizePictureSources(
@@ -257,13 +267,12 @@ export async function optimizePictureSources(
 				// To preserve the correct rotation *actually* rotate the image.
 				const imageOptimizationRotated = imageOptimization.rotate();
 
-				const localImageOptimizationFinal = imageOptimizationRotated
-					.resize({ width: sharpEntry.targetWidth })
-					.toFormat(sharpEntry.targetFormat);
-				const { data: optimizedImageBuffer, info } =
-					await localImageOptimizationFinal.toBuffer({
-						resolveWithObject: true,
-					});
+				const resizeOptions = sharpEntry.targetSizeIsWidth ? { width: sharpEntry.targetSizeScaled } : { height: sharpEntry.targetSizeScaled };
+
+				const localImageOptimizationFinal = imageOptimizationRotated.resize(resizeOptions).toFormat(sharpEntry.targetFormat);
+				const { data: optimizedImageBuffer, info } = await localImageOptimizationFinal.toBuffer({
+					resolveWithObject: true,
+				});
 
 				await exportFunction(optimizedImageBuffer, sharpEntry.filepath, {
 					width: info.width,
@@ -292,26 +301,18 @@ export function getSvgEntry(
 	baseFilePath: string = NEXTJS_IMAGE_FOLDER,
 	baseURL: string = NEXTJS_URL_PREFIX,
 ): INTERNAL_SVGEntry {
-	if (imageInfo.type !== "svg") {
-		throw new Error("getSvgEntry works only for svg images");
+	if (imageInfo.type !== 'svg') {
+		throw new Error('getSvgEntry works only for svg images');
 	}
 
-	const getImageUrl = getImageUrlMeta(
-		imageFilename,
-		imageSpecificHash,
-		baseURL,
-	);
-	const getImageFilepath = getImageFilepathMeta(
-		imageFilename,
-		imageSpecificHash,
-		baseFilePath,
-	);
+	const getImageUrl = getImageUrlMeta(imageFilename, imageSpecificHash, baseURL);
+	const getImageFilepath = getImageFilepathMeta(imageFilename, imageSpecificHash, baseFilePath);
 
 	// We can't depend on width. If the width changed the filename also changes and the browser invalidates the cache. Even tough only the js changed.
 	const fakeWidth = 0;
 	return {
-		src: getImageUrl(fakeWidth, "svg"),
-		filepath: getImageFilepath(fakeWidth, "svg"),
+		src: getImageUrl(fakeWidth, 'svg'),
+		filepath: getImageFilepath(fakeWidth, 'svg'),
 	};
 }
 
@@ -325,36 +326,55 @@ export function optimizeSvg(unsafeSvg: string, svgo: typeof SvgoType): string {
 // https://github.com/lovell/sharp/blob/7c631c0787915416e20a567a039516e99c81c42d/src/pipeline.cc#L176-L184
 //
 // Follow the issue: https://github.com/lovell/sharp/issues/4353
-export function inferHeight(
-	currentWidth: number,
-	currentHeight: number,
-	newWidth: number,
-): number {
-	const xFactor = currentWidth / newWidth;
-	const newHeightNotRounded = currentHeight / xFactor;
-	const newHeight = Math.round(newHeightNotRounded);
-	return newHeight;
+export function inferDimensions(currentSize: ImageSize, userSpecified: UserSpecified): ImageSize {
+	validateUserSpecified(userSpecified);
+
+	const newSize = { width: currentSize.width, height: currentSize.height };
+
+	if (userSpecified.width) {
+		const ratio = currentSize.width / userSpecified.width;
+		const newHeightNotRounded = currentSize.height / ratio;
+		const newHeight = Math.round(newHeightNotRounded);
+		newSize.height = newHeight;
+		newSize.width = userSpecified.width;
+	}
+
+	if (userSpecified.height) {
+		const ratio = currentSize.height / userSpecified.height;
+		const newWidthNotRounded = currentSize.width / ratio;
+		const newWidth = Math.round(newWidthNotRounded);
+		newSize.width = newWidth;
+		newSize.height = userSpecified.height;
+	}
+
+	return newSize;
 }
 
-export interface UserSpecifiedWidthInferenceCheck {
-	userSpecifiedWidth?: number;
-	inferredHeight?: number;
+export interface UserSpecifiedInferenceCheck {
+	userSpecified?: UserSpecified;
+	inferredSize?: ImageSize;
 }
 
 // Make this function throw when we get a good replay: https://github.com/lovell/sharp/issues/4353
-export function validateInferredWidth(
-	{ userSpecifiedWidth, inferredHeight }: UserSpecifiedWidthInferenceCheck,
-	actualHeight: number,
-) {
-	if (!(userSpecifiedWidth && inferredHeight)) {
+export function validateInferredWidth(userSpecifiedIC: UserSpecifiedInferenceCheck, actualSize: ImageSize) {
+	if (!(userSpecifiedIC.userSpecified && userSpecifiedIC.inferredSize)) {
 		return;
 	}
+	validateUserSpecified(userSpecifiedIC.userSpecified);
 
-	if (inferredHeight === actualHeight) {
-		return;
+	if (userSpecifiedIC.userSpecified.width) {
+		if (userSpecifiedIC.inferredSize.height === actualSize.height) {
+			return;
+		}
 	}
 
-	const errorMessage = `THIS SHOULD NOT HAPPEN! The user specified the width of the image is ${userSpecifiedWidth} and the inferred height is ${inferredHeight}. BUT sharp thinks that the correct height should be ${actualHeight}. If you see this error contact the owner of this code and provide them with this error message.`;
+	if (userSpecifiedIC.userSpecified.height) {
+		if (userSpecifiedIC.inferredSize.width === actualSize.height) {
+			return;
+		}
+	}
+
+	const errorMessage = `THIS SHOULD NOT HAPPEN! The user specified ${JSON.stringify(userSpecifiedIC.userSpecified)} and the inferred is ${JSON.stringify(userSpecifiedIC.inferredSize)}, but sharp thinks the size should be ${JSON.stringify(actualSize)}. If you see this error contact the owner of this code and provide them with this error message.`;
 	console.log(errorMessage);
 	// throw new Error(errorMessage);
 }
