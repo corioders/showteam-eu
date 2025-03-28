@@ -46,11 +46,13 @@ export default function LocalStaticImage(props: LocalStaticImageProps) {
 	}
 
 	if (props.sizes && src.z) {
-		throw new Error('When you are importing using the resource query and you specified only one width OR height then setting sizes property is NOT necessary');
+		throw new Error(
+			`When you are importing using the resource query and you specified only one width OR height then setting sizes property is NOT necessary: ${src.s[0].r}`,
+		);
 	}
 
 	if (!(props.sizes || src.z)) {
-		console.log('Sizes can be omitted ONLY when importing using the resource query and specifying only ONE width OR height');
+		console.log(`Sizes can be omitted ONLY when importing using the resource query and specifying only ONE width OR height: ${src.s[0].r}`);
 		// throw new Error('Sizes can be omitted ONLY when importing using the resource query and specifying only ONE width OR height');
 	}
 

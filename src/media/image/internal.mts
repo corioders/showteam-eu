@@ -148,6 +148,16 @@ export function getPictureSourcesNotSvg(
 	targetWidths = [...new Set(targetWidths)];
 	targetWidths = targetWidths.sort((a, b) => a - b);
 
+	if (userSpecified) {
+		for (const targetWidth of targetWidths) {
+			if (targetWidth > imageInfo.width) {
+				console.log(
+					`!WARNING! (<TOOO: DOCS LINK>) Image was requested with a heigher target width than original. Consider replacing the original image with a bigger version: ${imageFilename} Width: ${imageInfo.width} Requested width: ${targetWidth}`,
+				);
+			}
+		}
+	}
+
 	if (isDevelopmentMode) {
 		targetWidths = [imageInfo.width];
 	}
