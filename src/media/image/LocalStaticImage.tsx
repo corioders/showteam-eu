@@ -12,60 +12,63 @@ import type { INTERNAL_LocalStaticImageImport, LocalStaticImageImport as LocalSt
 
 export type LocalStaticImageImport = LocalStaticImageImportInternal;
 
-// If user would like to provide with, the query parameter `?w=<number>` is the approach. Height is then inferred
-export interface LocalStaticImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'width' | 'height'> {
+export interface LocalStaticImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'alt' | 'sizes' | 'width' | 'height'> {
 	src: LocalStaticImageImport;
 	alt: string;
+	sizes?: string;
 }
 
 // TODO: Error message when the user requested width does not match the actual with of the image at runtime. Bounding box etc...
 export default function LocalStaticImage(props: LocalStaticImageProps) {
 	const src = props.src as INTERNAL_LocalStaticImageImport;
 
-	const rawImageProps = { ...props } as unknown as ImgHTMLAttributes<HTMLImageElement>;
+	const userImageProps: Partial<LocalStaticImageProps> = { ...props };
 
 	// biome-ignore lint/performance/noDelete: Delete is required here
-	delete rawImageProps.src;
+	delete userImageProps.src;
 	// biome-ignore lint/performance/noDelete: Delete is required here
-	delete rawImageProps.alt;
+	delete userImageProps.alt;
+	// biome-ignore lint/performance/noDelete: Delete is required here
+	delete userImageProps.sizes;
 
-	const imageOptimizationAttributes = {
+	const imageOptimizationAttributes: ImgHTMLAttributes<HTMLImageElement> = {
 		...IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES,
-		// TODO: Figure out correct sizes
-		sizes: '100vw',
 		width: src.w,
 		height: src.h,
 	};
 
 	if (src.g) {
-		return <img {...imageOptimizationAttributes} {...rawImageProps} src={src.g} alt={props.alt} />;
+		return <img {...imageOptimizationAttributes} {...userImageProps} src={src.g} alt={props.alt} />;
 	}
 
 	if (!src.s) {
 		throw new Error('Either src.g OR src.s is required');
 	}
 
+	if (props.sizes && src.z) {
+		throw new Error('When you are importing using the resource query and you specified only one width OR height then setting sizes property is NOT necessary');
+	}
+
+	if (!(props.sizes || src.z)) {
+		console.log('Sizes can be omitted ONLY when importing using the resource query and specifying only ONE width OR height');
+		// throw new Error('Sizes can be omitted ONLY when importing using the resource query and specifying only ONE width OR height');
+	}
+
+	if (src.z) {
+		imageOptimizationAttributes.sizes = src.z;
+	}
+
 	const sources: JSX.Element[] = [];
 	for (const source of src.s) {
 		const sourceKey = `${src.contentHash}${source.t}`;
-		// The size is user specified we only have one size to work with.
-		if (src.i) {
-			sources.push(<source key={sourceKey} src={source.s} type={source.t} />);
-			continue;
-		}
-
-		sources.push(<source key={sourceKey} srcSet={source.s} type={source.t} />);
+		sources.push(<source key={sourceKey} srcSet={source.s} src={source.r} type={source.t} />);
 	}
 
-	let imageElement = <img {...imageOptimizationAttributes} {...rawImageProps} srcSet={src.s[0].s} alt={props.alt} />;
-	if (src.i) {
-		imageElement = <img {...imageOptimizationAttributes} {...rawImageProps} src={src.s[0].s} alt={props.alt} />;
-	}
-
+	const defaultImageFallbackSource = src.s[0];
 	return (
 		<picture>
 			{sources}
-			{imageElement}
+			<img {...imageOptimizationAttributes} {...userImageProps} srcSet={defaultImageFallbackSource.s} src={defaultImageFallbackSource.r} alt={props.alt} />
 		</picture>
 	);
 }

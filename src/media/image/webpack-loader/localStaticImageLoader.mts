@@ -10,19 +10,18 @@ import svgo from 'svgo';
 import { createStorage } from 'unstorage';
 import type { LoaderDefinitionFunction } from 'webpack';
 import {
-	type ImageInfo,
 	type ImageSize,
 	type PictureSource,
 	type UserSpecified,
 	getPictureSourcesNotSvg,
 	getSvgEntry,
 	hash,
-	inferDimensions,
+	inferImageSize,
 	optimizePictureSources,
 	optimizeSvg,
 	readImageInfoFromBuffer,
 	shouldOptimizeImages,
-	validateInferredWidth,
+	validateUserSpecified,
 } from '../internal.mjs';
 
 export interface LocalStaticImageImport {
@@ -39,10 +38,10 @@ export interface INTERNAL_LocalStaticImageImport extends LocalStaticImageImport 
 	// Height of the image. Height is either inferred from the user specified width or or taken from the original image.
 	h: number;
 
-	// Either i and s are present OR g is present. Never both
+	// Either o or/and s are present OR g is present. Never both
 
-	// Is size specified by the user in the loader query.
-	i?: boolean;
+	// siZes of the image. When the user specifies width or height in the loader query, then the corresponding WIDTH is put into this z
+	z?: string;
 
 	// Optimized sources of the image.
 	s?: INTERNAL_LowOverheadPictureSource[];
@@ -53,8 +52,11 @@ export interface INTERNAL_LocalStaticImageImport extends LocalStaticImageImport 
 
 // biome-ignore lint/style/useNamingConvention: We want to emphasize this is an internal interface
 interface INTERNAL_LowOverheadPictureSource {
-	// if `i` is set this is the src of the image, otherwise this is the srcSet of the image.
+	// The srcSet of the image.
 	s: string;
+
+	// The fallback sRc of the image
+	r: string;
 
 	// Type of the picture source.
 	t: PictureSource['type'];
@@ -70,6 +72,9 @@ interface Options {
 
 const RESOURCE_QUERY_WIDTH_REGEX = /\?w=(?<width>\d+)\.scaled/;
 const RESOURCE_QUERY_HEIGHT_REGEX = /\?h=(?<height>\d+)\.scaled/;
+
+const RESOURCE_QUERY_WIDTH_ARRAY_REGEX = /\?w=(?<width>\[[\d+|,| ]*\])\.scaled/;
+const RESOURCE_QUERY_HEIGHT_ARRAY_REGEX = /\?h=(?<height>\[[\d+|,| ]*\])\.scaled/;
 
 const NEXTJS_CLIENT_BUILD_FILEPATH_PREFIX = 'static/media';
 const NEXTJS_SERVER_BUILD_FILEPATH_PREFIX = '../../static/media';
@@ -92,11 +97,25 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		const widthSpecified = this.resourceQuery.match(RESOURCE_QUERY_WIDTH_REGEX)?.groups?.width;
 		const heightSpecified = this.resourceQuery.match(RESOURCE_QUERY_HEIGHT_REGEX)?.groups?.height;
 
+		const widthArraySpecified = this.resourceQuery.match(RESOURCE_QUERY_WIDTH_ARRAY_REGEX)?.groups?.width;
+		const heightArraySpecified = this.resourceQuery.match(RESOURCE_QUERY_HEIGHT_ARRAY_REGEX)?.groups?.height;
+
 		if (widthSpecified || heightSpecified) {
 			userSpecified = {
-				height: heightSpecified ? Number(heightSpecified) : undefined,
 				width: widthSpecified ? Number(widthSpecified) : undefined,
+				height: heightSpecified ? Number(heightSpecified) : undefined,
 			};
+		}
+
+		if (widthArraySpecified || heightArraySpecified) {
+			userSpecified = {
+				width: widthArraySpecified ? JSON.parse(widthArraySpecified) : undefined,
+				height: heightArraySpecified ? JSON.parse(heightArraySpecified) : undefined,
+			};
+		}
+
+		if (userSpecified) {
+			validateUserSpecified(userSpecified);
 		} else {
 			throw new Error(`Cannot parse resourceQuery: ${this.resourceQuery}`);
 		}
@@ -143,19 +162,25 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const imageFilename = path.basename(this.resourcePath);
 	const imageInfo = readImageInfoFromBuffer(imageBuffer);
 
-	let imageSize: ImageSize = imageInfo;
-	if (userSpecified) {
-		imageSize = inferDimensions(imageInfo, userSpecified);
+	// So the conditions go like follows:
+	// IF the user did not specify anything we just set the original size
+	// IF the user specified only one width OR one height, we infer the other size and set that as width and height of the image & we set the sizes to the inferred width
+	// IF the user specified width array OR height array then we set the original size
+	let imageSizeForTheImgElement: ImageSize = imageInfo;
+	let sizes: string | undefined = undefined;
+	if (userSpecified && !Array.isArray(userSpecified.width) && !Array.isArray(userSpecified.height)) {
+		imageSizeForTheImgElement = inferImageSize(imageInfo, userSpecified.width, userSpecified.height);
+		sizes = `${imageSizeForTheImgElement.width}px`;
 	}
-	const { width, height } = imageSize;
 
 	if (imageInfo.type === 'svg') {
 		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo, pathPrefix);
 		const importReturn: INTERNAL_LocalStaticImageImport = {
 			contentHash: imageSpecificHash,
 			filename: imageFilename,
-			w: width,
-			h: height,
+
+			w: imageSizeForTheImgElement.width,
+			h: imageSizeForTheImgElement.height,
 			g: svgEntry.src,
 		};
 		const importReturnString = `export default ${JSON.stringify(importReturn)}`;
@@ -178,15 +203,16 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	}
 
 	const pictureSources = getPictureSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, pathPrefix, userSpecified);
-	const loPictureSources: INTERNAL_LowOverheadPictureSource[] = pictureSources.map((ps) => ({ s: ps.srcSetORsrc, t: ps.type }));
+	const loPictureSources: INTERNAL_LowOverheadPictureSource[] = pictureSources.map((ps) => ({ s: ps.srcSet, r: ps.fallbackSrc, t: ps.type }));
 
 	const importReturn: INTERNAL_LocalStaticImageImport = {
 		contentHash: imageSpecificHash,
 		filename: imageFilename,
-		i: !!userSpecified,
-		w: width,
-		h: height,
+
+		w: imageSizeForTheImgElement.width,
+		h: imageSizeForTheImgElement.height,
 		s: loPictureSources,
+		z: sizes,
 	};
 	const importReturnString = `export default ${JSON.stringify(importReturn)}`;
 
@@ -195,7 +221,6 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		return importReturnString;
 	}
 
-	// TODO: Figure out if we'd like to rescale the images as the user requested in the ?w query.
 	if (isDevelopmentMode) {
 		if (pictureSources.length !== 1 || pictureSources[0].__sharpEntries.length !== 1) {
 			throw new Error('Expected only one source and one sharpEntry while in the development mode.');
@@ -206,11 +231,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		return importReturnString;
 	}
 
-	const exportFunction = (optimizedImageBuffer: Buffer, filepath: string, targetImageInfo?: ImageInfo) => {
-		if (targetImageInfo) {
-			validateInferredWidth({ inferredSize: imageSize, userSpecified }, targetImageInfo);
-		}
-
+	const exportFunction = (optimizedImageBuffer: Buffer, filepath: string) => {
 		this.emitFile(filepath, optimizedImageBuffer);
 		return Promise.resolve();
 	};

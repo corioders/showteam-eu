@@ -44,7 +44,7 @@ const nextConfig: NextConfig = {
 				isEdgeServer: isEdgeServer,
 
 				// Make our loader env dependent.
-				__env: process.env,
+				__env: JSON.stringify( process.env),
 			},
 		});
 

@@ -7,7 +7,7 @@ import type { BinaryLike, createHash as createHashType } from 'node:crypto';
 import type SharpType from 'sharp';
 import type SvgoType from 'svgo';
 
-import { IMAGE_FORMATS, IMAGE_SIZES, type ImageType } from './image.mjs';
+import { type ImageType, TARGET_IMAGE_FORMATS, TARGET_IMAGE_SIZES, getListOfScaledWidths } from './image.mjs';
 
 // TODO: Check if buffer-image-size works in the browser
 import readImageInfoFromBufferInternal from 'buffer-image-size';
@@ -45,8 +45,8 @@ export function readImageInfoFromBuffer(imageBuffer: Buffer): ImageInfo {
 }
 
 export interface PictureSource {
-	// If userSpecifiedWidth is set, only this width is generated
-	srcSetORsrc: string;
+	srcSet: string;
+	fallbackSrc: string;
 	type: `image/${ImageType}`;
 }
 
@@ -58,8 +58,7 @@ export interface INTERNAL_PictureSource extends PictureSource {
 // biome-ignore lint/style/useNamingConvention: <explanation>
 export interface INTERNAL_SharpEntry {
 	targetFormat: ImageType;
-	targetSizeScaled: number;
-	targetSizeIsWidth: boolean;
+	targetWidth: number;
 	filepath: string;
 
 	// Must be unique per image
@@ -67,8 +66,8 @@ export interface INTERNAL_SharpEntry {
 }
 
 export interface UserSpecified {
-	width?: number;
-	height?: number;
+	width?: number | number[];
+	height?: number | number[];
 }
 
 export interface ImageSize {
@@ -76,13 +75,21 @@ export interface ImageSize {
 	height: number;
 }
 
-function validateUserSpecified(userSpecified: UserSpecified) {
+export function validateUserSpecified(userSpecified: UserSpecified) {
 	if (userSpecified.width && userSpecified.height) {
 		throw new Error('You have specified both width and height. Only one is supported, the other one is inferred while kipping the image ratio.');
 	}
 
 	if (!(userSpecified.width || userSpecified.height)) {
 		throw new Error('THIS SHOULD NOT HAPPEN. The UserSpecified object was passed without height and width.');
+	}
+
+	if (Array.isArray(userSpecified.width) && userSpecified.width.length < 2) {
+		throw new Error(`User specified width array containing less than two items. Switch to the non-array syntax ${userSpecified.width}`);
+	}
+
+	if (Array.isArray(userSpecified.height) && userSpecified.height.length < 2) {
+		throw new Error(`User specified height array containing less than two items. Switch to the non-array syntax ${userSpecified.height}`);
 	}
 }
 
@@ -121,63 +128,30 @@ export function getPictureSourcesNotSvg(
 		throw new Error('Svg image cannot be treated as a regular image');
 	}
 
-	const imageFormats = isDevelopmentMode ? [imageInfo.type] : IMAGE_FORMATS;
+	const imageFormats = isDevelopmentMode ? [imageInfo.type] : TARGET_IMAGE_FORMATS;
+	let targetWidths = [...TARGET_IMAGE_SIZES, imageInfo.width];
+
 	if (userSpecified) {
 		validateUserSpecified(userSpecified);
-		const inferredDimensions = inferDimensions(imageInfo, userSpecified);
+		const targetUserImageSizes = inferImageSizes(imageInfo, userSpecified);
 
-		if (getScaledWidthOrHeight(inferredDimensions.width) > imageInfo.width || getScaledWidthOrHeight(inferredDimensions.height) > imageInfo.height) {
-			console.log(
-				`WARNING ${imageFilename}: The user specified width or height is too big for the image. The minimal image size should be ${getScaledWidthOrHeight(inferredDimensions.width)}x${getScaledWidthOrHeight(inferredDimensions.height)}. This image will be upscaled by the browser.`,
-			);
-		}
-
-		let targetSize = undefined;
-		let targetSizeIsWidth = true;
-		if (userSpecified.width) {
-			targetSize = getScaledWidthOrHeight(userSpecified.width);
-			targetSizeIsWidth = true;
-			if (targetSize > imageInfo.width) {
-				targetSize = imageInfo.width;
+		targetWidths = [imageInfo.width];
+		for (const targeUserSize of targetUserImageSizes) {
+			const scaledWidths = getListOfScaledWidths(targeUserSize.width);
+			for (const width of scaledWidths) {
+				targetWidths.push(width);
 			}
 		}
-		if (userSpecified.height) {
-			targetSize = getScaledWidthOrHeight(userSpecified.height);
-			targetSizeIsWidth = false;
-			if (targetSize > imageInfo.height) {
-				targetSize = imageInfo.width;
-				targetSizeIsWidth = true;
-			}
-		}
-
-		if (!targetSize) {
-			throw new Error(`THIS SHOULD NOT HAPPENED: User did not specify either width or height but we still ended up here. ${userSpecified}`);
-		}
-
-		const sources: INTERNAL_PictureSource[] = [];
-		for (const targetFormat of imageFormats) {
-			sources.push({
-				srcSetORsrc: getImageUrl(inferredDimensions.width, targetFormat),
-				type: `image/${targetFormat}`,
-
-				__sharpEntries: [
-					{
-						targetFormat: targetFormat,
-						targetSizeScaled: targetSize,
-						targetSizeIsWidth,
-						filepath: getImageFilepath(inferredDimensions.width, targetFormat),
-
-						cacheKey: `${imageSpecificHash}.${inferredDimensions.width}.${targetFormat}`,
-					},
-				],
-			});
-		}
-
-		return sources;
 	}
 
+	// Deduplicate and sort
+	targetWidths = [...new Set(targetWidths)];
+	targetWidths = targetWidths.sort((a, b) => a - b);
+
+	if (isDevelopmentMode) {
+		targetWidths = [imageInfo.width];
+	}
 	const sources: INTERNAL_PictureSource[] = [];
-	const targetWidths = isDevelopmentMode ? [imageInfo.width] : [...IMAGE_SIZES, imageInfo.width].sort((a, b) => a - b);
 	for (const targetFormat of imageFormats) {
 		let srcSetPerFormat = '';
 
@@ -188,12 +162,10 @@ export function getPictureSourcesNotSvg(
 				continue;
 			}
 
-			// TODO: Figure out correct srcSet numbers. ${targetWidth}w,
 			srcSetPerFormat += `${getImageUrl(targetWidth, targetFormat)} ${targetWidth}w, `;
 			sharpEntries.push({
 				targetFormat: targetFormat,
-				targetSizeScaled: targetWidth,
-				targetSizeIsWidth: true,
+				targetWidth: targetWidth,
 				filepath: getImageFilepath(targetWidth, targetFormat),
 
 				cacheKey: `${imageSpecificHash}.${targetWidth}.${targetFormat}`,
@@ -203,7 +175,8 @@ export function getPictureSourcesNotSvg(
 		// Remove the last ", "
 		srcSetPerFormat = srcSetPerFormat.slice(0, srcSetPerFormat.length - 2);
 		sources.push({
-			srcSetORsrc: srcSetPerFormat,
+			srcSet: srcSetPerFormat,
+			fallbackSrc: getImageUrl(targetWidths[0], targetFormat),
 			type: `image/${targetFormat}`,
 			__sharpEntries: sharpEntries,
 		});
@@ -267,12 +240,36 @@ export async function optimizePictureSources(
 				// To preserve the correct rotation *actually* rotate the image.
 				const imageOptimizationRotated = imageOptimization.rotate();
 
-				const resizeOptions = sharpEntry.targetSizeIsWidth ? { width: sharpEntry.targetSizeScaled } : { height: sharpEntry.targetSizeScaled };
+				const localImageOptimizationFinal = imageOptimizationRotated
+					.resize({
+						width: sharpEntry.targetWidth,
+						// Prevent issues with size inference.
+						// https://github.com/lovell/sharp/issues/4353
+						fastShrinkOnLoad: false,
+					})
+					.toFormat(sharpEntry.targetFormat);
 
-				const localImageOptimizationFinal = imageOptimizationRotated.resize(resizeOptions).toFormat(sharpEntry.targetFormat);
-				const { data: optimizedImageBuffer, info } = await localImageOptimizationFinal.toBuffer({
-					resolveWithObject: true,
-				});
+				const { data: optimizedImageBuffer, info } = await localImageOptimizationFinal.toBuffer({ resolveWithObject: true });
+
+				// ==================================================
+				// ==================================================
+				// Validate the inference function
+
+				const imageMetadata = await imageOptimization.metadata();
+				if (!(imageMetadata.width && imageMetadata.height)) {
+					throw new Error('Sharp metadata resolved without width and height');
+				}
+
+				const imageSize = { width: imageMetadata.width, height: imageMetadata.height };
+				const { height: inferredHeight } = inferImageSize(imageSize, sharpEntry.targetWidth);
+				if (inferredHeight !== info.height) {
+					console.log(
+						`!!WARNING!! The inference function is NOT working properly. Image of size ${JSON.stringify(imageSize)} and with target width of ${sharpEntry.targetWidth}. We inferred the height to be: ${inferredHeight} while sharp resized to ${JSON.stringify({ width: info.width, height: info.height })}. ${sharpEntry.filepath}`,
+					);
+				}
+
+				// ==================================================
+				// ==================================================
 
 				await exportFunction(optimizedImageBuffer, sharpEntry.filepath, {
 					width: info.width,
@@ -326,55 +323,50 @@ export function optimizeSvg(unsafeSvg: string, svgo: typeof SvgoType): string {
 // https://github.com/lovell/sharp/blob/7c631c0787915416e20a567a039516e99c81c42d/src/pipeline.cc#L176-L184
 //
 // Follow the issue: https://github.com/lovell/sharp/issues/4353
-export function inferDimensions(currentSize: ImageSize, userSpecified: UserSpecified): ImageSize {
-	validateUserSpecified(userSpecified);
+export function inferImageSize(currentSize: ImageSize, userSpecifiedWidth?: number, userSpecifiedHeight?: number): ImageSize {
+	validateUserSpecified({ width: userSpecifiedWidth, height: userSpecifiedHeight });
 
 	const newSize = { width: currentSize.width, height: currentSize.height };
 
-	if (userSpecified.width) {
-		const ratio = currentSize.width / userSpecified.width;
+	if (userSpecifiedWidth) {
+		const ratio = currentSize.width / userSpecifiedWidth;
 		const newHeightNotRounded = currentSize.height / ratio;
 		const newHeight = Math.round(newHeightNotRounded);
 		newSize.height = newHeight;
-		newSize.width = userSpecified.width;
+		newSize.width = userSpecifiedWidth;
 	}
 
-	if (userSpecified.height) {
-		const ratio = currentSize.height / userSpecified.height;
+	if (userSpecifiedHeight) {
+		const ratio = currentSize.height / userSpecifiedHeight;
 		const newWidthNotRounded = currentSize.width / ratio;
 		const newWidth = Math.round(newWidthNotRounded);
 		newSize.width = newWidth;
-		newSize.height = userSpecified.height;
+		newSize.height = userSpecifiedHeight;
 	}
 
 	return newSize;
 }
 
-export interface UserSpecifiedInferenceCheck {
-	userSpecified?: UserSpecified;
-	inferredSize?: ImageSize;
-}
+function inferImageSizes(currentSize: ImageSize, userSpecified: UserSpecified): ImageSize[] {
+	validateUserSpecified(userSpecified);
 
-// Make this function throw when we get a good replay: https://github.com/lovell/sharp/issues/4353
-export function validateInferredWidth(userSpecifiedIC: UserSpecifiedInferenceCheck, actualSize: ImageSize) {
-	if (!(userSpecifiedIC.userSpecified && userSpecifiedIC.inferredSize)) {
-		return;
-	}
-	validateUserSpecified(userSpecifiedIC.userSpecified);
-
-	if (userSpecifiedIC.userSpecified.width) {
-		if (userSpecifiedIC.inferredSize.height === actualSize.height) {
-			return;
-		}
+	let userSpecifiedArray: number[] = [];
+	let isWidthSpecified = false;
+	if (userSpecified.width) {
+		userSpecifiedArray = Array.isArray(userSpecified.width) ? userSpecified.width : [userSpecified.width];
+		isWidthSpecified = true;
 	}
 
-	if (userSpecifiedIC.userSpecified.height) {
-		if (userSpecifiedIC.inferredSize.width === actualSize.height) {
-			return;
-		}
+	if (userSpecified.height) {
+		userSpecifiedArray = Array.isArray(userSpecified.height) ? userSpecified.height : [userSpecified.height];
+		isWidthSpecified = false;
 	}
 
-	const errorMessage = `THIS SHOULD NOT HAPPEN! The user specified ${JSON.stringify(userSpecifiedIC.userSpecified)} and the inferred is ${JSON.stringify(userSpecifiedIC.inferredSize)}, but sharp thinks the size should be ${JSON.stringify(actualSize)}. If you see this error contact the owner of this code and provide them with this error message.`;
-	console.log(errorMessage);
-	// throw new Error(errorMessage);
+	const imageSizes: ImageSize[] = [];
+	for (const specifiedSize of userSpecifiedArray) {
+		const inferredSize = isWidthSpecified ? inferImageSize(currentSize, specifiedSize, undefined) : inferImageSize(currentSize, undefined, specifiedSize);
+		imageSizes.push(inferredSize);
+	}
+
+	return imageSizes;
 }
