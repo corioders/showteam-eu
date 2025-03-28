@@ -196,14 +196,6 @@ export default async function RemoteStaticImage(props: RemoteImageProps) {
 		return <img {...imageOptimizationAttributes} {...userImageProps} src={imageBase64} alt={props.alt} />;
 	}
 
-	if (props.sizes && inferredSizes) {
-		throw new Error('When you specified only one width OR height then setting sizes property is NOT necessary');
-	}
-
-	if (!(props.sizes || inferredSizes)) {
-		throw new Error('Sizes can be omitted ONLY when specifying only ONE width OR height');
-	}
-
 	// We can use nodejs dependencies because this code will only be run during either buildtime or development time
 
 	// If two images are byte-byte the same, then they are the same image
@@ -236,24 +228,54 @@ export default async function RemoteStaticImage(props: RemoteImageProps) {
 	const pictureSources = getPictureSourcesNotSvg(false, imageFilename, imageSpecificHash, imageInfo, NEXTJS_FILEPATH_PREFIX, userSpecified);
 	await optimizeImageAndWriteToDisk(pictureSources, imageBuffer, imageFilename);
 
+	if (props.sizes && inferredSizes) {
+		throw new Error('When you specified only one width OR height then setting sizes property is NOT necessary');
+	}
+
+	if (!(props.sizes || inferredSizes)) {
+		throw new Error('Sizes can be omitted ONLY when specifying only ONE width OR height');
+	}
+
+	if (inferredSizes) {
+		imageOptimizationAttributes.sizes = inferredSizes;
+	}
+
+	if (props.sizes) {
+		imageOptimizationAttributes.sizes = props.sizes;
+	}
+
 	const sources: JSX.Element[] = [];
 	for (const source of pictureSources) {
 		const sourceKey = `${imageSpecificHash}${source.type}`;
-
-		if (userSpecified) {
-			sources.push(<source key={sourceKey} src={source.srcSet} type={source.type} />);
-			continue;
-		}
-
-		sources.push(<source key={sourceKey} srcSet={source.srcSet} type={source.type} />);
+		sources.push(<source key={sourceKey} sizes={imageOptimizationAttributes.sizes} srcSet={source.srcSet} src={source.fallbackSrc} type={source.type} />);
 	}
 
+	const defaultImageFallbackSource = pictureSources[0];
 	return (
 		<picture>
 			{sources}
-			<img {...imageOptimizationAttributes} {...userImageProps} alt={props.alt} />
+			<img {...imageOptimizationAttributes} {...userImageProps} srcSet={defaultImageFallbackSource.srcSet} src={defaultImageFallbackSource.fallbackSrc} alt={props.alt} />
 		</picture>
 	);
+
+	// const sources: JSX.Element[] = [];
+	// for (const source of pictureSources) {
+	// 	const sourceKey = `${imageSpecificHash}${source.type}`;
+
+	// 	if (userSpecified) {
+	// 		sources.push(<source key={sourceKey} src={source.srcSet} type={source.type} />);
+	// 		continue;
+	// 	}
+
+	// 	sources.push(<source key={sourceKey} srcSet={source.srcSet} type={source.type} />);
+	// }
+
+	// return (
+	// 	<picture>
+	// 		{sources}
+	// 		<img {...imageOptimizationAttributes} {...userImageProps} alt={props.alt} />
+	// 	</picture>
+	// );
 }
 
 interface FetchedImage {

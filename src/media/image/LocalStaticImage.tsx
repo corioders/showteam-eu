@@ -58,10 +58,14 @@ export default function LocalStaticImage(props: LocalStaticImageProps) {
 		imageOptimizationAttributes.sizes = src.z;
 	}
 
+	if (props.sizes) {
+		imageOptimizationAttributes.sizes = props.sizes;
+	}
+
 	const sources: JSX.Element[] = [];
 	for (const source of src.s) {
 		const sourceKey = `${src.contentHash}${source.t}`;
-		sources.push(<source key={sourceKey} srcSet={source.s} src={source.r} type={source.t} />);
+		sources.push(<source key={sourceKey} sizes={imageOptimizationAttributes.sizes} srcSet={source.s} src={source.r} type={source.t} />);
 	}
 
 	const defaultImageFallbackSource = src.s[0];
