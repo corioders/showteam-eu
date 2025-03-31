@@ -26,7 +26,6 @@ export type ImageType =
 	| 'webp';
 
 export const IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES: ImgHTMLAttributes<HTMLImageElement> = {
-	loading: 'lazy',
 	decoding: 'async',
 };
 

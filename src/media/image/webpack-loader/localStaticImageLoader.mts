@@ -8,21 +8,23 @@ import path from 'node:path';
 import sharp from 'sharp';
 import svgo from 'svgo';
 import { createStorage } from 'unstorage';
+import fsDriver from 'unstorage/drivers/fs-lite';
 import type { LoaderDefinitionFunction } from 'webpack';
 import {
-	type ImageSize,
 	type PictureSource,
 	type UserSpecified,
+	calculateImageSizeFromUserSpecified,
 	getPictureSourcesNotSvg,
 	getSvgEntry,
 	hash,
-	inferImageSize,
 	optimizePictureSources,
 	optimizeSvg,
 	readImageInfoFromBuffer,
 	shouldOptimizeImages,
 	validateUserSpecified,
 } from '../internal.mjs';
+
+const cache = createStorage({ driver: fsDriver({ base: '.next/cache/cstd-next-local-static-image' }) });
 
 export interface LocalStaticImageImport {
 	// Hash of the original image. Can be used inside the react key prop.
@@ -61,9 +63,7 @@ interface INTERNAL_LowOverheadPictureSource {
 	// Type of the picture source.
 	t: PictureSource['type'];
 }
-import fsDriver from 'unstorage/drivers/fs-lite';
 
-const cache = createStorage({ driver: fsDriver({ base: '.next/cache/cstd-next-local-static-image' }) });
 interface Options {
 	isDev: boolean;
 	isServer: boolean;
@@ -131,27 +131,27 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	// https://discord.com/channels/752553802359505017/1352705911210377257/1352705911210377257
 	// https://github.com/vercel/next.js/issues/77413
 	//
-	let shouldSkipEmittingTheFile = false;
+	let skipEmit = false;
 	if (options.isServer && !userSpecified) {
-		shouldSkipEmittingTheFile = true;
+		skipEmit = true;
 	}
 
 	// Okay, this is even funnier. When the image with a resourceQuery is used on
 	// a 'use client' route, then it is webpack loaded by both the server-phase and the client-phase.
 	// For now let's say we stick to the server-phase so we skip the optim while we're on the client.
 	if (!options.isServer && userSpecified) {
-		shouldSkipEmittingTheFile = true;
+		skipEmit = true;
 	}
 
 	if (options.isEdgeServer) {
-		shouldSkipEmittingTheFile = true;
+		skipEmit = true;
 	}
 
 	let pathPrefix = NEXTJS_CLIENT_BUILD_FILEPATH_PREFIX;
-	if (options.isServer && !shouldSkipEmittingTheFile) {
+	if (options.isServer && !skipEmit) {
 		pathPrefix = NEXTJS_SERVER_BUILD_FILEPATH_PREFIX;
 	}
-	if (options.isServer && !shouldSkipEmittingTheFile && options.isDev) {
+	if (options.isServer && !skipEmit && options.isDev) {
 		pathPrefix = NEXTJS_SERVER_DEV_FILEPATH_PREFIX;
 	}
 
@@ -162,16 +162,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const imageFilename = path.basename(this.resourcePath);
 	const imageInfo = readImageInfoFromBuffer(imageBuffer);
 
-	// So the conditions go like follows:
-	// IF the user did not specify anything we just set the original size
-	// IF the user specified only one width OR one height, we infer the other size and set that as width and height of the image & we set the sizes to the inferred width
-	// IF the user specified width array OR height array then we set the original size
-	let imageSizeForTheImgElement: ImageSize = imageInfo;
-	let sizes: string | undefined = undefined;
-	if (userSpecified && !Array.isArray(userSpecified.width) && !Array.isArray(userSpecified.height)) {
-		imageSizeForTheImgElement = inferImageSize(imageInfo, userSpecified.width, userSpecified.height);
-		sizes = `${imageSizeForTheImgElement.width}px`;
-	}
+	const { imageSizeToSetAtTheImgElement, inferredSizes } = calculateImageSizeFromUserSpecified(imageInfo, userSpecified);
 
 	if (imageInfo.type === 'svg') {
 		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo, pathPrefix);
@@ -179,24 +170,17 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 			contentHash: imageSpecificHash,
 			filename: imageFilename,
 
-			w: imageSizeForTheImgElement.width,
-			h: imageSizeForTheImgElement.height,
+			w: imageSizeToSetAtTheImgElement.width,
+			h: imageSizeToSetAtTheImgElement.height,
 			g: svgEntry.src,
 		};
 		const importReturnString = `export default ${JSON.stringify(importReturn)}`;
 
-		// We are optimizing images only while building client.
-		if (shouldSkipEmittingTheFile) {
+		if (skipEmit) {
 			return importReturnString;
 		}
 
-		// Skip optimization in development mode
-		if (isDevelopmentMode) {
-			this.emitFile(svgEntry.filepath, imageBuffer);
-			return importReturnString;
-		}
-
-		const optimizedSvg = optimizeSvg(imageBuffer.toString(), svgo);
+		const optimizedSvg = optimizeSvg(isDevelopmentMode, imageBuffer.toString(), svgo);
 		this.emitFile(svgEntry.filepath, optimizedSvg);
 
 		return importReturnString;
@@ -209,25 +193,15 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		contentHash: imageSpecificHash,
 		filename: imageFilename,
 
-		w: imageSizeForTheImgElement.width,
-		h: imageSizeForTheImgElement.height,
+		w: imageSizeToSetAtTheImgElement.width,
+		h: imageSizeToSetAtTheImgElement.height,
 		s: loPictureSources,
-		z: sizes,
+		z: inferredSizes,
 	};
 	const importReturnString = `export default ${JSON.stringify(importReturn)}`;
 
 	// We are optimizing images only while building client.
-	if (shouldSkipEmittingTheFile) {
-		return importReturnString;
-	}
-
-	if (isDevelopmentMode) {
-		if (pictureSources.length !== 1 || pictureSources[0].__sharpEntries.length !== 1) {
-			throw new Error('Expected only one source and one sharpEntry while in the development mode.');
-		}
-
-		const theOnlySharpEntry = pictureSources[0].__sharpEntries[0];
-		this.emitFile(theOnlySharpEntry.filepath, imageBuffer);
+	if (skipEmit) {
 		return importReturnString;
 	}
 
@@ -244,7 +218,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 		await cache.setItemRaw(cacheKey, optimizedImageBuffer);
 	};
 
-	await optimizePictureSources(imageBuffer, pictureSources, exportFunction, getCacheFunction, setCacheFunction, sharp, imageFilename);
+	await optimizePictureSources(isDevelopmentMode, imageBuffer, pictureSources, exportFunction, getCacheFunction, setCacheFunction, sharp, imageFilename);
 
 	return importReturnString;
 };

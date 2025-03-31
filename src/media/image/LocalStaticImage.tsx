@@ -8,6 +8,7 @@ import './../../../src/media/image/picture-display-style.css';
 import type { ImgHTMLAttributes, JSX } from 'react';
 
 import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from './image.mjs';
+import { validateSizesProperty } from './internal.mjs';
 import type { INTERNAL_LocalStaticImageImport, LocalStaticImageImport as LocalStaticImageImportInternal } from './webpack-loader/localStaticImageLoader.mjs';
 
 export type LocalStaticImageImport = LocalStaticImageImportInternal;
@@ -15,53 +16,50 @@ export type LocalStaticImageImport = LocalStaticImageImportInternal;
 export interface LocalStaticImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'alt' | 'sizes' | 'width' | 'height'> {
 	src: LocalStaticImageImport;
 	alt: string;
+	loading: 'eager' | 'lazy';
 	sizes?: string;
+	pictureClassName?: string;
 }
 
 // TODO: Error message when the user requested width does not match the actual with of the image at runtime. Bounding box etc...
 export default function LocalStaticImage(props: LocalStaticImageProps) {
 	const src = props.src as INTERNAL_LocalStaticImageImport;
 
-	const userImageProps: Partial<LocalStaticImageProps> = { ...props };
+	const userImagePropsIncorrectType: Partial<LocalStaticImageProps> = { ...props };
 
 	// biome-ignore lint/performance/noDelete: Delete is required here
-	delete userImageProps.src;
+	delete userImagePropsIncorrectType.src;
 	// biome-ignore lint/performance/noDelete: Delete is required here
-	delete userImageProps.alt;
+	delete userImagePropsIncorrectType.alt;
 	// biome-ignore lint/performance/noDelete: Delete is required here
-	delete userImageProps.sizes;
+	delete userImagePropsIncorrectType.loading;
+	// biome-ignore lint/performance/noDelete: Delete is required here
+	delete userImagePropsIncorrectType.sizes;
+	// biome-ignore lint/performance/noDelete: Delete is required here
+	delete userImagePropsIncorrectType.pictureClassName;
 
-	const imageOptimizationAttributes: ImgHTMLAttributes<HTMLImageElement> = {
+	const userImageProps = userImagePropsIncorrectType as ImgHTMLAttributes<HTMLImageElement>;
+
+	const imageOptimizationAttributes = {
 		...IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES,
+		alt: props.alt,
+		loading: props.loading,
+		sizes: validateSizesProperty(props.sizes, src.z),
+
 		width: src.w,
 		height: src.h,
 	};
 
 	if (src.g) {
-		return <img {...imageOptimizationAttributes} {...userImageProps} src={src.g} alt={props.alt} />;
+		return (
+			<picture className={props.pictureClassName}>
+				<img {...imageOptimizationAttributes} {...userImageProps} src={src.g} alt={props.alt} />
+			</picture>
+		);
 	}
 
 	if (!src.s) {
 		throw new Error('Either src.g OR src.s is required');
-	}
-
-	if (props.sizes && src.z) {
-		throw new Error(
-			`When you are importing using the resource query and you specified only one width OR height then setting sizes property is NOT necessary: ${src.s[0].r}`,
-		);
-	}
-
-	if (!(props.sizes || src.z)) {
-		console.log(`Sizes can be omitted ONLY when importing using the resource query and specifying only ONE width OR height: ${src.s[0].r}`);
-		// throw new Error('Sizes can be omitted ONLY when importing using the resource query and specifying only ONE width OR height');
-	}
-
-	if (src.z) {
-		imageOptimizationAttributes.sizes = src.z;
-	}
-
-	if (props.sizes) {
-		imageOptimizationAttributes.sizes = props.sizes;
 	}
 
 	const sources: JSX.Element[] = [];
@@ -72,7 +70,7 @@ export default function LocalStaticImage(props: LocalStaticImageProps) {
 
 	const defaultImageFallbackSource = src.s[0];
 	return (
-		<picture>
+		<picture className={props.pictureClassName}>
 			{sources}
 			<img {...imageOptimizationAttributes} {...userImageProps} srcSet={defaultImageFallbackSource.s} src={defaultImageFallbackSource.r} alt={props.alt} />
 		</picture>

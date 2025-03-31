@@ -93,22 +93,16 @@ export function validateUserSpecified(userSpecified: UserSpecified) {
 	}
 }
 
-// This function scaled the size by a factor so that the image presents itself as the original
-// size but in reality it's *factor bigger. This results in higher quality images.
-function getScaledWidthOrHeight(widthOrHeight: number): number {
-	return widthOrHeight * 2;
-}
-
 const NEXTJS_IMAGE_FOLDER = '.next/static/media';
 const NEXTJS_URL_PREFIX = '/_next/static/media';
 
 function getImageFilenameMeta(imageFilename: string, imageSpecificHash: string) {
 	return (width: number, format: ImageType) => `${imageFilename}.${imageSpecificHash}.${width.toString()}.${format}`;
 }
-export function getImageUrlMeta(imageFilename: string, imageSpecificHash: string, baseURL: string = NEXTJS_URL_PREFIX) {
+function getImageUrlMeta(imageFilename: string, imageSpecificHash: string, baseURL: string = NEXTJS_URL_PREFIX) {
 	return (width: number, format: ImageType) => encodeURI(`${baseURL}/${getImageFilenameMeta(imageFilename, imageSpecificHash)(width, format)}`);
 }
-export function getImageFilepathMeta(imageFilename: string, imageSpecificHash: string, baseFilePath: string) {
+function getImageFilepathMeta(imageFilename: string, imageSpecificHash: string, baseFilePath: string) {
 	return (width: number, format: ImageType) => `${baseFilePath}/${getImageFilenameMeta(imageFilename, imageSpecificHash)(width, format)}`;
 }
 
@@ -216,6 +210,7 @@ function reportTime(startTime: number, wasCacheHit: boolean, imageFilenameToRepo
 }
 
 export async function optimizePictureSources(
+	isDevelopmentMode: boolean,
 	imageBuffer: Buffer,
 	pictureSources: INTERNAL_PictureSource[],
 	exportFunction: ExportFunction,
@@ -224,6 +219,14 @@ export async function optimizePictureSources(
 	sharp: typeof SharpType,
 	imageFilenameToReport: string,
 ) {
+	if (isDevelopmentMode) {
+		if (pictureSources.length !== 1 || pictureSources[0].__sharpEntries.length !== 1) {
+			throw new Error('Expected only one source and one sharpEntry while in the development mode.');
+		}
+		const theOnlySharpEntry = pictureSources[0].__sharpEntries[0];
+		exportFunction(imageBuffer, theOnlySharpEntry.filepath);
+	}
+
 	// Include an internal concurrency limit so that we are optimizing one image at the time.
 	//
 	// When using cloudflare, running more than one sharp instance at once usually causes segfaults.
@@ -323,9 +326,13 @@ export function getSvgEntry(
 	};
 }
 
-export function optimizeSvg(unsafeSvg: string, svgo: typeof SvgoType): string {
+export function optimizeSvg(isDevelopmentMode: boolean, unsafeSvg: string, svgo: typeof SvgoType): string {
 	// TODO: Fix, escape svg
 	const safeSvg = unsafeSvg;
+	if (isDevelopmentMode) {
+		return safeSvg;
+	}
+
 	const { data: optimizedSvg } = svgo.optimize(safeSvg, { multipass: true });
 	return optimizedSvg;
 }
@@ -333,7 +340,7 @@ export function optimizeSvg(unsafeSvg: string, svgo: typeof SvgoType): string {
 // https://github.com/lovell/sharp/blob/7c631c0787915416e20a567a039516e99c81c42d/src/pipeline.cc#L176-L184
 //
 // Follow the issue: https://github.com/lovell/sharp/issues/4353
-export function inferImageSize(currentSize: ImageSize, userSpecifiedWidth?: number, userSpecifiedHeight?: number): ImageSize {
+function inferImageSize(currentSize: ImageSize, userSpecifiedWidth?: number, userSpecifiedHeight?: number): ImageSize {
 	validateUserSpecified({ width: userSpecifiedWidth, height: userSpecifiedHeight });
 
 	const newSize = { width: currentSize.width, height: currentSize.height };
@@ -379,4 +386,52 @@ function inferImageSizes(currentSize: ImageSize, userSpecified: UserSpecified): 
 	}
 
 	return imageSizes;
+}
+
+export interface CalculatedSize {
+	imageSizeToSetAtTheImgElement: ImageSize;
+	inferredSizes: string | undefined;
+}
+
+// So the conditions go like follows:
+// IF the user did not specify anything we just set the size to the original size of the image
+// IF the user specified only one width OR one height, we infer the other size and set that as width and height of the image & we set the sizes to the inferred width
+// IF the user specified width array OR height array then we set the size to the original size of the image
+export function calculateImageSizeFromUserSpecified(imageInfo: ImageInfo, userSpecified: UserSpecified | undefined): CalculatedSize {
+	if (userSpecified) {
+		validateUserSpecified(userSpecified);
+	}
+
+	let imageSizeToSetAtTheImgElement: ImageSize = imageInfo;
+	let inferredSizes: string | undefined = undefined;
+	if (userSpecified && !Array.isArray(userSpecified.width) && !Array.isArray(userSpecified.height)) {
+		imageSizeToSetAtTheImgElement = inferImageSize(imageInfo, userSpecified.width, userSpecified.height);
+		inferredSizes = `${imageSizeToSetAtTheImgElement.width}px`;
+	}
+
+	return {
+		imageSizeToSetAtTheImgElement: imageSizeToSetAtTheImgElement,
+		inferredSizes: inferredSizes,
+	};
+}
+
+// This function works this way because of the calculateImageSizeFromUserSpecified. Look at the rules above.
+export function validateSizesProperty(userProvidedSizes: string | undefined, inferredSizes: string | undefined): string {
+	if (userProvidedSizes && inferredSizes) {
+		throw new Error('When you specified only one width OR height then setting sizes property is NOT necessary');
+	}
+
+	if (!(userProvidedSizes || inferredSizes)) {
+		throw new Error('Sizes can be omitted ONLY when specifying only ONE width OR height');
+	}
+
+	if (inferredSizes) {
+		return inferredSizes;
+	}
+
+	if (userProvidedSizes) {
+		return userProvidedSizes;
+	}
+
+	throw new Error('THIS SHOULD NOT HAPPEN: userProvidedSizes and inferredSizes were not cough in a condition.');
 }
