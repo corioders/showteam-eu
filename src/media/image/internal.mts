@@ -224,7 +224,7 @@ export async function optimizePictureSources(
 			throw new Error('Expected only one source and one sharpEntry while in the development mode.');
 		}
 		const theOnlySharpEntry = pictureSources[0].__sharpEntries[0];
-		exportFunction(imageBuffer, theOnlySharpEntry.filepath);
+		await exportFunction(imageBuffer, theOnlySharpEntry.filepath);
 	}
 
 	// Include an internal concurrency limit so that we are optimizing one image at the time.
