@@ -416,7 +416,7 @@ async function optimizeImageAndWriteToDisk(
 
 	const setCacheFunction = async (cacheKey: string, optimizedImageBuffer: Buffer): Promise<void> => {
 		const localCacheKey = OPTIMIZE_REMOTE_IMAGE_CACHE_KEY(cacheKey);
-		await cacheStorage.setItem(localCacheKey, optimizedImageBuffer);
+		await cacheStorage.setItemRaw(localCacheKey, optimizedImageBuffer);
 	};
 
 	await optimizePictureSources(isDevelopmentMode, imageBuffer, pictureSources, exportFunction, getCacheFunction, setCacheFunction, sharp, imageFilenameToReport);
