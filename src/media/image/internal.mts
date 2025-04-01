@@ -106,6 +106,7 @@ function getImageFilepathMeta(imageFilename: string, imageSpecificHash: string, 
 	return (width: number, format: ImageType) => `${baseFilePath}/${getImageFilenameMeta(imageFilename, imageSpecificHash)(width, format)}`;
 }
 
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
 export function getPictureSourcesNotSvg(
 	isDevelopmentMode: boolean,
 	imageFilename: string,
@@ -230,6 +231,7 @@ export async function optimizePictureSources(
 	// Include an internal concurrency limit so that we are optimizing one image at the time.
 	//
 	// When using cloudflare, running more than one sharp instance at once usually causes segfaults.
+	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
 	await concurrencyLimit(async () => {
 		const startTime = Date.now();
 		let wasCacheHit = false;
@@ -262,7 +264,9 @@ export async function optimizePictureSources(
 					})
 					.toFormat(sharpEntry.targetFormat);
 
-				const { data: optimizedImageBuffer, info } = await localImageOptimizationFinal.toBuffer({ resolveWithObject: true });
+				const { data: optimizedImageBuffer, info } = await localImageOptimizationFinal.toBuffer({
+					resolveWithObject: true,
+				});
 
 				// ==================================================
 				// ==================================================
@@ -273,7 +277,10 @@ export async function optimizePictureSources(
 					throw new Error('Sharp metadata resolved without width and height');
 				}
 
-				const imageSize = { width: imageMetadata.width, height: imageMetadata.height };
+				const imageSize = {
+					width: imageMetadata.width,
+					height: imageMetadata.height,
+				};
 				const { height: inferredHeight } = inferImageSize(imageSize, sharpEntry.targetWidth);
 				if (inferredHeight !== info.height) {
 					console.log(
@@ -341,7 +348,10 @@ export function optimizeSvg(isDevelopmentMode: boolean, unsafeSvg: string, svgo:
 //
 // Follow the issue: https://github.com/lovell/sharp/issues/4353
 function inferImageSize(currentSize: ImageSize, userSpecifiedWidth?: number, userSpecifiedHeight?: number): ImageSize {
-	validateUserSpecified({ width: userSpecifiedWidth, height: userSpecifiedHeight });
+	validateUserSpecified({
+		width: userSpecifiedWidth,
+		height: userSpecifiedHeight,
+	});
 
 	const newSize = { width: currentSize.width, height: currentSize.height };
 
@@ -403,7 +413,7 @@ export function calculateImageSizeFromUserSpecified(imageInfo: ImageInfo, userSp
 	}
 
 	let imageSizeToSetAtTheImgElement: ImageSize = imageInfo;
-	let inferredSizes: string | undefined = undefined;
+	let inferredSizes: string | undefined;
 	if (userSpecified && !Array.isArray(userSpecified.width) && !Array.isArray(userSpecified.height)) {
 		imageSizeToSetAtTheImgElement = inferImageSize(imageInfo, userSpecified.width, userSpecified.height);
 		inferredSizes = `${imageSizeToSetAtTheImgElement.width}px`;
@@ -416,13 +426,13 @@ export function calculateImageSizeFromUserSpecified(imageInfo: ImageInfo, userSp
 }
 
 // This function works this way because of the calculateImageSizeFromUserSpecified. Look at the rules above.
-export function validateSizesProperty(userProvidedSizes: string | undefined, inferredSizes: string | undefined): string {
+export function validateSizesProperty(userProvidedSizes: string | undefined, inferredSizes: string | undefined, imageNameToReport: string): string {
 	if (userProvidedSizes && inferredSizes) {
-		throw new Error('When you specified only one width OR height then setting sizes property is NOT necessary');
+		throw new Error(`When you specified only one width OR height then setting sizes property is NOT necessary: ${imageNameToReport}`);
 	}
 
 	if (!(userProvidedSizes || inferredSizes)) {
-		throw new Error('Sizes can be omitted ONLY when specifying only ONE width OR height');
+		throw new Error(`Sizes can be omitted ONLY when specifying only ONE width OR height: ${imageNameToReport}`);
 	}
 
 	if (inferredSizes) {
@@ -430,8 +440,11 @@ export function validateSizesProperty(userProvidedSizes: string | undefined, inf
 	}
 
 	if (userProvidedSizes) {
+		if (userProvidedSizes === 'auto') {
+			throw new Error(`The sizes='auto' attribute does not work in Safari and Firefox, sorry...`);
+		}
 		return userProvidedSizes;
 	}
 
-	throw new Error('THIS SHOULD NOT HAPPEN: userProvidedSizes and inferredSizes were not cough in a condition.');
+	throw new Error(`THIS SHOULD NOT HAPPEN: userProvidedSizes and inferredSizes were not cough in a condition: ${imageNameToReport}`);
 }

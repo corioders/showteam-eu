@@ -85,6 +85,7 @@ const NEXTJS_SERVER_DEV_FILEPATH_PREFIX = '../static/media';
 // TODO: If the resourceQuery issue will not be resolved
 // move all of the optim to be done during the server-phase.
 // Having a split mind is not a good thing.
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
 const localStaticImageLoader: LoaderDefinitionFunction = async function localStaticImageLoader(this, contentNotRawType) {
 	this.cacheable(true);
 
@@ -92,7 +93,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const options = this.getOptions() as Options;
 	const isDevelopmentMode = options.isDev || !shouldOptimizeImages();
 
-	let userSpecified: undefined | UserSpecified = undefined;
+	let userSpecified: undefined | UserSpecified;
 	if (this.resourceQuery) {
 		const widthSpecified = this.resourceQuery.match(RESOURCE_QUERY_WIDTH_REGEX)?.groups?.width;
 		const heightSpecified = this.resourceQuery.match(RESOURCE_QUERY_HEIGHT_REGEX)?.groups?.height;

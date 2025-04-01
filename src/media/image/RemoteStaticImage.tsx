@@ -37,7 +37,7 @@ import {
 } from './internal.mjs';
 
 // 25 MiB
-const MAX_CLOUDFLARE_IMAGE_SIZE = 25 * 2 ** 20;
+// const MAX_CLOUDFLARE_IMAGE_SIZE = 25 * 2 ** 20;
 
 const NEXTJS_FILEPATH_PREFIX = './.next/static/media';
 
@@ -172,7 +172,6 @@ export default async function RemoteStaticImage(props: RemoteStaticImageProps) {
 		...IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES,
 		alt: props.alt,
 		loading: props.loading,
-		sizes: validateSizesProperty(props.sizes, inferredSizes),
 
 		width: imageSizeToSetAtTheImgElement.width,
 		height: imageSizeToSetAtTheImgElement.height,
@@ -226,6 +225,8 @@ export default async function RemoteStaticImage(props: RemoteStaticImageProps) {
 			</picture>
 		);
 	}
+
+	imageOptimizationAttributes.sizes = validateSizesProperty(props.sizes, inferredSizes, imageFilename);
 
 	const pictureSources = getPictureSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, NEXTJS_FILEPATH_PREFIX, userSpecified);
 	await optimizeImageAndWriteToDisk(isDevelopmentMode, pictureSources, imageBuffer, imageFilename);
@@ -302,19 +303,19 @@ async function getFetchRemoteImageCache(cacheKey: string): Promise<FetchRemoteIm
 	};
 }
 
-async function fetchRemoteImageLastModified(imageURL: URL): Promise<string | null> {
-	const [headImageResponse, headFetchError] = await safePromise(() => fetch(imageURL, { method: 'HEAD' }));
-	if (headFetchError !== null) {
-		return null;
-	}
+// async function fetchRemoteImageLastModified(imageURL: URL): Promise<string | null> {
+// 	const [headImageResponse, headFetchError] = await safePromise(() => fetch(imageURL, { method: 'HEAD' }));
+// 	if (headFetchError !== null) {
+// 		return null;
+// 	}
 
-	if (!headImageResponse.ok || headImageResponse.status !== 200) {
-		return null;
-	}
+// 	if (!headImageResponse.ok || headImageResponse.status !== 200) {
+// 		return null;
+// 	}
 
-	const lastModified = headImageResponse.headers.get('Last-Modified');
-	return lastModified;
-}
+// 	const lastModified = headImageResponse.headers.get('Last-Modified');
+// 	return lastModified;
+// }
 
 async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): ErrorReturnPromise<FetchedImage> {
 	console.log(`Fetching remote image ${imageURL}`);

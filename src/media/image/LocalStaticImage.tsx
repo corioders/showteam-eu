@@ -25,7 +25,9 @@ export interface LocalStaticImageProps extends Omit<ImgHTMLAttributes<HTMLImageE
 export default function LocalStaticImage(props: LocalStaticImageProps) {
 	const src = props.src as INTERNAL_LocalStaticImageImport;
 
-	const userImagePropsIncorrectType: Partial<LocalStaticImageProps> = { ...props };
+	const userImagePropsIncorrectType: Partial<LocalStaticImageProps> = {
+		...props,
+	};
 
 	// biome-ignore lint/performance/noDelete: Delete is required here
 	delete userImagePropsIncorrectType.src;
@@ -44,7 +46,6 @@ export default function LocalStaticImage(props: LocalStaticImageProps) {
 		...IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES,
 		alt: props.alt,
 		loading: props.loading,
-		sizes: validateSizesProperty(props.sizes, src.z),
 
 		width: src.w,
 		height: src.h,
@@ -61,6 +62,8 @@ export default function LocalStaticImage(props: LocalStaticImageProps) {
 	if (!src.s) {
 		throw new Error('Either src.g OR src.s is required');
 	}
+
+	imageOptimizationAttributes.sizes = validateSizesProperty(props.sizes, src.z, src.filename);
 
 	const sources: JSX.Element[] = [];
 	for (const source of src.s) {
