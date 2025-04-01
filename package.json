@@ -12,6 +12,7 @@
 		"build": "tsc && tsc-alias",
 		"clean": "rm -rf build",
 
+		"check": "pnpm check-biome && pnpm check-types",
 		"check-types": "tsc --noEmit",
 		"check-biome": "biome check --error-on-warnings"
 	},
