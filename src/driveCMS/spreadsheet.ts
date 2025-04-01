@@ -8,7 +8,7 @@ import type { GoogleAuth } from 'googleapis-common';
 import { type WorkBook as XlsxWorkBook, read as xlsxRead } from 'xlsx';
 
 import { type ErrorReturnPromise, safe, safePromise } from '@/error';
-import { type FileID, MIMEType, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive';
+import { type FileID, MIMEType, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
 
 export type SpreadsheetID = FileID & { readonly __spreadsheetTag: unique symbol };
 

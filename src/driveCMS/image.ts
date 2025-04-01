@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, January 2025
 
-import type { FileID } from './drive';
+import type { FileID } from './drive.js';
 
 export type ImageID = FileID & { readonly __imageTag: unique symbol };
 

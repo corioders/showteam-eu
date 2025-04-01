@@ -4,7 +4,7 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
 import type { ErrorReturn } from '@/error';
-import { ParsingDSDTFError } from './error';
+import { ParsingDSDTFError } from './error.js';
 
 /* 
 ### Specification:

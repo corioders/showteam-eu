@@ -27,16 +27,16 @@ export interface Speaker {
 
 export type Activity = BreakActivity | OtherActivity | KeynoteActivity | PanelActivity;
 
-export function isACTIVITY_TYPE_T(x: string): x is ACTIVITY_TYPE_T {
-	return Object.values(ACTIVITY_TYPE).includes(x as ACTIVITY_TYPE_T);
+export function isActivityType(x: string): x is ActivityType {
+	return Object.values(ACTIVITY_TYPE).includes(x as ActivityType);
 }
 
-export type ACTIVITY_TYPE_T = ValueOf<typeof ACTIVITY_TYPE>;
+export type ActivityType = ValueOf<typeof ACTIVITY_TYPE>;
 export const ACTIVITY_TYPE = {
-	BREAK: 'Break',
-	OTHER: 'Other',
-	KEYNOTE: 'Keynote',
-	PANEL: 'Panel',
+	break: 'Break',
+	other: 'Other',
+	keynote: 'Keynote',
+	panel: 'Panel',
 } as const;
 
 export interface BreakActivity {
@@ -44,15 +44,15 @@ export interface BreakActivity {
 	start: DateTime;
 	end: DateTime;
 
-	Type: typeof ACTIVITY_TYPE.BREAK;
+	type: typeof ACTIVITY_TYPE.break;
 }
 export interface OtherActivity {
 	other: ParsedDSDTF;
 	start: DateTime;
 	end: DateTime;
 
-	Type: typeof ACTIVITY_TYPE.OTHER;
-	Name: string;
+	type: typeof ACTIVITY_TYPE.other;
+	name: string;
 }
 
 export interface KeynoteActivity {
@@ -60,9 +60,9 @@ export interface KeynoteActivity {
 	start: DateTime;
 	end: DateTime;
 
-	Type: typeof ACTIVITY_TYPE.KEYNOTE;
-	Name: string;
-	Speaker: Speaker;
+	type: typeof ACTIVITY_TYPE.keynote;
+	name: string;
+	speaker: Speaker;
 }
 
 export interface PanelActivity {
@@ -70,8 +70,8 @@ export interface PanelActivity {
 	start: DateTime;
 	end: DateTime;
 
-	Type: typeof ACTIVITY_TYPE.PANEL;
-	Name: string;
-	Speakers: Speaker[];
-	Moderator: Speaker;
+	type: typeof ACTIVITY_TYPE.panel;
+	name: string;
+	speakers: Speaker[];
+	moderator: Speaker;
 }

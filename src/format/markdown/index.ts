@@ -3,8 +3,8 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
-import { ErrorReturn } from "@/error/index.js";
-import { ParsedDSDTF, parseDSDTF } from "@/format/deadSimpleDataTextFormat/index.js";
+import type { ErrorReturn } from '@/error/index.js';
+import { type ParsedDSDTF, parseDSDTF } from '@/format/deadSimpleDataTextFormat/index.js';
 
 export interface MarkdownDocMetadata {
 	title: string;
@@ -17,8 +17,7 @@ export interface MarkdownDoc {
 }
 
 export function parseMarkdownDocWithMetadata(docMd: string): ErrorReturn<MarkdownDoc> {
-
-	let [_empty, frontmatter, content] = docMd.split('\===');
+	let [_empty, frontmatter, content] = docMd.split('===');
 
 	if (!frontmatter) {
 		return [
@@ -35,7 +34,7 @@ to the beginning of the document.`),
 
 	frontmatter = frontmatter.trim();
 
-	if (frontmatter.endsWith("\\")){
+	if (frontmatter.endsWith('\\')) {
 		frontmatter = frontmatter.slice(0, -1);
 	}
 	frontmatter = frontmatter.trim();

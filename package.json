@@ -9,8 +9,9 @@
 		"postinstall": "pnpm run build",
 		"dev": "concurrently \"tsc --watch --preserveWatchOutput\" \"tsc-alias --watch\"",
 		"build": "tsc && tsc-alias",
-		"clean": "rm -rf build"	,
+		"clean": "rm -rf build",
 
+		"check": "pnpm check-biome && pnpm check-types",
 		"check-types": "tsc --noEmit",
 		"check-biome": "biome check --error-on-warnings"
 	},

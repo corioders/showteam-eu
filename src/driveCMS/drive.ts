@@ -8,7 +8,7 @@ import type { ValueOf } from '@/type';
 import { google } from 'googleapis';
 import { type GaxiosPromise, type GoogleAuth, createAPIRequest } from 'googleapis-common';
 import { StatusCodes } from 'http-status-codes';
-import { DEPLOY_REVISION_NAME } from './const';
+import { DEPLOY_REVISION_NAME } from './const.js';
 
 // ResourceID is an ID of Folder or File
 export type ResourceID = string & { readonly __resourceTag: unique symbol };
@@ -53,7 +53,6 @@ export async function internalUNSAFEChangePermissionsToAnyoneWithLinkReader(goog
 	);
 
 	if (response.status !== StatusCodes.OK) {
-		// biome-ignore lint/suspicious/useErrorMessage: No message required
 		return [null, new AggregateError([ERR_UNABLE_CHANGE_PERMISSION, new Error(response.statusText)])];
 	}
 

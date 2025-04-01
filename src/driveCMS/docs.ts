@@ -4,10 +4,10 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, January 2025
 
 import { CSE, type ErrorReturnPromise } from '@/error';
-import { type FileID, MIMEType, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive';
+import { type FileID, MIMEType, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
 
+import type { TxtDocumentNode } from '@textlint/ast-node-types';
 import { parse } from '@textlint/markdown-to-ast';
-import { TxtDocumentNode } from '@textlint/ast-node-types';
 import type { GoogleAuth } from 'googleapis-common';
 
 export type DocID = FileID & { readonly __docTag: unique symbol };

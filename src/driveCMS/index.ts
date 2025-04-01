@@ -5,7 +5,7 @@
 
 import type { ErrorReturnPromise } from '@/error';
 import { google } from 'googleapis';
-import { type Doc, type DocID, DocMd, downloadDocMarkdownRevision, downloadDocRevision, getDocRevisions } from './docs';
+import { type Doc, type DocID, type DocMd, downloadDocMarkdownRevision, downloadDocRevision, getDocRevisions } from './docs.js';
 import {
 	type FileID,
 	type FolderID,
@@ -14,8 +14,8 @@ import {
 	getLatestRevision,
 	internalListFolder,
 	internalUNSAFEChangePermissionsToAnyoneWithLinkReader,
-} from './drive';
-import { type Spreadsheet, type SpreadsheetID, downloadSpreadsheetRevision, getSheetRevisions } from './spreadsheet';
+} from './drive.js';
+import { type Spreadsheet, type SpreadsheetID, downloadSpreadsheetRevision, getSheetRevisions } from './spreadsheet.js';
 
 if (typeof process.env.CORIODERS_DRIVE_CMS_KEY !== 'string') {
 	throw new Error(
