@@ -8,9 +8,12 @@
 	"scripts": {
 		"preinstall": "pnpm --filter cstd-ts build",
 		"postinstall": "pnpm run build",
-		"check": "tsc --noEmit",
+		"dev": "concurrently \"tsc --watch --preserveWatchOutput\" \"tsc-alias --watch\"",
 		"build": "tsc && tsc-alias",
-		"watch": "concurrently \"tsc --watch\" \"tsc-alias --watch\""
+		"clean": "rm -rf build"	,
+
+		"check-types": "tsc --noEmit",
+		"check-biome": "biome check --error-on-warnings"
 	},
 	"dependencies": {
 		"buffer-image-size": "^0.6.4",
