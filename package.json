@@ -7,9 +7,12 @@
 	},
 	"scripts": {
 		"postinstall": "pnpm run build",
-		"check": "tsc --noEmit",
+		"dev": "concurrently \"tsc --watch --preserveWatchOutput\" \"tsc-alias --watch\"",
 		"build": "tsc && tsc-alias",
-		"watch": "concurrently \"tsc --watch\" \"tsc-alias --watch\""
+		"clean": "rm -rf build"	,
+
+		"check-types": "tsc --noEmit",
+		"check-biome": "biome check --error-on-warnings"
 	},
 	"dependencies": {
 		"@textlint/markdown-to-ast": "14.4.2",

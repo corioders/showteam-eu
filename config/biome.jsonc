@@ -58,7 +58,9 @@
 					"fix": "safe",
 					"options": {}
 				},
-				"noNodejsModules": "off"
+				"noNodejsModules": "off",
+				// biome is unable to locate the correct package.json - we have a lot of false-positives
+				"noUndeclaredDependencies": "off"
 			},
 			"nursery": {
 				// TODO: Follow this issue: https://github.com/biomejs/biome/issues/1274
