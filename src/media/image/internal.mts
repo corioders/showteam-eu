@@ -407,7 +407,7 @@ export interface CalculatedSize {
 // IF the user did not specify anything we just set the size to the original size of the image
 // IF the user specified only one width OR one height, we infer the other size and set that as width and height of the image & we set the sizes to the inferred width
 // IF the user specified width array OR height array then we set the size to the original size of the image
-export function calculateImageSizeFromUserSpecified(imageInfo: ImageInfo, userSpecified: UserSpecified | undefined): CalculatedSize {
+export function calculateImageSizeFromUserSpecifiedNoSVG(imageInfo: ImageInfo, userSpecified: UserSpecified | undefined): CalculatedSize {
 	if (userSpecified) {
 		validateUserSpecified(userSpecified);
 	}

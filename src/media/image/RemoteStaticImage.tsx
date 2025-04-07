@@ -20,11 +20,12 @@ import { type Storage as UnstorageStorage, createStorage } from 'unstorage';
 import lruCacheDriver from 'unstorage/drivers/lru-cache';
 import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from './image.mjs';
 import {
+	type CalculatedSize,
 	type INTERNAL_PictureSource,
 	type INTERNAL_SVGEntry,
 	type ImageInfo,
 	type UserSpecified,
-	calculateImageSizeFromUserSpecified,
+	calculateImageSizeFromUserSpecifiedNoSVG,
 	getPictureSourcesNotSvg,
 	getSvgEntry,
 	hash,
@@ -165,16 +166,20 @@ export default async function RemoteStaticImage(props: RemoteStaticImageProps) {
 
 	const imageBuffer = fetchedImage.imageBuffer;
 	const imageInfo = fetchedImage.imageInfo;
+	const isSVG = imageInfo.type === 'svg';
 
-	const { inferredSizes, imageSizeToSetAtTheImgElement } = calculateImageSizeFromUserSpecified(imageInfo, userSpecified);
+	let calculatedSize: CalculatedSize | undefined;
+	if (!isSVG) {
+		calculatedSize = calculateImageSizeFromUserSpecifiedNoSVG(imageInfo, userSpecified);
+	}
 
 	const imageOptimizationAttributes = {
 		...IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES,
 		alt: props.alt,
 		loading: props.loading,
 
-		width: imageSizeToSetAtTheImgElement.width,
-		height: imageSizeToSetAtTheImgElement.height,
+		width: isSVG ? imageInfo.width : calculatedSize?.imageSizeToSetAtTheImgElement.width,
+		height: isSVG ? imageInfo.height : calculatedSize?.imageSizeToSetAtTheImgElement.height,
 	};
 
 	// ==================================================
@@ -188,7 +193,7 @@ export default async function RemoteStaticImage(props: RemoteStaticImageProps) {
 		// This is not how it work baby.
 		console.log('!!WARNING!! You are trying to optimize images in a non-static route. This is not how it works. You should be doing this in the static route.');
 
-		if (imageInfo.type === 'svg') {
+		if (isSVG) {
 			// This is the correct MIME type for svg
 			imageInfo.type += '+xml';
 		}
@@ -216,7 +221,7 @@ export default async function RemoteStaticImage(props: RemoteStaticImageProps) {
 
 	await nodeFs.mkdir(NEXTJS_FILEPATH_PREFIX, { recursive: true });
 
-	if (imageInfo.type === 'svg') {
+	if (isSVG) {
 		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo);
 		await optimizeSvgAndWriteToDisk(isDevelopmentMode, svgEntry, imageBuffer);
 		return (
@@ -226,7 +231,11 @@ export default async function RemoteStaticImage(props: RemoteStaticImageProps) {
 		);
 	}
 
-	imageOptimizationAttributes.sizes = validateSizesProperty(props.sizes, inferredSizes, imageFilename);
+	if (!calculatedSize) {
+		throw new Error('calculatedSize should be defined at this point');
+	}
+
+	imageOptimizationAttributes.sizes = validateSizesProperty(props.sizes, calculatedSize.inferredSizes, imageFilename);
 
 	const pictureSources = getPictureSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, NEXTJS_FILEPATH_PREFIX, userSpecified);
 	await optimizeImageAndWriteToDisk(isDevelopmentMode, pictureSources, imageBuffer, imageFilename);

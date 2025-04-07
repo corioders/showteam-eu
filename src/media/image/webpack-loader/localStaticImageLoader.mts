@@ -13,7 +13,7 @@ import type { LoaderDefinitionFunction } from 'webpack';
 import {
 	type PictureSource,
 	type UserSpecified,
-	calculateImageSizeFromUserSpecified,
+	calculateImageSizeFromUserSpecifiedNoSVG,
 	getPictureSourcesNotSvg,
 	getSvgEntry,
 	hash,
@@ -163,7 +163,6 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const imageFilename = path.basename(this.resourcePath);
 	const imageInfo = readImageInfoFromBuffer(imageBuffer);
 
-	const { imageSizeToSetAtTheImgElement, inferredSizes } = calculateImageSizeFromUserSpecified(imageInfo, userSpecified);
 
 	if (imageInfo.type === 'svg') {
 		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo, pathPrefix);
@@ -171,8 +170,8 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 			contentHash: imageSpecificHash,
 			filename: imageFilename,
 
-			w: imageSizeToSetAtTheImgElement.width,
-			h: imageSizeToSetAtTheImgElement.height,
+			w: imageInfo.width,
+			h: imageInfo.height,
 			g: svgEntry.src,
 		};
 		const importReturnString = `export default ${JSON.stringify(importReturn)}`;
@@ -186,6 +185,8 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 
 		return importReturnString;
 	}
+
+	const { imageSizeToSetAtTheImgElement, inferredSizes } = calculateImageSizeFromUserSpecifiedNoSVG(imageInfo, userSpecified);
 
 	const pictureSources = getPictureSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, pathPrefix, userSpecified);
 	const loPictureSources: INTERNAL_LowOverheadPictureSource[] = pictureSources.map((ps) => ({ s: ps.srcSet, r: ps.fallbackSrc, t: ps.type }));
