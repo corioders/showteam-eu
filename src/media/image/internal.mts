@@ -428,7 +428,7 @@ export function calculateImageSizeFromUserSpecified(imageInfo: ImageInfo, userSp
 // This function works this way because of the calculateImageSizeFromUserSpecified. Look at the rules above.
 export function validateSizesProperty(userProvidedSizes: string | undefined, inferredSizes: string | undefined, imageNameToReport: string): string {
 	if (userProvidedSizes && inferredSizes) {
-		throw new Error(`When you specified only one width OR height then setting sizes property is NOT necessary: ${imageNameToReport}`);
+		console.log(`!!WARNING!! You specified sizes, while it was possible to infer them. Are you sure you want to do that: ${imageNameToReport}`);
 	}
 
 	if (!(userProvidedSizes || inferredSizes)) {
@@ -441,7 +441,7 @@ export function validateSizesProperty(userProvidedSizes: string | undefined, inf
 
 	if (userProvidedSizes) {
 		if (userProvidedSizes === 'auto') {
-			throw new Error(`The sizes='auto' attribute does not work in Safari and Firefox, sorry...`);
+			throw new Error(`The sizes='auto' attribute does not work in Safari and Firefox, sorry... ${imageNameToReport}`);
 		}
 		return userProvidedSizes;
 	}
