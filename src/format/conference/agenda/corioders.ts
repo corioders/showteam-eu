@@ -226,7 +226,6 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isDeve
 	return agenda;
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
 function parseActivityDSDTF(dsdtf: ParsedDSDTF, startTime: DateTime, endTime: DateTime): Activity {
 	const Type = dsdtf.mapping.get('Type');
 	if (Type === undefined) {

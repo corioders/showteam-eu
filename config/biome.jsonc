@@ -49,7 +49,13 @@
 			},
 			"complexity": {
 				// This rule interferes with the noPropertyAccessFromIndexSignature typescript compiler flag
-				"useLiteralKeys": "off"
+				"useLiteralKeys": "off",
+				"noExcessiveCognitiveComplexity": {
+					"level": "warn",
+					"options": {
+						"maxAllowedComplexity": 20
+					}
+				}
 			},
 			"correctness": {
 				"useImportExtensions": {
