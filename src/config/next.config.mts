@@ -54,7 +54,6 @@ const nextConfig: NextConfig = {
 
 		config.resolve.plugins.push({
 			apply: (resolver) => {
-				// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
 				resolver.hooks.resolve.tap({ name: 'jsToJsxResolver', stage: 100 }, (resolveRequest) => {
 					const originalRequest = resolveRequest.request;
 					if (!originalRequest) {

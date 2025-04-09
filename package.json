@@ -18,9 +18,9 @@
 		"check-biome": "biome check --error-on-warnings"
 	},
 	"dependencies": {
+		"cstd-ts": "workspace:*",
 		"buffer-image-size": "^0.6.4",
 		"cacheable": "^1.8.8",
-		"cstd-ts": "link:./../cstd-ts",
 		"p-limit": "^6.2.0",
 		"react-markdown": "^10.1.0",
 		"remark-gfm": "^4.0.1",

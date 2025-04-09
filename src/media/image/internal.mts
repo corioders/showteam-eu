@@ -231,7 +231,6 @@ export async function optimizePictureSources(
 	// Include an internal concurrency limit so that we are optimizing one image at the time.
 	//
 	// When using cloudflare, running more than one sharp instance at once usually causes segfaults.
-	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
 	await concurrencyLimit(async () => {
 		const startTime = Date.now();
 		let wasCacheHit = false;
