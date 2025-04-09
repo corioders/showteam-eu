@@ -10,6 +10,7 @@
 		"postinstall": "pnpm run build",
 		"dev": "concurrently \"tsc --watch --preserveWatchOutput\" \"tsc-alias --watch\"",
 		"build": "tsc && tsc-alias",
+		"build-cloudflare": "pnpm run build",
 		"clean": "rm -rf build",
 
 		"check": "pnpm check-biome && pnpm check-types",
