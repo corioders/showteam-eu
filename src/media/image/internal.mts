@@ -141,7 +141,7 @@ export function getPictureSourcesNotSvg(
 
 	// Deduplicate and sort
 	targetWidths = [...new Set(targetWidths)];
-	targetWidths = targetWidths.sort((a, b) => a - b);
+	targetWidths = targetWidths.sort((a, b) => b - a);
 
 	if (userSpecified) {
 		for (const targetWidth of targetWidths) {
