@@ -3,12 +3,13 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, January 2025
 
-import { CSE, type ErrorReturnPromise } from '@/error';
-import { type FileID, MIMEType, type Resource, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
-
 import type { TxtDocumentNode } from '@textlint/ast-node-types';
 import { parse } from '@textlint/markdown-to-ast';
 import type { GoogleAuth } from 'googleapis-common';
+
+import { CSE, type ErrorReturnPromise } from '@/error';
+import memoize from 'memoize';
+import { type FileID, MIMEType, type Resource, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
 
 export type DocID = FileID & { readonly __docTag: unique symbol };
 
@@ -37,7 +38,11 @@ export interface DocMd {
 }
 
 export const ERR_EXPECTED_DOWNLOADED_DOC_STRING = new Error('Expected the downloaded doc to be a string. Because MIME type of markdown was provided.');
-export async function downloadDocMarkdownRevision(googleAuth: GoogleAuth, docID: DocID, revisionID: RevisionID): ErrorReturnPromise<DocMd> {
+export const downloadDocMarkdownRevision = memoize(async function downloadDocMarkdownRevision(
+	googleAuth: GoogleAuth,
+	docID: DocID,
+	revisionID: RevisionID,
+): ErrorReturnPromise<DocMd> {
 	const validationError = validateDocID(docID);
 	if (validationError !== null) {
 		return [null, validationError];
@@ -59,7 +64,7 @@ export async function downloadDocMarkdownRevision(googleAuth: GoogleAuth, docID:
 	};
 
 	return [doc, null];
-}
+});
 
 export interface Doc {
 	docAST: TxtDocumentNode;
@@ -67,7 +72,7 @@ export interface Doc {
 	docID: DocID;
 }
 
-export async function downloadDocRevision(googleAuth: GoogleAuth, docID: DocID, revisionID: RevisionID): ErrorReturnPromise<Doc> {
+export const downloadDocRevision = memoize(async function downloadDocRevision(googleAuth: GoogleAuth, docID: DocID, revisionID: RevisionID): ErrorReturnPromise<Doc> {
 	const validationError = validateDocID(docID);
 	if (validationError !== null) {
 		return [null, validationError];
@@ -94,9 +99,9 @@ export async function downloadDocRevision(googleAuth: GoogleAuth, docID: DocID, 
 	} catch (error) {
 		return [null, new Error('@textlint/markdown-to-ast parse failed', { cause: error })];
 	}
-}
+});
 
-export async function getDocRevisions(googleAuth: GoogleAuth, docID: DocID): ErrorReturnPromise<Revision[]> {
+export const getDocRevisions = memoize(async function getDocRevisions(googleAuth: GoogleAuth, docID: DocID): ErrorReturnPromise<Revision[]> {
 	const validationError = validateDocID(docID);
 	if (validationError !== null) {
 		return [null, validationError];
@@ -111,4 +116,4 @@ export async function getDocRevisions(googleAuth: GoogleAuth, docID: DocID): Err
 	}
 
 	return [revisions, null];
-}
+});

@@ -8,6 +8,7 @@ import type { ValueOf } from '@/type';
 import { google } from 'googleapis';
 import { type GaxiosPromise, type GoogleAuth, createAPIRequest } from 'googleapis-common';
 import { StatusCodes } from 'http-status-codes';
+import memoize from 'memoize';
 import { DEPLOY_REVISION_NAME } from './const.js';
 
 // ResourceID is an ID of Folder or File
@@ -46,7 +47,10 @@ export function isFolder(resource: Resource): resource is FolderResource {
 }
 
 export const ERR_UNABLE_CHANGE_PERMISSION = new Error('Unable change permission');
-export async function internalUNSAFEChangePermissionsToAnyoneWithLinkReader(googleAuth: GoogleAuth, fileID: FileID): ErrorReturnPromise<void> {
+export const internalUNSAFEChangePermissionsToAnyoneWithLinkReader = memoize(async function internalUNSAFEChangePermissionsToAnyoneWithLinkReader(
+	googleAuth: GoogleAuth,
+	fileID: FileID,
+): ErrorReturnPromise<void> {
 	const driveAPI = google.drive({ version: 'v3', auth: googleAuth });
 
 	const response = await driveAPI.permissions.create(
@@ -66,10 +70,10 @@ export async function internalUNSAFEChangePermissionsToAnyoneWithLinkReader(goog
 	}
 
 	return [null, null];
-}
+});
 
 export const ERR_UNABLE_TO_LIST_FILES = new Error('Unable to list files');
-export async function internalListFolder(googleAuth: GoogleAuth, folderID: FolderID): ErrorReturnPromise<Resource[]> {
+export const internalListFolder = memoize(async function internalListFolder(googleAuth: GoogleAuth, folderID: FolderID): ErrorReturnPromise<Resource[]> {
 	const driveAPI = google.drive({ version: 'v3', auth: googleAuth });
 	const [fileOrFolderListResponse, errorList] = await safePromise(() => driveAPI.files.list({ q: `'${folderID}' in parents` }));
 	if (errorList !== null) {
@@ -90,9 +94,14 @@ export async function internalListFolder(googleAuth: GoogleAuth, folderID: Folde
 	}
 
 	return [fileOrFolderList, null];
-}
+});
 
-export async function downloadFile(googleAuth: GoogleAuth, fileID: FileID, revisionID?: RevisionID, mimeType?: MIMETypeT): ErrorReturnPromise<unknown> {
+export const downloadFile = memoize(async function downloadFile(
+	googleAuth: GoogleAuth,
+	fileID: FileID,
+	revisionID?: RevisionID,
+	mimeType?: MIMETypeT,
+): ErrorReturnPromise<unknown> {
 	const [downloadURL, errorGetFileURL] = await getFileDownloadURL(googleAuth, fileID, revisionID, mimeType);
 	if (errorGetFileURL !== null) {
 		return [null, errorGetFileURL];
@@ -115,9 +124,14 @@ export async function downloadFile(googleAuth: GoogleAuth, fileID: FileID, revis
 	}
 
 	return [downloadResponse.data, null];
-}
+});
 
-export async function getFileDownloadURL(googleAuth: GoogleAuth, fileID: FileID, revisionID?: RevisionID, mimeType?: MIMETypeT): ErrorReturnPromise<string> {
+export const getFileDownloadURL = memoize(async function getFileDownloadURL(
+	googleAuth: GoogleAuth,
+	fileID: FileID,
+	revisionID?: RevisionID,
+	mimeType?: MIMETypeT,
+): ErrorReturnPromise<string> {
 	// https://developers.google.com/drive/api/reference/rest/v3/operations#Operation
 	interface Operation {
 		response: {
@@ -146,7 +160,7 @@ export async function getFileDownloadURL(googleAuth: GoogleAuth, fileID: FileID,
 
 	const downloadURL = downloadURIResponse.data.response.downloadUri;
 	return [downloadURL, null];
-}
+});
 
 export interface Revision {
 	name?: string;
@@ -154,7 +168,10 @@ export interface Revision {
 }
 
 // TODO: Consider Download ALL revisions: Look at the url: "revisionBatchSize"
-export async function getRevisionsFromUndocumentedAPI(googleAuth: GoogleAuth, undocumentedRevisionURL: string): ErrorReturnPromise<Revision[]> {
+export const getRevisionsFromUndocumentedAPI = memoize(async function getRevisionsFromUndocumentedAPI(
+	googleAuth: GoogleAuth,
+	undocumentedRevisionURL: string,
+): ErrorReturnPromise<Revision[]> {
 	const [response, errorGaxios] = await safePromise(() => {
 		return createAPIRequest({
 			options: {
@@ -201,7 +218,7 @@ export async function getRevisionsFromUndocumentedAPI(googleAuth: GoogleAuth, un
 
 	const sortedRevisions = revisions.sort((a, b) => a.revisionID - b.revisionID);
 	return [sortedRevisions, null];
-}
+});
 
 export const ERR_REVISIONS_LENGTH_IS_ZERO = new Error('Error: revisions.length === 0');
 export function getLatestRevision(revisions: Revision[]): ErrorReturn<Revision> {
