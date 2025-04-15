@@ -15,13 +15,28 @@ const memoizeCache = ourGlobalThis.__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE;
 
 function memoizeDriveCMSCacheKey(functionArguments: readonly unknown[]) {
 	let key = '';
-	for (const argument of functionArguments) {
+
+	// biome-ignore lint/style/useForOf: here we need speed
+	for (let i = 0; i < functionArguments.length; i++) {
+		const argument = functionArguments[i];
+		const argumentType = typeof argument;
+
+		if (argumentType === 'string') {
+			key += argument;
+			continue;
+		}
+
+		if (argumentType === 'number') {
+			key += String(argument);
+			continue;
+		}
+
 		if (argument instanceof GoogleAuth) {
 			key += JSON.stringify(argument.jsonContent);
 			continue;
 		}
 
-		key += JSON.stringify(argument);
+		throw new Error(`Unsupported memorize argument type: ${argumentType}, ${argument}`);
 	}
 
 	return key;

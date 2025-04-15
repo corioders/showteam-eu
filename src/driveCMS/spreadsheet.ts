@@ -8,6 +8,7 @@ import type { GoogleAuth } from 'googleapis-common';
 import { type WorkBook as XlsxWorkBook, read as xlsxRead } from 'xlsx';
 
 import { type ErrorReturnPromise, safe, safePromise } from '@/error';
+import { memoizeDriveCMS } from './cache.js';
 import { type FileID, MIMEType, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
 
 export type SpreadsheetID = FileID & { readonly __spreadsheetTag: unique symbol };
@@ -18,7 +19,11 @@ export interface Spreadsheet {
 	workbook: XlsxWorkBook;
 }
 
-export async function downloadSpreadsheetRevision(googleAuth: GoogleAuth, spreadsheetID: SpreadsheetID, revisionID: RevisionID): ErrorReturnPromise<Spreadsheet> {
+export const downloadSpreadsheetRevision = memoizeDriveCMS(async function downloadSpreadsheetRevision(
+	googleAuth: GoogleAuth,
+	spreadsheetID: SpreadsheetID,
+	revisionID: RevisionID,
+): ErrorReturnPromise<Spreadsheet> {
 	const [spreadsheetAsExcel, errorDownloadFile] = await downloadFile(googleAuth, spreadsheetID, revisionID, MIMEType.excel);
 	if (errorDownloadFile !== null) {
 		return [null, errorDownloadFile];
@@ -42,9 +47,9 @@ export async function downloadSpreadsheetRevision(googleAuth: GoogleAuth, spread
 	};
 
 	return [spreadsheet, null];
-}
+});
 
-export async function getSheetRevisions(googleAuth: GoogleAuth, spreadsheetId: SpreadsheetID): ErrorReturnPromise<Revision[]> {
+export const getSheetRevisions = memoizeDriveCMS(async function getSheetRevisions(googleAuth: GoogleAuth, spreadsheetId: SpreadsheetID): ErrorReturnPromise<Revision[]> {
 	const [revisions, err] = await getRevisionsFromUndocumentedAPI(
 		googleAuth,
 		`https://docs.google.com/spreadsheets/d/${spreadsheetId}/revisions/tiles?id=${spreadsheetId}&start=1&revisionBatchSize=1500&showDetailedRevisions=false&loadType=0&includes_info_params=true&cros_files=false`,
@@ -54,4 +59,4 @@ export async function getSheetRevisions(googleAuth: GoogleAuth, spreadsheetId: S
 	}
 
 	return [revisions, null];
-}
+});
