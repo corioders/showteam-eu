@@ -12,6 +12,15 @@ import type { GoogleAuth } from 'googleapis-common';
 
 export type DocID = FileID & { readonly __docTag: unique symbol };
 
+export const ERR_DOC_ID_EMPTY = new Error('Doc ID cannot be empty');
+export function validateDocID(docID: DocID): Error | null {
+	if (docID === '' || !docID) {
+		return new CSE(ERR_DOC_ID_EMPTY);
+	}
+
+	return null;
+}
+
 export interface DocResource extends Resource {
 	id: DocID;
 	mimeType: (typeof MIMEType)['docs'];
@@ -29,6 +38,11 @@ export interface DocMd {
 
 export const ERR_EXPECTED_DOWNLOADED_DOC_STRING = new Error('Expected the downloaded doc to be a string. Because MIME type of markdown was provided.');
 export async function downloadDocMarkdownRevision(googleAuth: GoogleAuth, docID: DocID, revisionID: RevisionID): ErrorReturnPromise<DocMd> {
+	const validationError = validateDocID(docID);
+	if (validationError !== null) {
+		return [null, validationError];
+	}
+
 	const [docAsMarkdown, errorDownloadFile] = await downloadFile(googleAuth, docID, revisionID, MIMEType.markdown);
 	if (errorDownloadFile !== null) {
 		return [null, errorDownloadFile];
@@ -54,6 +68,11 @@ export interface Doc {
 }
 
 export async function downloadDocRevision(googleAuth: GoogleAuth, docID: DocID, revisionID: RevisionID): ErrorReturnPromise<Doc> {
+	const validationError = validateDocID(docID);
+	if (validationError !== null) {
+		return [null, validationError];
+	}
+
 	const [docAsMarkdown, errorDownloadFile] = await downloadFile(googleAuth, docID, revisionID, MIMEType.markdown);
 	if (errorDownloadFile !== null) {
 		return [null, errorDownloadFile];
@@ -78,6 +97,11 @@ export async function downloadDocRevision(googleAuth: GoogleAuth, docID: DocID, 
 }
 
 export async function getDocRevisions(googleAuth: GoogleAuth, docID: DocID): ErrorReturnPromise<Revision[]> {
+	const validationError = validateDocID(docID);
+	if (validationError !== null) {
+		return [null, validationError];
+	}
+
 	const [revisions, err] = await getRevisionsFromUndocumentedAPI(
 		googleAuth,
 		`https://docs.google.com/document/d/${docID}/revisions/tiles?id=${docID}&start=1&revisionBatchSize=1500&showDetailedRevisions=false&loadType=0&includes_info_params=true&cros_files=false`,
