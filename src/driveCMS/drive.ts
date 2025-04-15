@@ -3,12 +3,13 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
-import { CSE, type ErrorReturn, type ErrorReturnPromise, safe, safePromise } from '@/error';
-import type { ValueOf } from '@/type';
 import { google } from 'googleapis';
 import { type GaxiosPromise, type GoogleAuth, createAPIRequest } from 'googleapis-common';
 import { StatusCodes } from 'http-status-codes';
-import memoize from 'memoize';
+
+import { CSE, type ErrorReturn, type ErrorReturnPromise, safe, safePromise } from '@/error';
+import type { ValueOf } from '@/type';
+import { memoizeDriveCMS } from './cache.js';
 import { DEPLOY_REVISION_NAME } from './const.js';
 
 // ResourceID is an ID of Folder or File
@@ -47,7 +48,7 @@ export function isFolder(resource: Resource): resource is FolderResource {
 }
 
 export const ERR_UNABLE_CHANGE_PERMISSION = new Error('Unable change permission');
-export const internalUNSAFEChangePermissionsToAnyoneWithLinkReader = memoize(async function internalUNSAFEChangePermissionsToAnyoneWithLinkReader(
+export const internalUNSAFEChangePermissionsToAnyoneWithLinkReader = memoizeDriveCMS(async function internalUNSAFEChangePermissionsToAnyoneWithLinkReader(
 	googleAuth: GoogleAuth,
 	fileID: FileID,
 ): ErrorReturnPromise<void> {
@@ -73,7 +74,7 @@ export const internalUNSAFEChangePermissionsToAnyoneWithLinkReader = memoize(asy
 });
 
 export const ERR_UNABLE_TO_LIST_FILES = new Error('Unable to list files');
-export const internalListFolder = memoize(async function internalListFolder(googleAuth: GoogleAuth, folderID: FolderID): ErrorReturnPromise<Resource[]> {
+export const internalListFolder = memoizeDriveCMS(async function internalListFolder(googleAuth: GoogleAuth, folderID: FolderID): ErrorReturnPromise<Resource[]> {
 	const driveAPI = google.drive({ version: 'v3', auth: googleAuth });
 	const [fileOrFolderListResponse, errorList] = await safePromise(() => driveAPI.files.list({ q: `'${folderID}' in parents` }));
 	if (errorList !== null) {
@@ -96,7 +97,7 @@ export const internalListFolder = memoize(async function internalListFolder(goog
 	return [fileOrFolderList, null];
 });
 
-export const downloadFile = memoize(async function downloadFile(
+export const downloadFile = memoizeDriveCMS(async function downloadFile(
 	googleAuth: GoogleAuth,
 	fileID: FileID,
 	revisionID?: RevisionID,
@@ -126,7 +127,7 @@ export const downloadFile = memoize(async function downloadFile(
 	return [downloadResponse.data, null];
 });
 
-export const getFileDownloadURL = memoize(async function getFileDownloadURL(
+export const getFileDownloadURL = memoizeDriveCMS(async function getFileDownloadURL(
 	googleAuth: GoogleAuth,
 	fileID: FileID,
 	revisionID?: RevisionID,
@@ -168,7 +169,7 @@ export interface Revision {
 }
 
 // TODO: Consider Download ALL revisions: Look at the url: "revisionBatchSize"
-export const getRevisionsFromUndocumentedAPI = memoize(async function getRevisionsFromUndocumentedAPI(
+export const getRevisionsFromUndocumentedAPI = memoizeDriveCMS(async function getRevisionsFromUndocumentedAPI(
 	googleAuth: GoogleAuth,
 	undocumentedRevisionURL: string,
 ): ErrorReturnPromise<Revision[]> {

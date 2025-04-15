@@ -8,7 +8,7 @@ import { parse } from '@textlint/markdown-to-ast';
 import type { GoogleAuth } from 'googleapis-common';
 
 import { CSE, type ErrorReturnPromise } from '@/error';
-import memoize from 'memoize';
+import { memoizeDriveCMS } from './cache.js';
 import { type FileID, MIMEType, type Resource, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
 
 export type DocID = FileID & { readonly __docTag: unique symbol };
@@ -38,7 +38,7 @@ export interface DocMd {
 }
 
 export const ERR_EXPECTED_DOWNLOADED_DOC_STRING = new Error('Expected the downloaded doc to be a string. Because MIME type of markdown was provided.');
-export const downloadDocMarkdownRevision = memoize(async function downloadDocMarkdownRevision(
+export const downloadDocMarkdownRevision = memoizeDriveCMS(async function downloadDocMarkdownRevision(
 	googleAuth: GoogleAuth,
 	docID: DocID,
 	revisionID: RevisionID,
@@ -72,7 +72,11 @@ export interface Doc {
 	docID: DocID;
 }
 
-export const downloadDocRevision = memoize(async function downloadDocRevision(googleAuth: GoogleAuth, docID: DocID, revisionID: RevisionID): ErrorReturnPromise<Doc> {
+export const downloadDocRevision = memoizeDriveCMS(async function downloadDocRevision(
+	googleAuth: GoogleAuth,
+	docID: DocID,
+	revisionID: RevisionID,
+): ErrorReturnPromise<Doc> {
 	const validationError = validateDocID(docID);
 	if (validationError !== null) {
 		return [null, validationError];
@@ -101,7 +105,7 @@ export const downloadDocRevision = memoize(async function downloadDocRevision(go
 	}
 });
 
-export const getDocRevisions = memoize(async function getDocRevisions(googleAuth: GoogleAuth, docID: DocID): ErrorReturnPromise<Revision[]> {
+export const getDocRevisions = memoizeDriveCMS(async function getDocRevisions(googleAuth: GoogleAuth, docID: DocID): ErrorReturnPromise<Revision[]> {
 	const validationError = validateDocID(docID);
 	if (validationError !== null) {
 		return [null, validationError];
