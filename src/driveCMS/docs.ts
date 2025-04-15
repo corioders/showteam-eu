@@ -4,13 +4,22 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, January 2025
 
 import { CSE, type ErrorReturnPromise } from '@/error';
-import { type FileID, MIMEType, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
+import { type FileID, MIMEType, type Resource, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
 
 import type { TxtDocumentNode } from '@textlint/ast-node-types';
 import { parse } from '@textlint/markdown-to-ast';
 import type { GoogleAuth } from 'googleapis-common';
 
 export type DocID = FileID & { readonly __docTag: unique symbol };
+
+export interface DocResource extends Resource {
+	id: DocID;
+	mimeType: (typeof MIMEType)['docs'];
+}
+
+export function isDoc(resource: Resource): resource is DocResource {
+	return resource.mimeType === MIMEType.docs;
+}
 
 export interface DocMd {
 	docMd: string;

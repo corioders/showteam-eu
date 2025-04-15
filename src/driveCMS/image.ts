@@ -3,9 +3,17 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, January 2025
 
-import type { FileID } from './drive.js';
+import type { FileID, Resource } from './drive.js';
 
 export type ImageID = FileID & { readonly __imageTag: unique symbol };
+
+export interface ImageResource extends Resource {
+	id: ImageID;
+}
+
+export function isImage(resource: Resource): resource is ImageResource {
+	return resource.mimeType.includes('image');
+}
 
 export function getPublicImageDownloadURL(imageID: ImageID): string {
 	return `https://drive.usercontent.google.com/uc?id=${imageID}&export=download`;

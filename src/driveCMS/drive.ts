@@ -36,6 +36,15 @@ export interface Resource {
 	mimeType: MIMETypeT;
 }
 
+export interface FolderResource extends Resource {
+	id: FolderID;
+	mimeType: (typeof MIMEType)['folder'];
+}
+
+export function isFolder(resource: Resource): resource is FolderResource {
+	return resource.mimeType === MIMEType.folder;
+}
+
 export const ERR_UNABLE_CHANGE_PERMISSION = new Error('Unable change permission');
 export async function internalUNSAFEChangePermissionsToAnyoneWithLinkReader(googleAuth: GoogleAuth, fileID: FileID): ErrorReturnPromise<void> {
 	const driveAPI = google.drive({ version: 'v3', auth: googleAuth });
