@@ -4,7 +4,7 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
 import type { ErrorReturnPromise } from '@/error';
-import { google } from 'googleapis';
+import { type forms_v1, google } from 'googleapis';
 import { type Doc, type DocID, type DocMd, downloadDocMarkdownRevision, downloadDocRevision, getDocRevisions } from './docs.js';
 import {
 	type FileID,
@@ -15,6 +15,7 @@ import {
 	internalListFolder,
 	internalUNSAFEChangePermissionsToAnyoneWithLinkReader,
 } from './drive.js';
+import { type FormID, getForm as internalGetForm } from './form.js';
 import { type Spreadsheet, type SpreadsheetID, downloadSpreadsheetRevision, getSheetRevisions } from './spreadsheet.js';
 
 if (typeof process.env.CORIODERS_DRIVE_CMS_KEY !== 'string') {
@@ -27,6 +28,10 @@ const googleAuth = new google.auth.GoogleAuth({
 	credentials: JSON.parse(process.env.CORIODERS_DRIVE_CMS_KEY as string),
 	scopes: ['https://www.googleapis.com/auth/drive'],
 });
+
+export function getForm(formID: FormID, isPreview: boolean): ErrorReturnPromise<forms_v1.Schema$Form> {
+	return internalGetForm(googleAuth, formID, isPreview);
+}
 
 // const driveAPI = google.drive({ version: "v3", auth: googleAuth });
 // const sheetsAPI = google.sheets({ version: "v4", auth: googleAuth });
