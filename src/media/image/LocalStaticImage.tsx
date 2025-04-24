@@ -5,7 +5,7 @@
 
 import './../../../src/media/image/picture-display-style.css';
 
-import type { ImgHTMLAttributes, JSX } from 'react';
+import type { DetailedHTMLProps, ImgHTMLAttributes, JSX } from 'react';
 
 import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from './image.mjs';
 import { validateSizesProperty } from './internal.mjs';
@@ -13,7 +13,8 @@ import type { INTERNAL_LocalStaticImageImport, LocalStaticImageImport as LocalSt
 
 export type LocalStaticImageImport = LocalStaticImageImportInternal;
 
-export interface LocalStaticImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'alt' | 'sizes' | 'width' | 'height'> {
+export interface LocalStaticImageProps
+	extends Omit<DetailedHTMLProps<ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement>, 'src' | 'alt' | 'sizes' | 'width' | 'height'> {
 	src: LocalStaticImageImport;
 	alt: string;
 	loading: 'eager' | 'lazy';

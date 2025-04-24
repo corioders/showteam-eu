@@ -181,7 +181,7 @@ export function getPictureSourcesNotSvg(
 		srcSetPerFormat = srcSetPerFormat.slice(0, srcSetPerFormat.length - 2);
 		sources.push({
 			srcSet: srcSetPerFormat,
-			fallbackSrc: getImageUrl(targetWidths[0], targetFormat),
+			fallbackSrc: getImageUrl(sharpEntries[0].targetWidth, targetFormat),
 			type: `image/${targetFormat}`,
 			__sharpEntries: sharpEntries,
 		});
