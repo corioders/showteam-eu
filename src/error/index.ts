@@ -3,8 +3,8 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
-export type ErrorReturn<Result> = [Result, null] | [null, Error];
-export type ErrorReturnPromise<Result> = Promise<ErrorReturn<Result>>;
+export type ErrorReturn<Result, ErrorT = Error> = [Result, null] | [null, ErrorT];
+export type ErrorReturnPromise<Result, ErrorT = Error> = Promise<ErrorReturn<Result, ErrorT>>;
 
 export function safe<T>(throwableFn: () => T): ErrorReturn<T> {
 	try {
@@ -14,7 +14,7 @@ export function safe<T>(throwableFn: () => T): ErrorReturn<T> {
 	}
 }
 
-export async function safePromise<T>(throwableFn: () => Promise<T>): ErrorReturnPromise<T> {
+export async function safePromise<T, ErrorT = Error>(throwableFn: () => Promise<T>): ErrorReturnPromise<T, ErrorT> {
 	try {
 		return [await throwableFn(), null];
 	} catch (error) {
