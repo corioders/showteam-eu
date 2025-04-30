@@ -15,16 +15,13 @@ import type { JSX } from 'react';
 
 interface Props extends Omit<MarkdownRendererProps, 'children'> {
 	docID: string;
-	// biome-ignore lint/style/useNamingConvention: <explanation>
-	IS_PREVIEW_ENV_NAME: string;
+	isPreview: boolean;
 }
 
 export default async function DocRenderer(props: Props): Promise<JSX.Element> {
-	const usePreviewRevision = process.env[props.IS_PREVIEW_ENV_NAME] === 'true';
-
 	let mdDownload: ErrorReturn<DocMd>;
 
-	if (usePreviewRevision) {
+	if (props.isPreview) {
 		mdDownload = await downloadDocLatestMarkdownRevision(props.docID as DocID);
 	} else {
 		mdDownload = await downloadDocLatestMarkdownDeployRevision(props.docID as DocID);

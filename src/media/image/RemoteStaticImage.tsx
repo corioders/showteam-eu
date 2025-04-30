@@ -401,6 +401,12 @@ async function optimizeSvgAndWriteToDisk(isDevelopmentMode: boolean, svgEntry: I
 		await cacheStorage.setItem(cacheKey, optimizedSvg);
 	}
 
+	const [_, statsError] = await safePromise(() => nodeFs.stat(svgEntry.filepath));
+	const exists = statsError === null;
+	if (exists) {
+		return;
+	}
+
 	await nodeFs.writeFile(svgEntry.filepath, optimizedSvg);
 }
 
@@ -416,6 +422,12 @@ async function optimizeImageAndWriteToDisk(
 	const nodeFs: typeof NodeFsType = require('node:fs/promises');
 
 	const exportFunction = async (optimizedImageBuffer: Buffer, filepath: string) => {
+		const [_, statsError] = await safePromise(() => nodeFs.stat(filepath));
+		const exists = statsError === null;
+		if (exists) {
+			return;
+		}
+
 		await nodeFs.writeFile(filepath, optimizedImageBuffer);
 	};
 

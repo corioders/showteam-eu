@@ -8,7 +8,14 @@ import type { JSX } from 'react';
 interface Props {
 	error: Error | string;
 }
+
+const IS_PREVIEW = process.env.IS_PREVIEW === 'true';
+
 export default function CstdError(props: Props): JSX.Element {
+	if (!IS_PREVIEW) {
+		return <></>;
+	}
+
 	return (
 		<div>
 			<h1 className="font-extrabold">ERROR:</h1>
