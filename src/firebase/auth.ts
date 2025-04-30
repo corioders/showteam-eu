@@ -5,7 +5,7 @@
 
 import type { ErrorReturnPromise } from '@/error/index.js';
 import type { FirebaseApp } from 'firebase/app';
-import { type UserCredential, createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
+import { type UserCredential, createUserWithEmailAndPassword, getAuth, onAuthStateChanged } from 'firebase/auth';
 import { firebaseSafePromise } from './error.js';
 
 const REQUIREMENTS_REGEX = /\[(?<requirements>.*)\]/;
@@ -33,4 +33,44 @@ export async function firebaseSignupUserWithEmailAndPassword(firebaseApp: Fireba
 	}
 
 	return [userCredentials, null];
+}
+
+type IsLoggedInSyncPromise = Promise<boolean>;
+const isLoggedInSyncPromisePerFirebaseApp: Map<FirebaseApp, IsLoggedInSyncPromise> | null = new Map();
+
+function initIsLoggedInSyncPromise(firebaseApp: FirebaseApp) {
+	if (isLoggedInSyncPromisePerFirebaseApp.get(firebaseApp)) {
+		return;
+	}
+
+	const isLoggedInSyncPromise = new Promise<boolean>((resolve, reject) => {
+		const auth = getAuth(firebaseApp);
+		const unsubscribe = onAuthStateChanged(
+			auth,
+			(user) => {
+				unsubscribe();
+				if (user === null) {
+					resolve(false);
+					return;
+				}
+				resolve(true);
+			},
+			reject,
+		);
+	});
+
+	isLoggedInSyncPromisePerFirebaseApp.set(firebaseApp, isLoggedInSyncPromise);
+
+	return;
+}
+
+export async function isLoggedIn(firebaseApp: FirebaseApp): Promise<boolean> {
+	initIsLoggedInSyncPromise(firebaseApp);
+	await isLoggedInSyncPromisePerFirebaseApp.get(firebaseApp);
+	const auth = getAuth(firebaseApp);
+	if (auth.currentUser !== null) {
+		return true;
+	}
+
+	return false;
 }
