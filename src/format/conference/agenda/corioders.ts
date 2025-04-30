@@ -47,7 +47,7 @@ const TIME_TIME_DELTA_MINUTES = 5;
 const FIRST_STAGE_TITLE_ROW_CELL: CellAddress = { c: 1, r: 0 };
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
-export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isDevelopment: boolean): Promise<Agenda> {
+export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPreview: boolean): Promise<Agenda> {
 	const agenda: Agenda = {
 		days: [],
 	};

@@ -26,13 +26,23 @@ function memoizeDriveCMSCacheKey(functionArguments: readonly unknown[]) {
 			continue;
 		}
 
-		if (argumentType === 'number') {
+		if (argumentType === 'number' || argumentType === 'boolean') {
 			key += String(argument);
 			continue;
 		}
 
 		if (argument instanceof GoogleAuth) {
 			key += JSON.stringify(argument.jsonContent);
+			continue;
+		}
+
+		if (argument === undefined) {
+			key += String(argument);
+			continue;
+		}
+
+		if (argumentType === 'object') {
+			key += JSON.stringify(argument);
 			continue;
 		}
 

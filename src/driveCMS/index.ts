@@ -4,18 +4,28 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
 import type { ErrorReturnPromise } from '@/error';
-import { type forms_v1, google } from 'googleapis';
+import { google } from 'googleapis';
 import { type Doc, type DocID, type DocMd, downloadDocMarkdownRevision, downloadDocRevision, getDocRevisions } from './docs.js';
 import {
 	type FileID,
 	type FolderID,
+	type PermissionRole,
+	type PermissionType,
 	type Resource,
+	type ResourceID,
 	getLatestDeployRevision,
 	getLatestRevision,
 	internalListFolder,
 	internalUNSAFEChangePermissionsToAnyoneWithLinkReader,
 } from './drive.js';
-import { type FormID, getForm as internalGetForm } from './form.js';
+import {
+	addPermission as internalAddPermission,
+	clearAllPermissions as internalClearAllPermissions,
+	copyPermissions as internalCopyPermissions,
+	createFolder as internalCreateFolder,
+	simpleFileUpload as internalSimpleFileUpload,
+} from './drive.js';
+import { type FileUploadOptions, type Form, type FormID, getForm as internalGetForm } from './form.js';
 import { type Spreadsheet, type SpreadsheetID, downloadSpreadsheetRevision, getSheetRevisions } from './spreadsheet.js';
 
 if (typeof process.env.CORIODERS_DRIVE_CMS_KEY !== 'string') {
@@ -24,13 +34,18 @@ if (typeof process.env.CORIODERS_DRIVE_CMS_KEY !== 'string') {
 	);
 }
 
+export type EmailAddress = string & { readonly __emailAddressTag: unique symbol };
+
+const driveCMSJsonKey = JSON.parse(process.env.CORIODERS_DRIVE_CMS_KEY as string);
+export const SERVICE_ACCOUNT_EMAIL = driveCMSJsonKey.client_email as EmailAddress;
+
 const googleAuth = new google.auth.GoogleAuth({
-	credentials: JSON.parse(process.env.CORIODERS_DRIVE_CMS_KEY as string),
+	credentials: driveCMSJsonKey,
 	scopes: ['https://www.googleapis.com/auth/drive'],
 });
 
-export function getForm(formID: FormID, isPreview: boolean): ErrorReturnPromise<forms_v1.Schema$Form> {
-	return internalGetForm(googleAuth, formID, isPreview);
+export function getForm(formID: FormID, isPreview: boolean, fileUploadOptions?: FileUploadOptions): ErrorReturnPromise<Form> {
+	return internalGetForm(googleAuth, formID, isPreview, fileUploadOptions);
 }
 
 // const driveAPI = google.drive({ version: "v3", auth: googleAuth });
@@ -127,4 +142,29 @@ export async function downloadSpreadsheetLatestDeployRevision(spreadsheetID: Spr
 	}
 
 	return downloadSpreadsheetRevision(googleAuth, spreadsheetID, latestDeployRevision.revisionID);
+}
+
+export function simpleFileUpload(folderID: FolderID, file: File): ErrorReturnPromise<FileID> {
+	return internalSimpleFileUpload(googleAuth, folderID, file);
+}
+
+export function createFolder(parentFolderID: FolderID, folderName: string): ErrorReturnPromise<FolderID> {
+	return internalCreateFolder(googleAuth, parentFolderID, folderName);
+}
+
+export function copyPermissions(sourceResourceID: ResourceID, targetResourceID: ResourceID): Promise<Error | null> {
+	return internalCopyPermissions(googleAuth, sourceResourceID, targetResourceID);
+}
+
+export function clearAllPermissions(targetResourceID: ResourceID, except?: EmailAddress[]): Promise<Error | null> {
+	return internalClearAllPermissions(googleAuth, targetResourceID, except);
+}
+
+export function addPermission(
+	targetResourceID: ResourceID,
+	emailAddress: EmailAddress,
+	permissionRole: PermissionRole,
+	permissionType: PermissionType = 'user',
+): Promise<Error | null> {
+	return internalAddPermission(googleAuth, targetResourceID, emailAddress, permissionRole, permissionType);
 }
