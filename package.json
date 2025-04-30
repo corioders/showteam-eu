@@ -10,15 +10,15 @@
 		"build": "tsc && tsc-alias",
 		"build-cloudflare": "pnpm run build",
 		"clean": "rm -rf build",
-
 		"check": "pnpm check-biome && pnpm check-types",
 		"check-types": "tsc --noEmit",
 		"check-biome": "biome check --error-on-warnings"
 	},
 	"dependencies": {
-		"cstd-ts": "workspace:*",
 		"buffer-image-size": "^0.6.4",
 		"cacheable": "^1.8.8",
+		"cstd-ts": "workspace:*",
+		"http-status-codes": "^2.3.0",
 		"p-limit": "^6.2.0",
 		"react-markdown": "^10.1.0",
 		"remark-gfm": "^4.0.1",
@@ -34,10 +34,11 @@
 		"typescript": "^5.6.2"
 	},
 	"peerDependencies": {
+		"@types/react": "*",
+		"firebase": "*",
+		"googleapis": "*",
 		"next": "*",
 		"react": "*",
-		"@types/react": "*",
-		"webpack": "*",
-		"firebase": "^11"
+		"webpack": "*"
 	}
 }
