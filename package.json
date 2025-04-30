@@ -37,6 +37,7 @@
 		"next": "*",
 		"react": "*",
 		"@types/react": "*",
-		"webpack": "*"
+		"webpack": "*",
+		"firebase": "^11"
 	}
 }
