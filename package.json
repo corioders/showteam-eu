@@ -26,9 +26,6 @@
 		"unstorage": "^1.15.0",
 		"xlsx": "^0.18.5"
 	},
-	"peerDependencies": {
-		"firebase": "^11"
-	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
 		"@textlint/ast-node-types": "^14.4.2",
@@ -38,5 +35,8 @@
 		"concurrently": "^9.0.1",
 		"tsc-alias": "^1.8.10",
 		"typescript": "^5.6.2"
+	},
+	"peerDependencies": {
+		"firebase": "*"
 	}
 }
