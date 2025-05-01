@@ -55,7 +55,8 @@
 					"options": {
 						"maxAllowedComplexity": 20
 					}
-				}
+				},
+				"useSimplifiedLogicExpression": "off"
 			},
 			"correctness": {
 				"useImportExtensions": {
