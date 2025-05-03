@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
-import type { ErrorReturnPromise } from '@/error';
+import { type ErrorReturnPromise, safe } from '@/error';
 import { google } from 'googleapis';
 import { type Doc, type DocID, type DocMd, downloadDocMarkdownRevision, downloadDocRevision, getDocRevisions } from './docs.js';
 import {
@@ -36,7 +36,11 @@ if (typeof process.env.CORIODERS_DRIVE_CMS_KEY !== 'string') {
 
 export type EmailAddress = string & { readonly __emailAddressTag: unique symbol };
 
-const driveCMSJsonKey = JSON.parse(process.env.CORIODERS_DRIVE_CMS_KEY as string);
+const [driveCMSJsonKey, driveCMSJsonKeyError] = safe(() => JSON.parse(process.env.CORIODERS_DRIVE_CMS_KEY as string));
+if (driveCMSJsonKeyError) {
+	throw new Error(`Unable to initialize drive cms, CORIODERS_DRIVE_CMS_KEY is not a valid JSON: ${driveCMSJsonKeyError.message}`, { cause: driveCMSJsonKeyError });
+}
+
 export const SERVICE_ACCOUNT_EMAIL = driveCMSJsonKey.client_email as EmailAddress;
 
 const googleAuth = new google.auth.GoogleAuth({
