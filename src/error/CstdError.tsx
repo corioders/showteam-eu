@@ -9,7 +9,7 @@ interface Props {
 	error: Error | string;
 }
 
-const IS_PREVIEW = process.env.IS_PREVIEW === 'true';
+const IS_PREVIEW = process.env.IS_PREVIEW === 'true' || process.env.NEXT_PUBLIC_IS_PREVIEW === 'true';
 
 export default function CstdError(props: Props): JSX.Element {
 	if (!IS_PREVIEW) {
