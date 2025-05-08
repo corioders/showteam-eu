@@ -327,7 +327,12 @@ async function getFetchRemoteImageCache(cacheKey: string): Promise<FetchRemoteIm
 // }
 
 async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): ErrorReturnPromise<FetchedImage> {
-	console.log(`Fetching remote image ${imageURL}`);
+	let imageURLForLogging = imageURL.toString();
+	if (isDataURI(imageURLForLogging)) {
+		imageURLForLogging = '<DATA URI>';
+	}
+
+	console.log(`Fetching remote image ${imageURLForLogging}`);
 
 	// const currentLastModified = await fetchRemoteImageLastModified(imageURL);
 	const cacheKey = hash(imageURL.toString(), require('node:crypto').createHash);
@@ -336,7 +341,7 @@ async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): 
 	// If the same image would be requested in two routes.
 	const cachedImage = await getFetchRemoteImageCache(cacheKey);
 	if (cachedImage) {
-		console.log(`Fetching remote image cache hit ${imageURL}`);
+		console.log(`Fetching remote image cache hit ${imageURLForLogging}`);
 		// if (cachedImage.lastModified === currentLastModified || currentLastModified === null) {
 		return [cachedImage.fetchedImage, null];
 		// }
@@ -358,7 +363,7 @@ async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): 
 	);
 	if (fetchError !== null) {
 		console.log(`FetchRemoteImage, fetch failed with error: ${fetchError}`);
-		const error = new Error(`Error while fetching image ${imageURL} response was: ${imageResponse}\n\nThe error was ${fetchError}`, { cause: fetchError });
+		const error = new Error(`Error while fetching image ${imageURLForLogging} response was: ${imageResponse}\n\nThe error was ${fetchError}`, { cause: fetchError });
 		return [null, error];
 	}
 
@@ -455,4 +460,8 @@ function requireWebpackExternalDependency__MakeWebpackNotBundleIt(id: string): a
 
 function convertToValidFilename(x: string): string {
 	return x.replaceAll(/[\/|\\:*?"<>]/g, ' ').replaceAll('\n', ' ');
+}
+
+function isDataURI(uri: string): boolean {
+	return uri.startsWith('data:');
 }
