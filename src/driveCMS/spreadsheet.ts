@@ -9,7 +9,8 @@ import { type WorkBook as XlsxWorkBook, read as xlsxRead } from 'xlsx';
 
 import { type ErrorReturnPromise, safe, safePromise } from '@/error';
 import { memoizeDriveCMS } from './cache.js';
-import { type FileID, MIMEType, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
+import { type FileID, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
+import { MIMEType, type MIMETypeT, type Resource } from './resource.js';
 
 export type SpreadsheetID = FileID & { readonly __spreadsheetTag: unique symbol };
 
@@ -17,6 +18,15 @@ export interface Spreadsheet {
 	spreadsheetID: SpreadsheetID;
 
 	workbook: XlsxWorkBook;
+}
+
+export interface SpreadsheetResource extends Resource {
+	id: SpreadsheetID;
+	mimeType: MIMETypeT['excel'];
+}
+
+export function isSpreadsheet(resource: Resource): resource is SpreadsheetResource {
+	return resource.mimeType === MIMEType.excel;
 }
 
 export const downloadSpreadsheetRevision = memoizeDriveCMS(async function downloadSpreadsheetRevision(

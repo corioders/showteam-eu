@@ -9,7 +9,8 @@ import type { GoogleAuth } from 'googleapis-common';
 
 import { CSE, type ErrorReturnPromise } from '@/error';
 import { memoizeDriveCMS } from './cache.js';
-import { type FileID, MIMEType, type Resource, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
+import { type FileID, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
+import { MIMEType, type MIMETypeT, type Resource } from './resource.js';
 
 export type DocID = FileID & { readonly __docTag: unique symbol };
 
@@ -24,7 +25,7 @@ export function validateDocID(docID: DocID): Error | null {
 
 export interface DocResource extends Resource {
 	id: DocID;
-	mimeType: (typeof MIMEType)['docs'];
+	mimeType: MIMETypeT['docs'];
 }
 
 export function isDoc(resource: Resource): resource is DocResource {

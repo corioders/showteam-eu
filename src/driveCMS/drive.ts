@@ -4,16 +4,13 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
 import { CSE, type ErrorReturn, type ErrorReturnPromise, safe, safePromise } from '@/error';
-import type { ValueOf } from '@/type';
 import { type drive_v3, google } from 'googleapis';
 import { type GaxiosPromise, type GoogleAuth, createAPIRequest } from 'googleapis-common';
 import { StatusCodes } from 'http-status-codes';
 import { memoizeDriveCMS } from './cache.js';
 import { DEPLOY_REVISION_NAME } from './const.js';
 import type { EmailAddress } from './index.js';
-
-// ResourceID is an ID of Folder or File
-export type ResourceID = string & { readonly __resourceTag: unique symbol };
+import { MIMEType, type MIMETypeT, type MIMETypeTE, type Resource, type ResourceID } from './resource.js';
 
 export type FolderID = ResourceID & { readonly __folderTag: unique symbol };
 export type FileID = ResourceID & { readonly __fileTag: unique symbol };
@@ -24,29 +21,14 @@ export type RevisionID = number & { readonly __revisionTag: unique symbol };
 export type PermissionRole = 'reader' | 'commenter' | 'writer' | 'fileOrganizer' | 'organizer' | 'owner';
 export type PermissionType = 'user' | 'group' | 'domain' | 'anyone';
 
-// https://developers.google.com/drive/api/guides/ref-export-formats
-export type MIMETypeT = ValueOf<typeof MIMEType>;
-export const MIMEType = {
-	csv: 'text/csv',
-	markdown: 'text/markdown',
-
-	folder: 'application/vnd.google-apps.folder',
-	docs: 'application/vnd.google-apps.document',
-	form: 'application/vnd.google-apps.form',
-
-	excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-	docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-} as const;
-
-export interface Resource {
-	id: ResourceID;
-	name: string;
-	mimeType: MIMETypeT;
-}
-
 export interface FolderResource extends Resource {
 	id: FolderID;
-	mimeType: (typeof MIMEType)['folder'];
+	mimeType: MIMETypeT['folder'];
+}
+
+export interface FileResource extends Resource {
+	id: FileID;
+	mimeType: MIMETypeT['csv'] | MIMETypeT['markdown'];
 }
 
 export function isFolder(resource: Resource): resource is FolderResource {
@@ -105,7 +87,7 @@ export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID
 		fileOrFolderList.push({
 			id: fileOrFolder.id as ResourceID,
 			name: fileOrFolder.name,
-			mimeType: fileOrFolder.mimeType as MIMETypeT,
+			mimeType: fileOrFolder.mimeType as MIMETypeTE,
 		});
 	}
 
@@ -116,7 +98,7 @@ export const downloadFile = memoizeDriveCMS(async function downloadFile(
 	googleAuth: GoogleAuth,
 	fileID: FileID,
 	revisionID?: RevisionID,
-	mimeType?: MIMETypeT,
+	mimeType?: MIMETypeTE,
 ): ErrorReturnPromise<unknown> {
 	const [downloadURL, errorGetFileURL] = await getFileDownloadURL(googleAuth, fileID, revisionID, mimeType);
 	if (errorGetFileURL !== null) {
@@ -146,7 +128,7 @@ export const getFileDownloadURL = memoizeDriveCMS(async function getFileDownload
 	googleAuth: GoogleAuth,
 	fileID: FileID,
 	revisionID?: RevisionID,
-	mimeType?: MIMETypeT,
+	mimeType?: MIMETypeTE,
 ): ErrorReturnPromise<string> {
 	// https://developers.google.com/drive/api/reference/rest/v3/operations#Operation
 	interface Operation {

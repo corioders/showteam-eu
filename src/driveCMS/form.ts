@@ -2,8 +2,9 @@ import { type ErrorReturnPromise, safePromise } from '@/error/index.js';
 import { type forms_v1, google } from 'googleapis';
 import type { GoogleAuth } from 'googleapis-common';
 import { StatusCodes } from 'http-status-codes';
-import { type FileID, type FolderID, type Resource, createFolder, internalListFolderNoCache, isFolder } from './drive.js';
+import { type FileID, type FolderID, createFolder, internalListFolderNoCache, isFolder } from './drive.js';
 import { getFileUploadQuestionTitle, isFileUploadQuestion } from './formClientSide.js';
+import type { Resource } from './resource.js';
 
 export type FormID = FileID & { readonly __formTag: unique symbol };
 export interface FormResource extends Resource {
