@@ -11,8 +11,6 @@ import {
 	type FolderID,
 	type PermissionRole,
 	type PermissionType,
-	type Resource,
-	type ResourceID,
 	getLatestDeployRevision,
 	getLatestRevision,
 	internalListFolder,
@@ -26,6 +24,7 @@ import {
 	simpleFileUpload as internalSimpleFileUpload,
 } from './drive.js';
 import { type FileUploadOptions, type Form, type FormID, getForm as internalGetForm } from './form.js';
+import type { Resource, ResourceID } from './resource.js';
 import { type Spreadsheet, type SpreadsheetID, downloadSpreadsheetRevision, getSheetRevisions } from './spreadsheet.js';
 
 if (typeof process.env.CORIODERS_DRIVE_CMS_KEY !== 'string') {

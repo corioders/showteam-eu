@@ -44,9 +44,12 @@ export interface FolderStructure<FSD extends FolderStructureDescriptor> {
 	children: FolderStructureTypedChildren<FSD['children']>;
 }
 
+// TODO: Better types
 type FolderStructureTypedChildren<FSDChildren> = {
 	[K in keyof FSDChildren]: FSDChildren[K] extends ChildDescriptor<infer ChildMIME>
-		? Child<ChildMIME>
+		? ChildMIME extends MIMETypeT['folder']
+			? FolderChild
+			: Child<ChildMIME>
 		: FSDChildren[K] extends ChildFolderDescriptor
 			? FolderChild
 			: never;
@@ -279,4 +282,16 @@ async function fetchAndParseChildStructure(
 	}
 
 	return errors;
+}
+
+// TODO: Better types
+export function getChildByMIMEType<T extends MIMETypeTE>(fsChildren: Record<string, Child | FolderChild>, mimeType: T): Child<T> | null {
+	for (const childName in fsChildren) {
+		const child = fsChildren[childName];
+		if (doesMIMETypeMatch(mimeType, child.resource.mimeType)) {
+			return child as Child<T>;
+		}
+	}
+
+	return null;
 }
