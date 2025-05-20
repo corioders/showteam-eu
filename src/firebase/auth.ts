@@ -30,6 +30,16 @@ export async function firebaseSigninUserWithEmailAndPassword(firebaseApp: Fireba
 	return [loginUserCredentials, null];
 }
 
+export async function firebaseLogout(firebaseApp: FirebaseApp): Promise<Error | null> {
+	const auth = getAuth(firebaseApp);
+	const [_, logoutUserError] = await firebaseSafePromise(() => auth.signOut());
+	if (logoutUserError) {
+		return switchFirebaseLoginError(logoutUserError);
+	}
+
+	return null;
+}
+
 const REQUIREMENTS_REGEX = /\[(?<requirements>.*)\]/;
 function switchFirebaseLoginError(error: FirebaseError): Error {
 	switch (error.code) {
