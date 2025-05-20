@@ -8,10 +8,6 @@ import { type StringMarkdown, markdownStringToPlainText } from '@/format/markdow
 import type { TxtDocumentNode } from '@textlint/ast-node-types';
 
 export interface ParseDocAstToHeaderKeyValueOptions {
-	// Used to specify when to start parsing the document. Content before startingHeaderName will be ignored.
-	// When not specified the parsing starts from the begging of the doc.
-	startingHeaderName?: string;
-
 	// The depth of the headers used for keys. Header 1 == depth 1, etc...
 	// Default 1.
 	keyHeaderDepth?: number;
