@@ -3,14 +3,18 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
-import type { ErrorReturn } from '@/error/index.js';
+import { type ErrorReturn, safe } from '@/error/index.js';
 import { type ParsedDSDTF, parseDSDTF } from '@/format/deadSimpleDataTextFormat/index.js';
+import { remark } from 'remark';
+import strip from 'strip-markdown';
 
+export type StringMarkdown = string & { readonly __markdownTag: unique symbol };
 export interface MarkdownDocMetadata {
 	title: string;
 	description: string;
 	other: ParsedDSDTF;
 }
+
 export interface MarkdownDoc {
 	metadata: MarkdownDocMetadata;
 	content: string;
@@ -59,4 +63,15 @@ to the beginning of the document.`),
 	}
 
 	return [{ metadata: { title, description, other: dsdtf }, content }, null];
+}
+
+const MARKDOWN_TO_PLAIN_TEXT_PROCESSOR = remark().use(strip);
+export function markdownStringToPlainText(markdown: StringMarkdown): ErrorReturn<string> {
+	const [remarkFile, parseError] = safe(() => MARKDOWN_TO_PLAIN_TEXT_PROCESSOR.processSync(markdown));
+	if (parseError) {
+		return [null, parseError];
+	}
+
+	const plainText = String(remarkFile);
+	return [plainText, null];
 }

@@ -1,3 +1,8 @@
+// Copyright (C) Corioders <corioders@gmail.com> - All Rights Reserved
+// Unauthorized copying of this file, via any medium is strictly prohibited
+// Proprietary and confidential
+// Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
+
 import type { ValueOf } from '@/type/index.js';
 import type { DocResource } from './docs.js';
 import type { FileResource, FolderResource } from './drive.js';
