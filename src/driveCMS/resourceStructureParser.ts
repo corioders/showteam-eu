@@ -11,6 +11,8 @@ import { MIMEType, type MIMETypeT, type MIMETypeTE, type MIMETypeToResourceType,
 
 const NAME_NOT_IMPORTANT_PREFIX = 'CORIODERS_CHILD_DESCRIPTOR_NAME_NOT_SPECIFIED';
 export const NAME_NOT_IMPORTANT = () => `${NAME_NOT_IMPORTANT_PREFIX} ${Math.random()}`;
+
+export type FolderDescriptorChildren = { [key: string]: ChildDescriptor | ChildFolderDescriptor };
 export interface ChildDescriptor<T extends MIMETypeTE = MIMETypeTE> {
 	resourceType: T;
 
@@ -24,21 +26,20 @@ export interface ChildDescriptor<T extends MIMETypeTE = MIMETypeTE> {
 	// By default it will be set to false.
 	allowDuplicateMIMETypes?: boolean;
 }
-
-export type FolderDescriptorChildren = { [key: string]: ChildDescriptor | ChildFolderDescriptor };
-
 export interface ChildFolderDescriptor extends ChildDescriptor {
-	resourceType: MIMETypeT['folder'];
 	children: FolderDescriptorChildren;
 }
 
 function isChildFolderDescriptor(x: ChildDescriptor | ChildFolderDescriptor): x is ChildFolderDescriptor {
 	return x.resourceType === MIMEType.folder;
 }
-
 export interface FolderStructureDescriptor {
 	rootFolderID: FolderID;
 	children: FolderDescriptorChildren;
+}
+
+export function defineFolderStructureDescriptor<T extends FolderStructureDescriptor>(fsd: T): Readonly<T> {
+	return Object.freeze(fsd);
 }
 
 // biome-ignore lint/style/useNamingConvention: <explanation>
@@ -46,18 +47,16 @@ export interface FolderStructure<FSD extends FolderStructureDescriptor> {
 	rootFolder: FolderID;
 
 	// The mapping is between child name and the child itself.
-	children: FolderStructureTypedChildren<FSD['children']>;
+	children: TypedChildren<FSD['children']>;
 }
 
-// TODO: Better types
-type FolderStructureTypedChildren<FSDChildren> = {
+// TODO: This type is unholy.
+type TypedChildren<FSDChildren> = {
 	[K in keyof FSDChildren]: FSDChildren[K] extends ChildDescriptor<infer ChildMIME>
 		? ChildMIME extends MIMETypeT['folder']
-			? FolderChild
+			? FolderChild<Extract<FSDChildren[K], ChildFolderDescriptor>['children']>
 			: Child<ChildMIME>
-		: FSDChildren[K] extends ChildFolderDescriptor
-			? FolderChild
-			: never;
+		: never;
 };
 
 export interface Child<T extends MIMETypeTE = MIMETypeTE> {
@@ -65,14 +64,14 @@ export interface Child<T extends MIMETypeTE = MIMETypeTE> {
 	resource: MIMETypeToResourceType<T>;
 }
 
-export interface FolderChild extends Child {
+export interface FolderChild<FolderChildren> extends Child {
 	resource: FolderResource;
 
 	// The mapping is between child name and the child itself.
-	children: { [key: string]: Child | FolderChild };
+	children: TypedChildren<FolderChildren>;
 }
 
-function isFolderChild(x: Child): x is FolderChild {
+export function isFolderChild<T>(x: Child | FolderChild<T>): x is FolderChild<T> {
 	return isFolder(x.resource);
 }
 
@@ -159,8 +158,8 @@ function validateChildDescriptor(childDescriptor: ChildDescriptor | ChildFolderD
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
-async function fetchAndParseChildStructure(
-	fsChildren: Record<string, Child | FolderChild>,
+async function fetchAndParseChildStructure<T>(
+	fsChildren: Record<string, Child | FolderChild<T>>,
 	parentFolder: FolderResource,
 	children: Resource[],
 	childrenDescriptor: FolderDescriptorChildren,
@@ -272,7 +271,7 @@ async function fetchAndParseChildStructure(
 			}
 
 			if (!child.children) {
-				child.children = {};
+				child.children = {} as TypedChildren<T>;
 			}
 
 			const recursiveErrors = await fetchAndParseChildStructure(child.children, resource, children, childDescriptor.children);
@@ -289,8 +288,7 @@ async function fetchAndParseChildStructure(
 	return errors;
 }
 
-// TODO: Better types
-export function getChildByMIMEType<T extends MIMETypeTE>(fsChildren: Record<string, Child | FolderChild>, mimeType: T): Child<T> | null {
+export function getChildByMIMEType<T extends MIMETypeTE, A>(fsChildren: Record<string, Child | FolderChild<A>>, mimeType: T): Child<T> | null {
 	for (const childName in fsChildren) {
 		const child = fsChildren[childName];
 		if (doesMIMETypeMatch(mimeType, child.resource.mimeType)) {
