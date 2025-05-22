@@ -295,3 +295,17 @@ export function getChildByMIMEType<T extends MIMETypeTE>(fsChildren: Record<stri
 
 	return null;
 }
+
+// TODO: Better types
+export function getAllChildrenByMIMEType<T extends MIMETypeTE>(fsChildren: Record<string, Child | FolderChild>, mimeType: T): Child<T>[] {
+	const children: Child<T>[] = [];
+
+	for (const childName in fsChildren) {
+		const child = fsChildren[childName];
+		if (doesMIMETypeMatch(mimeType, child.resource.mimeType)) {
+			children.push(child as Child<T>);
+		}
+	}
+
+	return children;
+}

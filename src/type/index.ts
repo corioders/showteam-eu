@@ -12,3 +12,5 @@ export function isBlob(x: unknown): x is Blob {
 
 	return x instanceof Blob || Object.prototype.toString.call(x) === '[object Blob]';
 }
+
+export type ArrayElement<A> = A extends readonly (infer T)[] ? T : never;
