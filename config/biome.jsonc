@@ -7,7 +7,9 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"maxSize": 2097152
+		"maxSize": 2097152,
+		// Ignore the 'build' folder
+		"ignore": ["build"]
 	},
 	"formatter": {
 		"enabled": true,
@@ -30,10 +32,7 @@
 			},
 			"style": {
 				"noDefaultExport": "off",
-				"useFilenamingConvention": {
-					"level": "warn",
-					"options": { "strictCase": false }
-				},
+				"useFilenamingConvention": "off",
 				"useNamingConvention": {
 					"level": "warn",
 					"options": { "strictCase": false }

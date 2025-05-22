@@ -1,18 +1,18 @@
-import { type ErrorReturn, safe } from '@/error/index.js';
+// Copyright (C) Corioders <corioders@gmail.com> - All Rights Reserved
+// Unauthorized copying of this file, via any medium is strictly prohibited
+// Proprietary and confidential
+// Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
+
+import type { ErrorReturn } from '@/error/index.js';
+import { type StringMarkdown, markdownStringToPlainText } from '@/format/markdown/index.js';
 import type { TxtDocumentNode } from '@textlint/ast-node-types';
-import markdownToTxt from 'markdown-to-txt';
 
 export interface ParseDocAstToHeaderKeyValueOptions {
-	// Used to specify when to start parsing the document. Content before startingHeaderName will be ignored.
-	// When not specified the parsing starts from the begging of the doc.
-	startingHeaderName?: string;
-
 	// The depth of the headers used for keys. Header 1 == depth 1, etc...
 	// Default 1.
 	keyHeaderDepth?: number;
 }
 
-export type StringMarkdown = string & { readonly __markdownTag: unique symbol };
 export interface ParsedHeaderToKeyValue {
 	readonly mapping: Map<string, StringMarkdown>;
 }
@@ -51,7 +51,6 @@ export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: P
 		const headerText = firstHeaderChild.value;
 		const key = headerText;
 
-		// if (isMarkdownKey(key)) {
 		const searchStartIndex = i + 1;
 		const nextHeaderIndex = findNextKeyHeaderIndex(searchStartIndex);
 		if (nextHeaderIndex) {
@@ -84,7 +83,7 @@ export function markdownMappingToPlainText(mapping: Map<string, StringMarkdown>)
 	const newMapping = new Map();
 
 	for (const [key, markdownText] of mapping) {
-		const [text, parsingError] = safe(() => markdownToTxt(markdownText));
+		const [text, parsingError] = markdownStringToPlainText(markdownText);
 		if (parsingError) {
 			return [null, parsingError];
 		}
