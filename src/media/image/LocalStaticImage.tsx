@@ -23,6 +23,10 @@ export interface LocalStaticImageProps
 }
 
 // TODO: Error message when the user requested width does not match the actual with of the image at runtime. Bounding box etc...
+
+/**
+ * https://h.corioders.com/cstd-next/images#localstaticimage
+ */
 export default function LocalStaticImage(props: LocalStaticImageProps) {
 	const src = props.src as INTERNAL_LocalStaticImageImport;
 

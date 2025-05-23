@@ -9,15 +9,16 @@ import { FormRendererClientContextProvider } from './_context/_client.jsx';
 
 export interface Props {
 	formID: FormID;
-	isPreview: boolean;
 	fileUploadOptions?: FileUploadOptions;
 	children: ReactNode;
 }
 
+const IS_PREVIEW = process.env.IS_PREVIEW === 'true' || process.env.NEXT_PUBLIC_IS_PREVIEW === 'true';
+
 export const serverContext: FormRendererContextT = {};
 
 export default async function FormRendererRoot(props: Props) {
-	const [form, errorDownload] = await getForm(props.formID as FormID, props.isPreview, props.fileUploadOptions);
+	const [form, errorDownload] = await getForm(props.formID as FormID, IS_PREVIEW, props.fileUploadOptions);
 	if (errorDownload !== null) {
 		return <CstdError error={errorDownload} />;
 	}

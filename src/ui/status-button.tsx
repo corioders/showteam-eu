@@ -10,6 +10,9 @@ interface Props<T extends string> extends Omit<ComponentProps<'button'>, 'childr
 	contentClassName?: string;
 }
 
+/**
+ * https://h.corioders.com/cstd-next/status-button
+ */
 export function StatusButton<T extends string>({ children, status, variants, className, contentClassName, transition, initial, animate, exit, ...props }: Props<T>) {
 	return (
 		<button className={cn(className, 'relative overflow-hidden', variants({ status: status as VariantProps<Props<T>['variants']>['status'] }))} {...props}>

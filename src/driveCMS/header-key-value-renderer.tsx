@@ -19,8 +19,9 @@ interface Props<FolderChildren> {
 	children: FolderChild<FolderChildren>;
 
 	components: Partial<Components>;
-	isPreview: boolean;
 }
+
+const IS_PREVIEW = process.env.IS_PREVIEW === 'true' || process.env.NEXT_PUBLIC_IS_PREVIEW === 'true';
 
 export async function HeaderKeyValueRenderer<FolderChildren>(props: Props<FolderChildren>) {
 	const section = props.children;
@@ -35,7 +36,7 @@ export async function HeaderKeyValueRenderer<FolderChildren>(props: Props<Folder
 
 	let docDownload: ErrorReturn<Doc>;
 
-	if (props.isPreview) {
+	if (IS_PREVIEW) {
 		docDownload = await downloadDocLatestRevision(doc.resource.id);
 	} else {
 		docDownload = await downloadDocLatestDeployRevision(doc.resource.id);

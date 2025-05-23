@@ -11,6 +11,9 @@ interface Props {
 
 const IS_PREVIEW = process.env.IS_PREVIEW === 'true' || process.env.NEXT_PUBLIC_IS_PREVIEW === 'true';
 
+/**
+ * https://h.corioders.com/cstd-next/cstd-error
+ */
 export default function CstdError(props: Props): JSX.Element {
 	if (!IS_PREVIEW) {
 		return <></>;
