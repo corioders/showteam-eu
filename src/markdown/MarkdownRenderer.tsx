@@ -11,6 +11,9 @@ import remarkGfm from 'remark-gfm';
 
 export type Props = Options;
 
+/**
+ * https://h.corioders.com/cstd-next/markdown-renderer
+ */
 export default function MarkdownRenderer({ urlTransform, remarkPlugins, ...props }: Props): JSX.Element {
 	return <MarkdownAsync remarkPlugins={[remarkGfm, ...(remarkPlugins ?? [])]} urlTransform={urlTransform ?? defaultUrlTransform} {...props} />;
 }
