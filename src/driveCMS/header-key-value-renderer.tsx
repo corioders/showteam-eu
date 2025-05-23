@@ -11,7 +11,7 @@ import type { MapKey, MapValue } from 'cstd-ts/type/index.js';
 import type { ReactNode } from 'react';
 
 interface Components {
-	item: (props: { key: MapKey<ParsedHeaderToKeyValue['mapping']>; value: MapValue<ParsedHeaderToKeyValue['mapping']> }) => ReactNode;
+	item: (props: { itemKey: MapKey<ParsedHeaderToKeyValue['mapping']>; itemValue: MapValue<ParsedHeaderToKeyValue['mapping']> }) => ReactNode;
 	root: (props: Children<ReactNode | ReactNode[]>) => ReactNode;
 }
 
@@ -56,8 +56,8 @@ export async function HeaderKeyValueRenderer<FolderChildren>(props: Props<Folder
 	const components = { ...defaultComponents, ...props.components };
 
 	const items: ReactNode[] = [];
-	for (const [key, value] of keyValue.mapping) {
-		items.push(<components.item key={key} value={value} />);
+	for (const [itemKey, itemValue] of keyValue.mapping) {
+		items.push(<components.item key={`${doc.resource.id}-${itemKey}`} itemKey={itemKey} itemValue={itemValue} />);
 	}
 
 	return <components.root>{items}</components.root>;
@@ -66,9 +66,9 @@ export async function HeaderKeyValueRenderer<FolderChildren>(props: Props<Folder
 const defaultComponents: Components = {
 	item: (props) => (
 		<div className="flex flex-col gap-2">
-			<p className="font-bold">{props.key}</p>
+			<p className="font-bold">{props.itemKey}</p>
 			<div className="flex-flex-col gap-2">
-				<MarkdownRenderer>{props.value}</MarkdownRenderer>
+				<MarkdownRenderer>{props.itemValue}</MarkdownRenderer>
 			</div>
 		</div>
 	),
