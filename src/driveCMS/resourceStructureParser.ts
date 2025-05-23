@@ -51,7 +51,7 @@ export interface FolderStructure<FSD extends FolderStructureDescriptor> {
 }
 
 // TODO: This type is unholy.
-type TypedChildren<FSDChildren> = {
+export type TypedChildren<FSDChildren> = {
 	[K in keyof FSDChildren]: FSDChildren[K] extends ChildDescriptor<infer ChildMIME>
 		? ChildMIME extends MIMETypeT['folder']
 			? FolderChild<Extract<FSDChildren[K], ChildFolderDescriptor>['children']>
@@ -299,8 +299,7 @@ export function getChildByMIMEType<T extends MIMETypeTE, A>(fsChildren: Record<s
 	return null;
 }
 
-// TODO: Better types
-export function getAllChildrenByMIMEType<T extends MIMETypeTE>(fsChildren: Record<string, Child | FolderChild>, mimeType: T): Child<T>[] {
+export function getAllChildrenByMIMEType<T extends MIMETypeTE, A>(fsChildren: Record<string, Child | FolderChild<A>>, mimeType: T): Child<T>[] {
 	const children: Child<T>[] = [];
 
 	for (const childName in fsChildren) {
