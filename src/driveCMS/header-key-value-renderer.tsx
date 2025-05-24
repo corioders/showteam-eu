@@ -18,7 +18,7 @@ interface Components {
 interface Props<FolderChildren> {
 	children: FolderChild<FolderChildren>;
 
-	components: Partial<Components>;
+	components?: Partial<Components>;
 }
 
 const IS_PREVIEW = process.env.IS_PREVIEW === 'true' || process.env.NEXT_PUBLIC_IS_PREVIEW === 'true';

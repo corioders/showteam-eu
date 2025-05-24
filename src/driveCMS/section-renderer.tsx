@@ -5,8 +5,6 @@ import type { ReactNode } from 'react';
 interface Props<FolderChildren extends FolderDescriptorChildren> {
 	children: TypedChildren<FolderChildren>;
 
-	// TODO: fix this type
-	// components: { [key: K]: (props: { children: Extract<TypedChildren<FolderChildren>, K> }) => ReactNode };
 	components: { [Key in keyof TypedChildren<FolderChildren>]: (props: { children: TypedChildren<FolderChildren>[Key] }) => ReactNode };
 }
 

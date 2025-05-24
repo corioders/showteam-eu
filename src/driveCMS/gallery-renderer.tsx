@@ -1,21 +1,21 @@
 import CstdError from 'cstd-next/error/CstdError.js';
 import RemoteStaticImage from 'cstd-next/media/image/RemoteStaticImage.js';
 import type { Children } from 'cstd-next/type/index.js';
-import { getPublicImageDownloadURL } from 'cstd-ts/driveCMS/image.js';
+import { type ImageResource, getPublicImageDownloadURL } from 'cstd-ts/driveCMS/image.js';
 import { UNSAFEChangePermissionsToAnyoneWithLinkReader } from 'cstd-ts/driveCMS/index.js';
 import { MIMEType } from 'cstd-ts/driveCMS/resource.js';
 import { type FolderChild, getAllChildrenByMIMEType, isFolderChild } from 'cstd-ts/driveCMS/resourceStructureParser.js';
-import type { ComponentProps, ReactNode } from 'react';
+import { type ComponentProps, Fragment, type ReactNode } from 'react';
 
 interface Components {
-	item: (props: Pick<ComponentProps<typeof RemoteStaticImage>, 'src' | 'alt'>) => ReactNode;
-	root: (props: Children<ReactNode | ReactNode[]>) => ReactNode;
+	item: (props: Pick<ComponentProps<typeof RemoteStaticImage>, 'src' | 'alt'>, resource: ImageResource) => ReactNode;
+	root: (props: Children<ReactNode[]>) => ReactNode;
 }
 
 interface Props<FolderChildren> {
 	children: FolderChild<FolderChildren>;
 
-	components: Partial<Components>;
+	components?: Partial<Components>;
 }
 
 export async function GalleryRenderer<FolderChildren>(props: Props<FolderChildren>) {
@@ -32,13 +32,13 @@ export async function GalleryRenderer<FolderChildren>(props: Props<FolderChildre
 	const components = { ...defaultComponents, ...props.components };
 
 	const items: ReactNode[] = [];
-	for (const { resource: image } of images) {
-		const [_, changePermissionsError] = await UNSAFEChangePermissionsToAnyoneWithLinkReader(image.id);
+	for (const { resource } of images) {
+		const [_, changePermissionsError] = await UNSAFEChangePermissionsToAnyoneWithLinkReader(resource.id);
 		if (changePermissionsError) {
 			return <CstdError error={changePermissionsError} />;
 		}
 
-		items.push(<components.item key={image.id} src={getPublicImageDownloadURL(image.id)} alt={image.name} />);
+		items.push(<Fragment key={resource.id}>{components.item({ src: getPublicImageDownloadURL(resource.id), alt: resource.name }, resource)}</Fragment>);
 	}
 
 	return <components.root>{items}</components.root>;
