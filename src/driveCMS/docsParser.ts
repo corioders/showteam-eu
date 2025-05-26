@@ -15,12 +15,15 @@ export interface ParseDocAstToHeaderKeyValueOptions {
 
 export interface ParsedHeaderToKeyValue {
 	readonly mapping: Map<string, StringMarkdown>;
+
+	readonly keyToMarkdownKeyMapping: Map<string, StringMarkdown>;
 }
 
 export const ERR_MAPPING_EMPTY = new Error('Mapping is empty');
 
 export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: ParseDocAstToHeaderKeyValueOptions): ErrorReturn<ParsedHeaderToKeyValue> {
-	const mapping = new Map();
+	const mapping = new Map<string, StringMarkdown>();
+	const keyToMarkdownKeyMapping = new Map<string, StringMarkdown>();
 
 	const keyHeaderDepth = options?.keyHeaderDepth ?? 1;
 
@@ -43,13 +46,17 @@ export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: P
 		}
 
 		const headerChild = currentChild;
+
 		const firstHeaderChild = headerChild.children[0];
 		if (firstHeaderChild?.type !== 'Str') {
 			return [null, new Error(`Expected the heading ${keyHeaderDepth} with text inside, got heading ${keyHeaderDepth} with ${firstHeaderChild.type}`)];
 		}
 
+		const headerMarkdownText: StringMarkdown = headerChild.raw as StringMarkdown;
 		const headerText = firstHeaderChild.value;
 		const key = headerText;
+
+		keyToMarkdownKeyMapping.set(key, headerMarkdownText);
 
 		const searchStartIndex = i + 1;
 		const nextHeaderIndex = findNextKeyHeaderIndex(searchStartIndex);
@@ -64,7 +71,7 @@ export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: P
 		const markdownRangeStart = headerChildRangeEnd;
 		const markdownRangeEnd = nextHeaderRangeStart;
 
-		const markdownString = docAST.raw.slice(markdownRangeStart, markdownRangeEnd);
+		const markdownString = docAST.raw.slice(markdownRangeStart, markdownRangeEnd) as StringMarkdown;
 		mapping.set(key, markdownString);
 	}
 
@@ -74,6 +81,7 @@ export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: P
 
 	const parsedHeaderToKeyValue: ParsedHeaderToKeyValue = {
 		mapping: mapping,
+		keyToMarkdownKeyMapping: keyToMarkdownKeyMapping,
 	};
 
 	return [parsedHeaderToKeyValue, null];

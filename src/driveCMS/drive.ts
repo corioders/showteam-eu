@@ -100,6 +100,10 @@ export const downloadFile = memoizeDriveCMS(async function downloadFile(
 	revisionID?: RevisionID,
 	mimeType?: MIMETypeTE,
 ): ErrorReturnPromise<unknown> {
+	// biome-ignore lint/suspicious/noConsoleLog: <explanation>
+	// biome-ignore lint/suspicious/noConsole: <explanation>
+	console.log(`Downloading ${fileID}${mimeType && `MIME: ${mimeType}`}`);
+
 	const [downloadURL, errorGetFileURL] = await getFileDownloadURL(googleAuth, fileID, revisionID, mimeType);
 	if (errorGetFileURL !== null) {
 		return [null, errorGetFileURL];

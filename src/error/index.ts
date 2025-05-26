@@ -61,3 +61,7 @@ function errorIs(error: Error, target: Error): boolean {
 
 	return false;
 }
+
+export function UnreachableErrorMessage(userMessage: string): string {
+	return `'!!UNREACHABLE!! CONTACT CODE OWNER !!UNREACHABLE!! ${userMessage}`;
+}
