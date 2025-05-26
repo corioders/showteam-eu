@@ -18,6 +18,7 @@ import type { ImgHTMLAttributes, JSX } from 'react';
 import { Agent, type RequestInit, fetch } from 'undici';
 import { type Storage as UnstorageStorage, createStorage } from 'unstorage';
 import lruCacheDriver from 'unstorage/drivers/lru-cache';
+import { memoizeImages } from './cache.js';
 import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from './image.mjs';
 import {
 	type CalculatedSize,
@@ -117,7 +118,7 @@ DESIGN:
 // I mean, a fallback will trigger, but the fallback will not serve the optimized image.
 //
 // TODO: BLUR IMAGE DATA
-export default async function RemoteStaticImage(props: RemoteStaticImageProps) {
+const RemoteStaticImage = memoizeImages(async function RemoteStaticImage(props: RemoteStaticImageProps) {
 	const isDevelopmentMode = process.env['NODE_ENV'] === 'development' || !shouldOptimizeImages();
 
 	// Make sure that the src provided is a valid URL
@@ -253,7 +254,8 @@ export default async function RemoteStaticImage(props: RemoteStaticImageProps) {
 			<img {...imageOptimizationAttributes} {...userImageProps} srcSet={defaultImageFallbackSource.srcSet} src={defaultImageFallbackSource.fallbackSrc} alt={props.alt} />
 		</picture>
 	);
-}
+});
+export default RemoteStaticImage;
 
 interface FetchedImage {
 	imageBuffer: Buffer;

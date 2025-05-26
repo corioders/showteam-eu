@@ -4,7 +4,7 @@ import type { Children } from 'cstd-next/type/index.js';
 import { type ImageResource, getPublicImageDownloadURL } from 'cstd-ts/driveCMS/image.js';
 import { UNSAFEChangePermissionsToAnyoneWithLinkReader } from 'cstd-ts/driveCMS/index.js';
 import { MIMEType } from 'cstd-ts/driveCMS/resource.js';
-import { type FolderChild, getAllChildrenByMIMEType, isFolderChild } from 'cstd-ts/driveCMS/resourceStructureParser.js';
+import { type FolderChild, getAllChildrenByMIMEType, isFolderChild } from 'cstd-ts/driveCMS/resourceStructureParser/index.js';
 import { type ComponentProps, Fragment, type ReactNode } from 'react';
 
 interface Components {
@@ -13,20 +13,19 @@ interface Components {
 }
 
 interface Props<FolderChildren> {
-	children: FolderChild<FolderChildren>;
+	galleryFolder: FolderChild<FolderChildren>;
 
 	components?: Partial<Components>;
 }
 
-export async function GalleryRenderer<FolderChildren>(props: Props<FolderChildren>) {
-	const section = props.children;
-	if (!isFolderChild(section)) {
+export async function GalleryRenderer<FolderChildren>({ galleryFolder, ...props }: Props<FolderChildren>) {
+	if (!isFolderChild(galleryFolder)) {
 		return <CstdError error={new Error('Expected a folder')} />;
 	}
 
-	const images = getAllChildrenByMIMEType(section.children, MIMEType.image);
+	const images = getAllChildrenByMIMEType(galleryFolder.children, MIMEType.image);
 	if (images.length === 0) {
-		return <CstdError error={new Error(`Missing images in ${section.resource.name}`)} />;
+		return <CstdError error={new Error(`Missing images in ${galleryFolder.resource.name}`)} />;
 	}
 
 	const components = { ...defaultComponents, ...props.components };

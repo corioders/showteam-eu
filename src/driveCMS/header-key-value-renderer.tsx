@@ -1,11 +1,12 @@
+import 'server-only';
+import MarkdownRenderer from '@/markdown/MarkdownRenderer.jsx';
 import CstdError from 'cstd-next/error/CstdError.js';
-import MarkdownRenderer from 'cstd-next/markdown/MarkdownRenderer.js';
 import type { Children } from 'cstd-next/type/index.js';
 import type { Doc } from 'cstd-ts/driveCMS/docs.js';
 import { type ParsedHeaderToKeyValue, parseDocAstToHeaderKeyValue } from 'cstd-ts/driveCMS/docsParser.js';
 import { downloadDocLatestDeployRevision, downloadDocLatestRevision } from 'cstd-ts/driveCMS/index.js';
-import { MIMEType } from 'cstd-ts/driveCMS/resource.js';
-import { type FolderChild, getChildByMIMEType, isFolderChild } from 'cstd-ts/driveCMS/resourceStructureParser.js';
+import { MIMEType, type MIMETypeT, doesMIMETypeMatch } from 'cstd-ts/driveCMS/resource.js';
+import type { Child } from 'cstd-ts/driveCMS/resourceStructureParser/index.js';
 import type { ErrorReturn } from 'cstd-ts/error/index.js';
 import type { MapKey, MapValue } from 'cstd-ts/type/index.js';
 import type { ReactNode } from 'react';
@@ -15,23 +16,17 @@ interface Components {
 	root: (props: Children<ReactNode | ReactNode[]>) => ReactNode;
 }
 
-interface Props<FolderChildren> {
-	children: FolderChild<FolderChildren>;
+interface Props {
+	doc: Child<MIMETypeT['docs']>;
 
 	components?: Partial<Components>;
 }
 
 const IS_PREVIEW = process.env.IS_PREVIEW === 'true' || process.env.NEXT_PUBLIC_IS_PREVIEW === 'true';
 
-export async function HeaderKeyValueRenderer<FolderChildren>(props: Props<FolderChildren>) {
-	const section = props.children;
-	if (!isFolderChild(section)) {
-		return <CstdError error={new Error('Expected a folder')} />;
-	}
-
-	const doc = getChildByMIMEType(section.children, MIMEType.docs);
-	if (!doc) {
-		return <CstdError error={new Error(`Missing doc in ${section.resource.name}`)} />;
+export async function HeaderKeyValueRenderer({ doc, ...props }: Props) {
+	if (!doesMIMETypeMatch(MIMEType.docs, doc.resource.mimeType)) {
+		return <CstdError error={new Error(`Expected a docs, but got ${doc.resource.mimeType}`)} />;
 	}
 
 	let docDownload: ErrorReturn<Doc>;
@@ -48,7 +43,7 @@ export async function HeaderKeyValueRenderer<FolderChildren>(props: Props<Folder
 		return <CstdError error={errorDownload} />;
 	}
 
-	const [keyValue, kvError] = await parseDocAstToHeaderKeyValue(docContent.docAST);
+	const [keyValue, kvError] = parseDocAstToHeaderKeyValue(docContent.docAST);
 	if (kvError) {
 		return <CstdError error={kvError} />;
 	}
