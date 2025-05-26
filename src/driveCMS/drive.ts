@@ -507,7 +507,7 @@ export async function clearAllPermissions(googleAuth: GoogleAuth, targetResource
 	}
 }
 
-export const addPermission = memoizeDriveCMS(async function addPermission(
+export const addPermission = async function addPermission(
 	googleAuth: GoogleAuth,
 	targetResourceID: ResourceID,
 	emailAddress: string,
@@ -534,4 +534,4 @@ export const addPermission = memoizeDriveCMS(async function addPermission(
 	}
 
 	return null;
-});
+};

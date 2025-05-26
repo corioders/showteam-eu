@@ -7,6 +7,7 @@ import { type ErrorReturnPromise, safePromise } from '@/error/index.js';
 import { type forms_v1, google } from 'googleapis';
 import type { GoogleAuth } from 'googleapis-common';
 import { StatusCodes } from 'http-status-codes';
+import { memoizeDriveCMS } from './cache.js';
 import { type FileID, type FolderID, createFolder, internalListFolderNoCache, isFolder } from './drive.js';
 import { getFileUploadQuestionTitle, isFileUploadQuestion } from './formClientSide.js';
 import type { Resource } from './resource.js';
@@ -38,7 +39,7 @@ export interface FileUploadOptions {
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
-export const getForm = async function getForm(
+export const getForm = memoizeDriveCMS(async function getForm(
 	googleAuth: GoogleAuth,
 	formID: FormID,
 	isPreview: boolean,
@@ -152,7 +153,7 @@ export const getForm = async function getForm(
 	}
 
 	return [form, null];
-};
+});
 
 async function getRealQuestionSubmitIDFromUndocumentedAPI(responseURI: string): ErrorReturnPromise<number[]> {
 	const [formResponse, formResponseError] = await safePromise(() => fetch(responseURI));
