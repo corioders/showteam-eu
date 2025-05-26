@@ -4,7 +4,7 @@ import type { Children } from 'cstd-next/type/index.js';
 import { type ImageResource, getPublicImageDownloadURL } from 'cstd-ts/driveCMS/image.js';
 import { UNSAFEChangePermissionsToAnyoneWithLinkReader } from 'cstd-ts/driveCMS/index.js';
 import { MIMEType } from 'cstd-ts/driveCMS/resource.js';
-import { type FolderChild, getAllChildrenByMIMEType, isFolderChild } from 'cstd-ts/driveCMS/resourceStructureParser.js';
+import { type FolderChild, getAllChildrenByMIMEType, isFolderChild } from 'cstd-ts/driveCMS/resourceStructureParser/index.js';
 import { type ComponentProps, Fragment, type ReactNode } from 'react';
 
 interface Components {

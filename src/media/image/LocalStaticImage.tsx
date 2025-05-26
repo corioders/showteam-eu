@@ -7,6 +7,7 @@ import './../../../src/media/image/picture-display-style.css';
 
 import type { DetailedHTMLProps, ImgHTMLAttributes, JSX } from 'react';
 
+import { memoizeImages } from './cache.js';
 import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from './image.mjs';
 import { validateSizesProperty } from './internal.mjs';
 import type { INTERNAL_LocalStaticImageImport, LocalStaticImageImport as LocalStaticImageImportInternal } from './webpack-loader/localStaticImageLoader.mjs';
@@ -27,7 +28,8 @@ export interface LocalStaticImageProps
 /**
  * https://h.corioders.com/cstd-next/images#localstaticimage
  */
-export default function LocalStaticImage(props: LocalStaticImageProps) {
+
+const LocalStaticImage = memoizeImages(function LocalStaticImage(props: LocalStaticImageProps) {
 	const src = props.src as INTERNAL_LocalStaticImageImport;
 
 	const userImagePropsIncorrectType: Partial<LocalStaticImageProps> = {
@@ -83,4 +85,6 @@ export default function LocalStaticImage(props: LocalStaticImageProps) {
 			<img {...imageOptimizationAttributes} {...userImageProps} srcSet={defaultImageFallbackSource.s} src={defaultImageFallbackSource.r} alt={props.alt} />
 		</picture>
 	);
-}
+});
+
+export default LocalStaticImage;

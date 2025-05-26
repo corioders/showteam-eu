@@ -1,11 +1,12 @@
+import 'server-only';
+import MarkdownRenderer from '@/markdown/MarkdownRenderer.jsx';
 import CstdError from 'cstd-next/error/CstdError.js';
-import MarkdownRenderer from 'cstd-next/markdown/MarkdownRenderer.js';
 import type { Children } from 'cstd-next/type/index.js';
 import type { Doc } from 'cstd-ts/driveCMS/docs.js';
 import { type ParsedHeaderToKeyValue, parseDocAstToHeaderKeyValue } from 'cstd-ts/driveCMS/docsParser.js';
 import { downloadDocLatestDeployRevision, downloadDocLatestRevision } from 'cstd-ts/driveCMS/index.js';
 import { MIMEType } from 'cstd-ts/driveCMS/resource.js';
-import { type FolderChild, getChildByMIMEType, isFolderChild } from 'cstd-ts/driveCMS/resourceStructureParser.js';
+import { type FolderChild, getChildByMIMEType, isFolderChild } from 'cstd-ts/driveCMS/resourceStructureParser/index.js';
 import type { ErrorReturn } from 'cstd-ts/error/index.js';
 import type { MapKey, MapValue } from 'cstd-ts/type/index.js';
 import type { ReactNode } from 'react';
@@ -48,7 +49,7 @@ export async function HeaderKeyValueRenderer<FolderChildren>(props: Props<Folder
 		return <CstdError error={errorDownload} />;
 	}
 
-	const [keyValue, kvError] = await parseDocAstToHeaderKeyValue(docContent.docAST);
+	const [keyValue, kvError] = parseDocAstToHeaderKeyValue(docContent.docAST);
 	if (kvError) {
 		return <CstdError error={kvError} />;
 	}
