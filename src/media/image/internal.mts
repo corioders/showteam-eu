@@ -14,9 +14,22 @@ import readImageInfoFromBufferInternal from 'buffer-image-size';
 
 // Importing p-limit works on browser.
 import pLimit from 'p-limit';
+import { PERFORMANCE_PLACEHOLDER } from './performance-placeholder.mjs';
+
+const DISABLE_PERFORMANCE_PLACEHOLDER = 'CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER';
 
 const SKIP_IMAGE_OPTIMIZATION_FLAG = 'CORIODERS_SKIP_IMAGE_OPTIMIZATION';
 const FORCE_IMAGE_OPTIMIZATION_FLAG = 'CORIODERS_FORCE_IMAGE_OPTIMIZATION';
+const KIBIBYTE = 1024;
+const MAX_DEV_IMAGE_SIZE = 2 * KIBIBYTE;
+
+function disablePerformancePlaceholder(): boolean {
+	if (process.env[DISABLE_PERFORMANCE_PLACEHOLDER] === 'true') {
+		return true;
+	}
+
+	return false;
+}
 
 export function shouldOptimizeImages(): boolean {
 	if (process.env[FORCE_IMAGE_OPTIMIZATION_FLAG]) {
@@ -38,10 +51,17 @@ export interface ImageInfo {
 	width: number;
 	height: number;
 	type: ImageType;
+
+	imageSize: number;
 }
 
 export function readImageInfoFromBuffer(imageBuffer: Buffer): ImageInfo {
-	return readImageInfoFromBufferInternal(imageBuffer) as ImageInfo;
+	const imageSize = imageBuffer.length;
+
+	return {
+		...(readImageInfoFromBufferInternal(imageBuffer) as ImageInfo),
+		imageSize: imageSize,
+	};
 }
 
 export interface PictureSource {
@@ -109,13 +129,23 @@ function getImageFilepathMeta(imageFilename: string, imageSpecificHash: string, 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
 export function getPictureSourcesNotSvg(
 	isDevelopmentMode: boolean,
-	imageFilename: string,
-	imageSpecificHash: string,
+	imageFilenameArg: string,
+	imageSpecificHashArg: string,
 	imageInfo: ImageInfo,
 	baseFilePath: string,
 	userSpecified?: UserSpecified,
 	baseURL: string = NEXTJS_URL_PREFIX,
 ): INTERNAL_PictureSource[] {
+	let imageFilename = imageFilenameArg;
+	let imageSpecificHash = imageSpecificHashArg;
+	const usePerformancePlaceholder = isDevelopmentMode && imageInfo.imageSize > MAX_DEV_IMAGE_SIZE && !disablePerformancePlaceholder();
+
+	if (usePerformancePlaceholder) {
+		imageFilename = 'PERFORMANCE_PLACEHOLDER_';
+		imageSpecificHash = 'PERFORMANCE_PLACEHOLDER';
+		imageSpecificHash = `PERFORMANCE_PLACEHOLDER_${imageInfo.width}_${imageInfo.height}`;
+	}
+
 	const getImageUrl = getImageUrlMeta(imageFilename, imageSpecificHash, baseURL);
 	const getImageFilepath = getImageFilepathMeta(imageFilename, imageSpecificHash, baseFilePath);
 
@@ -123,7 +153,7 @@ export function getPictureSourcesNotSvg(
 		throw new Error('Svg image cannot be treated as a regular image');
 	}
 
-	const imageFormats = isDevelopmentMode ? [imageInfo.type] : TARGET_IMAGE_FORMATS;
+	let imageFormats = isDevelopmentMode ? [imageInfo.type] : TARGET_IMAGE_FORMATS;
 	let targetWidths = [...TARGET_IMAGE_SIZES, imageInfo.width];
 
 	if (userSpecified) {
@@ -145,7 +175,7 @@ export function getPictureSourcesNotSvg(
 
 	if (userSpecified) {
 		for (const targetWidth of targetWidths) {
-			if (targetWidth > imageInfo.width) {
+			if (targetWidth > imageInfo.width && !usePerformancePlaceholder) {
 				console.log(
 					`!WARNING! (<TOOO: DOCS LINK>) Image was requested with a heigher target width than original. Consider replacing the original image with a bigger version: ${imageFilename} Width: ${imageInfo.width} Requested width: ${targetWidth}`,
 				);
@@ -155,6 +185,9 @@ export function getPictureSourcesNotSvg(
 
 	if (isDevelopmentMode) {
 		targetWidths = [imageInfo.width];
+		if (usePerformancePlaceholder) {
+			imageFormats = ['webp'];
+		}
 	}
 	const sources: INTERNAL_PictureSource[] = [];
 	for (const targetFormat of imageFormats) {
@@ -225,7 +258,25 @@ export async function optimizePictureSources(
 			throw new Error('Expected only one source and one sharpEntry while in the development mode.');
 		}
 		const theOnlySharpEntry = pictureSources[0].__sharpEntries[0];
+
+		if (imageBuffer.length > MAX_DEV_IMAGE_SIZE && !disablePerformancePlaceholder()) {
+			const imageInfo = readImageInfoFromBuffer(imageBuffer);
+			const cacheKey = `PERFORMANCE_PLACEHOLDER_${imageInfo.width}_${imageInfo.height}`;
+
+			const cachedScaledPerformancePlaceholder = await getCacheFunction(cacheKey);
+			if (cachedScaledPerformancePlaceholder) {
+				await exportFunction(cachedScaledPerformancePlaceholder, theOnlySharpEntry.filepath);
+				return;
+			}
+
+			const scaledPerformancePlaceholder = await sharp(PERFORMANCE_PLACEHOLDER).resize({ width: imageInfo.width, height: imageInfo.height }).toBuffer();
+			await setCacheFunction(cacheKey, scaledPerformancePlaceholder);
+			await exportFunction(scaledPerformancePlaceholder, theOnlySharpEntry.filepath);
+			return;
+		}
+
 		await exportFunction(imageBuffer, theOnlySharpEntry.filepath);
+		return;
 	}
 
 	// Include an internal concurrency limit so that we are optimizing one image at the time.
@@ -294,6 +345,8 @@ export async function optimizePictureSources(
 					width: info.width,
 					height: info.height,
 					type: sharpEntry.targetFormat,
+
+					imageSize: optimizedImageBuffer.length,
 				});
 
 				await setCacheFunction(cacheKey, optimizedImageBuffer);
@@ -422,28 +475,4 @@ export function calculateImageSizeFromUserSpecifiedNoSVG(imageInfo: ImageInfo, u
 		imageSizeToSetAtTheImgElement: imageSizeToSetAtTheImgElement,
 		inferredSizes: inferredSizes,
 	};
-}
-
-// This function works this way because of the calculateImageSizeFromUserSpecified. Look at the rules above.
-export function validateSizesProperty(userProvidedSizes: string | undefined, inferredSizes: string | undefined, imageNameToReport: string): string {
-	if (userProvidedSizes && inferredSizes) {
-		console.log(`!!WARNING!! You specified sizes, while it was possible to infer them. Are you sure you want to do that: ${imageNameToReport}`);
-	}
-
-	if (!(userProvidedSizes || inferredSizes)) {
-		throw new Error(`Sizes can be omitted ONLY when specifying only ONE width OR height: ${imageNameToReport}`);
-	}
-
-	if (inferredSizes) {
-		return inferredSizes;
-	}
-
-	if (userProvidedSizes) {
-		if (userProvidedSizes === 'auto') {
-			throw new Error(`The sizes='auto' attribute does not work in Safari and Firefox, sorry... ${imageNameToReport}`);
-		}
-		return userProvidedSizes;
-	}
-
-	throw new Error(`THIS SHOULD NOT HAPPEN: userProvidedSizes and inferredSizes were not cough in a condition: ${imageNameToReport}`);
 }

@@ -44,6 +44,6 @@ export async function GalleryRenderer<FolderChildren>({ galleryFolder, ...props 
 }
 
 const defaultComponents: Components = {
-	item: (props) => <RemoteStaticImage {...props} loading="lazy" />,
+	item: (props) => <RemoteStaticImage {...props} loading="lazy" decoding="async" />,
 	root: (props) => <section {...props} />,
 } as const;

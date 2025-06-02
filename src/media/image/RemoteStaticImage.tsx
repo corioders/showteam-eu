@@ -34,9 +34,9 @@ import {
 	optimizeSvg,
 	readImageInfoFromBuffer,
 	shouldOptimizeImages,
-	validateSizesProperty,
 	validateUserSpecified,
 } from './internal.mjs';
+import { validateSizesProperty } from './internalClient.mjs';
 
 // 25 MiB
 // const MAX_CLOUDFLARE_IMAGE_SIZE = 25 * 2 ** 20;

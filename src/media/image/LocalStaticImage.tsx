@@ -9,7 +9,7 @@ import type { DetailedHTMLProps, ImgHTMLAttributes, JSX } from 'react';
 
 import { memoizeImages } from './cache.js';
 import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from './image.mjs';
-import { validateSizesProperty } from './internal.mjs';
+import { validateSizesProperty } from './internalClient.mjs';
 import type { INTERNAL_LocalStaticImageImport, LocalStaticImageImport as LocalStaticImageImportInternal } from './webpack-loader/localStaticImageLoader.mjs';
 
 export type LocalStaticImageImport = LocalStaticImageImportInternal;
