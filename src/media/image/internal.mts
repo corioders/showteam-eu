@@ -23,12 +23,20 @@ const FORCE_IMAGE_OPTIMIZATION_FLAG = 'CORIODERS_FORCE_IMAGE_OPTIMIZATION';
 const KIBIBYTE = 1024;
 const MAX_DEV_IMAGE_SIZE = 2 * KIBIBYTE;
 
-function disablePerformancePlaceholder(): boolean {
+function shouldUsePerformancePlaceholder(isDevelopmentMode: boolean, imageSize: number): boolean {
 	if (process.env[DISABLE_PERFORMANCE_PLACEHOLDER] === 'true') {
-		return true;
+		return false;
 	}
 
-	return false;
+	if (!isDevelopmentMode) {
+		return false;
+	}
+
+	if (imageSize < MAX_DEV_IMAGE_SIZE) {
+		return false;
+	}
+
+	return true;
 }
 
 export function shouldOptimizeImages(): boolean {
@@ -138,7 +146,7 @@ export function getPictureSourcesNotSvg(
 ): INTERNAL_PictureSource[] {
 	let imageFilename = imageFilenameArg;
 	let imageSpecificHash = imageSpecificHashArg;
-	const usePerformancePlaceholder = isDevelopmentMode && imageInfo.imageSize > MAX_DEV_IMAGE_SIZE && !disablePerformancePlaceholder();
+	const usePerformancePlaceholder = shouldUsePerformancePlaceholder(isDevelopmentMode, imageInfo.imageSize);
 
 	if (usePerformancePlaceholder) {
 		imageFilename = 'PERFORMANCE_PLACEHOLDER_';
@@ -259,7 +267,7 @@ export async function optimizePictureSources(
 		}
 		const theOnlySharpEntry = pictureSources[0].__sharpEntries[0];
 
-		if (imageBuffer.length > MAX_DEV_IMAGE_SIZE && !disablePerformancePlaceholder()) {
+		if (shouldUsePerformancePlaceholder(isDevelopmentMode, imageBuffer.length)) {
 			const imageInfo = readImageInfoFromBuffer(imageBuffer);
 			const cacheKey = `PERFORMANCE_PLACEHOLDER_${imageInfo.width}_${imageInfo.height}`;
 

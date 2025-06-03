@@ -80,6 +80,8 @@ const NEXTJS_CLIENT_BUILD_FILEPATH_PREFIX = 'static/media';
 const NEXTJS_SERVER_BUILD_FILEPATH_PREFIX = '../../static/media';
 const NEXTJS_SERVER_DEV_FILEPATH_PREFIX = '../static/media';
 
+const EMITTED_FILES = new Set<string>();
+
 // TODO: BLUUUR
 //
 // TODO: If the resourceQuery issue will not be resolved
@@ -207,7 +209,12 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	}
 
 	const exportFunction = (optimizedImageBuffer: Buffer, filepath: string) => {
-		this.emitFile(filepath, optimizedImageBuffer);
+		if (EMITTED_FILES.has(filepath)) {
+			return Promise.resolve();
+		}
+
+		EMITTED_FILES.add(filepath);
+		this.emitFile(filepath, optimizedImageBuffer, undefined, {});
 		return Promise.resolve();
 	};
 
