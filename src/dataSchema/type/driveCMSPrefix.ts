@@ -3,15 +3,13 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import { newTypedSymbol } from '@/datastructure/index.js';
-import { type ErrorReturn, UnreachableErrorMessage } from '@/error/index.js';
+import { TypedSymbolMap, newTypedSymbol } from '@/datastructure/index.js';
+import { GOOGLE_DRIVE_PUBLIC_PREFIX } from '@/driveCMS/const.js';
 import { isASCII } from '@/string/index.js';
-import { GOOGLE_DRIVE_PUBLIC_PREFIX } from '../const.js';
-import type { Child, ChildMetadata } from './index.js';
 
 // ParseResourcePrefixFunction parses resourceName and returns resourceName without prefix
 // If ParseResourcePrefixFunction returns false, this means that the resourceName does not satisfy the prefix
-export type ResourcePrefixParserFunction = (resourceName: string, metadata: ChildMetadata) => string | false;
+export type ResourcePrefixParserFunction = (resourceName: string, metadata: TypedSymbolMap) => string | false;
 export interface ResourcePrefixParser {
 	// 	userErrorPrefixTemplate is a string provided in an error when the prefix does not match.
 	userErrorPrefixTemplate: string;
@@ -23,7 +21,7 @@ export function MergeResourcePrefixParser(parsers: ResourcePrefixParser[]): Reso
 	return {
 		userErrorPrefixTemplate: parsers.map((x) => x.userErrorPrefixTemplate).join(' '),
 		userErrorMessage: parsers.map((x) => x.userErrorMessage).join('\n'),
-		parser: (resourceName: string, metadata: ChildMetadata) => {
+		parser: (resourceName: string, metadata: TypedSymbolMap) => {
 			let parsed = resourceName;
 			for (const parser of parsers) {
 				const parserOutput = parser.parser(parsed, metadata);
@@ -37,10 +35,20 @@ export function MergeResourcePrefixParser(parsers: ResourcePrefixParser[]): Reso
 	};
 }
 
+export function NoPrefix(): ResourcePrefixParser {
+	return {
+		userErrorPrefixTemplate: 'no prefix required ',
+		userErrorMessage: 'no prefix required',
+		parser: (resourceName: string, metadata: TypedSymbolMap) => {
+			return resourceName;
+		},
+	};
+}
+
 export function StringResourcePrefixParserFactory(prefix: string): ResourcePrefixParser {
 	return {
 		userErrorPrefixTemplate: prefix,
-		parser: (resourceName: string, _: ChildMetadata) => {
+		parser: (resourceName: string, _: TypedSymbolMap) => {
 			if (resourceName.startsWith(prefix)) {
 				return resourceName.replace(prefix, '').trim();
 			}
@@ -56,7 +64,7 @@ export const LANGUAGE_METADATA_KEY = newTypedSymbol<LanguagePrefix>('LANGUAGE_ME
 export const LanguageResourcePrefixParser: ResourcePrefixParser = {
 	userErrorPrefixTemplate: 'XX',
 	userErrorMessage: 'Where XX is a 2 letter country code',
-	parser: (resourceName: string, metadata: ChildMetadata) => {
+	parser: (resourceName: string, metadata: TypedSymbolMap) => {
 		if (resourceName.length < 2) {
 			return false;
 		}
@@ -83,7 +91,7 @@ const ORDER_METADATA_KEY = newTypedSymbol<number>('ORDER_METADATA_KEY');
 export const OrderResourcePrefixParser: ResourcePrefixParser = {
 	userErrorPrefixTemplate: 'NN',
 	userErrorMessage: 'Where NN is a number. Note that this number can be of any length, but must be positive.',
-	parser: (resourceName: string, metadata: ChildMetadata) => {
+	parser: (resourceName: string, metadata: TypedSymbolMap) => {
 		const prefixEnd = resourceName.indexOf(' ');
 
 		const prefix = resourceName.slice(0, prefixEnd);
@@ -98,31 +106,7 @@ export const OrderResourcePrefixParser: ResourcePrefixParser = {
 	},
 };
 
-// TODO: This type should not exist. We need to rethink the whole thing.
-export interface ChildWithName {
-	child: Child;
-	name: string;
-}
-
-export function getOrderedChildren(children: ChildWithName[]): ErrorReturn<ChildWithName[]> {
-	for (const childWithName of children) {
-		const order = childWithName.child.metadata.getEntry(ORDER_METADATA_KEY);
-		if (order === undefined) {
-			throw new Error(`Order is undefined for child with name: ${childWithName.child.resource.name}`);
-		}
-	}
-
-	const orderedChildren = children.slice();
-	orderedChildren.sort((a, b) => {
-		const aOrder = a.child.metadata.getEntry(ORDER_METADATA_KEY);
-		const bOrder = b.child.metadata.getEntry(ORDER_METADATA_KEY);
-
-		if (aOrder === undefined || bOrder === undefined) {
-			throw new Error(UnreachableErrorMessage('Order is undefined'));
-		}
-
-		return aOrder - bOrder;
-	});
-
-	return [orderedChildren, null];
-}
+export const PublicPrefixParser = StringResourcePrefixParserFactory(GOOGLE_DRIVE_PUBLIC_PREFIX);
+export const PublicLanguagePrefixParser = MergeResourcePrefixParser([PublicPrefixParser, LanguageResourcePrefixParser]);
+export const PublicOrderedPrefixParser = MergeResourcePrefixParser([PublicPrefixParser, OrderResourcePrefixParser]);
+export const PublicLanguageOrderPrefixParser = MergeResourcePrefixParser([PublicPrefixParser, LanguageResourcePrefixParser, OrderResourcePrefixParser]);

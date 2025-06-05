@@ -3,6 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
+import { IS_PREVIEW } from '@/const.js';
 import { type ErrorReturnPromise, safe } from '@/error';
 import { google } from 'googleapis';
 import { type Doc, type DocID, type DocMd, downloadDocMarkdownRevision, downloadDocRevision, getDocRevisions } from './docs.js';
@@ -63,6 +64,16 @@ export function listFolder(folderID: FolderID): ErrorReturnPromise<Resource[]> {
 	return internalListFolder(googleAuth, folderID);
 }
 
+export function downloadDocCorrectRevisionMarkdown(docID: DocID): ErrorReturnPromise<DocMd> {
+	if (IS_PREVIEW) {
+		return downloadDocLatestRevisionMarkdown(docID);
+	}
+
+	return downloadDocLatestDeployRevisionMarkdown(docID);
+}
+
+// TODO: Change function name to the const above
+export const downloadDocLatestRevisionMarkdown = downloadDocLatestMarkdownRevision;
 export async function downloadDocLatestMarkdownRevision(docID: DocID): ErrorReturnPromise<DocMd> {
 	const [revisions, errorGetRevisions] = await getDocRevisions(googleAuth, docID);
 	if (errorGetRevisions !== null) {
@@ -77,6 +88,8 @@ export async function downloadDocLatestMarkdownRevision(docID: DocID): ErrorRetu
 	return downloadDocMarkdownRevision(googleAuth, docID, latestRevision.revisionID);
 }
 
+// TODO: Change function name to the const above
+export const downloadDocLatestDeployRevisionMarkdown = downloadDocLatestMarkdownDeployRevision;
 export async function downloadDocLatestMarkdownDeployRevision(docID: DocID): ErrorReturnPromise<DocMd> {
 	const [revisions, errorGetRevisions] = await getDocRevisions(googleAuth, docID);
 	if (errorGetRevisions !== null) {

@@ -75,7 +75,7 @@ export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID
 	const driveAPI = google.drive({ version: 'v3', auth: googleAuth });
 	const [fileOrFolderListResponse, errorList] = await safePromise(() => driveAPI.files.list({ q: `'${folderID}' in parents` }));
 	if (errorList !== null) {
-		return [null, new Error('Error while listing files', { cause: errorList })];
+		return [null, new Error(`Error while listing files: ${errorList}`, { cause: errorList })];
 	}
 
 	const fileOrFolderList: Resource[] = [];
