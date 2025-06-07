@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import { TypedSymbolMap, newTypedSymbol } from '@/datastructure/index.js';
+import { type TypedSymbolMap, newTypedSymbol } from '@/datastructure/index.js';
 import { GOOGLE_DRIVE_PUBLIC_PREFIX } from '@/driveCMS/const.js';
 import { isASCII } from '@/string/index.js';
 
@@ -59,8 +59,11 @@ export function StringResourcePrefixParserFactory(prefix: string): ResourcePrefi
 }
 
 export type LanguagePrefix = string & { __tagLanguagePrefix: symbol };
-// TODO: This should not be exported. But we need it for now. Fix.
-export const LANGUAGE_METADATA_KEY = newTypedSymbol<LanguagePrefix>('LANGUAGE_METADATA_KEY');
+const LANGUAGE_METADATA_KEY = newTypedSymbol<LanguagePrefix>('LANGUAGE_METADATA_KEY');
+export function getLanguagePrefix(resourceMetadata: TypedSymbolMap): LanguagePrefix | undefined {
+	return resourceMetadata.getEntry(LANGUAGE_METADATA_KEY)
+}
+
 export const LanguageResourcePrefixParser: ResourcePrefixParser = {
 	userErrorPrefixTemplate: 'XX',
 	userErrorMessage: 'Where XX is a 2 letter country code',
@@ -74,7 +77,7 @@ export const LanguageResourcePrefixParser: ResourcePrefixParser = {
 			return false;
 		}
 
-		const languagePrefix = prefix as LanguagePrefix;
+		const languagePrefix = prefix.toLowerCase() as LanguagePrefix;
 		const setError = metadata.setEntry(LANGUAGE_METADATA_KEY, languagePrefix);
 		if (setError) {
 			// biome-ignore lint/suspicious/noConsole: <explanation>

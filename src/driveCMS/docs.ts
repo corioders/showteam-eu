@@ -36,7 +36,6 @@ export function isDoc(resource: Resource): resource is DocResource {
 
 export interface DocMd {
 	docMd: string;
-
 	docID: DocID;
 }
 

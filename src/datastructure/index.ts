@@ -30,4 +30,13 @@ export class TypedSymbolMap {
 
 		return this._storage.get(key) as T;
 	}
+
+	copy(): TypedSymbolMap {
+		const copy = new TypedSymbolMap();
+		for (const [key, value] of this._storage) {
+			copy.setEntry(key as TypedSymbol<unknown>, value);
+		}
+
+		return copy;
+	}
 }

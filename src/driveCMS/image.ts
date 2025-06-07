@@ -3,6 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, January 2025
 
+import { ImageURL } from '@/media/image/index.js';
 import type { FileID } from './drive.js';
 import type { Resource } from './resource.js';
 
@@ -16,6 +17,6 @@ export function isImage(resource: Resource): resource is ImageResource {
 	return resource.mimeType.includes('image');
 }
 
-export function getPublicImageDownloadURL(imageID: ImageID): string {
-	return `https://drive.usercontent.google.com/uc?id=${imageID}&export=download`;
+export function getPublicImageDownloadURL(imageID: ImageID): ImageURL {
+	return `https://drive.usercontent.google.com/uc?id=${imageID}&export=download` as ImageURL;
 }

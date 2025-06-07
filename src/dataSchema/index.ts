@@ -16,22 +16,31 @@ export type FetchParserReturn<FPR> = ErrorReturn<FPR | false>;
 type FetchParserFunction<pFPR, FPR> = (parentFetchParserReturn: pFPR) => FetchParserReturn<FPR> | FetchParserPromiseReturn<FPR>;
 export type TypeFunction<UES, pFPR, FPR> = (userSpecification: UES) => FetchParserFunction<pFPR, FPR>;
 
-export function defineTypeFunction<_pUES, _ppUES, pFPR, UES, FPR>(
-	_parentTF: TypeFunction<_pUES, _ppUES, pFPR> | null,
-	tf: TypeFunction<UES, Flatten<pFPR>, FPR>,
-): TypeFunction<UES, Flatten<pFPR>, FPR> {
+export function defineTypeFunction<UES, pFPR, FPR>(
+	tf: TypeFunction<UES, pFPR, FPR>,
+): TypeFunction<UES, pFPR, FPR> {
 	return tf;
 }
 
-export function defineTypeAggregateFunction<_pUES, _ppUES, pFPR, UES, FPR>(
-	_parentTF: TypeFunction<_pUES, _ppUES, pFPR> | null,
+
+export function defineTypeAggregateFunction<UES, pFPR, FPR>(
 	filterFunction: (x: Flatten<pFPR>) => boolean,
-	tf: TypeFunction<UES, Array<Flatten<pFPR>>, FPR>,
-): TypeFunction<UES, Array<Flatten<pFPR>>, Flatten<FPR>> & { filter: (x: Flatten<pFPR>) => boolean } {
-	const modifiedTF = tf as TypeFunction<UES, Array<Flatten<pFPR>>, Flatten<FPR>> & { filter: (x: Flatten<pFPR>) => boolean };
+	tf: TypeFunction<UES, Array<pFPR>, Array<FPR>>,
+): TypeFunction<UES, Array<pFPR>, Array<FPR>> {
+	const modifiedTF = tf as TypeFunction<UES, Array<pFPR>, Array<FPR>> & { filter: (x: Flatten<pFPR>) => boolean };
 	modifiedTF.filter = filterFunction;
 	return modifiedTF;
 }
+
+export function defineTypeAggregateToSingleFunction<UES, pFPR, FPR>(
+	filterFunction: (x: Flatten<pFPR>) => boolean,
+	tf: TypeFunction<UES, Array<pFPR>, FPR>,
+): TypeFunction<UES, Array<pFPR>, FPR> {
+	const modifiedTF = tf as TypeFunction<UES, Array<pFPR>, FPR> & { filter: (x: Flatten<pFPR>) => boolean };
+	modifiedTF.filter = filterFunction;
+	return modifiedTF;
+}
+
 
 export function defineDataSchema<DSD extends DataSchemaDefinition>(dsd: DSD): DSD {
 	return dsd;
@@ -122,28 +131,26 @@ async function fetchAndParseInternal(currentPipe, currentResult, parentFetchPars
 			}
 		}
 
-		resultEntry.result = [fetchParserReturn, fetchParserError];
 		const nextPipe = entry.pipe;
+		resultEntry.result = [fetchParserReturn, fetchParserError];
 		if (!nextPipe) {
 			continue;
 		}
 
-		if (isFetchParserReturnAggregate) {
-			resultEntry.next = [];
-			if (fetchParserError) {
-				await fetchAndParseInternal(nextPipe, resultEntry.next, [fetchParserReturn, fetchParserError], entryDebugPath);
-				continue;
-			}
-
+		if (isFetchParserReturnAggregate && fetchParserReturn && Array.isArray(fetchParserReturn)) {
+			resultEntry.aggregate = [];
 			for (let i = 0; i < fetchParserReturn.length; i++) {
 				const fetchParserReturnItem = fetchParserReturn[i];
 				const result = {};
 				await fetchAndParseInternal(nextPipe, result, [fetchParserReturnItem, null], `${entryDebugPath}[${i}]`);
-				resultEntry.next.push(result);
+				resultEntry.aggregate.push({
+					result: [fetchParserReturnItem, null],
+					next: result
+				})
 			}
-
 			continue;
 		}
+
 
 		resultEntry.next = {};
 		await fetchAndParseInternal(nextPipe, resultEntry.next, [fetchParserReturn, fetchParserError], entryDebugPath);
