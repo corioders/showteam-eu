@@ -8,5 +8,5 @@ export type CountryISO2Code = string & { readonly __tagCountryISO2Code: symbol }
 
 // TODO: Make this more rigorous
 export function isCountryISO2Code(x: string): x is CountryISO2Code {
-    return typeof x === 'string' && x.length === 2;
+	return typeof x === 'string' && x.length === 2;
 }

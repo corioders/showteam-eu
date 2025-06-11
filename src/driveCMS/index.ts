@@ -28,7 +28,7 @@ import { type FileUploadOptions, type Form, type FormID, getForm as internalGetF
 import type { Resource, ResourceID } from './resource.js';
 import { type Spreadsheet, type SpreadsheetID, downloadSpreadsheetRevision, getSheetRevisions } from './spreadsheet.js';
 
-if (typeof process.env.CORIODERS_DRIVE_CMS_KEY !== 'string') {
+if (typeof process.env['CORIODERS_DRIVE_CMS_KEY'] !== 'string') {
 	throw new Error(
 		'Unable to initialize drive cms, missing the `CORIODERS_DRIVE_CMS_KEY` environment variable. See https://medium.com/@matheodaly.md/using-google-drive-api-with-python-and-a-service-account-d6ae1f6456c2',
 	);
@@ -36,7 +36,7 @@ if (typeof process.env.CORIODERS_DRIVE_CMS_KEY !== 'string') {
 
 export type EmailAddress = string & { readonly __emailAddressTag: unique symbol };
 
-const [driveCMSJsonKey, driveCMSJsonKeyError] = safe(() => JSON.parse(process.env.CORIODERS_DRIVE_CMS_KEY as string));
+const [driveCMSJsonKey, driveCMSJsonKeyError] = safe(() => JSON.parse(process.env['CORIODERS_DRIVE_CMS_KEY'] as string));
 if (driveCMSJsonKeyError) {
 	throw new Error(`Unable to initialize drive cms, CORIODERS_DRIVE_CMS_KEY is not a valid JSON: ${driveCMSJsonKeyError.message}`, { cause: driveCMSJsonKeyError });
 }
@@ -56,7 +56,7 @@ export function getForm(formID: FormID, isPreview: boolean, fileUploadOptions?: 
 // const sheetsAPI = google.sheets({ version: "v4", auth: googleAuth });
 
 // Figure out if changing permissions of the folder would work.
-export function UNSAFEChangePermissionsToAnyoneWithLinkReader(fileID: FileID): ErrorReturnPromise<void> {
+export function UNSAFEChangePermissionsToAnyoneWithLinkReader(fileID: FileID): ErrorReturnPromise<void, Error | null> {
 	return internalUNSAFEChangePermissionsToAnyoneWithLinkReader(googleAuth, fileID);
 }
 

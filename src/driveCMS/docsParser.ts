@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
 
-import type { ErrorReturn } from '@/error/index.js';
+import { type ErrorReturn, UnreachableErrorMessage } from '@/error/index.js';
 import { type StringMarkdown, markdownStringToPlainText } from '@/format/markdown/index.js';
 import type { TxtDocumentNode } from '@textlint/ast-node-types';
 
@@ -28,19 +28,26 @@ export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: P
 	const keyHeaderDepth = options?.keyHeaderDepth ?? 1;
 
 	const astChildren = docAST.children;
-	function findNextKeyHeaderIndex(startIndex: number): number | null {
+	function findNextKeyHeaderIndex(startIndex: number): ErrorReturn<number | null> {
 		for (let i = startIndex; i < astChildren.length; i++) {
 			const currentChild = astChildren[i];
+			if (!currentChild) {
+				return [null, new Error(UnreachableErrorMessage('Current child was not found'))];
+			}
+
 			if (currentChild.type === 'Header' && currentChild.depth === keyHeaderDepth) {
-				return i;
+				return [i, null];
 			}
 		}
 
-		return null;
+		return [null, null];
 	}
 
 	for (let i = 0; i < astChildren.length; i++) {
 		const currentChild = astChildren[i];
+		if (!currentChild) {
+			return [null, new Error(UnreachableErrorMessage('Current child was not found'))];
+		}
 		if (currentChild.type !== 'Header' || currentChild.depth !== keyHeaderDepth) {
 			continue;
 		}
@@ -49,7 +56,7 @@ export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: P
 
 		const firstHeaderChild = headerChild.children[0];
 		if (firstHeaderChild?.type !== 'Str') {
-			return [null, new Error(`Expected the heading ${keyHeaderDepth} with text inside, got heading ${keyHeaderDepth} with ${firstHeaderChild.type}`)];
+			return [null, new Error(`Expected the heading ${keyHeaderDepth} with text inside, got heading ${keyHeaderDepth} with ${firstHeaderChild?.type}`)];
 		}
 
 		const headerMarkdownText: StringMarkdown = headerChild.raw as StringMarkdown;
@@ -59,12 +66,15 @@ export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: P
 		keyToMarkdownKeyMapping.set(key, headerMarkdownText);
 
 		const searchStartIndex = i + 1;
-		const nextHeaderIndex = findNextKeyHeaderIndex(searchStartIndex);
+		const [nextHeaderIndex, nextHeaderIndexError] = findNextKeyHeaderIndex(searchStartIndex);
+		if (nextHeaderIndexError) {
+			return [null, nextHeaderIndexError];
+		}
 		if (nextHeaderIndex) {
 			i = nextHeaderIndex - 1;
 		}
 
-		const nextHeader = nextHeaderIndex !== undefined ? astChildren[nextHeaderIndex] : undefined;
+		const nextHeader = nextHeaderIndex ? astChildren[nextHeaderIndex] : undefined;
 		const [_headerChildRangeStart, headerChildRangeEnd] = headerChild.range;
 		const [nextHeaderRangeStart, _nextHeaderRangeEnd] = nextHeader?.range ?? [docAST.range[1], 0];
 

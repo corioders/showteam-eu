@@ -48,12 +48,12 @@ to the beginning of the document.`),
 		return [null, error];
 	}
 
-	const title = dsdtf.mapping.get('Title').trim();
+	const title = dsdtf.mapping.get('Title')?.trim();
 	if (!title) {
 		return [null, new Error('Title is not defined')];
 	}
 
-	const description = dsdtf.mapping.get('Description').trim();
+	const description = dsdtf.mapping.get('Description')?.trim();
 	if (!description) {
 		return [null, new Error('Description is not defined')];
 	}

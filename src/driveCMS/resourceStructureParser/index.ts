@@ -57,7 +57,7 @@ export function defineFolderStructureDescriptor<T extends FolderStructureDescrip
 	return Object.freeze(fsd);
 }
 
-// biome-ignore lint/style/useNamingConvention: <explanation>
+// // biome-ignore lint/style/useNamingConvention: <explanation>
 export interface FolderStructure<FSD extends FolderStructureDescriptor> {
 	rootFolder: FolderID;
 
@@ -134,57 +134,63 @@ export const fetchAndParseFolderStructure = memoizeDriveCMS(async function fetch
 	return [fs as FolderStructure<T>, null];
 });
 
-// biome-ignore lint/correctness/noUnusedVariables: <explanation>
-function validateFolderStructureDescriptor(fsd: FolderStructureDescriptor): Error | null {
-	if (fsd.rootFolderID === undefined) {
-		return new Error('rootFolderID is undefined');
-	}
+// // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+// function validateFolderStructureDescriptor(fsd: FolderStructureDescriptor): Error | null {
+// 	if (fsd.rootFolderID === undefined) {
+// 		return new Error('rootFolderID is undefined');
+// 	}
 
-	if (fsd.children === undefined) {
-		return new Error('children is undefined');
-	}
+// 	if (fsd.children === undefined) {
+// 		return new Error('children is undefined');
+// 	}
 
-	for (const childName in fsd.children) {
-		const child = fsd.children[childName];
-		const error = validateChildDescriptor(child);
-		if (error) {
-			return error;
-		}
-	}
-}
+// 	for (const childName in fsd.children) {
+// 		const child = fsd.children[childName] as Required<(typeof fsd.children)[typeof childName]>;
+// 		const error = validateChildDescriptor(child);
+// 		if (error) {
+// 			return error;
+// 		}
+// 	}
 
-function validateChildDescriptor(childDescriptor: ChildDescriptor | ChildFolderDescriptor): Error | null {
-	if (childDescriptor.resourceType === undefined) {
-		return new Error('resourceType is undefined');
-	}
+// 	return null;
+// }
 
-	if (isChildFolderDescriptor(childDescriptor)) {
-		if (childDescriptor.children === undefined) {
-			return new Error('children is undefined');
-		}
+// function validateChildDescriptor(childDescriptor: ChildDescriptor | ChildFolderDescriptor): Error | null {
+// 	if (childDescriptor.resourceType === undefined) {
+// 		return new Error('resourceType is undefined');
+// 	}
 
-		const childNames = new Set<string>();
-		const childMIMETypes = new Set<MIMETypeTE>();
-		for (const childName in childDescriptor.children) {
-			const child = childDescriptor.children[childName];
+// 	if (isChildFolderDescriptor(childDescriptor)) {
+// 		if (childDescriptor.children === undefined) {
+// 			return new Error('children is undefined');
+// 		}
 
-			if (childNames.has(childName)) {
-				return new Error(`Duplicate child name ${childName}`);
-			}
-			childNames.add(childName);
+// 		const childNames = new Set<string>();
+// 		const childMIMETypes = new Set<MIMETypeTE>();
+// 		for (const childName in childDescriptor.children) {
+// 			const child = childDescriptor.children[childName] as Required<(typeof childDescriptor.children)[typeof childName]>;
 
-			if (childMIMETypes.has(child.resourceType)) {
-				return new Error(`Duplicate child MIME type ${childDescriptor.children[childName].resourceType}`);
-			}
-			childMIMETypes.add(child.resourceType);
+// 			if (childNames.has(childName)) {
+// 				return new Error(`Duplicate child name ${childName}`);
+// 			}
+// 			childNames.add(childName);
 
-			const error = validateChildDescriptor(child);
-			if (error) {
-				return error;
-			}
-		}
-	}
-}
+// 			if (childMIMETypes.has(child.resourceType)) {
+// 				return new Error(
+// 					`Duplicate child MIME type ${(childDescriptor.children[childName] as Required<(typeof childDescriptor.children)[typeof childName]>).resourceType}`,
+// 				);
+// 			}
+// 			childMIMETypes.add(child.resourceType);
+
+// 			const error = validateChildDescriptor(child);
+// 			if (error) {
+// 				return error;
+// 			}
+// 		}
+// 	}
+
+// 	return null;
+// }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
 async function fetchAndParseChildStructure<T>(
@@ -197,7 +203,7 @@ async function fetchAndParseChildStructure<T>(
 	const errors: Error[] = [];
 
 	for (const childDescriptorName in childrenDescriptor) {
-		const childDescriptor = childrenDescriptor[childDescriptorName];
+		const childDescriptor = childrenDescriptor[childDescriptorName] as Required<(typeof childrenDescriptor)[typeof childDescriptorName]>;
 
 		// If the name is not important we can match multiple children.
 		const nameNotImportant = childDescriptorName.includes(NAME_NOT_IMPORTANT_PREFIX);
@@ -340,6 +346,7 @@ async function fetchAndParseChildStructure<T>(
 			const [googleChildren, googleChildrenListError] = await listFolder(child.resource.id);
 			if (googleChildrenListError) {
 				errors.push(new Error(`Within '${parentFolder.name}'. Unable to list a folder with name ${child.resource.name} and id ${child.resource.id}`));
+				continue;
 			}
 
 			if (!child.children) {
@@ -362,7 +369,7 @@ async function fetchAndParseChildStructure<T>(
 
 export function getChildByMIMEType<T extends MIMETypeTE, A>(fsChildren: Record<string, Child | FolderChild<A>>, mimeType: T): Child<T> | null {
 	for (const childName in fsChildren) {
-		const child = fsChildren[childName];
+		const child = fsChildren[childName] as Required<(typeof fsChildren)[typeof childName]>;
 		if (doesMIMETypeMatch(mimeType, child.resource.mimeType)) {
 			return child as Child<T>;
 		}
@@ -375,7 +382,7 @@ export function getAllChildrenByMIMEType<T extends MIMETypeTE, A>(fsChildren: Re
 	const children: Child<T>[] = [];
 
 	for (const childName in fsChildren) {
-		const child = fsChildren[childName];
+		const child = fsChildren[childName] as Required<(typeof fsChildren)[typeof childName]>;
 		if (doesMIMETypeMatch(mimeType, child.resource.mimeType)) {
 			children.push(child as Child<T>);
 		}

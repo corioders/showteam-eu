@@ -62,7 +62,7 @@ function switchFirebaseLoginError(error: FirebaseError): Error {
 }
 
 type IsLoggedInSyncPromise = Promise<boolean>;
-const isLoggedInSyncPromisePerFirebaseApp: Map<FirebaseApp, IsLoggedInSyncPromise> | null = new Map();
+const isLoggedInSyncPromisePerFirebaseApp: Map<FirebaseApp, IsLoggedInSyncPromise> = new Map();
 
 function initIsLoggedInSyncPromise(firebaseApp: FirebaseApp) {
 	if (isLoggedInSyncPromisePerFirebaseApp.get(firebaseApp)) {

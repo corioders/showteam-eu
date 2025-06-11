@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
-import { CSE, type ErrorReturn, type ErrorReturnPromise, safe, safePromise } from '@/error';
+import { CSE, type ErrorReturn, type ErrorReturnPromise, UnreachableErrorMessage, safe, safePromise } from '@/error';
 import { type drive_v3, google } from 'googleapis';
 import { type GaxiosPromise, type GoogleAuth, createAPIRequest } from 'googleapis-common';
 import { StatusCodes } from 'http-status-codes';
@@ -47,20 +47,17 @@ export const ERR_UNABLE_CHANGE_PERMISSION = new Error('Unable change permission'
 export const internalUNSAFEChangePermissionsToAnyoneWithLinkReader = memoizeDriveCMS(async function internalUNSAFEChangePermissionsToAnyoneWithLinkReader(
 	googleAuth: GoogleAuth,
 	fileID: FileID,
-): ErrorReturnPromise<void> {
+): ErrorReturnPromise<void, Error | null> {
 	const driveAPI = google.drive({ version: 'v3', auth: googleAuth });
 
-	const response = await driveAPI.permissions.create(
-		{
-			fileId: fileID,
-			requestBody: {
-				type: 'anyone',
-				role: 'reader',
-				allowFileDiscovery: false,
-			},
+	const response = await driveAPI.permissions.create({
+		fileId: fileID,
+		requestBody: {
+			type: 'anyone',
+			role: 'reader',
+			allowFileDiscovery: false,
 		},
-		null,
-	);
+	});
 
 	if (response.status !== StatusCodes.OK) {
 		return [null, new AggregateError([ERR_UNABLE_CHANGE_PERMISSION, new Error(response.statusText)])];
@@ -72,6 +69,8 @@ export const internalUNSAFEChangePermissionsToAnyoneWithLinkReader = memoizeDriv
 export const ERR_UNABLE_TO_LIST_FILES = new Error('Unable to list files');
 export const internalListFolder = memoizeDriveCMS(internalListFolderNoCache);
 export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID: FolderID): ErrorReturnPromise<Resource[]> {
+	console.log(`Listing folder: ${folderID}`);
+
 	const driveAPI = google.drive({ version: 'v3', auth: googleAuth });
 	const [fileOrFolderListResponse, errorList] = await safePromise(() => driveAPI.files.list({ q: `'${folderID}' in parents` }));
 	if (errorList !== null) {
@@ -84,6 +83,9 @@ export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID
 	}
 
 	for (const fileOrFolder of fileOrFolderListResponse.data.files) {
+		if (typeof fileOrFolder.name !== 'string') {
+			return [null, new Error(`fileOrFolder.name is not of type string. But of type: ${typeof fileOrFolder.name}`)];
+		}
 		fileOrFolderList.push({
 			id: fileOrFolder.id as ResourceID,
 			name: fileOrFolder.name,
@@ -100,9 +102,7 @@ export const downloadFile = memoizeDriveCMS(async function downloadFile(
 	revisionID?: RevisionID,
 	mimeType?: MIMETypeTE,
 ): ErrorReturnPromise<unknown> {
-	// biome-ignore lint/suspicious/noConsoleLog: <explanation>
-	// biome-ignore lint/suspicious/noConsole: <explanation>
-	console.log(`Downloading ${fileID}${mimeType && `MIME: ${mimeType}`}`);
+	console.log(`Downloading ${fileID}${mimeType && ` MIME: ${mimeType}`}${revisionID && ` REVISION: ${revisionID}`}`);
 
 	const [downloadURL, errorGetFileURL] = await getFileDownloadURL(googleAuth, fileID, revisionID, mimeType);
 	if (errorGetFileURL !== null) {
@@ -205,6 +205,9 @@ export const getRevisionsFromUndocumentedAPI = memoizeDriveCMS(async function ge
 	}
 
 	const jsonDataString = response.data.split('\n')[1];
+	if (!jsonDataString) {
+		return [null, new Error(UnreachableErrorMessage('jsonDataString is not defined. Google changed their code'))];
+	}
 	const [responseJson, errorJson] = safe(() => JSON.parse(jsonDataString) as ResponseJson);
 	if (errorJson !== null) {
 		return [null, new Error('Unable to json parse response data', { cause: errorJson })];
@@ -212,10 +215,14 @@ export const getRevisionsFromUndocumentedAPI = memoizeDriveCMS(async function ge
 
 	const revisions: Revision[] = [];
 	for (const responseRevision of responseJson.tileInfo) {
-		revisions.push({
+		const newRevision: Revision = {
 			revisionID: responseRevision.end as RevisionID,
-			name: responseRevision.name,
-		});
+		};
+		if (responseRevision.name) {
+			newRevision.name = responseRevision.name;
+		}
+
+		revisions.push(newRevision);
 	}
 
 	const sortedRevisions = revisions.sort((a, b) => a.revisionID - b.revisionID);
@@ -229,6 +236,10 @@ export function getLatestRevision(revisions: Revision[]): ErrorReturn<Revision> 
 	}
 
 	const latestRevision = revisions[revisions.length - 1];
+	if (!latestRevision) {
+		return [null, new Error(UnreachableErrorMessage('Cannot get latestRevision'))];
+	}
+
 	return [latestRevision, null];
 }
 
@@ -236,7 +247,7 @@ export const ERR_UNABLE_TO_GET_LATEST_DEPLOY_REVISION = new Error('Error: unable
 export function getLatestDeployRevision(revisions: Revision[]): ErrorReturn<Revision> {
 	let latestDeployRevision: Revision | null = null;
 	for (let i = revisions.length - 1; i >= 0; i--) {
-		const revision = revisions[i];
+		const revision = revisions[i] as Revision;
 		if (revision.name !== DEPLOY_REVISION_NAME) {
 			continue;
 		}
@@ -405,6 +416,9 @@ export async function copyPermissions(googleAuth: GoogleAuth, sourceResourceID: 
 	}
 
 	const permissions = permissionsResponse.data.permissions;
+	if (!permissions) {
+		return new Error('Permissions are not defined');
+	}
 
 	// Check for "anyone" permissions (general access)
 	const anyonePermission = permissions.find((p) => p.type === 'anyone');
@@ -412,7 +426,7 @@ export async function copyPermissions(googleAuth: GoogleAuth, sourceResourceID: 
 	if (anyonePermission) {
 		const newAnyonePermission: drive_v3.Schema$Permission = {
 			type: 'anyone',
-			role: anyonePermission.role,
+			role: anyonePermission.role as string | null,
 		};
 
 		const [_, errorCreateAnyonePermission] = await safePromise(() =>
@@ -441,18 +455,18 @@ export async function copyPermissions(googleAuth: GoogleAuth, sourceResourceID: 
 		}
 
 		const newPermission: drive_v3.Schema$Permission = {
-			role: permission.role,
-			type: permission.type,
+			role: permission.role as string | null,
+			type: permission.type as string | null,
 		};
 
 		if (permission.type === 'user') {
-			newPermission.emailAddress = permission.emailAddress;
+			newPermission.emailAddress = permission.emailAddress as string | null;
 		}
 		if (permission.type === 'group') {
-			newPermission.emailAddress = permission.emailAddress;
+			newPermission.emailAddress = permission.emailAddress as string | null;
 		}
 		if (permission.type === 'domain') {
-			newPermission.domain = permission.domain;
+			newPermission.domain = permission.domain as string | null;
 		}
 
 		const [_, errorCreatePermission] = await safePromise(() =>
@@ -485,6 +499,10 @@ export async function clearAllPermissions(googleAuth: GoogleAuth, targetResource
 	}
 
 	const targetPermissions = targetPermissionsResponse.data.permissions;
+	if (!targetPermissions) {
+		return new Error('targetPermissions are not defined');
+	}
+
 	for (const permission of targetPermissions) {
 		if (permission.role === 'owner') {
 			continue;
@@ -497,7 +515,7 @@ export async function clearAllPermissions(googleAuth: GoogleAuth, targetResource
 		const [_, errorDeletePermission] = await safePromise(() =>
 			drive.permissions.delete({
 				fileId: targetResourceID,
-				permissionId: permission.id,
+				permissionId: permission.id as string,
 			}),
 		);
 
@@ -505,6 +523,8 @@ export async function clearAllPermissions(googleAuth: GoogleAuth, targetResource
 			return new Error(`Error deleting permission ${permission.id}`, { cause: errorDeletePermission });
 		}
 	}
+
+	return null;
 }
 
 export const addPermission = async function addPermission(

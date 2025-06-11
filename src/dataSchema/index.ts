@@ -4,62 +4,90 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
 import type { ErrorReturn, ErrorReturnPromise } from '@/error/index.js';
-type DataSchemaDefinition = any;
-// type DataSchema<DSD> = SOME_TRANSFORMATION<DSD
-type DataSchema<DSD> = any;
-
-type Flatten<Type> = Type extends Array<infer Item> ? Item : Type;
+import type { Flatten } from '@/type/index.js';
 
 export type FetchParserPromiseReturn<FPR> = ErrorReturnPromise<FPR | false>;
 export type FetchParserReturn<FPR> = ErrorReturn<FPR | false>;
 
 type FetchParserFunction<pFPR, FPR> = (parentFetchParserReturn: pFPR) => FetchParserReturn<FPR> | FetchParserPromiseReturn<FPR>;
-export type TypeFunction<UES, pFPR, FPR> = (userSpecification: UES) => FetchParserFunction<pFPR, FPR>;
+export type TypeFunction<US, pFPR, FPR, _ProducesAggregateObject> = (userSpecification: US) => FetchParserFunction<pFPR, FPR>;
 
-export function defineTypeFunction<UES, pFPR, FPR>(
-	tf: TypeFunction<UES, pFPR, FPR>,
-): TypeFunction<UES, pFPR, FPR> {
+export function defineTypeFunction<US, pFPR, FPR, TF = TypeFunction<US, pFPR, FPR, false>>(tf: TF): TF {
 	return tf;
 }
 
-
-export function defineTypeAggregateFunction<UES, pFPR, FPR>(
-	filterFunction: (x: Flatten<pFPR>) => boolean,
-	tf: TypeFunction<UES, Array<pFPR>, Array<FPR>>,
-): TypeFunction<UES, Array<pFPR>, Array<FPR>> {
-	const modifiedTF = tf as TypeFunction<UES, Array<pFPR>, Array<FPR>> & { filter: (x: Flatten<pFPR>) => boolean };
+export function defineTypeAggregateFunction<US, pFPR, FPR, TF = TypeFunction<US, pFPR[], FPR[], true>>(filterFunction: (x: Flatten<pFPR>) => boolean, tf: TF): TF {
+	const modifiedTF = tf as TF & { filter: (x: Flatten<pFPR>) => boolean };
 	modifiedTF.filter = filterFunction;
 	return modifiedTF;
 }
 
-export function defineTypeAggregateToSingleFunction<UES, pFPR, FPR>(
-	filterFunction: (x: Flatten<pFPR>) => boolean,
-	tf: TypeFunction<UES, Array<pFPR>, FPR>,
-): TypeFunction<UES, Array<pFPR>, FPR> {
-	const modifiedTF = tf as TypeFunction<UES, Array<pFPR>, FPR> & { filter: (x: Flatten<pFPR>) => boolean };
+export function defineTypeAggregateToSingleFunction<US, pFPR, FPR, TF = TypeFunction<US, pFPR[], FPR, false>>(filterFunction: (x: Flatten<pFPR>) => boolean, tf: TF): TF {
+	const modifiedTF = tf as TF & { filter: (x: Flatten<pFPR>) => boolean };
 	modifiedTF.filter = filterFunction;
 	return modifiedTF;
 }
 
+type DataSchemaDefinition<T extends Record<string, Record<string, any>>> = {
+	[K in keyof T]: DataSchemaDefinitionNode<T[K]>;
+};
 
-export function defineDataSchema<DSD extends DataSchemaDefinition>(dsd: DSD): DSD {
-	return dsd;
+type DataSchemaDefinitionNode<T> = T extends { type: TypeFunction<infer US, any, any, any>; pipe?: infer PType }
+	? { type: TypeFunction<US, any, any, any>; pipe?: PType extends Record<string, Record<string, any>> ? DataSchemaDefinition<PType> : never } & US
+	: { type: TypeFunction<any, any, any, any>; pipe?: unknown };
+
+export function defineDataSchema<const T extends DataSchemaDefinition<T>>(dsd: T): Readonly<T> {
+	return Object.freeze(dsd);
 }
 
-export async function fetchAndParse<DSD extends DataSchemaDefinition>(dsd: DSD): ErrorReturnPromise<DataSchema<DSD>> {
+export function defineDataSchemaNode<const T extends Record<string, any>>(dsd: T & DataSchemaDefinitionNode<T>): Readonly<T> {
+	return Object.freeze(dsd);
+}
+
+export type DataSchema<T extends DataSchemaDefinition<T>> = {
+	[K in keyof T]: DataSchemaNode<T[K]>;
+};
+
+export type DataSchemaNode<T> = T extends { type: TypeFunction<any, infer pFPR, infer FPR, infer ProducesAggregateObject>; pipe?: infer PType }
+	? ProducesAggregateObject extends false
+		? {
+				dataUsed: pFPR;
+				result: ErrorReturn<FPR>;
+				next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType> ? DataSchema<PType> : never) : never;
+			}
+		: {
+				dataUsed: pFPR;
+				result: ErrorReturn<FPR>;
+				aggregate: {
+					result: ErrorReturn<Flatten<FPR>>;
+					next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType> ? DataSchema<PType> : never) : never;
+				}[];
+			}
+	: never;
+
+export async function fetchAndParse<const T extends DataSchemaDefinition<T>>(dsd: T): ErrorReturnPromise<DataSchema<T>> {
 	const currentPipe = dsd;
 	const currentResult = {};
-	await fetchAndParseInternal(currentPipe, currentResult, [null, null], '');
+	const error = await fetchAndParseInternal(currentPipe, currentResult, [null, null], '');
+	if (error) {
+		return [null, error];
+	}
 
-	return [currentResult, null];
+	return [currentResult as DataSchema<T>, null];
 }
 
-async function fetchAndParseInternal(currentPipe, currentResult, parentFetchParserErrorReturn, currentDebugPath: string) {
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
+async function fetchAndParseInternal(
+	currentPipe: Record<string, Record<string, unknown>>,
+	currentResult: Record<string, Record<string, unknown>>,
+	parentFetchParserErrorReturn: ErrorReturn<unknown>,
+	currentDebugPath: string,
+): Promise<Error | null> {
 	const pipeNames = Object.keys(currentPipe);
 	const [parentFetchParserReturn, parentFetchParserError] = parentFetchParserErrorReturn;
 
 	for (const pipeName of pipeNames) {
-		const entry = currentPipe[pipeName];
+		const entry = currentPipe[pipeName] as { type: TypeFunction<any, any, any, any> & { filter?: (x: any) => boolean }; pipe?: any };
 		const entryDebugPath = `${currentDebugPath} > ${pipeName}`;
 
 		const typeFactoryFunction = entry.type;
@@ -70,15 +98,15 @@ async function fetchAndParseInternal(currentPipe, currentResult, parentFetchPars
 		// When a resultEntry has been created it means that this entry has been processed.
 		// One entry can be processed once.
 		if (currentResult[pipeName]) {
-			throw new Error(`Fetch parser tried processing two array entries from it's parent. Debug path: ${entryDebugPath}`);
+			return new Error(`Fetch parser tried processing two array entries from it's parent. Debug path: ${entryDebugPath}`);
 		}
 
 		currentResult[pipeName] = {};
 		const resultEntry = currentResult[pipeName];
 
 		let isFetchParserReturnAggregate = false;
-		let fetchParserReturn = null;
-		let fetchParserError = null;
+		let fetchParserReturn: any = null;
+		let fetchParserError: any = null;
 		if (parentFetchParserError) {
 			fetchParserReturn = null;
 			fetchParserError = parentFetchParserError;
@@ -86,6 +114,7 @@ async function fetchAndParseInternal(currentPipe, currentResult, parentFetchPars
 			const fetchParser = typeFactoryFunction(userSpecification);
 
 			if (Array.isArray(parentFetchParserReturn)) {
+				// ==================================================
 				// Aggregation support
 				if (typeFactoryFunction.filter) {
 					isFetchParserReturnAggregate = true;
@@ -94,13 +123,16 @@ async function fetchAndParseInternal(currentPipe, currentResult, parentFetchPars
 					if (aggregateArguments.length === 0) {
 						fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
 					} else {
-						resultEntry.dataUsed = aggregateArguments;
+						resultEntry['dataUsed'] = aggregateArguments;
 						[fetchParserReturn, fetchParserError] = await fetchParser(aggregateArguments);
 						if (fetchParserReturn === false) {
 							fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
 						}
 					}
+					// ==================================================
 				} else {
+					// ==================================================
+					// Our parent returned an array. We process exactly one item from it.
 					let isProcessed = false;
 					for (const parentFetchParserReturnItem of parentFetchParserReturn) {
 						const [localFetchParserReturn, localFetchParserError] = await fetchParser(parentFetchParserReturnItem);
@@ -113,7 +145,7 @@ async function fetchAndParseInternal(currentPipe, currentResult, parentFetchPars
 						}
 
 						isProcessed = true;
-						resultEntry.dataUsed = parentFetchParserReturnItem;
+						resultEntry['dataUsed'] = parentFetchParserReturnItem;
 						fetchParserReturn = localFetchParserReturn;
 						fetchParserError = localFetchParserError;
 					}
@@ -121,151 +153,47 @@ async function fetchAndParseInternal(currentPipe, currentResult, parentFetchPars
 					if (isProcessed === false) {
 						fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
 					}
+					// ==================================================
 				}
 			} else {
-				resultEntry.dataUsed = parentFetchParserReturn;
+				// ==================================================
+				// Our parent returned single element.
+				resultEntry['dataUsed'] = parentFetchParserReturn;
 				[fetchParserReturn, fetchParserError] = await fetchParser(parentFetchParserReturn);
 				if (fetchParserReturn === false) {
 					fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
 				}
+				// ==================================================
 			}
 		}
 
 		const nextPipe = entry.pipe;
-		resultEntry.result = [fetchParserReturn, fetchParserError];
+		resultEntry['result'] = [fetchParserReturn, fetchParserError];
 		if (!nextPipe) {
 			continue;
 		}
+		if (Object.keys(nextPipe).length === 0) {
+			return new Error(`The pipe object cannot be empty ${entryDebugPath}`);
+		}
 
 		if (isFetchParserReturnAggregate && fetchParserReturn && Array.isArray(fetchParserReturn)) {
-			resultEntry.aggregate = [];
+			const aggregate: any = [];
 			for (let i = 0; i < fetchParserReturn.length; i++) {
 				const fetchParserReturnItem = fetchParserReturn[i];
 				const result = {};
 				await fetchAndParseInternal(nextPipe, result, [fetchParserReturnItem, null], `${entryDebugPath}[${i}]`);
-				resultEntry.aggregate.push({
+				aggregate.push({
 					result: [fetchParserReturnItem, null],
-					next: result
-				})
+					next: result,
+				});
 			}
+			resultEntry['aggregate'] = aggregate;
 			continue;
 		}
 
-
-		resultEntry.next = {};
-		await fetchAndParseInternal(nextPipe, resultEntry.next, [fetchParserReturn, fetchParserError], entryDebugPath);
+		resultEntry['next'] = {};
+		await fetchAndParseInternal(nextPipe, resultEntry['next'] as Record<string, Record<string, unknown>>, [fetchParserReturn, fetchParserError], entryDebugPath);
 	}
+
+	return null;
 }
-
-// const BLOG_DSD = defineDataSchema({
-// 	root: {
-// 		type: typeGoogleDriveRootFolder,
-// 		prefix: PublicOrderedPrefixParser,
-// 		folderID: '1agrvFosnFN1omUXpUZ2miF1dn-YbYwhN',
-// 		pipe: {
-// 			postFolder: {
-// 				type: typeGoogleDriveFolder,
-// 				prefix: PublicPrefixParser,
-// 				pipe: {
-// 					postImage: { type: typeGoogleDriveSingleImage },
-// 					postDocument: { type: typeGoogleDriveSingleDoc, pipe: { parsed: { type: typeGoogleDriveSingleDocWithMetadata } } },
-// 				},
-// 			},
-// 		},
-// 	},
-// });
-
-// fetchAndParse(BLOG_DSD).then((x) => {
-// 	const a = x[0];
-// 	// // const root_result = a.root.result[0];
-
-// 	console.log('#0');
-// 	console.log(a.root.next.postFolder.next[0]);
-
-// 	console.log('#1');
-// 	console.log(a.root.next.postFolder.next[1]);
-
-// 	// console.log(JSON.stringify(x, null, 2));
-// });
-
-// // ==================================================
-
-// // const dsd = defineDataSchema({
-// // 	root: {
-// // 		type: typeGoogleDriveRootFolder, /// <- returns [hero, stats, speakers, venues, partners, events, gallery] etc....
-// // 		folderID: '1DwajPCZYZjqTu36uZpvxpllJeNoKCIio',
-
-// // 		pipe: {
-// // 			posts: {
-// // 				type: typeGoogleDriveFolderAggregate,
-// // 				pipe: {
-// // 					postImage: {
-// // 						type: typeGoogleDriveImage,
-// // 					},
-// // 				},
-// // 			},
-// // 			// hero: {
-// // 			// 	type: typeGoogleDriveFolder,
-// // 			// 	folderName: 'F1',
-// // 			// 	aa: 'F2',
-// // 			// 	// pipe: {},
-// // 			// },
-
-// // 			// gallery: {
-// // 			// 	type: typeGoogleDriveFolder,
-// // 			// 	folderName: 'F1',
-// // 			// 	// pipe: {},
-// // 			// },
-
-// // 			// speakers: {
-// // 			// 	type: typeGoogleDriveFolder,
-// // 			// 	folderName: 'speakers',
-// // 			// 	pipe: {},
-// // 			// },
-// // 		},
-// // 	},
-// // });
-
-// // fetchAndParse(dsd);
-
-// // const b = fetchAndParse(dsd);
-// // const [rootOK, rootError] = b.root;
-// // if (rootError) {
-// // 	...
-// // }
-
-// // const [heroOK, heroError] = rootOK.hero;
-// // if
-
-// // ==================================================
-
-// // const dsd = defineDataSchema({
-// // 	/* <---- #0 */
-// // 	name_used_in_the_DS_object: {
-// // 		/* <---- this this one ENTRY */
-// // 		// this type function gives the scheme to this object
-// // 		type: typeGoogleDriveFolder,
-
-// // 		// but every entry has the property children, this is like the #0 object IT IS RECUSRIVE
-// // 		children: {
-// // 			RECURSIVE: {
-// // 				// ....
-// // 			},
-// // 		},
-// // 	},
-// // });
-
-// // const dsd = defineDataSchema({
-// // 	mleko: {
-// // 		type: typeGoogleDriveRootFolder,
-// // 		id: 'root id'
-
-// // 		children: dsd_galerri
-// // 	}
-// // })
-
-// // const ds = fetchAndParse(dsd);
-// // // no i to jest albo objekt dalej, albo talbica w zaleznosci od tego co zwraca parser
-// // ds.name_used_in_the_DS_object;
-
-// // // teraz to co zostało to jakiś passing tych rzeczy z tych fn typowych niżej

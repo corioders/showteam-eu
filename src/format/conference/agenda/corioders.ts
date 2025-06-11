@@ -5,8 +5,8 @@
 
 import { type ParsedDSDTF, getAsArray, parseDSDTF } from '@/format/deadSimpleDataTextFormat';
 import { DateTime } from 'luxon';
-import { type CellAddress, type WorkBook as XlsxWorkBook, utils as xlsxUtils } from 'xlsx';
-import { ACTIVITY_TYPE, type Activity, type Agenda, type Speaker, isActivityType } from './index.js';
+import { type CellAddress, type WorkSheet, type WorkBook as XlsxWorkBook, utils as xlsxUtils } from 'xlsx';
+import { ACTIVITY_TYPE, type Activity, type Agenda, type AgendaDay, type Speaker, isActivityType } from './index.js';
 
 /*
 ## Specification:
@@ -64,6 +64,9 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 
 		// TODO: Provide an error if this does not work
 		const [_public, _day, N, date] = dayNameUnderscoreSplit;
+		if (!date) {
+			throw new Error('date is not defined');
+		}
 
 		// TODO: Provide an error if N cannot be parsed.
 		const NParsed = Number(N);
@@ -89,8 +92,8 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 
 	for (let i = 0; i < agenda.days.length; i++) {
 		const agendaDay = agenda.days[i];
-		const daySheetName = daysSheetNames[i];
-		const daySheet = workbook.Sheets[daySheetName];
+		const daySheetName = daysSheetNames[i] as string;
+		const daySheet = workbook.Sheets[daySheetName] as WorkSheet;
 
 		if (daySheet['!ref'] === undefined) {
 			throw new Error(`daySheet['!ref'] === undefined`);
@@ -219,7 +222,7 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 
 			const activity = parseActivityDSDTF(activityDSDTF, activityStartTime, activityEndTime);
 
-			agendaDay.activities.push(activity);
+			(agendaDay as AgendaDay).activities.push(activity);
 		}
 	}
 

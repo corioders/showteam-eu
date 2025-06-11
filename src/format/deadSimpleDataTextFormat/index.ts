@@ -90,13 +90,13 @@ export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 		return [newParsedDSDTF(new Map()), null];
 	}
 
-	const firstToken = dsdtfNewLineSplit[0].split(WHITESPACE)[0];
+	const firstToken = (dsdtfNewLineSplit[0] as string).split(WHITESPACE)[0] as string;
 	if (!isTokenAKey(firstToken)) {
 		return [null, new ParsingDSDTFError('First text line is not a valid key', `Try adding ${KEY_SUFFIX} here.`)];
 	}
 
 	const keyValueMapping = new Map<string, string>();
-	function addKeyValuePairToMapping(key: string, value: string): Error {
+	function addKeyValuePairToMapping(key: string, value: string): Error | null {
 		// Store the previous key-value pair. Skip comments.
 		if (key !== null && isKeyACommentKey(key) === false) {
 			if (keyValueMapping.has(key)) {
@@ -118,9 +118,9 @@ export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 		currentValue += NEW_LINE;
 
 		const dsdtfLine = dsdtfNewLineSplit[i];
-		const dsdtfLineWhitespaceSplit = dsdtfLine.split(WHITESPACE);
+		const dsdtfLineWhitespaceSplit = (dsdtfLine as string).split(WHITESPACE);
 		for (let j = 0; j < dsdtfLineWhitespaceSplit.length; j++) {
-			const token = dsdtfLineWhitespaceSplit[j];
+			const token = dsdtfLineWhitespaceSplit[j] as string;
 			if (isTokenAKey(token)) {
 				if (j !== 0) {
 					return [null, new Error('New keys must start on a new line')];

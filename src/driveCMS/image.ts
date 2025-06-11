@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, January 2025
 
-import { ImageURL } from '@/media/image/index.js';
+import type { ImageURL } from '@/media/image/index.js';
 import type { FileID } from './drive.js';
 import type { Resource } from './resource.js';
 

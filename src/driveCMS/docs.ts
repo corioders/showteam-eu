@@ -200,17 +200,15 @@ function sortPhotoIDAndImageURLArrayBasedOnDocOrder(
 		return [null, new Error(UnreachableErrorMessage('Google changed something: Unable to find searchEndIndex'))];
 	}
 
-	// biome-ignore lint/style/useNamingConvention: <explanation>
-	const DOCS_modelChunkString = source.slice(searchStartIndex + DOCS_MODEL_CHUNK_START_STRING.length, searchEndIndex);
-	// biome-ignore lint/style/useNamingConvention: <explanation>
-	const DOCS_modelChunk = JSON.parse(DOCS_modelChunkString);
+	const docsModelChunkString = source.slice(searchStartIndex + DOCS_MODEL_CHUNK_START_STRING.length, searchEndIndex);
+	const docsModelChunk = JSON.parse(docsModelChunkString);
 
 	// kix is an ID used to mark every "entity" on the docs page. Paragraph, image, etc...
 	// spi is an indication where on page is this specific entity.
 	// We have to map GoogleInternalPhotoID to kixID and then sort these kixID by SPI.
 	const kixIDtoSPI = new Map<string, number>();
 	const photoIDtoKixID = new Map<string, string>();
-	for (const chunk of DOCS_modelChunk) {
+	for (const chunk of docsModelChunk) {
 		if (chunk.spi) {
 			kixIDtoSPI.set(chunk.id, chunk.spi);
 		}
@@ -222,24 +220,31 @@ function sortPhotoIDAndImageURLArrayBasedOnDocOrder(
 		}
 	}
 
+	// ==================================================
+	// TODO: Make this into for loop
 	let mapError: Error | null = null;
-	const arrayWithIndexInSource = copyArray.map((photoIDAndImageURL) => {
-		const kixID = photoIDtoKixID.get(photoIDAndImageURL.id);
-		if (!kixID) {
-			mapError = new Error(UnreachableErrorMessage(`Google changed something: Unable to find photo ID ${photoIDAndImageURL.id} in kixIDtoSPI`));
-		}
+	const arrayWithIndexInSource = copyArray
+		.map((photoIDAndImageURL) => {
+			const kixID = photoIDtoKixID.get(photoIDAndImageURL.id);
+			if (!kixID) {
+				mapError = new Error(UnreachableErrorMessage(`Google changed something: Unable to find photo ID ${photoIDAndImageURL.id} in kixIDtoSPI`));
+				return;
+			}
 
-		const spi = kixIDtoSPI.get(kixID);
-		if (!spi) {
-			mapError = new Error(UnreachableErrorMessage(`Google changed something: Unable to find kixID ${kixID} in kixIDtoSPI`));
-		}
-		const sortNumber = spi;
+			const spi = kixIDtoSPI.get(kixID);
+			if (!spi) {
+				mapError = new Error(UnreachableErrorMessage(`Google changed something: Unable to find kixID ${kixID} in kixIDtoSPI`));
+				return;
+			}
+			const sortNumber = spi;
 
-		return { ...photoIDAndImageURL, sortNumber };
-	});
+			return { ...photoIDAndImageURL, sortNumber };
+		})
+		.filter((x) => !!x);
 	if (mapError) {
 		return [null, mapError];
 	}
+	// ==================================================
 
 	const sortedArrayWithIndexInSource = arrayWithIndexInSource.sort((a, b) => a.sortNumber - b.sortNumber);
 	const sortedArray = sortedArrayWithIndexInSource.map((photoIDAndImageURL) => ({ id: photoIDAndImageURL.id, url: photoIDAndImageURL.url }));

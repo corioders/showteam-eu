@@ -7,8 +7,8 @@ import { GoogleAuth } from 'googleapis-common';
 import memoize from 'memoize';
 
 interface OurGlobalThis {
-	// biome-ignore lint/style/useNamingConvention: This is a readonly thing.
-	// biome-ignore lint/suspicious/noExplicitAny: This is required by typescript
+	// // biome-ignore lint/style/useNamingConvention: This is a readonly thing.
+	// // biome-ignore lint/suspicious/noExplicitAny: This is required by typescript
 	__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE?: Map<any, any>;
 }
 const ourGlobalThis = (global ?? globalThis ?? window ?? {}) as OurGlobalThis;
@@ -57,7 +57,7 @@ function memoizeDriveCMSCacheKey(functionArguments: readonly unknown[]) {
 	return key;
 }
 
-type AnyFunction = (...arguments_: readonly unknown[]) => unknown;
+type AnyFunction = (...arguments_: readonly any[]) => any;
 export function memoizeDriveCMS<FunctionToMemoize extends AnyFunction>(fn: FunctionToMemoize): FunctionToMemoize {
 	return memoize(fn, {
 		cacheKey: memoizeDriveCMSCacheKey,

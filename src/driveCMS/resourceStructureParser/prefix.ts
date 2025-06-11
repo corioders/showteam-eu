@@ -6,7 +6,6 @@
 import { newTypedSymbol } from '@/datastructure/index.js';
 import { type ErrorReturn, UnreachableErrorMessage } from '@/error/index.js';
 import { isASCII } from '@/string/index.js';
-import { GOOGLE_DRIVE_PUBLIC_PREFIX } from '../const.js';
 import type { Child, ChildMetadata } from './index.js';
 
 // ParseResourcePrefixFunction parses resourceName and returns resourceName without prefix
@@ -69,7 +68,6 @@ export const LanguageResourcePrefixParser: ResourcePrefixParser = {
 		const languagePrefix = prefix as LanguagePrefix;
 		const setError = metadata.setEntry(LANGUAGE_METADATA_KEY, languagePrefix);
 		if (setError) {
-			// biome-ignore lint/suspicious/noConsole: <explanation>
 			console.error(setError);
 			return false;
 		}
@@ -117,7 +115,7 @@ export function getOrderedChildren(children: ChildWithName[]): ErrorReturn<Child
 		const aOrder = a.child.metadata.getEntry(ORDER_METADATA_KEY);
 		const bOrder = b.child.metadata.getEntry(ORDER_METADATA_KEY);
 
-		if (aOrder === undefined || bOrder === undefined) {
+		if (!aOrder || !bOrder) {
 			throw new Error(UnreachableErrorMessage('Order is undefined'));
 		}
 

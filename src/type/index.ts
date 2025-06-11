@@ -14,6 +14,8 @@ export function isBlob(x: unknown): x is Blob {
 }
 
 export type ArrayElement<A> = A extends readonly (infer T)[] ? T : never;
+export type Flatten<Type> = Type extends Array<infer Item> ? Item : Type;
 
 export type MapKey<T extends Map<unknown, unknown>> = T extends Map<infer K, unknown> ? K : never;
 export type MapValue<T extends Map<unknown, unknown>> = T extends Map<unknown, infer V> ? V : never;
+export type RemoveReadonly<T> = { -readonly [P in keyof T]: T[P] };

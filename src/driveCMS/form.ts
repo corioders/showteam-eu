@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
 
-import { type ErrorReturnPromise, safePromise } from '@/error/index.js';
+import { type ErrorReturnPromise, UnreachableErrorMessage, safePromise } from '@/error/index.js';
 import { type forms_v1, google } from 'googleapis';
 import type { GoogleAuth } from 'googleapis-common';
 import { StatusCodes } from 'http-status-codes';
@@ -69,18 +69,25 @@ export const getForm = memoizeDriveCMS(async function getForm(
 	// in the browser. Because of that we have to do some we-scraping...
 
 	const responseURI = googleAPIsForm.responderUri;
+	if (!responseURI) {
+		return [null, new Error(UnreachableErrorMessage('responseURI is empty. Google changed something'))];
+	}
 	const [questionSubmitIDs, errorGetQuestionSubmitIDs] = await getRealQuestionSubmitIDFromUndocumentedAPI(responseURI);
 	if (errorGetQuestionSubmitIDs !== null) {
 		return [null, errorGetQuestionSubmitIDs];
 	}
 
+	if (!googleAPIsForm.items) {
+		return [null, new Error(UnreachableErrorMessage('googleAPIsForm.items is empty. Google changed something'))];
+	}
+
 	for (let i = 0; i < googleAPIsForm.items.length; i++) {
-		googleAPIsForm.items[i].itemId = `entry.${String(questionSubmitIDs[i])}`;
+		(googleAPIsForm.items[i] as { itemId: string }).itemId = `entry.${String(questionSubmitIDs[i])}`;
 	}
 	// ==================================================
 	// ==================================================
 
-	const responderViewURL = new URL(googleAPIsForm.responderUri);
+	const responderViewURL = new URL(responseURI);
 
 	const pathSegments = responderViewURL.pathname.split('/');
 	const formResponderID = pathSegments[pathSegments.length - 2];
@@ -167,6 +174,9 @@ async function getRealQuestionSubmitIDFromUndocumentedAPI(responseURI: string): 
 	}
 
 	let data = formResponseText.split('FB_PUBLIC_LOAD_DATA_ = ')[1];
+	if (!data) {
+		return [null, new Error(UnreachableErrorMessage('FB_PUBLIC_LOAD_DATA_ split failed. Google changed something.'))];
+	}
 	data = data.substring(0, data.indexOf(';'));
 	const parsedData = JSON.parse(data) as unknown[];
 	const flattenedData = parsedData.flat(100);

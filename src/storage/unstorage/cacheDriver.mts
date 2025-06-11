@@ -12,7 +12,8 @@ export interface CacheDriverOptions {
 }
 
 export default defineDriver<CacheDriverOptions, CacheDriverOptions['driver']>((opts: CacheDriverOptions) => {
-	const baseDriver = opts.driver;
+	// TODO remove the Required conversion
+	const baseDriver = opts.driver as Required<Driver>;
 	const cache = createStorage({ driver: opts.cacheDriver ?? lruCacheDriver(undefined) });
 
 	return {

@@ -39,7 +39,7 @@ export function NoPrefix(): ResourcePrefixParser {
 	return {
 		userErrorPrefixTemplate: 'no prefix required ',
 		userErrorMessage: 'no prefix required',
-		parser: (resourceName: string, metadata: TypedSymbolMap) => {
+		parser: (resourceName: string, _metadata: TypedSymbolMap) => {
 			return resourceName;
 		},
 	};
@@ -60,8 +60,8 @@ export function StringResourcePrefixParserFactory(prefix: string): ResourcePrefi
 
 export type LanguagePrefix = string & { __tagLanguagePrefix: symbol };
 const LANGUAGE_METADATA_KEY = newTypedSymbol<LanguagePrefix>('LANGUAGE_METADATA_KEY');
-export function getLanguagePrefix(resourceMetadata: TypedSymbolMap): LanguagePrefix | undefined {
-	return resourceMetadata.getEntry(LANGUAGE_METADATA_KEY)
+export function getLanguagePrefix(resourceMetadata: TypedSymbolMap): LanguagePrefix | null {
+	return resourceMetadata.getEntry(LANGUAGE_METADATA_KEY);
 }
 
 export const LanguageResourcePrefixParser: ResourcePrefixParser = {
@@ -80,7 +80,6 @@ export const LanguageResourcePrefixParser: ResourcePrefixParser = {
 		const languagePrefix = prefix.toLowerCase() as LanguagePrefix;
 		const setError = metadata.setEntry(LANGUAGE_METADATA_KEY, languagePrefix);
 		if (setError) {
-			// biome-ignore lint/suspicious/noConsole: <explanation>
 			console.error(setError);
 			return false;
 		}

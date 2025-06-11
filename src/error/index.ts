@@ -10,7 +10,7 @@ export function safe<T>(throwableFn: () => T): ErrorReturn<T> {
 	try {
 		return [throwableFn(), null];
 	} catch (error) {
-		return [null, error];
+		return [null, error as Error];
 	}
 }
 
@@ -18,7 +18,7 @@ export async function safePromise<T, ErrorT = Error>(throwableFn: () => Promise<
 	try {
 		return [await throwableFn(), null];
 	} catch (error) {
-		return [null, error];
+		return [null, error as ErrorT];
 	}
 }
 

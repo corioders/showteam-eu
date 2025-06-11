@@ -1,7 +1,5 @@
 {
 	"compilerOptions": {
-		"noEmit": true,
-
 		"checkJs": true,
 		"allowJs": true,
 
@@ -36,7 +34,6 @@
 		"jsx": "preserve",
 		"sourceMap": true,
 		"incremental": true,
-		"allowImportingTsExtensions": true,
 		"useUnknownInCatchVariables": true,
 		"allowUnreachableCode": false,
 		"allowUnusedLabels": false,
