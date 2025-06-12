@@ -370,7 +370,7 @@ function getMaybeInternationalizedResource(resourceWithMetadata: ResourceWithMet
 	return resourceWithMetadata;
 }
 
-export type GoogleDriveDocWithMetadataUS = never;
+export type GoogleDriveDocWithMetadataUS = {};
 export const typeGoogleDriveSingleDocWithMetadata = defineTypeFunction<GoogleDriveDocWithMetadataUS, DocMd, MarkdownDoc>((_us) => {
 	return (docMd): FetchParserReturn<MarkdownDoc> => {
 		const [markdownDoc, parseError] = parseMarkdownDocWithMetadata(docMd.docMd);
