@@ -365,6 +365,7 @@ function getMaybeInternationalizedResource(resourceWithMetadata: ResourceWithMet
 	return resourceWithMetadata;
 }
 
+// biome-ignore lint/complexity/noBannedTypes: This type is required
 export type GoogleDriveDocWithMetadataUS = {};
 export const typeGoogleDriveSingleDocWithMetadata = defineTypeFunction<GoogleDriveDocWithMetadataUS, DocMd, MarkdownDoc>((_us) => {
 	return (docMd): FetchParserReturn<MarkdownDoc> => {
