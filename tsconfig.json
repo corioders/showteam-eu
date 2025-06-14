@@ -2,6 +2,7 @@
 	"compilerOptions": {
 		"strict": true,
 		"outDir": "build",
+		// "sourceRoot": "../../packages/corioders-lib/cstd-next/src",
 		"tsBuildInfoFile": "./build/tsconfig.tsbuildinfo",
 		"sourceMap": true,
 		"incremental": true,
