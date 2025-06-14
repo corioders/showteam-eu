@@ -4,7 +4,7 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
 import { TypedSymbolMap } from '@/datastructure/index.js';
-import { type DocMd, isDoc } from '@/driveCMS/docs.js';
+import { type DocMd, type DocResource, isDoc } from '@/driveCMS/docs.js';
 import { type FolderID, isFolder } from '@/driveCMS/drive.js';
 import { getPublicImageDownloadURL, isImage } from '@/driveCMS/image.js';
 import { downloadDocCorrectRevisionMarkdown, listFolder } from '@/driveCMS/index.js';
@@ -154,32 +154,29 @@ export interface GoogleDriveFolderUS {
 	childPrefix: ResourcePrefixParser;
 }
 export type ResourceWithMetadataArrayParent = ResourceWithMetadata[] & { parent: ResourceWithMetadata };
-export const typeGoogleDriveFolder = defineTypeAggregateFunction<GoogleDriveFolderUS, ResourceWithMetadata, ResourceWithMetadataArrayParent>(
-	({ resource }) => isFolder(resource),
-	(us) => {
-		return async (resourcesWithMetadata) => {
-			const childrenWithMetadataList: ResourceWithMetadataArrayParent[] = [];
+export const typeGoogleDriveFolder = defineTypeAggregateFunction<GoogleDriveFolderUS, ResourceWithMetadata, ResourceWithMetadataArrayParent>((us) => {
+	return async (resourcesWithMetadata) => {
+		const childrenWithMetadataList: ResourceWithMetadataArrayParent[] = [];
 
-			for (const resourceWithMetadata of resourcesWithMetadata) {
-				const resource = resourceWithMetadata.resource;
-				if (!isFolder(resource)) {
-					return [false, null];
-				}
-
-				const [children, listError] = await listFolder(resource.id);
-				if (listError) {
-					return [null, listError];
-				}
-
-				const childrenWithMetadata = parseResourceMetadata(children, us.childPrefix) as ResourceWithMetadataArrayParent;
-				childrenWithMetadata.parent = resourceWithMetadata;
-				childrenWithMetadataList.push(childrenWithMetadata);
+		for (const resourceWithMetadata of resourcesWithMetadata) {
+			const resource = resourceWithMetadata.resource;
+			if (!isFolder(resource)) {
+				return [false, null];
 			}
 
-			return [childrenWithMetadataList, null];
-		};
-	},
-);
+			const [children, listError] = await listFolder(resource.id);
+			if (listError) {
+				return [null, listError];
+			}
+
+			const childrenWithMetadata = parseResourceMetadata(children, us.childPrefix) as ResourceWithMetadataArrayParent;
+			childrenWithMetadata.parent = resourceWithMetadata;
+			childrenWithMetadataList.push(childrenWithMetadata);
+		}
+
+		return [childrenWithMetadataList, null];
+	};
+});
 
 export interface GoogleDriveImageUS extends GoogleDriveResourcePrefixUS {}
 export interface GoogleDriveImage {
@@ -210,37 +207,34 @@ export const typeGoogleDriveSingleImage = defineTypeFunction<GoogleDriveImageUS,
 	};
 });
 
-export const typeGoogleDriveImages = defineTypeAggregateFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>(
-	(resourceWithMetadata) => isImage(resourceWithMetadata.resource),
-	(us) => {
-		return async (resourcesWithMetadata) => {
-			const images: GoogleDriveImage[] = [];
+export const typeGoogleDriveImages = defineTypeAggregateFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>((us) => {
+	return async (resourcesWithMetadata) => {
+		const images: GoogleDriveImage[] = [];
 
-			for (const resourceWithMetadata of resourcesWithMetadata) {
-				const resource = resourceWithMetadata.resource;
-				if (!isImage(resource)) {
-					continue;
-				}
-
-				const [newResourceWithMetadata, prefixError] = await typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
-				if (newResourceWithMetadata === false) {
-					continue;
-				}
-				if (prefixError) {
-					continue;
-				}
-
-				const image: GoogleDriveImage = {
-					downloadURL: getPublicImageDownloadURL(resource.id),
-					resourceWithMetadata: newResourceWithMetadata,
-				};
-				images.push(image);
+		for (const resourceWithMetadata of resourcesWithMetadata) {
+			const resource = resourceWithMetadata.resource;
+			if (!isImage(resource)) {
+				continue;
 			}
 
-			return [images, null];
-		};
-	},
-);
+			const [newResourceWithMetadata, prefixError] = await typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
+			if (newResourceWithMetadata === false) {
+				continue;
+			}
+			if (prefixError) {
+				continue;
+			}
+
+			const image: GoogleDriveImage = {
+				downloadURL: getPublicImageDownloadURL(resource.id),
+				resourceWithMetadata: newResourceWithMetadata,
+			};
+			images.push(image);
+		}
+
+		return [images, null];
+	};
+});
 
 export interface GoogleDriveSingleDocUS extends GoogleDriveResourcePrefixUS {
 	documentName?: string;
@@ -275,88 +269,89 @@ export const typeGoogleDriveSingleDoc = defineTypeFunction<GoogleDriveSingleDocU
 	};
 });
 
-export interface GoogleDriveInternationalizedDocMd {
-	default: DocMd;
-	intl: { [key: CountryISO2Code]: DocMd };
-}
-
-export function getDocMdFromInternationalizedDocMd(countryISO2Code: CountryISO2Code, internationalizeDocMd: GoogleDriveInternationalizedDocMd): DocMd {
-	return internationalizeDocMd.intl[countryISO2Code.toLowerCase() as CountryISO2Code] ?? internationalizeDocMd.default;
-}
-
 export interface GoogleDriveInternationalizedDocUS extends GoogleDriveResourcePrefixUS {
 	documentName?: string;
 }
+export interface GoogleDriveInternationalizedDocMd {
+	doc: DocMd;
+	resource: DocResource;
+}
+
+export interface GoogleDriveInternationalizedDocRA {
+	lang: CountryISO2Code;
+}
+
 export const typeGoogleDriveInternationalizedDoc = defineTypeAggregateToSingleFunction<
 	GoogleDriveInternationalizedDocUS,
 	ResourceWithMetadata,
-	GoogleDriveInternationalizedDocMd
->(
-	(resourceWithMetadata) => isDoc(resourceWithMetadata.resource),
-	(us) => {
-		// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
-		return async (resourcesWithMetadata) => {
-			let defaultInternationalizeDocMd: DocMd | null = null;
-			const intl: { [key: CountryISO2Code]: DocMd } = {};
-			// const internationalizeDocMd: GoogleDriveInternationalizedDocMd = {
-			// 	default: null,
-			// 	intl: {},
-			// };
+	GoogleDriveInternationalizedDocMd,
+	GoogleDriveInternationalizedDocRA
+>((us) => {
+	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
+	return async (resourcesWithMetadata, runtimeArguments) => {
+		let defaultInternationalizeDocMd: GoogleDriveInternationalizedDocMd | null = null;
+		let intlDoc: GoogleDriveInternationalizedDocMd | null = null;
 
-			for (const resourceWithMetadataNotLocal of resourcesWithMetadata) {
-				const resourceWithMetadata = copyResourceWithMetadata(resourceWithMetadataNotLocal);
-				const resource = resourceWithMetadata.resource;
-				if (!isDoc(resource)) {
+		for (const resourceWithMetadataNotLocal of resourcesWithMetadata) {
+			const resourceWithMetadata = copyResourceWithMetadata(resourceWithMetadataNotLocal);
+			const resource = resourceWithMetadata.resource;
+			if (!isDoc(resource)) {
+				continue;
+			}
+
+			const [userPrefixedResourceWithMetadata, userPrefixError] = await typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
+			if (userPrefixedResourceWithMetadata === false) {
+				continue;
+			}
+			if (userPrefixError) {
+				continue;
+			}
+
+			const docMaybeIntlResource = getMaybeInternationalizedResource(userPrefixedResourceWithMetadata);
+			if (us.documentName) {
+				if (docMaybeIntlResource.resource.name !== us.documentName) {
 					continue;
 				}
+			}
 
-				const [userPrefixedResourceWithMetadata, userPrefixError] = await typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
-				if (userPrefixedResourceWithMetadata === false) {
-					continue;
-				}
-				if (userPrefixError) {
-					continue;
-				}
-
-				const docMaybeIntlResource = getMaybeInternationalizedResource(userPrefixedResourceWithMetadata);
-				if (us.documentName) {
-					if (docMaybeIntlResource.resource.name !== us.documentName) {
-						continue;
-					}
-				}
-
-				const [docMarkdown, downloadError] = await downloadDocCorrectRevisionMarkdown(resource.id);
-				if (downloadError) {
-					return [null, downloadError];
-				}
-
-				if (!defaultInternationalizeDocMd) {
-					defaultInternationalizeDocMd = docMarkdown;
-				}
-
-				const langPrefix = getLanguagePrefix(docMaybeIntlResource.metadata);
-				if (langPrefix) {
-					if (!isCountryISO2Code(langPrefix)) {
-						return [null, new Error(`Language prefix: ${langPrefix} is not a CountryISO2Code`)];
-					}
-
-					intl[langPrefix] = docMarkdown;
-				}
+			const [docMarkdown, downloadError] = await downloadDocCorrectRevisionMarkdown(resource.id);
+			if (downloadError) {
+				return [null, downloadError];
 			}
 
 			if (!defaultInternationalizeDocMd) {
-				return [false, null];
+				defaultInternationalizeDocMd = {
+					doc: docMarkdown,
+					resource: resource,
+				};
 			}
 
-			const internationalizeDocMd: GoogleDriveInternationalizedDocMd = {
-				default: defaultInternationalizeDocMd,
-				intl: intl,
-			};
+			const langPrefix = getLanguagePrefix(docMaybeIntlResource.metadata);
+			if (langPrefix) {
+				if (!isCountryISO2Code(langPrefix)) {
+					return [null, new Error(`Language prefix: ${langPrefix} is not a CountryISO2Code`)];
+				}
 
-			return [internationalizeDocMd, null];
-		};
-	},
-);
+				if (langPrefix === runtimeArguments.lang) {
+					intlDoc = {
+						doc: docMarkdown,
+						resource: resource,
+					};
+				}
+			}
+		}
+
+		if (!defaultInternationalizeDocMd) {
+			return [false, null];
+		}
+
+		if (!intlDoc) {
+			return [defaultInternationalizeDocMd, null];
+		}
+
+		return [intlDoc, null];
+	};
+});
 
 function getMaybeInternationalizedResource(resourceWithMetadata: ResourceWithMetadata): ResourceWithMetadata {
 	// TODO: Remove this as, make types smarter

@@ -4,71 +4,108 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
 import type { ErrorReturn, ErrorReturnPromise } from '@/error/index.js';
-import type { Flatten } from '@/type/index.js';
+import type { Flatten, UnionToIntersection } from '@/type/index.js';
 
 export type FetchParserPromiseReturn<FPR> = ErrorReturnPromise<FPR | false>;
 export type FetchParserReturn<FPR> = ErrorReturn<FPR | false>;
 
-type FetchParserFunction<pFPR, FPR> = (parentFetchParserReturn: pFPR) => FetchParserReturn<FPR> | FetchParserPromiseReturn<FPR>;
-export type TypeFunction<US, pFPR, FPR, _ProducesAggregateObject> = (userSpecification: US) => FetchParserFunction<pFPR, FPR>;
+type FetchParserFunction<pFPR, FPR, RA> = RA extends undefined
+	? (parentFetchParserReturn: pFPR) => FetchParserReturn<FPR> | FetchParserPromiseReturn<FPR>
+	: (parentFetchParserReturn: pFPR, runtimeArguments: RA) => FetchParserReturn<FPR> | FetchParserPromiseReturn<FPR>;
+export type TypeFunction<US, pFPR, FPR, RA, _ProducesAggregateObject> = (userSpecification: US) => FetchParserFunction<pFPR, FPR, RA>;
+export type GetTypeFunctionReturnThatIsPassedToTheNextOne<TF> = TF extends TypeFunction<any, any, infer FPR, any, infer ProducesAggregateObject>
+	? ProducesAggregateObject extends true
+		? Flatten<FPR>
+		: FPR
+	: never;
 
-export function defineTypeFunction<US, pFPR, FPR, TF = TypeFunction<US, pFPR, FPR, false>>(tf: TF): TF {
+export function defineTypeFunction<US, pFPR, FPR, RA = undefined, TF = TypeFunction<US, pFPR, FPR, RA, false>>(tf: TF): TF {
 	return tf;
 }
 
-export function defineTypeAggregateFunction<US, pFPR, FPR, TF = TypeFunction<US, pFPR[], FPR[], true>>(filterFunction: (x: Flatten<pFPR>) => boolean, tf: TF): TF {
-	const modifiedTF = tf as TF & { filter: (x: Flatten<pFPR>) => boolean };
-	modifiedTF.filter = filterFunction;
-	return modifiedTF;
+interface AggregateFunctionOptions {
+	isAggregate: boolean;
+	produceAggregateObjet: boolean;
 }
 
-export function defineTypeAggregateToSingleFunction<US, pFPR, FPR, TF = TypeFunction<US, pFPR[], FPR, false>>(filterFunction: (x: Flatten<pFPR>) => boolean, tf: TF): TF {
-	const modifiedTF = tf as TF & { filter: (x: Flatten<pFPR>) => boolean };
-	modifiedTF.filter = filterFunction;
-	return modifiedTF;
+export function defineTypeAggregateFunction<US, pFPR, FPR, RA = undefined, TF = TypeFunction<US, pFPR[], FPR[], RA, true>>(
+	tf: TF,
+): TypeFunction<US, pFPR, FPR, RA, true> {
+	const modifiedTF = tf as TF & AggregateFunctionOptions;
+	modifiedTF.isAggregate = true;
+	modifiedTF.produceAggregateObjet = true;
+	// Okay this is sort of hacky. But DSD does not need to know the *real* return types of the aggregate function.
+	// It's easier to pretend it's a normal function, because indeed the transformation is handled during runtime. Invisible to user.
+	return modifiedTF as TypeFunction<US, pFPR, FPR, RA, true>;
 }
 
-type DataSchemaDefinition<T extends Record<string, Record<string, any>>> = {
-	[K in keyof T]: DataSchemaDefinitionNode<T[K]>;
+export function defineTypeAggregateToSingleFunction<US, pFPR, FPR, RA = undefined, TF = TypeFunction<US, pFPR[], FPR, RA, false>>(
+	tf: TF,
+): TypeFunction<US, pFPR, FPR, RA, false> {
+	const modifiedTF = tf as TF & AggregateFunctionOptions;
+	modifiedTF.isAggregate = true;
+	modifiedTF.produceAggregateObjet = false;
+	// Okay this is sort of hacky. But DSD does not need to know the *real* return types of the aggregate function.
+	// It's easier to pretend it's a normal function, because indeed the transformation is handled during runtime. Invisible to user.
+	return modifiedTF as TypeFunction<US, pFPR, FPR, RA, false>;
+}
+
+type DataSchemaDefinition<T extends Record<string, Record<string, any>>, pFPR> = {
+	[K in keyof T]: DataSchemaDefinitionNode<T[K], pFPR>;
 };
+type DataSchemaDefinitionNode<T, pFPR> = T extends { type: TypeFunction<infer US, pFPR, infer FPR, any, any>; pipe?: infer PType }
+	? {
+			type: TypeFunction<US, pFPR, FPR, any, any>;
+			pipe?: PType extends Record<string, Record<string, any>> ? DataSchemaDefinition<PType, GetTypeFunctionReturnThatIsPassedToTheNextOne<FPR>> : never;
+		} & US
+	: { type: TypeFunction<any, pFPR, any, any, any>; pipe?: unknown };
 
-type DataSchemaDefinitionNode<T> = T extends { type: TypeFunction<infer US, any, any, any>; pipe?: infer PType }
-	? { type: TypeFunction<US, any, any, any>; pipe?: PType extends Record<string, Record<string, any>> ? DataSchemaDefinition<PType> : never } & US
-	: { type: TypeFunction<any, any, any, any>; pipe?: unknown };
+type ExtractRuntimeArgumentsFromFetchParse<T> = T extends TypeFunction<any, any, any, infer RA, any> ? RA : never;
+type ExtractRuntimeArgumentsFromDSDn<DSDn> = DSDn extends DataSchemaDefinitionNode<any, any>
+	? // biome-ignore lint/complexity/noBannedTypes: Using {} is required for this type to work properly
+		(ExtractRuntimeArgumentsFromFetchParse<DSDn['type']> extends undefined ? {} : ExtractRuntimeArgumentsFromFetchParse<DSDn['type']>) &
+			// biome-ignore lint/complexity/noBannedTypes: Using {} is required for this type to work properly
+			(DSDn['pipe'] extends DataSchemaDefinition<any, any> ? ExtractRuntimeArgumentsFromDSD<DSDn['pipe']> : {})
+	: never;
+type ExtractRuntimeArgumentsFromDSD<DSD> = DSD extends DataSchemaDefinition<any, any>
+	? UnionToIntersection<{ [K in keyof DSD]: ExtractRuntimeArgumentsFromDSDn<DSD[K]> }[keyof DSD]>
+	: never;
 
-export function defineDataSchema<const T extends DataSchemaDefinition<T>>(dsd: T): Readonly<T> {
-	return Object.freeze(dsd);
+export function defineDataSchema<const T extends DataSchemaDefinition<T, void>>(dsd: T): Readonly<T> {
+	return dsd;
 }
 
-export function defineDataSchemaNode<const T extends Record<string, any>>(dsd: T & DataSchemaDefinitionNode<T>): Readonly<T> {
-	return Object.freeze(dsd);
+export function defineDataSchemaNode<const T extends Record<string, any>>(dsd: T & DataSchemaDefinitionNode<T, any>): Readonly<T> {
+	return dsd;
 }
 
-export type DataSchema<T extends DataSchemaDefinition<T>> = {
+export type DataSchema<T extends DataSchemaDefinition<T, any>> = {
 	[K in keyof T]: DataSchemaNode<T[K]>;
 };
-
-export type DataSchemaNode<T> = T extends { type: TypeFunction<any, infer pFPR, infer FPR, infer ProducesAggregateObject>; pipe?: infer PType }
+export type DataSchemaNode<T> = T extends { type: TypeFunction<any, infer pFPR, infer FPR, infer _RA, infer ProducesAggregateObject>; pipe?: infer PType }
 	? ProducesAggregateObject extends false
 		? {
 				dataUsed: pFPR;
 				result: ErrorReturn<FPR>;
-				next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType> ? DataSchema<PType> : never) : never;
+				next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchema<PType> : never) : never;
 			}
 		: {
 				dataUsed: pFPR;
 				result: ErrorReturn<FPR>;
 				aggregate: {
-					result: ErrorReturn<Flatten<FPR>>;
-					next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType> ? DataSchema<PType> : never) : never;
+					result: ErrorReturn<FPR>;
+					next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchema<PType> : never) : never;
 				}[];
 			}
 	: never;
 
-export async function fetchAndParse<const T extends DataSchemaDefinition<T>>(dsd: T): ErrorReturnPromise<DataSchema<T>> {
+export async function fetchAndParse<const T extends DataSchemaDefinition<T, any>>(
+	dsd: T,
+	runtimeArguments: ExtractRuntimeArgumentsFromDSD<T>,
+): ErrorReturnPromise<DataSchema<T>> {
 	const currentPipe = dsd;
 	const currentResult = {};
-	const error = await fetchAndParseInternal(currentPipe, currentResult, [null, null], '');
+	const error = await fetchAndParseInternal(runtimeArguments as Record<string, unknown>, currentPipe, currentResult, [null, null], '');
 	if (error) {
 		return [null, error];
 	}
@@ -78,6 +115,7 @@ export async function fetchAndParse<const T extends DataSchemaDefinition<T>>(dsd
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
 async function fetchAndParseInternal(
+	runtimeArguments: Record<string, unknown>,
 	currentPipe: Record<string, Record<string, unknown>>,
 	currentResult: Record<string, Record<string, unknown>>,
 	parentFetchParserErrorReturn: ErrorReturn<unknown>,
@@ -87,7 +125,7 @@ async function fetchAndParseInternal(
 	const [parentFetchParserReturn, parentFetchParserError] = parentFetchParserErrorReturn;
 
 	for (const pipeName of pipeNames) {
-		const entry = currentPipe[pipeName] as { type: TypeFunction<any, any, any, any> & { filter?: (x: any) => boolean }; pipe?: any };
+		const entry = currentPipe[pipeName] as { type: TypeFunction<any, any, any, any, any> & Partial<AggregateFunctionOptions>; pipe?: any };
 		const entryDebugPath = `${currentDebugPath} > ${pipeName}`;
 
 		const typeFactoryFunction = entry.type;
@@ -104,7 +142,6 @@ async function fetchAndParseInternal(
 		currentResult[pipeName] = {};
 		const resultEntry = currentResult[pipeName];
 
-		let isFetchParserReturnAggregate = false;
 		let fetchParserReturn: any = null;
 		let fetchParserError: any = null;
 		if (parentFetchParserError) {
@@ -113,53 +150,46 @@ async function fetchAndParseInternal(
 		} else {
 			const fetchParser = typeFactoryFunction(userSpecification);
 
-			if (Array.isArray(parentFetchParserReturn)) {
+			if (typeFactoryFunction.isAggregate) {
 				// ==================================================
 				// Aggregation support
-				if (typeFactoryFunction.filter) {
-					isFetchParserReturnAggregate = true;
-					const aggregateArguments = parentFetchParserReturn.filter(typeFactoryFunction.filter);
-					//  This entry type is unable to process this parentFetchParserReturn
-					if (aggregateArguments.length === 0) {
-						fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
-					} else {
-						resultEntry['dataUsed'] = aggregateArguments;
-						[fetchParserReturn, fetchParserError] = await fetchParser(aggregateArguments);
-						if (fetchParserReturn === false) {
-							fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
-						}
-					}
-					// ==================================================
-				} else {
-					// ==================================================
-					// Our parent returned an array. We process exactly one item from it.
-					let isProcessed = false;
-					for (const parentFetchParserReturnItem of parentFetchParserReturn) {
-						const [localFetchParserReturn, localFetchParserError] = await fetchParser(parentFetchParserReturnItem);
-						if (localFetchParserReturn === false) {
-							continue;
-						}
+				const aggregateArguments = Array.isArray(parentFetchParserReturn) ? parentFetchParserReturn : [parentFetchParserReturn];
 
-						if (isProcessed === true) {
-							throw new Error(`Fetch parser tried processing more than one array entry from it's parent. Debug path: ${entryDebugPath}`);
-						}
-
-						isProcessed = true;
-						resultEntry['dataUsed'] = parentFetchParserReturnItem;
-						fetchParserReturn = localFetchParserReturn;
-						fetchParserError = localFetchParserError;
-					}
-
-					if (isProcessed === false) {
-						fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
-					}
-					// ==================================================
+				resultEntry['dataUsed'] = aggregateArguments;
+				[fetchParserReturn, fetchParserError] = await fetchParser(aggregateArguments, runtimeArguments);
+				if (fetchParserReturn === false) {
+					fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
 				}
+				// ==================================================
+			} else if (Array.isArray(parentFetchParserReturn)) {
+				// ==================================================
+				// Our parent returned an array. We process exactly one item from it.
+				let isProcessed = false;
+				for (const parentFetchParserReturnItem of parentFetchParserReturn) {
+					const [localFetchParserReturn, localFetchParserError] = await fetchParser(parentFetchParserReturnItem, runtimeArguments);
+					if (localFetchParserReturn === false) {
+						continue;
+					}
+
+					if (isProcessed === true) {
+						throw new Error(`Fetch parser tried processing more than one array entry from it's parent. Debug path: ${entryDebugPath}`);
+					}
+
+					isProcessed = true;
+					resultEntry['dataUsed'] = parentFetchParserReturnItem;
+					fetchParserReturn = localFetchParserReturn;
+					fetchParserError = localFetchParserError;
+				}
+
+				if (isProcessed === false) {
+					fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
+				}
+				// ==================================================
 			} else {
 				// ==================================================
 				// Our parent returned single element.
 				resultEntry['dataUsed'] = parentFetchParserReturn;
-				[fetchParserReturn, fetchParserError] = await fetchParser(parentFetchParserReturn);
+				[fetchParserReturn, fetchParserError] = await fetchParser(parentFetchParserReturn, runtimeArguments);
 				if (fetchParserReturn === false) {
 					fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
 				}
@@ -176,12 +206,16 @@ async function fetchAndParseInternal(
 			return new Error(`The pipe object cannot be empty ${entryDebugPath}`);
 		}
 
-		if (isFetchParserReturnAggregate && fetchParserReturn && Array.isArray(fetchParserReturn)) {
+		if (typeFactoryFunction.produceAggregateObjet && fetchParserReturn) {
+			if (!Array.isArray(fetchParserReturn)) {
+				return new Error(`Fetch parser did not return an array but it is an aggregate function. ${entryDebugPath}`);
+			}
+
 			const aggregate: any = [];
 			for (let i = 0; i < fetchParserReturn.length; i++) {
 				const fetchParserReturnItem = fetchParserReturn[i];
 				const result = {};
-				await fetchAndParseInternal(nextPipe, result, [fetchParserReturnItem, null], `${entryDebugPath}[${i}]`);
+				await fetchAndParseInternal(runtimeArguments, nextPipe, result, [fetchParserReturnItem, null], `${entryDebugPath}[${i}]`);
 				aggregate.push({
 					result: [fetchParserReturnItem, null],
 					next: result,
@@ -192,8 +226,100 @@ async function fetchAndParseInternal(
 		}
 
 		resultEntry['next'] = {};
-		await fetchAndParseInternal(nextPipe, resultEntry['next'] as Record<string, Record<string, unknown>>, [fetchParserReturn, fetchParserError], entryDebugPath);
+		await fetchAndParseInternal(
+			runtimeArguments,
+			nextPipe,
+			resultEntry['next'] as Record<string, Record<string, unknown>>,
+			[fetchParserReturn, fetchParserError],
+			entryDebugPath,
+		);
 	}
 
 	return null;
+}
+
+type ExtractAllDataSchemeNodes<DSD> = DSD extends DataSchemaDefinition<any, any>
+	? {
+			[K in keyof DSD]: DSD[K] extends { pipe: infer P } ? DSD[K] | (P extends DataSchemaDefinition<any, any> ? ExtractAllDataSchemeNodes<P> : never) : DSD[K];
+		}[keyof DSD]
+	: never;
+
+export type RemovePipeAtCutPoints<DSD, CutPoints> = DSD extends DataSchemaDefinition<any, any>
+	? {
+			[K in keyof DSD]: DSD[K] extends CutPoints
+				? Omit<DSD[K], 'pipe'>
+				: DSD[K] extends { pipe: infer P }
+					? DSD[K] extends { pipe: DataSchemaDefinition<any, any> }
+						? Omit<DSD[K], 'pipe'> & { pipe: RemovePipeAtCutPoints<P, CutPoints> }
+						: DSD[K]
+					: DSD[K];
+		}
+	: never;
+
+export function cutoffDataSchemaDefinition<
+	const T extends DataSchemaDefinition<T, any>,
+	const CutPoint extends ExtractAllDataSchemeNodes<T>,
+	const CutPoints extends readonly CutPoint[],
+>(originalDSD: T, cutPointNodes: CutPoints): ErrorReturn<RemovePipeAtCutPoints<T, CutPoints[number]>> {
+	const clonedDSD = deepClone(originalDSD);
+	for (const cutPoint of cutPointNodes) {
+		const err = modifyDSD(originalDSD, clonedDSD, cutPoint as Record<string, unknown>);
+		if (err) {
+			return [null, err];
+		}
+	}
+
+	const shallowDSD = clonedDSD as unknown as RemovePipeAtCutPoints<T, CutPoints[number]>;
+	return [shallowDSD, null];
+}
+
+function modifyDSD(
+	originalDSD: Record<string, Record<string, unknown>>,
+	clonedDSD: Record<string, Record<string, unknown>> | undefined,
+	cutPoint: Record<string, unknown>,
+): Error | null {
+	if (!clonedDSD) {
+		return new Error(`Error you provided cut points where one is their parent. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`);
+	}
+
+	const pipeKeys = Object.keys(originalDSD);
+	for (const pipeKey of pipeKeys) {
+		const original = originalDSD[pipeKey] as Record<string, unknown>;
+		const cloned = clonedDSD[pipeKey] as Record<string, unknown>;
+
+		if (original === cutPoint) {
+			// biome-ignore lint/performance/noDelete: <explanation>
+			delete cloned['pipe'];
+			continue;
+		}
+
+		if (!original['pipe']) {
+			continue;
+		}
+
+		const err = modifyDSD(original['pipe'] as Record<string, Record<string, unknown>>, cloned['pipe'] as Record<string, Record<string, unknown>>, cutPoint);
+		if (err) {
+			return err;
+		}
+	}
+
+	return null;
+}
+
+function deepClone<T>(value: T): T {
+	// Base case: if value is not an object, return it as is
+	if (!value || typeof value !== 'object') {
+		return value;
+	}
+
+	// If it's an array, map over it and deep clone each item
+	if (Array.isArray(value)) {
+		return value.map((item) => deepClone(item)) as T;
+	}
+
+	// If it's an object, iterate over its keys and deep clone each value
+	return Object.keys(value).reduce((acc: Record<string, unknown>, key) => {
+		acc[key] = deepClone(value[key as keyof T]);
+		return acc;
+	}, {}) as T;
 }

@@ -2,7 +2,7 @@
 	"extends": ["./config/tsconfig.json"],
 	"compilerOptions": {
 		"outDir": "build",
-		"sourceRoot": "../../packages/corioders-lib/cstd-ts/src",
+		// "sourceRoot": "../../packages/corioders-lib/cstd-ts/src",
 		"tsBuildInfoFile": "./build/tsconfig.tsbuildinfo",
 		"sourceMap": true,
 		"incremental": true,
