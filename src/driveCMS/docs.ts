@@ -8,6 +8,7 @@ import { parse } from '@textlint/markdown-to-ast';
 import { type GaxiosPromise, type GoogleAuth, createAPIRequest } from 'googleapis-common';
 
 import { CSE, type ErrorReturn, type ErrorReturnPromise, UnreachableErrorMessage, safePromise } from '@/error';
+import type { StringMarkdown } from '@/format/markdown/index.js';
 import type { ImageURL } from '@/media/image/index.js';
 import { StatusCodes } from 'http-status-codes';
 import { memoizeDriveCMS } from './cache.js';
@@ -35,7 +36,7 @@ export function isDoc(resource: Resource): resource is DocResource {
 }
 
 export interface DocMd {
-	docMd: string;
+	docMd: StringMarkdown;
 	docID: DocID;
 }
 
@@ -56,7 +57,7 @@ export const downloadDocMarkdownRevision = memoizeDriveCMS(async function downlo
 	}
 
 	const doc: DocMd = {
-		docMd: docAsMarkdown,
+		docMd: docAsMarkdown as StringMarkdown,
 
 		docID: docID,
 	};
@@ -101,8 +102,12 @@ export const downloadDocRevision = memoizeDriveCMS(async function downloadDocRev
 
 const MARKDOWN_IMAGE_REGEX = /!\[\]\[image\d+\]/;
 const IMAGE_BASE64_MARKDOWN_DEFINITION_AT_THE_END = '[image1]: <data:image/';
-export async function baseDownloadDocRevisionAndAdjustInDocMarkdownImages(googleAuth: GoogleAuth, docID: DocID, revisionID: RevisionID): ErrorReturnPromise<string> {
-	const [docAsMarkdown, errorDownloadFile] = await downloadFile(googleAuth, docID, revisionID, MIMEType.markdown);
+export async function baseDownloadDocRevisionAndAdjustInDocMarkdownImages(
+	googleAuth: GoogleAuth,
+	docID: DocID,
+	revisionID: RevisionID,
+): ErrorReturnPromise<StringMarkdown> {
+	const [docAsMarkdown, errorDownloadFile] = await downloadFile<StringMarkdown>(googleAuth, docID, revisionID, MIMEType.markdown);
 	if (errorDownloadFile !== null) {
 		return [null, errorDownloadFile];
 	}
@@ -142,7 +147,7 @@ export async function baseDownloadDocRevisionAndAdjustInDocMarkdownImages(google
 	const imageURLs = sortedPhotoIDAndImageURL.map((photoIDAndImageURL) => photoIDAndImageURL.url);
 	for (const imageURL of imageURLs) {
 		// TODO: The alt text can be 99% extracted from the metadata.
-		docAsMarkdownAdjusted = docAsMarkdownAdjusted.replace(MARKDOWN_IMAGE_REGEX, `![TODO_ALT_TEXT](${imageURL})`);
+		docAsMarkdownAdjusted = docAsMarkdownAdjusted.replace(MARKDOWN_IMAGE_REGEX, `![TODO_ALT_TEXT](${imageURL})`) as StringMarkdown;
 	}
 
 	// ==================================================
@@ -152,7 +157,7 @@ export async function baseDownloadDocRevisionAndAdjustInDocMarkdownImages(google
 		return [null, new Error(UnreachableErrorMessage('Unable to find image base64 definitions in the markdown'))];
 	}
 
-	docAsMarkdownAdjusted = docAsMarkdownAdjusted.slice(0, imageBase64Definitions - 1);
+	docAsMarkdownAdjusted = docAsMarkdownAdjusted.slice(0, imageBase64Definitions - 1) as StringMarkdown;
 	// ==================================================
 
 	return [docAsMarkdownAdjusted, null];

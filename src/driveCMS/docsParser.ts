@@ -7,20 +7,32 @@ import { type ErrorReturn, UnreachableErrorMessage } from '@/error/index.js';
 import { type StringMarkdown, markdownStringToPlainText } from '@/format/markdown/index.js';
 import type { TxtDocumentNode } from '@textlint/ast-node-types';
 
+/**
+ * @deprecated Please use the parse functionality in format/markdown
+ */
 export interface ParseDocAstToHeaderKeyValueOptions {
 	// The depth of the headers used for keys. Header 1 == depth 1, etc...
 	// Default 1.
 	keyHeaderDepth?: number;
 }
 
+/**
+ * @deprecated Please use the parse functionality in format/markdown
+ */
 export interface ParsedHeaderToKeyValue {
 	readonly mapping: Map<string, StringMarkdown>;
 
 	readonly keyToMarkdownKeyMapping: Map<string, StringMarkdown>;
 }
 
+/**
+ * @deprecated Please use the parse functionality in format/markdown
+ */
 export const ERR_MAPPING_EMPTY = new Error('Mapping is empty');
 
+/**
+ * @deprecated Please use the parse functionality in format/markdown
+ */
 export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: ParseDocAstToHeaderKeyValueOptions): ErrorReturn<ParsedHeaderToKeyValue> {
 	const mapping = new Map<string, StringMarkdown>();
 	const keyToMarkdownKeyMapping = new Map<string, StringMarkdown>();
@@ -97,6 +109,9 @@ export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: P
 	return [parsedHeaderToKeyValue, null];
 }
 
+/**
+ * @deprecated Please use the parse functionality in format/markdown
+ */
 export function markdownMappingToPlainText(mapping: Map<string, StringMarkdown>): ErrorReturn<Map<string, string>> {
 	const newMapping = new Map();
 

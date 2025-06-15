@@ -96,12 +96,12 @@ export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID
 	return [fileOrFolderList, null];
 }
 
-export const downloadFile = memoizeDriveCMS(async function downloadFile(
+export const downloadFile = memoizeDriveCMS(async function downloadFile<T = unknown>(
 	googleAuth: GoogleAuth,
 	fileID: FileID,
 	revisionID?: RevisionID,
 	mimeType?: MIMETypeTE,
-): ErrorReturnPromise<unknown> {
+): ErrorReturnPromise<T> {
 	console.log(`Downloading ${fileID}${mimeType && ` MIME: ${mimeType}`}${revisionID && ` REVISION: ${revisionID}`}`);
 
 	const [downloadURL, errorGetFileURL] = await getFileDownloadURL(googleAuth, fileID, revisionID, mimeType);
@@ -125,7 +125,8 @@ export const downloadFile = memoizeDriveCMS(async function downloadFile(
 		return [null, errorDownloadFile];
 	}
 
-	return [downloadResponse.data, null];
+	// TODO: We don't know downloadResponse.data is T
+	return [downloadResponse.data as T, null];
 });
 
 export const getFileDownloadURL = memoizeDriveCMS(async function getFileDownloadURL(
