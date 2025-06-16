@@ -53,12 +53,21 @@ export function defineTypeAggregateToSingleFunction<US, pFPR, FPR, RA = undefine
 type DataSchemaDefinition<T extends Record<string, Record<string, any>>, pFPR> = {
 	[K in keyof T]: DataSchemaDefinitionNode<T[K], pFPR>;
 };
-type DataSchemaDefinitionNode<T, pFPR> = T extends { type: TypeFunction<infer US, pFPR, infer FPR, any, any>; pipe?: infer PType }
+type DataSchemaDefinitionNode<T, pFPR> = T extends {
+	type: TypeFunction<infer US, pFPR, infer FPR, any, any>;
+	optional?: boolean;
+	pipe?: infer PType;
+}
 	? {
 			type: TypeFunction<US, pFPR, FPR, any, any>;
+			optional?: boolean;
 			pipe?: PType extends Record<string, Record<string, any>> ? DataSchemaDefinition<PType, GetTypeFunctionReturnThatIsPassedToTheNextOne<FPR>> : never;
 		} & US
-	: { type: TypeFunction<any, pFPR, any, any, any>; pipe?: unknown };
+	: {
+			type: TypeFunction<any, pFPR, any, any, any>;
+			optional?: boolean;
+			pipe?: unknown;
+		};
 
 type ExtractRuntimeArgumentsFromFetchParse<T> = T extends TypeFunction<any, any, any, infer RA, any> ? RA : never;
 type ExtractRuntimeArgumentsFromDSDn<DSDn> = DSDn extends DataSchemaDefinitionNode<any, any>
@@ -80,8 +89,11 @@ export function defineDataSchemaNode<const T extends Record<string, any>>(dsd: T
 }
 
 export type DataSchema<T extends DataSchemaDefinition<T, any>> = {
-	[K in keyof T]: DataSchemaNode<T[K]>;
+	[K in keyof T as T[K] extends { optional: true } ? never : K]: DataSchemaNode<T[K]>;
+} & {
+	[K in keyof T as T[K] extends { optional: true } ? K : never]?: DataSchemaNode<T[K]>;
 };
+
 export type DataSchemaNode<T> = T extends { type: TypeFunction<any, infer pFPR, infer FPR, infer _RA, infer ProducesAggregateObject>; pipe?: infer PType }
 	? ProducesAggregateObject extends false
 		? {
@@ -125,7 +137,7 @@ async function fetchAndParseInternal(
 	const [parentFetchParserReturn, parentFetchParserError] = parentFetchParserErrorReturn;
 
 	for (const pipeName of pipeNames) {
-		const entry = currentPipe[pipeName] as { type: TypeFunction<any, any, any, any, any> & Partial<AggregateFunctionOptions>; pipe?: any };
+		const entry = currentPipe[pipeName] as { type: TypeFunction<any, any, any, any, any> & Partial<AggregateFunctionOptions>; optional?: boolean; pipe?: any };
 		const entryDebugPath = `${currentDebugPath} > ${pipeName}`;
 
 		const typeFactoryFunction = entry.type;
@@ -139,8 +151,8 @@ async function fetchAndParseInternal(
 			return new Error(`Fetch parser tried processing two array entries from it's parent. Debug path: ${entryDebugPath}`);
 		}
 
-		currentResult[pipeName] = {};
-		const resultEntry = currentResult[pipeName];
+		const resultEntry: Record<string, unknown> = {};
+		let resultEntryProcessed = true;
 
 		let fetchParserReturn: any = null;
 		let fetchParserError: any = null;
@@ -158,7 +170,7 @@ async function fetchAndParseInternal(
 				resultEntry['dataUsed'] = aggregateArguments;
 				[fetchParserReturn, fetchParserError] = await fetchParser(aggregateArguments, runtimeArguments);
 				if (fetchParserReturn === false) {
-					fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
+					resultEntryProcessed = false;
 				}
 				// ==================================================
 			} else if (Array.isArray(parentFetchParserReturn)) {
@@ -182,7 +194,7 @@ async function fetchAndParseInternal(
 				}
 
 				if (isProcessed === false) {
-					fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
+					resultEntryProcessed = false;
 				}
 				// ==================================================
 			} else {
@@ -191,12 +203,20 @@ async function fetchAndParseInternal(
 				resultEntry['dataUsed'] = parentFetchParserReturn;
 				[fetchParserReturn, fetchParserError] = await fetchParser(parentFetchParserReturn, runtimeArguments);
 				if (fetchParserReturn === false) {
-					fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
+					resultEntryProcessed = false;
 				}
 				// ==================================================
 			}
 		}
 
+		if (!resultEntryProcessed) {
+			if (entry.optional) {
+				continue;
+			}
+			fetchParserError = new Error(`Entry not processed: ${entryDebugPath}`);
+		}
+
+		currentResult[pipeName] = resultEntry;
 		const nextPipe = entry.pipe;
 		resultEntry['result'] = [fetchParserReturn, fetchParserError];
 		if (!nextPipe) {
@@ -223,18 +243,17 @@ async function fetchAndParseInternal(
 						next: result,
 					});
 				}
-				continue;
 			}
+		} else {
+			resultEntry['next'] = {};
+			await fetchAndParseInternal(
+				runtimeArguments,
+				nextPipe,
+				resultEntry['next'] as Record<string, Record<string, unknown>>,
+				[fetchParserReturn, fetchParserError],
+				entryDebugPath,
+			);
 		}
-
-		resultEntry['next'] = {};
-		await fetchAndParseInternal(
-			runtimeArguments,
-			nextPipe,
-			resultEntry['next'] as Record<string, Record<string, unknown>>,
-			[fetchParserReturn, fetchParserError],
-			entryDebugPath,
-		);
 	}
 
 	return null;
@@ -309,7 +328,9 @@ function modifyDSD(
 }
 
 export type DataSchemaErrorBounded<T extends DataSchemaDefinition<T, any>> = {
-	[K in keyof T]: DataSchemaNodeErrorBounded<T[K]>;
+	[K in keyof T as T[K] extends { optional: true } ? never : K]: DataSchemaNodeErrorBounded<T[K]>;
+} & {
+	[K in keyof T as T[K] extends { optional: true } ? K : never]?: DataSchemaNodeErrorBounded<T[K]>;
 };
 
 export type DataSchemaNodeErrorBounded<T> = T extends { type: TypeFunction<any, infer pFPR, infer FPR, infer _RA, infer ProducesAggregateObject>; pipe?: infer PType }
@@ -330,7 +351,9 @@ export type DataSchemaNodeErrorBounded<T> = T extends { type: TypeFunction<any, 
 	: never;
 
 type DataSchemaToDataSchemaErrorBounded<DS> = DS extends DataSchema<infer DSD> ? DataSchemaErrorBounded<DSD> : never;
-export function dataSchemeErrorBoundary<DS extends DataSchema<any>>(originalDataSchema: DS): ErrorReturn<DataSchemaToDataSchemaErrorBounded<DS>, AggregateError> {
+export function dataSchemeErrorBoundary<T extends DataSchemaDefinition<T, any>, DS extends DataSchema<T>>(
+	originalDataSchema: DS,
+): ErrorReturn<DataSchemaToDataSchemaErrorBounded<DS>, AggregateError> {
 	const errorsSet: Set<Error> = new Set();
 
 	const dataSchema = deepClone(originalDataSchema);
