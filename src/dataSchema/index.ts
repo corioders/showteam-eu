@@ -206,23 +206,25 @@ async function fetchAndParseInternal(
 			return new Error(`The pipe object cannot be empty ${entryDebugPath}`);
 		}
 
-		if (typeFactoryFunction.produceAggregateObjet && fetchParserReturn) {
-			if (!Array.isArray(fetchParserReturn)) {
-				return new Error(`Fetch parser did not return an array but it is an aggregate function. ${entryDebugPath}`);
-			}
-
+		if (typeFactoryFunction.produceAggregateObjet) {
 			const aggregate: any = [];
-			for (let i = 0; i < fetchParserReturn.length; i++) {
-				const fetchParserReturnItem = fetchParserReturn[i];
-				const result = {};
-				await fetchAndParseInternal(runtimeArguments, nextPipe, result, [fetchParserReturnItem, null], `${entryDebugPath}[${i}]`);
-				aggregate.push({
-					result: [fetchParserReturnItem, null],
-					next: result,
-				});
-			}
 			resultEntry['aggregate'] = aggregate;
-			continue;
+			if (fetchParserReturn) {
+				if (!Array.isArray(fetchParserReturn)) {
+					return new Error(`Fetch parser did not return an array but it is an aggregate function. ${entryDebugPath}`);
+				}
+
+				for (let i = 0; i < fetchParserReturn.length; i++) {
+					const fetchParserReturnItem = fetchParserReturn[i];
+					const result = {};
+					await fetchAndParseInternal(runtimeArguments, nextPipe, result, [fetchParserReturnItem, null], `${entryDebugPath}[${i}]`);
+					aggregate.push({
+						result: [fetchParserReturnItem, null],
+						next: result,
+					});
+				}
+				continue;
+			}
 		}
 
 		resultEntry['next'] = {};
@@ -306,20 +308,120 @@ function modifyDSD(
 	return null;
 }
 
+export type DataSchemaErrorBounded<T extends DataSchemaDefinition<T, any>> = {
+	[K in keyof T]: DataSchemaNodeErrorBounded<T[K]>;
+};
+
+export type DataSchemaNodeErrorBounded<T> = T extends { type: TypeFunction<any, infer pFPR, infer FPR, infer _RA, infer ProducesAggregateObject>; pipe?: infer PType }
+	? ProducesAggregateObject extends false
+		? {
+				dataUsed: pFPR;
+				result: FPR;
+				next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchemaErrorBounded<PType> : never) : never;
+			}
+		: {
+				dataUsed: pFPR;
+				result: FPR;
+				aggregate: {
+					result: FPR;
+					next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchemaErrorBounded<PType> : never) : never;
+				}[];
+			}
+	: never;
+
+type DataSchemaToDataSchemaErrorBounded<DS> = DS extends DataSchema<infer DSD> ? DataSchemaErrorBounded<DSD> : never;
+export function dataSchemeErrorBoundary<DS extends DataSchema<any>>(originalDataSchema: DS): ErrorReturn<DataSchemaToDataSchemaErrorBounded<DS>, AggregateError> {
+	const errorsSet: Set<Error> = new Set();
+
+	const dataSchema = deepClone(originalDataSchema);
+	for (const dataSchemaNode of Object.values(dataSchema)) {
+		dataSchemeErrorBoundaryRecursive(dataSchemaNode, errorsSet);
+	}
+
+	if (errorsSet.size > 0) {
+		const errors = [...errorsSet.values()];
+		return [null, new AggregateError(errors, errors.map((e) => e.message).join('\n'))];
+	}
+
+	return [dataSchema as unknown as DataSchemaToDataSchemaErrorBounded<DS>, null];
+}
+
+function dataSchemeErrorBoundaryRecursive(dataSchemaNode: any, errors: Set<Error>) {
+	const [result, resultError] = dataSchemaNode.result;
+	if (resultError) {
+		errors.add(resultError);
+	}
+
+	if (result) {
+		dataSchemaNode.result = result;
+	}
+
+	if (dataSchemaNode.next) {
+		for (const childNode of Object.values(dataSchemaNode.next)) {
+			dataSchemeErrorBoundaryRecursive(childNode, errors);
+		}
+	}
+
+	if (dataSchemaNode.aggregate) {
+		for (const aggregateEntry of dataSchemaNode.aggregate) {
+			for (const childNode of Object.values(aggregateEntry.next)) {
+				dataSchemeErrorBoundaryRecursive(childNode, errors);
+			}
+		}
+	}
+}
+
 function deepClone<T>(value: T): T {
-	// Base case: if value is not an object, return it as is
-	if (!value || typeof value !== 'object') {
+	// Handle null explicitly (typeof null === 'object')
+	if (value === null || typeof value !== 'object') {
 		return value;
 	}
 
-	// If it's an array, map over it and deep clone each item
+	// Handle Date objects
+	if (value instanceof Date) {
+		return new Date(value.getTime()) as T;
+	}
+
+	// Handle RegExp objects
+	if (value instanceof RegExp) {
+		return new RegExp(value.source, value.flags) as T;
+	}
+
+	// Handle Map objects
+	if (value instanceof Map) {
+		const clonedMap = new Map();
+		for (const [key, val] of value) {
+			clonedMap.set(deepClone(key), deepClone(val));
+		}
+		return clonedMap as T;
+	}
+
+	// Handle Set objects
+	if (value instanceof Set) {
+		const clonedSet = new Set();
+		for (const item of value) {
+			clonedSet.add(deepClone(item));
+		}
+		return clonedSet as T;
+	}
+
+	// Handle Arrays
 	if (Array.isArray(value)) {
 		return value.map((item) => deepClone(item)) as T;
 	}
 
-	// If it's an object, iterate over its keys and deep clone each value
-	return Object.keys(value).reduce((acc: Record<string, unknown>, key) => {
-		acc[key] = deepClone(value[key as keyof T]);
-		return acc;
-	}, {}) as T;
+	// Handle plain objects
+	if (value.constructor === Object || !value.constructor) {
+		const cloned: Record<string, unknown> = {};
+		for (const key in value) {
+			if (Object.prototype.hasOwnProperty.call(value, key)) {
+				cloned[key] = deepClone(value[key]);
+			}
+		}
+		return cloned as T;
+	}
+
+	// For other object types (classes, etc.), return as-is
+	// This prevents errors with complex objects that shouldn't be cloned
+	return value;
 }
