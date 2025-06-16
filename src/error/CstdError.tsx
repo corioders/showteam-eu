@@ -3,7 +3,8 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
-import type { JSX } from 'react';
+import type { ErrorReturn } from 'cstd-ts/error/index.js';
+import type { ReactNode } from 'react';
 
 interface Props {
 	error: Error | string;
@@ -14,7 +15,7 @@ const IS_PREVIEW = process.env.IS_PREVIEW === 'true' || process.env.NEXT_PUBLIC_
 /**
  * https://h.corioders.com/cstd-next/cstd-error
  */
-export default function CstdError(props: Props): JSX.Element {
+export default function CstdError(props: Props): ReactNode {
 	if (!IS_PREVIEW) {
 		return <></>;
 	}
@@ -25,4 +26,13 @@ export default function CstdError(props: Props): JSX.Element {
 			<p className="whitespace-pre-wrap break-words">{String(props.error)}</p>
 		</div>
 	);
+}
+
+export function errorReturnHandler<T>(errorReturn: ErrorReturn<T>, component: (result: T) => ReactNode): ReactNode {
+	const [result, error] = errorReturn;
+	if (error) {
+		return <CstdError error={error} />;
+	}
+
+	return component(result);
 }
