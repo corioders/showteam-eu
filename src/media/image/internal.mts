@@ -63,6 +63,7 @@ export interface ImageInfo {
 	imageSize: number;
 }
 
+// TODO readImageInfoFromBufferInternal throws
 export function readImageInfoFromBuffer(imageBuffer: Buffer): ImageInfo {
 	const imageSize = imageBuffer.length;
 
