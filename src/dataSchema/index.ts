@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import type { ErrorReturn, ErrorReturnPromise } from '@/error/index.js';
+import { type ErrorReturn, type ErrorReturnPromise, UnreachableErrorMessage } from '@/error/index.js';
 import type { Flatten, UnionToIntersection } from '@/type/index.js';
 
 export type FetchParserPromiseReturn<FPR> = ErrorReturnPromise<FPR | false>;
@@ -19,7 +19,17 @@ export type GetTypeFunctionReturnThatIsPassedToTheNextOne<TF> = TF extends TypeF
 		: FPR
 	: never;
 
-export function defineTypeFunction<US, pFPR, FPR, RA = undefined, TF = TypeFunction<US, pFPR, FPR, RA, false>>(tf: TF): TF {
+// TODO: Make the types of the noop function work.
+export const typeNoopFunction = defineTypeFunction<any, any, any>((_us: any) => {
+	const noopFunction = () => {
+		throw new Error(UnreachableErrorMessage('Noop function called. The logic inside fetchAndParseInternal handles noop function'));
+	};
+	return noopFunction;
+});
+
+export function defineTypeFunction<US, pFPR, FPR, RA = undefined, TF extends TypeFunction<US, pFPR, FPR, RA, false> = TypeFunction<US, pFPR, FPR, RA, false>>(
+	tf: TF,
+): TF {
 	return tf;
 }
 
@@ -28,20 +38,28 @@ interface AggregateFunctionOptions {
 	produceAggregateObjet: boolean;
 }
 
-export function defineTypeAggregateFunction<US, pFPR, FPR, RA = undefined, TF = TypeFunction<US, pFPR[], FPR[], RA, true>>(
-	tf: TF,
-): TypeFunction<US, pFPR, FPR, RA, true> {
+export function defineTypeAggregateFunction<
+	US,
+	pFPR,
+	FPR,
+	RA = undefined,
+	TF extends TypeFunction<US, pFPR[], FPR[], RA, true> = TypeFunction<US, pFPR[], FPR[], RA, true>,
+>(tf: TF): TypeFunction<US, pFPR, FPR, RA, true> {
 	const modifiedTF = tf as TF & AggregateFunctionOptions;
 	modifiedTF.isAggregate = true;
 	modifiedTF.produceAggregateObjet = true;
 	// Okay this is sort of hacky. But DSD does not need to know the *real* return types of the aggregate function.
 	// It's easier to pretend it's a normal function, because indeed the transformation is handled during runtime. Invisible to user.
-	return modifiedTF as TypeFunction<US, pFPR, FPR, RA, true>;
+	return modifiedTF as unknown as TypeFunction<US, pFPR, FPR, RA, true>;
 }
 
-export function defineTypeAggregateToSingleFunction<US, pFPR, FPR, RA = undefined, TF = TypeFunction<US, pFPR[], FPR, RA, false>>(
-	tf: TF,
-): TypeFunction<US, pFPR, FPR, RA, false> {
+export function defineTypeAggregateToSingleFunction<
+	US,
+	pFPR,
+	FPR,
+	RA = undefined,
+	TF extends TypeFunction<US, pFPR[], FPR, RA, false> = TypeFunction<US, pFPR[], FPR, RA, false>,
+>(tf: TF): TypeFunction<US, pFPR, FPR, RA, false> {
 	const modifiedTF = tf as TF & AggregateFunctionOptions;
 	modifiedTF.isAggregate = true;
 	modifiedTF.produceAggregateObjet = false;
@@ -156,9 +174,18 @@ async function fetchAndParseInternal(
 
 		let fetchParserReturn: any = null;
 		let fetchParserError: any = null;
-		if (parentFetchParserError) {
+		if (typeFactoryFunction === typeNoopFunction) {
+			fetchParserReturn = parentFetchParserReturn;
+			fetchParserError = parentFetchParserError;
+
+			// Noop function executed successfully.
+			resultEntryProcessed = true;
+		} else if (parentFetchParserError) {
 			fetchParserReturn = null;
 			fetchParserError = parentFetchParserError;
+
+			// We want to preserve this error.
+			resultEntryProcessed = true;
 		} else {
 			const fetchParser = typeFactoryFunction(userSpecification);
 

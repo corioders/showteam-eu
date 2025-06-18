@@ -115,7 +115,7 @@ export function getOrderedChildren(children: ChildWithName[]): ErrorReturn<Child
 		const aOrder = a.child.metadata.getEntry(ORDER_METADATA_KEY);
 		const bOrder = b.child.metadata.getEntry(ORDER_METADATA_KEY);
 
-		if (!aOrder || !bOrder) {
+		if (aOrder === null || bOrder === null) {
 			throw new Error(UnreachableErrorMessage('Order is undefined'));
 		}
 
