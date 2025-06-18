@@ -9,17 +9,38 @@ import { remark } from 'remark';
 import strip from 'strip-markdown';
 
 export type StringMarkdown = string & { readonly __markdownTag: unique symbol };
+
+const MARKDOWN_TO_PLAIN_TEXT_PROCESSOR = remark().use(strip);
+export function markdownStringToPlainText(markdown: StringMarkdown): ErrorReturn<string> {
+	const [remarkFile, parseError] = safe(() => MARKDOWN_TO_PLAIN_TEXT_PROCESSOR.processSync(markdown));
+	if (parseError) {
+		return [null, parseError];
+	}
+
+	const plainText = String(remarkFile);
+	return [plainText, null];
+}
+
+// ==================================================
+// ==================================================
+// ==================================================
+// For backwards compatibility
+// DEPRECATED
+
+/**  @deprecated use MarkdownFrontmatterParser instead */
 export interface MarkdownDocMetadata {
 	title: string;
 	description: string;
 	other: ParsedDSDTF;
 }
 
+/**  @deprecated use MarkdownFrontmatterParser instead */
 export interface MarkdownDoc {
 	metadata: MarkdownDocMetadata;
 	content: string;
 }
 
+/**  @deprecated use MarkdownFrontmatterParser instead */
 export function parseMarkdownDocWithMetadata(docMd: string): ErrorReturn<MarkdownDoc> {
 	let [_empty, frontmatter, content] = docMd.split('===');
 
@@ -63,15 +84,4 @@ to the beginning of the document.`),
 	}
 
 	return [{ metadata: { title, description, other: dsdtf }, content }, null];
-}
-
-const MARKDOWN_TO_PLAIN_TEXT_PROCESSOR = remark().use(strip);
-export function markdownStringToPlainText(markdown: StringMarkdown): ErrorReturn<string> {
-	const [remarkFile, parseError] = safe(() => MARKDOWN_TO_PLAIN_TEXT_PROCESSOR.processSync(markdown));
-	if (parseError) {
-		return [null, parseError];
-	}
-
-	const plainText = String(remarkFile);
-	return [plainText, null];
 }

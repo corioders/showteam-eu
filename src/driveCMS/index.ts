@@ -48,6 +48,10 @@ const googleAuth = new google.auth.GoogleAuth({
 	scopes: ['https://www.googleapis.com/auth/drive'],
 });
 
+export async function getRequestAuthHeaders(url: string): Promise<{ [index: string]: string }> {
+	return await googleAuth.getRequestHeaders(url);
+}
+
 export function getForm(formID: FormID, isPreview: boolean, fileUploadOptions?: FileUploadOptions): ErrorReturnPromise<Form> {
 	return internalGetForm(googleAuth, formID, isPreview, fileUploadOptions);
 }

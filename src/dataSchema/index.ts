@@ -122,10 +122,12 @@ export type DataSchemaNode<T> = T extends { type: TypeFunction<any, infer pFPR, 
 		: {
 				dataUsed: pFPR;
 				result: ErrorReturn<FPR>;
-				aggregate: {
-					result: ErrorReturn<FPR>;
-					next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchema<PType> : never) : never;
-				}[];
+				aggregate: T extends { pipe: PType }
+					? {
+							result: ErrorReturn<FPR>;
+							next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchema<PType> : never) : never;
+						}[]
+					: never;
 			}
 	: never;
 

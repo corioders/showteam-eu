@@ -6,7 +6,7 @@
 import { TypedSymbolMap } from '@/datastructure/index.js';
 import { type DocMd, type DocResource, isDoc } from '@/driveCMS/docs.js';
 import { type FolderID, isFolder } from '@/driveCMS/drive.js';
-import { getPublicImageDownloadURL, isImage } from '@/driveCMS/image.js';
+import { getImageDownloadURL, getPublicImageDownloadURL, isImage } from '@/driveCMS/image.js';
 import { downloadDocCorrectRevisionMarkdown, listFolder } from '@/driveCMS/index.js';
 import type { Resource } from '@/driveCMS/resource.js';
 import { type MarkdownDoc, parseMarkdownDocWithMetadata } from '@/format/markdown/index.js';
@@ -161,7 +161,7 @@ export const typeGoogleDriveFolder = defineTypeAggregateFunction<GoogleDriveFold
 		for (const resourceWithMetadata of resourcesWithMetadata) {
 			const resource = resourceWithMetadata.resource;
 			if (!isFolder(resource)) {
-				return [false, null];
+				continue;
 			}
 
 			const [children, listError] = await listFolder(resource.id);
@@ -183,6 +183,10 @@ export interface GoogleDriveImage {
 	downloadURL: ImageURL;
 	resourceWithMetadata: ResourceWithMetadata;
 }
+
+/**
+ * @deprecated please use typeGoogleDriveSingleImagePrivateURL
+ */
 export const typeGoogleDriveSingleImage = defineTypeFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>((us) => {
 	return async (resourceWithMetadata) => {
 		const resource = resourceWithMetadata.resource;
@@ -200,6 +204,30 @@ export const typeGoogleDriveSingleImage = defineTypeFunction<GoogleDriveImageUS,
 
 		const image: GoogleDriveImage = {
 			downloadURL: getPublicImageDownloadURL(resource.id),
+			resourceWithMetadata: newResourceWithMetadata,
+		};
+
+		return [image, null];
+	};
+});
+
+export const typeGoogleDriveSingleImagePrivateURL = defineTypeFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>((us) => {
+	return async (resourceWithMetadata) => {
+		const resource = resourceWithMetadata.resource;
+		if (!isImage(resource)) {
+			return [false, null];
+		}
+
+		const [newResourceWithMetadata, prefixError] = await typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
+		if (newResourceWithMetadata === false) {
+			return [false, null];
+		}
+		if (prefixError) {
+			return [null, prefixError];
+		}
+
+		const image: GoogleDriveImage = {
+			downloadURL: getImageDownloadURL(resource.id),
 			resourceWithMetadata: newResourceWithMetadata,
 		};
 
