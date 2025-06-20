@@ -406,7 +406,9 @@ export type DataSchemaNodeErrorBounded<T> = T extends { type: TypeFunction<any, 
 			}
 	: never;
 
-type DataSchemaToDataSchemaErrorBounded<DS> = DS extends DataSchema<infer DSD> ? DataSchemaErrorBounded<DSD> : never;
+export type DataSchemaToDataSchemaErrorBounded<DS> = DS extends DataSchema<infer DSD> ? DataSchemaErrorBounded<DSD> : never;
+export type DataSchemaNodeToDataSchemaNodeErrorBounded<DSN> = DSN extends DataSchemaNode<infer DSDN> ? DataSchemaNodeErrorBounded<DSDN> : never;
+
 export function dataSchemaErrorBoundary<T extends DataSchemaDefinition<T, any>, DS extends DataSchema<T>>(
 	originalDataSchema: DS,
 ): ErrorReturn<DataSchemaToDataSchemaErrorBounded<DS>, AggregateError> {
