@@ -24,7 +24,7 @@ import {
 	validateUserSpecified,
 } from '../internal.mjs';
 
-const cache = createStorage({ driver: fsDriver({ base: '.next/cache/cstd-next-local-static-image' }) });
+const cache = createStorage({ driver: fsDriver({ base: '.next/cache/corioders/cstd-next-local-static-image' }) });
 
 export interface LocalStaticImageImport {
 	// Hash of the original image. Can be used inside the react key prop.
