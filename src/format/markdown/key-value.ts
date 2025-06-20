@@ -3,8 +3,8 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import { type ErrorReturn, safe } from '@/error/index.js';
-import type { Root } from 'mdast';
+import { CSE, type ErrorReturn, safe } from '@/error/index.js';
+import type { Root, RootContent } from 'mdast';
 import { toMarkdown } from 'mdast-util-to-markdown';
 import { toString as markdownToString } from 'mdast-util-to-string';
 import { remark } from 'remark';
@@ -22,14 +22,30 @@ export interface ParsedMarkdownValue {
 }
 
 export interface ParsedMarkdownKeyValue {
-	mapping: Record<string, ParsedMarkdownValue>;
+	parsedMarkdownValues: ParsedMarkdownValue[];
+}
+
+export const ERR_DUPLICATE_VALUES_ARRAY_TO_MAPPING = new Error('Tried converting duplicate values array to mapping. Do not pass allowDuplicateKeys to the parser.');
+export function ParsedMarkdownValuesToMapping(parsedMarkdownValues: ParsedMarkdownValue[]): ErrorReturn<Record<string, ParsedMarkdownValue>> {
+	const mapping: Record<string, ParsedMarkdownValue> = {};
+	for (const value of parsedMarkdownValues) {
+		if (mapping[value.key]) {
+			return [null, new CSE(ERR_DUPLICATE_VALUES_ARRAY_TO_MAPPING)];
+		}
+
+		mapping[value.key] = value;
+	}
+
+	return [mapping, null];
 }
 
 export interface MarkdownParserSpec {
 	headerLevel: number;
+	allowDuplicateKeys?: boolean | undefined;
 }
 const FILE_DATA_KEY = 'parsedMarkdownKeyValue';
 
+export const ERR_DUPLICATE_KEYS = new Error('Duplicate keys are not allowed. Unless you pass allowDuplicateKeys to the parser.');
 export function MarkdownKeyValueParser(markdown: StringMarkdown, spec: MarkdownParserSpec): ErrorReturn<ParsedMarkdownKeyValue> {
 	const [file, errorParse] = safe(() => remark().use(remarkKeyValuePlugin, spec).processSync(markdown));
 	if (errorParse) {
@@ -51,41 +67,66 @@ export function MarkdownKeyValueParser(markdown: StringMarkdown, spec: MarkdownP
 function remarkKeyValuePlugin(options: MarkdownParserSpec) {
 	return (tree: Root, file: VFile) => {
 		interface MapValue {
-			nodes: any[];
+			nodes: RootContent[];
 			keyMarkdown: StringMarkdown;
 		}
 
-		const map: Record<string, MapValue> = {};
+		interface DuplicateMapValue {
+			values: MapValue[];
+			index: number;
+		}
+
+		const map: Record<string, DuplicateMapValue> = {};
 		let currentKey: string | null = null;
 
 		visit(tree, (node) => {
 			if (node.type === 'heading' && node.depth === options.headerLevel) {
 				currentKey = markdownToString(node).trim();
 
-				if (!map[currentKey]) {
+				const value = {
+					keyMarkdown: toMarkdown(node).trim() as StringMarkdown,
+					nodes: [],
+				};
+
+				const currentMapValue = map[currentKey];
+				if (currentMapValue) {
+					if (options.allowDuplicateKeys) {
+						currentMapValue.values.push(value);
+						currentMapValue.index = 1;
+					} else {
+						throw new CSE(ERR_DUPLICATE_KEYS);
+					}
+				} else {
 					map[currentKey] = {
-						keyMarkdown: toMarkdown(node).trim() as StringMarkdown,
-						nodes: [],
+						index: 0,
+						values: [value],
 					};
 				}
 				return SKIP;
 			}
-			if (currentKey && map[currentKey]) {
-				map[currentKey]?.nodes.push(node);
+
+			if (currentKey) {
+				const currentMapValue = map[currentKey];
+				if (currentMapValue) {
+					// We don't care about the true typescript type here.
+					currentMapValue.values[currentMapValue.index]?.nodes.push(node as RootContent);
+				}
 				return SKIP;
 			}
 
 			return CONTINUE;
 		});
 
-		const markdownKeyValue: ParsedMarkdownKeyValue = { mapping: {} };
-		for (const [key, mapValue] of Object.entries(map)) {
-			markdownKeyValue.mapping[key] = {
-				key: key,
-				keyMarkdown: mapValue.keyMarkdown,
-				value: markdownToString(mapValue.nodes).trim(),
-				valueMarkdown: toMarkdown({ type: 'root', children: mapValue.nodes }).trim() as StringMarkdown,
-			};
+		const markdownKeyValue: ParsedMarkdownKeyValue = { parsedMarkdownValues: [] };
+		for (const [key, mapDuplicateValue] of Object.entries(map)) {
+			for (const mapValue of mapDuplicateValue.values) {
+				markdownKeyValue.parsedMarkdownValues.push({
+					key: key,
+					keyMarkdown: mapValue.keyMarkdown,
+					value: markdownToString(mapValue.nodes).trim(),
+					valueMarkdown: toMarkdown({ type: 'root', children: mapValue.nodes }).trim() as StringMarkdown,
+				});
+			}
 		}
 
 		file.data[FILE_DATA_KEY] = markdownKeyValue;

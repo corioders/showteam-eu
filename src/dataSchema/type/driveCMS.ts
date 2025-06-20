@@ -127,41 +127,16 @@ export interface GoogleDriveSingleFolderUS {
 	childPrefix?: ResourcePrefixParser;
 	name?: string;
 }
-export const typeGoogleDriveSingleFolder = defineTypeFunction<GoogleDriveSingleFolderUS, ResourceWithMetadata, ResourceWithMetadata[]>((us) => {
-	return async (resourceWithMetadata) => {
-		const resource = resourceWithMetadata.resource;
-		if (!isFolder(resource)) {
-			return [false, null];
-		}
-
-		if (us.name && resource.name !== us.name) {
-			return [false, null];
-		}
-
-		const [children, listError] = await listFolder(resource.id);
-		if (listError) {
-			return [null, listError];
-		}
-
-		const prefix = us.childPrefix ?? NoPrefix();
-
-		const childrenWithMetadata = parseResourceMetadata(children, prefix);
-		return [childrenWithMetadata, null];
-	};
-});
-
-export interface GoogleDriveFolderUS {
-	childPrefix: ResourcePrefixParser;
-}
-export type ResourceWithMetadataArrayParent = ResourceWithMetadata[] & { parent: ResourceWithMetadata };
-export const typeGoogleDriveFolder = defineTypeAggregateFunction<GoogleDriveFolderUS, ResourceWithMetadata, ResourceWithMetadataArrayParent>((us) => {
-	return async (resourcesWithMetadata) => {
-		const childrenWithMetadataList: ResourceWithMetadataArrayParent[] = [];
-
-		for (const resourceWithMetadata of resourcesWithMetadata) {
+export const typeGoogleDriveSingleFolder = defineTypeFunction<GoogleDriveSingleFolderUS, ResourceWithMetadata, ResourceWithMetadata[]>(
+	function typeGoogleDriveSingleFolder(us) {
+		return async (resourceWithMetadata) => {
 			const resource = resourceWithMetadata.resource;
 			if (!isFolder(resource)) {
-				continue;
+				return [false, null];
+			}
+
+			if (us.name && resource.name !== us.name) {
+				return [false, null];
 			}
 
 			const [children, listError] = await listFolder(resource.id);
@@ -169,14 +144,43 @@ export const typeGoogleDriveFolder = defineTypeAggregateFunction<GoogleDriveFold
 				return [null, listError];
 			}
 
-			const childrenWithMetadata = parseResourceMetadata(children, us.childPrefix) as ResourceWithMetadataArrayParent;
-			childrenWithMetadata.parent = resourceWithMetadata;
-			childrenWithMetadataList.push(childrenWithMetadata);
-		}
+			const prefix = us.childPrefix ?? NoPrefix();
 
-		return [childrenWithMetadataList, null];
-	};
-});
+			const childrenWithMetadata = parseResourceMetadata(children, prefix);
+			return [childrenWithMetadata, null];
+		};
+	},
+);
+
+export interface GoogleDriveFolderUS {
+	childPrefix: ResourcePrefixParser;
+}
+export type ResourceWithMetadataArrayParent = ResourceWithMetadata[] & { parent: ResourceWithMetadata };
+export const typeGoogleDriveFolder = defineTypeAggregateFunction<GoogleDriveFolderUS, ResourceWithMetadata, ResourceWithMetadataArrayParent>(
+	function typeGoogleDriveFolder(us) {
+		return async (resourcesWithMetadata) => {
+			const childrenWithMetadataList: ResourceWithMetadataArrayParent[] = [];
+
+			for (const resourceWithMetadata of resourcesWithMetadata) {
+				const resource = resourceWithMetadata.resource;
+				if (!isFolder(resource)) {
+					continue;
+				}
+
+				const [children, listError] = await listFolder(resource.id);
+				if (listError) {
+					return [null, listError];
+				}
+
+				const childrenWithMetadata = parseResourceMetadata(children, us.childPrefix) as ResourceWithMetadataArrayParent;
+				childrenWithMetadata.parent = resourceWithMetadata;
+				childrenWithMetadataList.push(childrenWithMetadata);
+			}
+
+			return [childrenWithMetadataList, null];
+		};
+	},
+);
 
 export interface GoogleDriveImageUS extends GoogleDriveResourcePrefixUS {}
 export interface GoogleDriveImage {
@@ -187,7 +191,7 @@ export interface GoogleDriveImage {
 /**
  * @deprecated please use typeGoogleDriveSingleImagePrivateURL
  */
-export const typeGoogleDriveSingleImage = defineTypeFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>((us) => {
+export const typeGoogleDriveSingleImage = defineTypeFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>(function typeGoogleDriveSingleImage(us) {
 	return async (resourceWithMetadata) => {
 		const resource = resourceWithMetadata.resource;
 		if (!isImage(resource)) {
@@ -211,31 +215,33 @@ export const typeGoogleDriveSingleImage = defineTypeFunction<GoogleDriveImageUS,
 	};
 });
 
-export const typeGoogleDriveSingleImagePrivateURL = defineTypeFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>((us) => {
-	return async (resourceWithMetadata) => {
-		const resource = resourceWithMetadata.resource;
-		if (!isImage(resource)) {
-			return [false, null];
-		}
+export const typeGoogleDriveSingleImagePrivateURL = defineTypeFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>(
+	function typeGoogleDriveSingleImagePrivateURL(us) {
+		return async (resourceWithMetadata) => {
+			const resource = resourceWithMetadata.resource;
+			if (!isImage(resource)) {
+				return [false, null];
+			}
 
-		const [newResourceWithMetadata, prefixError] = await typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
-		if (newResourceWithMetadata === false) {
-			return [false, null];
-		}
-		if (prefixError) {
-			return [null, prefixError];
-		}
+			const [newResourceWithMetadata, prefixError] = await typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
+			if (newResourceWithMetadata === false) {
+				return [false, null];
+			}
+			if (prefixError) {
+				return [null, prefixError];
+			}
 
-		const image: GoogleDriveImage = {
-			downloadURL: getImageDownloadURL(resource.id),
-			resourceWithMetadata: newResourceWithMetadata,
+			const image: GoogleDriveImage = {
+				downloadURL: getImageDownloadURL(resource.id),
+				resourceWithMetadata: newResourceWithMetadata,
+			};
+
+			return [image, null];
 		};
+	},
+);
 
-		return [image, null];
-	};
-});
-
-export const typeGoogleDriveImages = defineTypeAggregateFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>((us) => {
+export const typeGoogleDriveImages = defineTypeAggregateFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>(function typeGoogleDriveImages(us) {
 	return async (resourcesWithMetadata) => {
 		const images: GoogleDriveImage[] = [];
 
@@ -267,7 +273,7 @@ export const typeGoogleDriveImages = defineTypeAggregateFunction<GoogleDriveImag
 export interface GoogleDriveSingleDocUS extends GoogleDriveResourcePrefixUS {
 	documentName?: string;
 }
-export const typeGoogleDriveSingleDoc = defineTypeFunction<GoogleDriveSingleDocUS, ResourceWithMetadata, DocMd>((us) => {
+export const typeGoogleDriveSingleDoc = defineTypeFunction<GoogleDriveSingleDocUS, ResourceWithMetadata, DocMd>(function typeGoogleDriveSingleDoc(us) {
 	return async (resourceWithMetadata): FetchParserPromiseReturn<DocMd> => {
 		const resource = resourceWithMetadata.resource;
 		if (!isDoc(resource)) {
@@ -314,7 +320,7 @@ export const typeGoogleDriveInternationalizedDoc = defineTypeAggregateToSingleFu
 	ResourceWithMetadata,
 	GoogleDriveInternationalizedDocMd,
 	GoogleDriveInternationalizedDocRA
->((us) => {
+>(function typeGoogleDriveInternationalizedDoc(us) {
 	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
 	return async (resourcesWithMetadata, runtimeArguments) => {
 		let defaultInternationalizeDocMd: GoogleDriveInternationalizedDocMd | null = null;
@@ -395,13 +401,15 @@ function getMaybeInternationalizedResource(resourceWithMetadata: ResourceWithMet
 
 // biome-ignore lint/complexity/noBannedTypes: This type is required
 export type GoogleDriveDocWithMetadataUS = {};
-export const typeGoogleDriveSingleDocWithMetadata = defineTypeFunction<GoogleDriveDocWithMetadataUS, DocMd, MarkdownDoc>((_us) => {
-	return (docMd): FetchParserReturn<MarkdownDoc> => {
-		const [markdownDoc, parseError] = parseMarkdownDocWithMetadata(docMd.docMd);
-		if (parseError) {
-			return [null, parseError];
-		}
+export const typeGoogleDriveSingleDocWithMetadata = defineTypeFunction<GoogleDriveDocWithMetadataUS, DocMd, MarkdownDoc>(
+	function typeGoogleDriveSingleDocWithMetadata(_us) {
+		return (docMd): FetchParserReturn<MarkdownDoc> => {
+			const [markdownDoc, parseError] = parseMarkdownDocWithMetadata(docMd.docMd);
+			if (parseError) {
+				return [null, parseError];
+			}
 
-		return [markdownDoc, null];
-	};
-});
+			return [markdownDoc, null];
+		};
+	},
+);

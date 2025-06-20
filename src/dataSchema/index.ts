@@ -121,7 +121,7 @@ export type DataSchemaNode<T> = T extends { type: TypeFunction<any, infer pFPR, 
 			}
 		: {
 				dataUsed: pFPR;
-				result: ErrorReturn<FPR>;
+				result: ErrorReturn<FPR[]>;
 				aggregate: T extends { pipe: PType }
 					? {
 							result: ErrorReturn<FPR>;
@@ -306,17 +306,31 @@ export type RemovePipeAtCutPoints<DSD, CutPoints> = DSD extends DataSchemaDefini
 		}
 	: never;
 
+const CUT_POINT_DONE_KEY = '_DSD_INTERNAL_CUT_POINT_DONE';
 export function cutoffDataSchemaDefinition<
 	const T extends DataSchemaDefinition<T, any>,
 	const CutPoint extends ExtractAllDataSchemeNodes<T>,
 	const CutPoints extends readonly CutPoint[],
 >(originalDSD: T, cutPointNodes: CutPoints): ErrorReturn<RemovePipeAtCutPoints<T, CutPoints[number]>> {
 	const clonedDSD = deepClone(originalDSD);
-	for (const cutPoint of cutPointNodes) {
+
+	const cutPoints = cutPointNodes as unknown as Record<string, unknown>[];
+	for (const cutPoint of cutPoints) {
 		const err = modifyDSD(originalDSD, clonedDSD, cutPoint as Record<string, unknown>);
 		if (err) {
 			return [null, err];
 		}
+	}
+
+	for (const cutPoint of cutPoints) {
+		if (!cutPoint[CUT_POINT_DONE_KEY]) {
+			return [
+				null,
+				new Error(`Error you provided more cut points than necessary. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`),
+			];
+		}
+
+		delete cutPoint[CUT_POINT_DONE_KEY];
 	}
 
 	const shallowDSD = clonedDSD as unknown as RemovePipeAtCutPoints<T, CutPoints[number]>;
@@ -328,6 +342,10 @@ function modifyDSD(
 	clonedDSD: Record<string, Record<string, unknown>> | undefined,
 	cutPoint: Record<string, unknown>,
 ): Error | null {
+	if (cutPoint[CUT_POINT_DONE_KEY]) {
+		return null;
+	}
+
 	if (!clonedDSD) {
 		return new Error(`Error you provided cut points where one is their parent. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`);
 	}
@@ -338,8 +356,17 @@ function modifyDSD(
 		const cloned = clonedDSD[pipeKey] as Record<string, unknown>;
 
 		if (original === cutPoint) {
+			if (original[CUT_POINT_DONE_KEY]) {
+				return new Error(`Error you provided more cut points than necessary. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`);
+			}
+
+			cutPoint[CUT_POINT_DONE_KEY] = true;
 			// biome-ignore lint/performance/noDelete: <explanation>
 			delete cloned['pipe'];
+			continue;
+		}
+
+		if (original[CUT_POINT_DONE_KEY]) {
 			continue;
 		}
 
