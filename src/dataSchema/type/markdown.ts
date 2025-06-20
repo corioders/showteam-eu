@@ -20,7 +20,6 @@ export const typeMarkdownKeyValueRootFromGoogleDocParser = defineTypeFunction<Ma
 export const typeMarkdownKeyValueRootParser = defineTypeFunction<MarkdownKeyValueParserUserSpec, StringMarkdown, ParsedMarkdownValue[]>(
 	function typeMarkdownKeyValueRootParser(us) {
 		return (stringMarkdown) => {
-			console.log(stringMarkdown);
 			const [parsedMarkdown, parseError] = MarkdownKeyValueParser(stringMarkdown, { headerLevel: us.childHeaderLevel, allowDuplicateKeys: us.allowDuplicateKeys });
 			if (parseError) {
 				return [null, parseError];
