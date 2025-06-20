@@ -288,9 +288,9 @@ async function fetchAndParseInternal(
 	return null;
 }
 
-type ExtractAllDataSchemeNodes<DSD> = DSD extends DataSchemaDefinition<any, any>
+type ExtractAllDataSchemaNodes<DSD> = DSD extends DataSchemaDefinition<any, any>
 	? {
-			[K in keyof DSD]: DSD[K] extends { pipe: infer P } ? DSD[K] | (P extends DataSchemaDefinition<any, any> ? ExtractAllDataSchemeNodes<P> : never) : DSD[K];
+			[K in keyof DSD]: DSD[K] extends { pipe: infer P } ? DSD[K] | (P extends DataSchemaDefinition<any, any> ? ExtractAllDataSchemaNodes<P> : never) : DSD[K];
 		}[keyof DSD]
 	: never;
 
@@ -309,7 +309,7 @@ export type RemovePipeAtCutPoints<DSD, CutPoints> = DSD extends DataSchemaDefini
 const CUT_POINT_DONE_KEY = '_DSD_INTERNAL_CUT_POINT_DONE';
 export function cutoffDataSchemaDefinition<
 	const T extends DataSchemaDefinition<T, any>,
-	const CutPoint extends ExtractAllDataSchemeNodes<T>,
+	const CutPoint extends ExtractAllDataSchemaNodes<T>,
 	const CutPoints extends readonly CutPoint[],
 >(originalDSD: T, cutPointNodes: CutPoints): ErrorReturn<RemovePipeAtCutPoints<T, CutPoints[number]>> {
 	const clonedDSD = deepClone(originalDSD);
@@ -407,14 +407,14 @@ export type DataSchemaNodeErrorBounded<T> = T extends { type: TypeFunction<any, 
 	: never;
 
 type DataSchemaToDataSchemaErrorBounded<DS> = DS extends DataSchema<infer DSD> ? DataSchemaErrorBounded<DSD> : never;
-export function dataSchemeErrorBoundary<T extends DataSchemaDefinition<T, any>, DS extends DataSchema<T>>(
+export function dataSchemaErrorBoundary<T extends DataSchemaDefinition<T, any>, DS extends DataSchema<T>>(
 	originalDataSchema: DS,
 ): ErrorReturn<DataSchemaToDataSchemaErrorBounded<DS>, AggregateError> {
 	const errorsSet: Set<Error> = new Set();
 
 	const dataSchema = deepClone(originalDataSchema);
 	for (const dataSchemaNode of Object.values(dataSchema)) {
-		dataSchemeErrorBoundaryRecursive(dataSchemaNode, errorsSet);
+		dataSchemaErrorBoundaryRecursive(dataSchemaNode, errorsSet);
 	}
 
 	if (errorsSet.size > 0) {
@@ -425,7 +425,7 @@ export function dataSchemeErrorBoundary<T extends DataSchemaDefinition<T, any>, 
 	return [dataSchema as unknown as DataSchemaToDataSchemaErrorBounded<DS>, null];
 }
 
-function dataSchemeErrorBoundaryRecursive(dataSchemaNode: any, errors: Set<Error>) {
+function dataSchemaErrorBoundaryRecursive(dataSchemaNode: any, errors: Set<Error>) {
 	const [result, resultError] = dataSchemaNode.result;
 	if (resultError) {
 		errors.add(resultError);
@@ -437,14 +437,14 @@ function dataSchemeErrorBoundaryRecursive(dataSchemaNode: any, errors: Set<Error
 
 	if (dataSchemaNode.next) {
 		for (const childNode of Object.values(dataSchemaNode.next)) {
-			dataSchemeErrorBoundaryRecursive(childNode, errors);
+			dataSchemaErrorBoundaryRecursive(childNode, errors);
 		}
 	}
 
 	if (dataSchemaNode.aggregate) {
 		for (const aggregateEntry of dataSchemaNode.aggregate) {
 			for (const childNode of Object.values(aggregateEntry.next)) {
-				dataSchemeErrorBoundaryRecursive(childNode, errors);
+				dataSchemaErrorBoundaryRecursive(childNode, errors);
 			}
 		}
 	}

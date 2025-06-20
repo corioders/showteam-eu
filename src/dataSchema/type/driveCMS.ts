@@ -241,6 +241,9 @@ export const typeGoogleDriveSingleImagePrivateURL = defineTypeFunction<GoogleDri
 	},
 );
 
+/**
+ * @deprecated please use typeGoogleDriveImagesPrivateURL
+ */
 export const typeGoogleDriveImages = defineTypeAggregateFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>(function typeGoogleDriveImages(us) {
 	return async (resourcesWithMetadata) => {
 		const images: GoogleDriveImage[] = [];
@@ -269,6 +272,37 @@ export const typeGoogleDriveImages = defineTypeAggregateFunction<GoogleDriveImag
 		return [images, null];
 	};
 });
+
+export const typeGoogleDriveImagesPrivateURL = defineTypeAggregateFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>(
+	function typeGoogleDriveImagesPrivateURL(us) {
+		return async (resourcesWithMetadata) => {
+			const images: GoogleDriveImage[] = [];
+
+			for (const resourceWithMetadata of resourcesWithMetadata) {
+				const resource = resourceWithMetadata.resource;
+				if (!isImage(resource)) {
+					continue;
+				}
+
+				const [newResourceWithMetadata, prefixError] = await typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
+				if (newResourceWithMetadata === false) {
+					continue;
+				}
+				if (prefixError) {
+					continue;
+				}
+
+				const image: GoogleDriveImage = {
+					downloadURL: getImageDownloadURL(resource.id),
+					resourceWithMetadata: newResourceWithMetadata,
+				};
+				images.push(image);
+			}
+
+			return [images, null];
+		};
+	},
+);
 
 export interface GoogleDriveSingleDocUS extends GoogleDriveResourcePrefixUS {
 	documentName?: string;
@@ -401,6 +435,8 @@ function getMaybeInternationalizedResource(resourceWithMetadata: ResourceWithMet
 
 // biome-ignore lint/complexity/noBannedTypes: This type is required
 export type GoogleDriveDocWithMetadataUS = {};
+
+/**  @deprecated use typeMarkdownFrontmatterRootFromGoogleDocParser instead */
 export const typeGoogleDriveSingleDocWithMetadata = defineTypeFunction<GoogleDriveDocWithMetadataUS, DocMd, MarkdownDoc>(
 	function typeGoogleDriveSingleDocWithMetadata(_us) {
 		return (docMd): FetchParserReturn<MarkdownDoc> => {
