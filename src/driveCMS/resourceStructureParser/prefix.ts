@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import { newTypedSymbol } from '@/datastructure/index.js';
+import { newTypedSymbol } from '@/dataStructure/index.js';
 import { type ErrorReturn, UnreachableErrorMessage } from '@/error/index.js';
 import { isASCII } from '@/string/index.js';
 import type { Child, ChildMetadata } from './index.js';

@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import type { MetadataBase, ObjectWithMetadata } from '@/datastructure/metadata.js';
+import type { MetadataBase, ObjectWithMetadata } from '@/dataStructure/metadata.js';
 import { type DocMd, type DocResource, isDoc } from '@/driveCMS/docs.js';
 import { type FolderID, isFolder } from '@/driveCMS/drive.js';
 import { getImageDownloadURL, getPublicImageDownloadURL, isImage } from '@/driveCMS/image.js';

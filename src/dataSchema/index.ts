@@ -119,12 +119,12 @@ export type DataSchema<T extends DataSchemaDefinition<T, any>> = PrettifyHardcor
 export type DataSchemaNode<T> = T extends { type: FetchParserFunction<infer pFPR, infer FPR, any, infer ProducesAggregateObject>; pipe?: infer PType }
 	? ProducesAggregateObject extends false
 		? {
-				dataUsed: pFPR;
+				dataUsed: PrettifyHardcore<pFPR>;
 				result: ErrorReturn<FPR>;
 				next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchema<PType> : never) : never;
 			}
 		: {
-				dataUsed: pFPR;
+				dataUsed: PrettifyHardcore<pFPR>;
 				result: ErrorReturn<FPR[]>;
 				aggregate: T extends { pipe: PType }
 					? {
@@ -303,10 +303,10 @@ type ExtractAllDataSchemaNodes<DSD> = DSD extends DataSchemaDefinition<any, any>
 export type RemovePipeAtCutPoints<DSD, CutPoints> = DSD extends DataSchemaDefinition<any, any>
 	? {
 			[K in keyof DSD]: DSD[K] extends CutPoints
-				? Omit<DSD[K], 'pipe'>
+				? PrettifyHardcore<Omit<DSD[K], 'pipe'>>
 				: DSD[K] extends { pipe: infer P }
 					? DSD[K] extends { pipe: DataSchemaDefinition<any, any> }
-						? Omit<DSD[K], 'pipe'> & { pipe: RemovePipeAtCutPoints<P, CutPoints> }
+						? PrettifyHardcore<Omit<DSD[K], 'pipe'> & { pipe: PrettifyHardcore<RemovePipeAtCutPoints<P, CutPoints>> }>
 						: DSD[K]
 					: DSD[K];
 		}

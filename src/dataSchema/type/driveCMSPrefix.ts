@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import type { MetadataBase, ObjectWithMetadata } from '@/datastructure/metadata.js';
+import type { MetadataBase, ObjectWithMetadata } from '@/dataStructure/metadata.js';
 
 import { GOOGLE_DRIVE_PUBLIC_PREFIX } from '@/driveCMS/const.js';
 import { isCountryISO2Code, standardizeCountryISO2Code } from '@/internationalization/index.js';

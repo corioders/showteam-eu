@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
 
-import { TypedSymbolMap, newTypedSymbol } from '@/datastructure/index.js';
+import { TypedSymbolMap, newTypedSymbol } from '@/dataStructure/index.js';
 import { GOOGLE_DRIVE_PUBLIC_PREFIX } from '@/driveCMS/const.js';
 import { type FolderID, type FolderResource, isFolder } from '@/driveCMS/drive.js';
 import { listFolder } from '@/driveCMS/index.js';

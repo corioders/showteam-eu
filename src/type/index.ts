@@ -36,6 +36,7 @@ export type IsEmptyObject<T> = T extends EmptyObject ? true : false;
 export type EmptyObject = Record<string, never>;
 
 export type Prettify<T> = { [K in keyof T]: T[K] } & {};
+export type DeepPrettify<T> = { [K in keyof T]: DeepPrettify<T[K]> } & {};
 
 type RemoveNever<T> = { [K in keyof T as T[K] extends never ? never : K]: T[K] };
 /**
