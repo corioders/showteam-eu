@@ -3,7 +3,27 @@
 	"extends": ["../cstd-ts/config/biome.jsonc"],
 	"linter": {
 		"rules": {
+			"correctness": {
+				"useImportExtensions": {
+					"level": "warn",
+					"fix": "safe",
+					"options": {
+						"suggestedExtensions": {
+							"ts": {
+								"module": "js",
+								"component": "jsx"
+							}
+						}
+					}
+				}
+			},
+			"style": {
+				// This is required to make biome work with types in dataScheme type system.
+				// TODO: Figure out how to name this types so that biome is happy
+				"useNamingConvention": "off"
+			},
 			"suspicious": {
+				"noExplicitAny": "off",
 				"noConsole": "off",
 				"noConsoleLog": "off"
 			}
