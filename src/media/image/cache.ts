@@ -6,8 +6,6 @@
 import memoize from 'memoize';
 
 interface OurGlobalThis {
-	// biome-ignore lint/style/useNamingConvention: This is a readonly thing.
-	// biome-ignore lint/suspicious/noExplicitAny: This is required by typescript
 	__CSTD_NEXT_IMAGES_MEMOIZE_CACHE?: Map<any, any>;
 }
 const ourGlobalThis = (global ?? globalThis ?? window ?? {}) as OurGlobalThis;
@@ -52,7 +50,6 @@ function memoizeImagesCacheKey(functionArguments: readonly unknown[]) {
 	return key;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: Any here is required.
 type AnyFunction = (...arguments_: readonly any[]) => unknown;
 export function memoizeImages<FunctionToMemoize extends AnyFunction>(fn: FunctionToMemoize): FunctionToMemoize {
 	return memoize(fn, {

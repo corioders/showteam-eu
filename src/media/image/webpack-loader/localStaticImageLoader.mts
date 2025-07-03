@@ -33,7 +33,6 @@ export interface LocalStaticImageImport {
 	filename: string;
 }
 
-// biome-ignore lint/style/useNamingConvention: We want to emphasize this is an internal interface
 export interface INTERNAL_LocalStaticImageImport extends LocalStaticImageImport {
 	// Width of the image. Width is specified by user in the import query or taken from the original image.
 	w: number;
@@ -46,14 +45,13 @@ export interface INTERNAL_LocalStaticImageImport extends LocalStaticImageImport 
 	z?: string;
 
 	// Optimized sources of the image.
-	s?: INTERNAL_LowOverheadPictureSource[];
+	s?: InternalLowOverheadPictureSource[];
 
 	// src of the svG image
 	g?: string;
 }
 
-// biome-ignore lint/style/useNamingConvention: We want to emphasize this is an internal interface
-interface INTERNAL_LowOverheadPictureSource {
+interface InternalLowOverheadPictureSource {
 	// The srcSet of the image.
 	s: string;
 
@@ -190,7 +188,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const { imageSizeToSetAtTheImgElement, inferredSizes } = calculateImageSizeFromUserSpecifiedNoSVG(imageInfo, userSpecified);
 
 	const pictureSources = getPictureSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, pathPrefix, userSpecified);
-	const loPictureSources: INTERNAL_LowOverheadPictureSource[] = pictureSources.map((ps) => ({ s: ps.srcSet, r: ps.fallbackSrc, t: ps.type }));
+	const loPictureSources: InternalLowOverheadPictureSource[] = pictureSources.map((ps) => ({ s: ps.srcSet, r: ps.fallbackSrc, t: ps.type }));
 
 	const importReturn: INTERNAL_LocalStaticImageImport = {
 		contentHash: imageSpecificHash,

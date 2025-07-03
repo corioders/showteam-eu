@@ -79,12 +79,10 @@ export interface PictureSource {
 	type: `image/${ImageType}`;
 }
 
-// biome-ignore lint/style/useNamingConvention: <explanation>
 export interface INTERNAL_PictureSource extends PictureSource {
 	__sharpEntries: INTERNAL_SharpEntry[];
 }
 
-// biome-ignore lint/style/useNamingConvention: <explanation>
 export interface INTERNAL_SharpEntry {
 	targetFormat: ImageType;
 	targetWidth: number;
@@ -366,7 +364,6 @@ export async function optimizePictureSources(
 	});
 }
 
-// biome-ignore lint/style/useNamingConvention: <explanation>
 export interface INTERNAL_SVGEntry {
 	src: string;
 	filepath: string;

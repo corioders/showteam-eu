@@ -49,10 +49,8 @@ const NEXTJS_FILEPATH_PREFIX = './.next/static/media';
 // Production(edge / nodejs): While we cannot change the CND static assets
 // we can fallback to responding with base64 encoded image. If we are on the node runtime the cache could provide some speedup.
 interface OurGlobalThis {
-	// biome-ignore lint/style/useNamingConvention: This is a readonly thing.
 	__CSTD_NEXT_IMAGES_CACHE?: UnstorageStorage;
 
-	// biome-ignore lint/style/useNamingConvention: Same as above
 	__CSTD_NEXT_IMAGES_DEV_CACHE?: Map<string, JSX.Element>;
 }
 
@@ -394,7 +392,7 @@ async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): 
 const OPTIMIZE_REMOTE_SVG_IMAGE_CACHE_KEY = (x: string) => `OPTIMIZE_REMOTE_SVG_IMAGE_CACHE_KEY:${x}`;
 
 async function optimizeSvgAndWriteToDisk(isDevelopmentMode: boolean, svgEntry: INTERNAL_SVGEntry, imageBuffer: Buffer): Promise<void> {
-	const svgo: typeof SvgoType = requireWebpackExternalDependency__MakeWebpackNotBundleIt('svgo');
+	const svgo: typeof SvgoType = requireWebpackExternalDependencyMakeWebpackNotBundleIt('svgo');
 	const nodeFs: typeof NodeFsType = require('node:fs/promises');
 
 	if (isDevelopmentMode) {
@@ -425,7 +423,7 @@ async function optimizeImageAndWriteToDisk(
 	imageBuffer: Buffer,
 	imageFilenameToReport: string,
 ): Promise<void> {
-	const sharp: typeof SharpType = requireWebpackExternalDependency__MakeWebpackNotBundleIt('sharp');
+	const sharp: typeof SharpType = requireWebpackExternalDependencyMakeWebpackNotBundleIt('sharp');
 	const nodeFs: typeof NodeFsType = require('node:fs/promises');
 
 	const exportFunction = async (optimizedImageBuffer: Buffer, filepath: string) => {
@@ -451,9 +449,7 @@ async function optimizeImageAndWriteToDisk(
 	await optimizePictureSources(isDevelopmentMode, imageBuffer, pictureSources, exportFunction, getCacheFunction, setCacheFunction, sharp, imageFilenameToReport);
 }
 
-// biome-ignore lint/style/useNamingConvention: This is a hacky function. It's name reflects that.
-// biome-ignore lint/suspicious/noExplicitAny: This is the return value of the require function.
-function requireWebpackExternalDependency__MakeWebpackNotBundleIt(id: string): any {
+function requireWebpackExternalDependencyMakeWebpackNotBundleIt(id: string): any {
 	// biome-ignore lint/style/useNamingConvention:
 	// biome-ignore lint/security/noGlobalEval:
 	const originalNodejsRequire__NotAffectedByWebpackBuild = eval('require') as typeof require;

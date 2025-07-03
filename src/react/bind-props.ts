@@ -4,12 +4,9 @@ import { type ComponentProps, type FunctionComponent, createElement } from 'reac
  * Extract all of C’s keys except the ones from React.FC
  * (i.e. its "statics" only).
  */
-
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 type NonFCStatics<C> = Omit<C, keyof FunctionComponent<any>>;
 
 export function bindComponentProps<
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	ComponentT extends FunctionComponent<any>,
 	BoundProps extends Partial<ComponentProps<ComponentT>>,
 	BoundComponentT = FunctionComponent<Omit<ComponentProps<ComponentT>, keyof BoundProps>> & NonFCStatics<ComponentT>,
