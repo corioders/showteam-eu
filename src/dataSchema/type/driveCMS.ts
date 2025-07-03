@@ -3,114 +3,82 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import { TypedSymbolMap } from '@/datastructure/index.js';
+import type { MetadataBase, ObjectWithMetadata } from '@/datastructure/metadata.js';
 import { type DocMd, type DocResource, isDoc } from '@/driveCMS/docs.js';
 import { type FolderID, isFolder } from '@/driveCMS/drive.js';
 import { getImageDownloadURL, getPublicImageDownloadURL, isImage } from '@/driveCMS/image.js';
 import { downloadDocCorrectRevisionMarkdown, listFolder } from '@/driveCMS/index.js';
 import type { Resource } from '@/driveCMS/resource.js';
 import { type MarkdownDoc, parseMarkdownDocWithMetadata } from '@/format/markdown/index.js';
-import { type CountryISO2Code, isCountryISO2Code } from '@/internationalization/index.js';
+import type { CountryISO2Code } from '@/internationalization/index.js';
 import type { ImageURL } from '@/media/image/index.js';
-import { type FetchParserPromiseReturn, type FetchParserReturn, defineTypeAggregateFunction, defineTypeAggregateToSingleFunction, defineTypeFunction } from '../index.js';
-import { LanguageResourcePrefixParser, NoPrefix, type ResourcePrefixParser, getLanguagePrefix } from './driveCMSPrefix.js';
+import { type FetchParserFunction, type FetchParserReturn, defineTypeAggregateFunction, defineTypeAggregateToSingleFunction, defineTypeFunction } from '../index.js';
+import { LanguageResourcePrefixParser, type ResourcePrefixParser } from './driveCMSPrefix.js';
 
-export interface ResourceWithMetadata {
+// TODO: Make resource with metadata generic over the metadata.
+export type ResourceWithMetadata<Metadata extends MetadataBase> = {
 	resource: Resource;
-	metadata: TypedSymbolMap;
-}
+} & ObjectWithMetadata<Metadata>;
 
-export interface ResourceWithMetadataAndParent extends ResourceWithMetadata {
-	parent: ResourceWithMetadata;
-}
-
-function parseResourceMetadata(resources: Resource[], prefix: ResourcePrefixParser): ResourceWithMetadata[] {
-	const recourseWithMetadata: ResourceWithMetadata[] = [];
+function parseResourceMetadata<Metadata extends MetadataBase>(resources: Resource[], prefix: ResourcePrefixParser<Metadata>): ResourceWithMetadata<Metadata>[] {
+	const recourseWithMetadata: ResourceWithMetadata<Metadata>[] = [];
 
 	for (const resource of resources) {
-		const metadata = new TypedSymbolMap();
-		const newResourceName = prefix.parser(resource.name, metadata);
-		// Resource should not be matched
-		if (newResourceName === false) {
+		const prefixParserReturn = prefix.parser(resource.name);
+		if (!prefixParserReturn) {
 			continue;
 		}
 
 		recourseWithMetadata.push({
-			resource: { ...resource, name: newResourceName },
-			metadata,
+			resource: { ...resource, name: prefixParserReturn.newResourceName },
+			metadata: prefixParserReturn.metadata,
 		});
 	}
 
 	return recourseWithMetadata;
 }
 
-function copyResourceWithMetadata(resourceWithMetadata: ResourceWithMetadata): ResourceWithMetadata {
+function copyResourceWithMetadata<Metadata extends MetadataBase>(resourceWithMetadata: ResourceWithMetadata<Metadata>): ResourceWithMetadata<Metadata> {
 	return {
-		resource: resourceWithMetadata.resource,
-		metadata: resourceWithMetadata.metadata.copy(),
+		resource: { ...resourceWithMetadata.resource },
+		metadata: { ...resourceWithMetadata.metadata },
 	};
 }
 
-export interface GoogleDriveResourcePrefixUS {
-	prefix?: ResourcePrefixParser;
+export interface GoogleDriveResourcePrefixUserSpec<Metadata extends MetadataBase> {
+	prefix: ResourcePrefixParser<Metadata>;
 }
-export const typeGoogleDriveSingleResourcePrefix = defineTypeFunction<GoogleDriveResourcePrefixUS, ResourceWithMetadata, ResourceWithMetadata>(
-	function typeGoogleDriveResourcePrefix(us) {
-		return (resourceWithMetadata) => {
-			if (!us.prefix) {
-				return [resourceWithMetadata, null];
-			}
 
-			const newResourceName = us.prefix.parser(resourceWithMetadata.resource.name, resourceWithMetadata.metadata);
-			if (newResourceName === false) {
-				return [false, null];
-			}
+export const typeGoogleDriveSingleResourcePrefix = defineTypeFunction(function typeGoogleDriveResourcePrefix<Metadata extends MetadataBase>(
+	us: GoogleDriveResourcePrefixUserSpec<Metadata>,
+): FetchParserFunction<ResourceWithMetadata<any>, ResourceWithMetadata<Metadata>> {
+	return (resourceWithMetadata) => {
+		const prefixParserReturn = us.prefix.parser(resourceWithMetadata.resource.name);
+		if (!prefixParserReturn) {
+			return [false, null];
+		}
 
-			const newResourceWithMetadata: ResourceWithMetadata = {
-				...resourceWithMetadata,
-				resource: {
-					...resourceWithMetadata.resource,
-					name: newResourceName,
-				},
-			};
-
-			return [newResourceWithMetadata, null];
+		const newResourceWithMetadata: ResourceWithMetadata<Metadata> = {
+			...resourceWithMetadata,
+			resource: {
+				...resourceWithMetadata.resource,
+				name: prefixParserReturn.newResourceName,
+			},
+			metadata: prefixParserReturn.metadata,
 		};
-	},
-);
 
-// export const typeGoogleDriveResourcePrefix = defineTypeAggregateFunction<GoogleDriveResourcePrefixUS, ResourceWithMetadata, ResourceWithMetadata>(
-// 	() => true,
-// 	function typeGoogleDriveResourcePrefix(us) {
-// 		return async (resourcesWithMetadata) => {
-// 			const newResourcesWithMetadata: ResourceWithMetadata[] = []
-// 			for (const resourceWithMetadata of resourcesWithMetadata) {
-// 				const newResourceName = us.prefix.parser(resourceWithMetadata.resource.name, resourceWithMetadata.metadata)
-// 				if (newResourceName === false) {
-// 					continue
-// 				}
+		return [newResourceWithMetadata, null];
+	};
+});
 
-// 				const newResourceWithMetadata: ResourceWithMetadata = {
-// 					...resourceWithMetadata,
-// 					resource: {
-// 						...resourceWithMetadata.resource,
-// 						name: newResourceName
-// 					},
-// 				}
-
-// 				newResourcesWithMetadata.push(newResourceWithMetadata)
-// 			}
-
-// 			return [newResourcesWithMetadata, null];
-// 		};
-// 	}
-// );
-
-export interface GoogleDriveRootFolderUS {
-	childPrefix: ResourcePrefixParser;
+export interface GoogleDriveRootFolderUserSpec<Metadata extends MetadataBase> {
+	childPrefix: ResourcePrefixParser<Metadata>;
 	folderID: FolderID;
 }
-export const typeGoogleDriveRootFolder = defineTypeFunction<GoogleDriveRootFolderUS, void, ResourceWithMetadata[]>(function typeGoogleDriveRootFolder(us) {
+
+export const typeGoogleDriveRootFolder = defineTypeFunction(function typeGoogleDriveRootFolder<Metadata extends MetadataBase>(
+	us: GoogleDriveRootFolderUserSpec<Metadata>,
+): FetchParserFunction<void, ResourceWithMetadata<Metadata>[]> {
 	return async () => {
 		const [listFolderResult, listFolderError] = await listFolder(us.folderID);
 		if (listFolderError) {
@@ -123,20 +91,51 @@ export const typeGoogleDriveRootFolder = defineTypeFunction<GoogleDriveRootFolde
 	};
 });
 
-export interface GoogleDriveSingleFolderUS {
-	childPrefix?: ResourcePrefixParser;
+export interface GoogleDriveSingleFolderUserSpec<Metadata extends MetadataBase> {
+	childPrefix: ResourcePrefixParser<Metadata>;
 	name?: string;
 }
-export const typeGoogleDriveSingleFolder = defineTypeFunction<GoogleDriveSingleFolderUS, ResourceWithMetadata, ResourceWithMetadata[]>(
-	function typeGoogleDriveSingleFolder(us) {
-		return async (resourceWithMetadata) => {
+// GoogleDriveSingleFolderUserSpec, ResourceWithMetadata, ResourceWithMetadata[]
+export const typeGoogleDriveSingleFolder = defineTypeFunction(function typeGoogleDriveSingleFolder<Metadata extends MetadataBase>(
+	us: GoogleDriveSingleFolderUserSpec<Metadata>,
+): FetchParserFunction<ResourceWithMetadata<any>, ResourceWithMetadata<Metadata>[]> {
+	return async (resourceWithMetadata) => {
+		const resource = resourceWithMetadata.resource;
+		if (!isFolder(resource)) {
+			return [false, null];
+		}
+
+		if (us.name && resource.name !== us.name) {
+			return [false, null];
+		}
+
+		const [children, listError] = await listFolder(resource.id);
+		if (listError) {
+			return [null, listError];
+		}
+
+		const childrenWithMetadata = parseResourceMetadata(children, us.childPrefix);
+		return [childrenWithMetadata, null];
+	};
+});
+
+export interface GoogleDriveFolderUserSpec<Metadata extends MetadataBase> {
+	childPrefix: ResourcePrefixParser<Metadata>;
+}
+
+export type ResourceWithMetadataArrayParent<Metadata extends MetadataBase, ParentMetadata extends MetadataBase> = ResourceWithMetadata<Metadata>[] & {
+	parent: ResourceWithMetadata<ParentMetadata>;
+};
+export const typeGoogleDriveFolder = defineTypeAggregateFunction(function typeGoogleDriveFolder<Metadata extends MetadataBase, ParentMetadata extends MetadataBase>(
+	us: GoogleDriveFolderUserSpec<Metadata>,
+): FetchParserFunction<ResourceWithMetadata<ParentMetadata>[], ResourceWithMetadataArrayParent<Metadata, ParentMetadata>[]> {
+	return async (resourcesWithMetadata) => {
+		const childrenWithMetadataList: ResourceWithMetadataArrayParent<Metadata, ParentMetadata>[] = [];
+
+		for (const resourceWithMetadata of resourcesWithMetadata) {
 			const resource = resourceWithMetadata.resource;
 			if (!isFolder(resource)) {
-				return [false, null];
-			}
-
-			if (us.name && resource.name !== us.name) {
-				return [false, null];
+				continue;
 			}
 
 			const [children, listError] = await listFolder(resource.id);
@@ -144,54 +143,27 @@ export const typeGoogleDriveSingleFolder = defineTypeFunction<GoogleDriveSingleF
 				return [null, listError];
 			}
 
-			const prefix = us.childPrefix ?? NoPrefix();
+			const childrenWithMetadata = parseResourceMetadata(children, us.childPrefix) as ResourceWithMetadataArrayParent<Metadata, ParentMetadata>;
+			childrenWithMetadata.parent = resourceWithMetadata;
+			childrenWithMetadataList.push(childrenWithMetadata);
+		}
 
-			const childrenWithMetadata = parseResourceMetadata(children, prefix);
-			return [childrenWithMetadata, null];
-		};
-	},
-);
+		return [childrenWithMetadataList, null];
+	};
+});
 
-export interface GoogleDriveFolderUS {
-	childPrefix: ResourcePrefixParser;
-}
-export type ResourceWithMetadataArrayParent = ResourceWithMetadata[] & { parent: ResourceWithMetadata };
-export const typeGoogleDriveFolder = defineTypeAggregateFunction<GoogleDriveFolderUS, ResourceWithMetadata, ResourceWithMetadataArrayParent>(
-	function typeGoogleDriveFolder(us) {
-		return async (resourcesWithMetadata) => {
-			const childrenWithMetadataList: ResourceWithMetadataArrayParent[] = [];
-
-			for (const resourceWithMetadata of resourcesWithMetadata) {
-				const resource = resourceWithMetadata.resource;
-				if (!isFolder(resource)) {
-					continue;
-				}
-
-				const [children, listError] = await listFolder(resource.id);
-				if (listError) {
-					return [null, listError];
-				}
-
-				const childrenWithMetadata = parseResourceMetadata(children, us.childPrefix) as ResourceWithMetadataArrayParent;
-				childrenWithMetadata.parent = resourceWithMetadata;
-				childrenWithMetadataList.push(childrenWithMetadata);
-			}
-
-			return [childrenWithMetadataList, null];
-		};
-	},
-);
-
-export interface GoogleDriveImageUS extends GoogleDriveResourcePrefixUS {}
-export interface GoogleDriveImage {
+export interface GoogleDriveImageUserSpec<Metadata extends MetadataBase> extends GoogleDriveResourcePrefixUserSpec<Metadata> {}
+export interface GoogleDriveImage<Metadata extends MetadataBase> {
 	downloadURL: ImageURL;
-	resourceWithMetadata: ResourceWithMetadata;
+	resourceWithMetadata: ResourceWithMetadata<Metadata>;
 }
 
 /**
  * @deprecated please use typeGoogleDriveSingleImagePrivateURL
  */
-export const typeGoogleDriveSingleImage = defineTypeFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>(function typeGoogleDriveSingleImage(us) {
+export const typeGoogleDriveSingleImage = defineTypeFunction(function typeGoogleDriveSingleImage<Metadata extends MetadataBase>(
+	us: GoogleDriveImageUserSpec<Metadata>,
+): FetchParserFunction<ResourceWithMetadata<Metadata>, GoogleDriveImage<Metadata>> {
 	return async (resourceWithMetadata) => {
 		const resource = resourceWithMetadata.resource;
 		if (!isImage(resource)) {
@@ -206,7 +178,7 @@ export const typeGoogleDriveSingleImage = defineTypeFunction<GoogleDriveImageUS,
 			return [null, prefixError];
 		}
 
-		const image: GoogleDriveImage = {
+		const image: GoogleDriveImage<Metadata> = {
 			downloadURL: getPublicImageDownloadURL(resource.id),
 			resourceWithMetadata: newResourceWithMetadata,
 		};
@@ -215,38 +187,40 @@ export const typeGoogleDriveSingleImage = defineTypeFunction<GoogleDriveImageUS,
 	};
 });
 
-export const typeGoogleDriveSingleImagePrivateURL = defineTypeFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>(
-	function typeGoogleDriveSingleImagePrivateURL(us) {
-		return async (resourceWithMetadata) => {
-			const resource = resourceWithMetadata.resource;
-			if (!isImage(resource)) {
-				return [false, null];
-			}
+export const typeGoogleDriveSingleImagePrivateURL = defineTypeFunction(function typeGoogleDriveSingleImagePrivateURL<Metadata extends MetadataBase>(
+	us: GoogleDriveImageUserSpec<Metadata>,
+): FetchParserFunction<ResourceWithMetadata<Metadata>, GoogleDriveImage<Metadata>> {
+	return async (resourceWithMetadata) => {
+		const resource = resourceWithMetadata.resource;
+		if (!isImage(resource)) {
+			return [false, null];
+		}
 
-			const [newResourceWithMetadata, prefixError] = await typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
-			if (newResourceWithMetadata === false) {
-				return [false, null];
-			}
-			if (prefixError) {
-				return [null, prefixError];
-			}
+		const [newResourceWithMetadata, prefixError] = await typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
+		if (newResourceWithMetadata === false) {
+			return [false, null];
+		}
+		if (prefixError) {
+			return [null, prefixError];
+		}
 
-			const image: GoogleDriveImage = {
-				downloadURL: getImageDownloadURL(resource.id),
-				resourceWithMetadata: newResourceWithMetadata,
-			};
-
-			return [image, null];
+		const image: GoogleDriveImage<Metadata> = {
+			downloadURL: getImageDownloadURL(resource.id),
+			resourceWithMetadata: newResourceWithMetadata,
 		};
-	},
-);
+
+		return [image, null];
+	};
+});
 
 /**
  * @deprecated please use typeGoogleDriveImagesPrivateURL
  */
-export const typeGoogleDriveImages = defineTypeAggregateFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>(function typeGoogleDriveImages(us) {
+export const typeGoogleDriveImages = defineTypeAggregateFunction(function typeGoogleDriveImages<Metadata extends MetadataBase>(
+	us: GoogleDriveImageUserSpec<Metadata>,
+): FetchParserFunction<ResourceWithMetadata<Metadata>[], GoogleDriveImage<Metadata>[]> {
 	return async (resourcesWithMetadata) => {
-		const images: GoogleDriveImage[] = [];
+		const images: GoogleDriveImage<Metadata>[] = [];
 
 		for (const resourceWithMetadata of resourcesWithMetadata) {
 			const resource = resourceWithMetadata.resource;
@@ -262,7 +236,7 @@ export const typeGoogleDriveImages = defineTypeAggregateFunction<GoogleDriveImag
 				continue;
 			}
 
-			const image: GoogleDriveImage = {
+			const image: GoogleDriveImage<Metadata> = {
 				downloadURL: getPublicImageDownloadURL(resource.id),
 				resourceWithMetadata: newResourceWithMetadata,
 			};
@@ -273,42 +247,44 @@ export const typeGoogleDriveImages = defineTypeAggregateFunction<GoogleDriveImag
 	};
 });
 
-export const typeGoogleDriveImagesPrivateURL = defineTypeAggregateFunction<GoogleDriveImageUS, ResourceWithMetadata, GoogleDriveImage>(
-	function typeGoogleDriveImagesPrivateURL(us) {
-		return async (resourcesWithMetadata) => {
-			const images: GoogleDriveImage[] = [];
+export const typeGoogleDriveImagesPrivateURL = defineTypeAggregateFunction(function typeGoogleDriveImagesPrivateURL<Metadata extends MetadataBase>(
+	us: GoogleDriveImageUserSpec<Metadata>,
+): FetchParserFunction<ResourceWithMetadata<Metadata>[], GoogleDriveImage<Metadata>[]> {
+	return async (resourcesWithMetadata) => {
+		const images: GoogleDriveImage<Metadata>[] = [];
 
-			for (const resourceWithMetadata of resourcesWithMetadata) {
-				const resource = resourceWithMetadata.resource;
-				if (!isImage(resource)) {
-					continue;
-				}
-
-				const [newResourceWithMetadata, prefixError] = await typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
-				if (newResourceWithMetadata === false) {
-					continue;
-				}
-				if (prefixError) {
-					continue;
-				}
-
-				const image: GoogleDriveImage = {
-					downloadURL: getImageDownloadURL(resource.id),
-					resourceWithMetadata: newResourceWithMetadata,
-				};
-				images.push(image);
+		for (const resourceWithMetadata of resourcesWithMetadata) {
+			const resource = resourceWithMetadata.resource;
+			if (!isImage(resource)) {
+				continue;
 			}
 
-			return [images, null];
-		};
-	},
-);
+			const [newResourceWithMetadata, prefixError] = await typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
+			if (newResourceWithMetadata === false) {
+				continue;
+			}
+			if (prefixError) {
+				continue;
+			}
 
-export interface GoogleDriveSingleDocUS extends GoogleDriveResourcePrefixUS {
+			const image: GoogleDriveImage<Metadata> = {
+				downloadURL: getImageDownloadURL(resource.id),
+				resourceWithMetadata: newResourceWithMetadata,
+			};
+			images.push(image);
+		}
+
+		return [images, null];
+	};
+});
+
+export interface GoogleDriveSingleDocUserSpec<Metadata extends MetadataBase> extends GoogleDriveResourcePrefixUserSpec<Metadata> {
 	documentName?: string;
 }
-export const typeGoogleDriveSingleDoc = defineTypeFunction<GoogleDriveSingleDocUS, ResourceWithMetadata, DocMd>(function typeGoogleDriveSingleDoc(us) {
-	return async (resourceWithMetadata): FetchParserPromiseReturn<DocMd> => {
+export const typeGoogleDriveSingleDoc = defineTypeFunction(function typeGoogleDriveSingleDoc<Metadata extends MetadataBase>(
+	us: GoogleDriveSingleDocUserSpec<Metadata>,
+): FetchParserFunction<ResourceWithMetadata<Metadata>, DocMd> {
+	return async (resourceWithMetadata) => {
 		const resource = resourceWithMetadata.resource;
 		if (!isDoc(resource)) {
 			return [false, null];
@@ -337,28 +313,26 @@ export const typeGoogleDriveSingleDoc = defineTypeFunction<GoogleDriveSingleDocU
 	};
 });
 
-export interface GoogleDriveInternationalizedDocUS extends GoogleDriveResourcePrefixUS {
+export interface GoogleDriveInternationalizedDocUserSpec<Metadata extends MetadataBase> extends GoogleDriveResourcePrefixUserSpec<Metadata> {
 	documentName?: string;
 }
+
+export interface GoogleDriveInternationalizedDocRuntimeArguments {
+	lang: CountryISO2Code;
+}
+
 export interface GoogleDriveInternationalizedDocMd {
 	doc: DocMd;
 	resource: DocResource;
 }
 
-export interface GoogleDriveInternationalizedDocRA {
-	lang: CountryISO2Code;
-}
-
-export const typeGoogleDriveInternationalizedDoc = defineTypeAggregateToSingleFunction<
-	GoogleDriveInternationalizedDocUS,
-	ResourceWithMetadata,
-	GoogleDriveInternationalizedDocMd,
-	GoogleDriveInternationalizedDocRA
->(function typeGoogleDriveInternationalizedDoc(us) {
+export const typeGoogleDriveInternationalizedDoc = defineTypeAggregateToSingleFunction(function typeGoogleDriveInternationalizedDoc<Metadata extends MetadataBase>(
+	us: GoogleDriveInternationalizedDocUserSpec<Metadata>,
+): FetchParserFunction<ResourceWithMetadata<Metadata>[], GoogleDriveInternationalizedDocMd, GoogleDriveInternationalizedDocRuntimeArguments> {
 	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
 	return async (resourcesWithMetadata, runtimeArguments) => {
 		let defaultInternationalizeDocMd: GoogleDriveInternationalizedDocMd | null = null;
-		let intlDoc: GoogleDriveInternationalizedDocMd | null = null;
+		let selectedIntlDoc: GoogleDriveInternationalizedDocMd | null = null;
 
 		for (const resourceWithMetadataNotLocal of resourcesWithMetadata) {
 			const resourceWithMetadata = copyResourceWithMetadata(resourceWithMetadataNotLocal);
@@ -375,13 +349,6 @@ export const typeGoogleDriveInternationalizedDoc = defineTypeAggregateToSingleFu
 				continue;
 			}
 
-			const docMaybeIntlResource = getMaybeInternationalizedResource(userPrefixedResourceWithMetadata);
-			if (us.documentName) {
-				if (docMaybeIntlResource.resource.name !== us.documentName) {
-					continue;
-				}
-			}
-
 			const [docMarkdown, downloadError] = await downloadDocCorrectRevisionMarkdown(resource.id);
 			if (downloadError) {
 				return [null, downloadError];
@@ -394,18 +361,22 @@ export const typeGoogleDriveInternationalizedDoc = defineTypeAggregateToSingleFu
 				};
 			}
 
-			const langPrefix = getLanguagePrefix(docMaybeIntlResource.metadata);
-			if (langPrefix) {
-				if (!isCountryISO2Code(langPrefix)) {
-					return [null, new Error(`Language prefix: ${langPrefix} is not a CountryISO2Code`)];
-				}
+			const [intlDoc, intlDocError] = await typeGoogleDriveSingleResourcePrefix({ prefix: LanguageResourcePrefixParser })(userPrefixedResourceWithMetadata);
+			if (intlDocError) {
+				return [null, intlDocError];
+			}
 
-				if (langPrefix === runtimeArguments.lang) {
-					intlDoc = {
-						doc: docMarkdown,
-						resource: resource,
-					};
-				}
+			if (!intlDoc) {
+				continue;
+			}
+
+			if (intlDoc.metadata.countryCodeDS === runtimeArguments.lang) {
+				selectedIntlDoc = {
+					doc: docMarkdown,
+					resource: resource,
+				};
+
+				return [selectedIntlDoc, null];
 			}
 		}
 
@@ -413,25 +384,13 @@ export const typeGoogleDriveInternationalizedDoc = defineTypeAggregateToSingleFu
 			return [false, null];
 		}
 
-		if (!intlDoc) {
+		if (!selectedIntlDoc) {
 			return [defaultInternationalizeDocMd, null];
 		}
 
-		return [intlDoc, null];
+		return [selectedIntlDoc, null];
 	};
 });
-
-function getMaybeInternationalizedResource(resourceWithMetadata: ResourceWithMetadata): ResourceWithMetadata {
-	// TODO: Remove this as, make types smarter
-	const [langPrefixedRecourseWithMetadata, _languagePrefixError] = typeGoogleDriveSingleResourcePrefix({ prefix: LanguageResourcePrefixParser })(
-		resourceWithMetadata,
-	) as Awaited<ReturnType<ReturnType<typeof typeGoogleDriveSingleResourcePrefix>>>;
-	if (langPrefixedRecourseWithMetadata) {
-		return langPrefixedRecourseWithMetadata;
-	}
-
-	return resourceWithMetadata;
-}
 
 // biome-ignore lint/complexity/noBannedTypes: This type is required
 export type GoogleDriveDocWithMetadataUS = {};

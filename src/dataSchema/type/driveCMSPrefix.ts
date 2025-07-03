@@ -3,54 +3,83 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import { type TypedSymbolMap, newTypedSymbol } from '@/datastructure/index.js';
+import type { MetadataBase, ObjectWithMetadata } from '@/datastructure/metadata.js';
+
 import { GOOGLE_DRIVE_PUBLIC_PREFIX } from '@/driveCMS/const.js';
-import { isASCII } from '@/string/index.js';
+import { isCountryISO2Code, standardizeCountryISO2Code } from '@/internationalization/index.js';
+import type { EmptyObject, PrettifyHardcore, UnionToIntersection } from '@/type/index.js';
+import type { LanguageMetadata, OrderMetadata } from '../metadata/index.js';
+
+export type ResourcePrefixParserFunctionReturn<Metadata extends MetadataBase> =
+	| ({
+			newResourceName: string;
+	  } & ObjectWithMetadata<Metadata>)
+	| false;
 
 // ParseResourcePrefixFunction parses resourceName and returns resourceName without prefix
 // If ParseResourcePrefixFunction returns false, this means that the resourceName does not satisfy the prefix
-export type ResourcePrefixParserFunction = (resourceName: string, metadata: TypedSymbolMap) => string | false;
-export interface ResourcePrefixParser {
+export type ResourcePrefixParserFunction<Metadata extends MetadataBase> = (resourceName: string) => ResourcePrefixParserFunctionReturn<Metadata>;
+
+export interface ResourcePrefixParser<Metadata extends MetadataBase> {
 	// 	userErrorPrefixTemplate is a string provided in an error when the prefix does not match.
 	userErrorPrefixTemplate: string;
 	userErrorMessage?: string;
-	parser: ResourcePrefixParserFunction;
+	parser: ResourcePrefixParserFunction<Metadata>;
 }
 
-export function MergeResourcePrefixParser(parsers: ResourcePrefixParser[]): ResourcePrefixParser {
+type ExtractMetadata<T extends ResourcePrefixParser<any>> = T extends ResourcePrefixParser<infer Metadata> ? Metadata : never;
+type MergeMetadataInternal<ResourcePrefixParsers extends ResourcePrefixParser<any>[]> = PrettifyHardcore<
+	UnionToIntersection<ExtractMetadata<ResourcePrefixParsers[number]>>
+>;
+type MergeMetadata<ResourcePrefixParsers extends ResourcePrefixParser<any>[]> = MergeMetadataInternal<ResourcePrefixParsers> extends MetadataBase
+	? MergeMetadataInternal<ResourcePrefixParsers>
+	: never;
+
+// TODO: Merge metadata
+export function MergeResourcePrefixParser<ResourcePrefixParsers extends ResourcePrefixParser<any>[], MergedMetadata extends MergeMetadata<ResourcePrefixParsers>>(
+	parsers: ResourcePrefixParsers,
+): ResourcePrefixParser<MergedMetadata> {
 	return {
 		userErrorPrefixTemplate: parsers.map((x) => x.userErrorPrefixTemplate).join(' '),
 		userErrorMessage: parsers.map((x) => x.userErrorMessage).join('\n'),
-		parser: (resourceName: string, metadata: TypedSymbolMap) => {
-			let parsed = resourceName;
+		parser: (resourceName: string) => {
+			let runningResourceName = resourceName;
+
+			const mergedMetadata: MetadataBase = {};
 			for (const parser of parsers) {
-				const parserOutput = parser.parser(parsed, metadata);
-				if (!parserOutput) {
+				const parserReturn = parser.parser(runningResourceName);
+				if (!parserReturn) {
 					return false;
 				}
-				parsed = parserOutput;
+
+				runningResourceName = parserReturn.newResourceName;
+
+				for (const [metadataKey, metadataValue] of Object.entries(parserReturn.metadata)) {
+					if (mergedMetadata[metadataKey]) {
+						throw new Error('Someone used the same key on the metadata object. Metadata object MUST use unique keys!');
+					}
+
+					mergedMetadata[metadataKey] = metadataValue;
+				}
 			}
-			return parsed;
+
+			return {
+				newResourceName: runningResourceName,
+				metadata: mergedMetadata as MergedMetadata,
+			};
 		},
 	};
 }
 
-export function NoPrefix(): ResourcePrefixParser {
-	return {
-		userErrorPrefixTemplate: 'no prefix required ',
-		userErrorMessage: 'no prefix required',
-		parser: (resourceName: string, _metadata: TypedSymbolMap) => {
-			return resourceName;
-		},
-	};
-}
-
-export function StringResourcePrefixParserFactory(prefix: string): ResourcePrefixParser {
+export function StringResourcePrefixParserFactory(prefix: string): ResourcePrefixParser<EmptyObject> {
 	return {
 		userErrorPrefixTemplate: prefix,
-		parser: (resourceName: string, _: TypedSymbolMap) => {
+		parser: (resourceName: string) => {
 			if (resourceName.startsWith(prefix)) {
-				return resourceName.replace(prefix, '').trim();
+				return {
+					newResourceName: resourceName.replace(prefix, '').trim(),
+					metadata: {},
+				};
 			}
 
 			return false;
@@ -58,53 +87,56 @@ export function StringResourcePrefixParserFactory(prefix: string): ResourcePrefi
 	};
 }
 
-export type LanguagePrefix = string & { __tagLanguagePrefix: symbol };
-const LANGUAGE_METADATA_KEY = newTypedSymbol<LanguagePrefix>('LANGUAGE_METADATA_KEY');
-export function getLanguagePrefix(resourceMetadata: TypedSymbolMap): LanguagePrefix | null {
-	return resourceMetadata.getEntry(LANGUAGE_METADATA_KEY);
-}
+export const NoPrefix: ResourcePrefixParser<EmptyObject> = {
+	userErrorPrefixTemplate: 'no prefix required ',
+	userErrorMessage: 'no prefix required',
+	parser: (resourceName: string) => {
+		return { newResourceName: resourceName, metadata: {} };
+	},
+};
 
-export const LanguageResourcePrefixParser: ResourcePrefixParser = {
+export const LanguageResourcePrefixParser: ResourcePrefixParser<LanguageMetadata> = {
 	userErrorPrefixTemplate: 'XX',
 	userErrorMessage: 'Where XX is a 2 letter country code',
-	parser: (resourceName: string, metadata: TypedSymbolMap) => {
+	parser: (resourceName: string) => {
 		if (resourceName.length < 2) {
 			return false;
 		}
 
-		const prefix = resourceName.slice(0, 2);
-		if (!isASCII(prefix)) {
+		const countryPrefix = resourceName.slice(0, 2).toLocaleLowerCase();
+		const newResourceName = resourceName.slice(2, resourceName.length).trim();
+		if (!isCountryISO2Code(countryPrefix)) {
 			return false;
 		}
 
-		const languagePrefix = prefix.toLowerCase() as LanguagePrefix;
-		const setError = metadata.setEntry(LANGUAGE_METADATA_KEY, languagePrefix);
-		if (setError) {
-			console.error(setError);
-			return false;
-		}
-
-		return resourceName.replace(prefix, '').trim();
+		return {
+			newResourceName,
+			metadata: {
+				countryCodeDS: standardizeCountryISO2Code(countryPrefix),
+			},
+		};
 	},
 };
 
-export type OrderingPrefix = string & { __tagLanguage: symbol };
-const ORDER_METADATA_KEY = newTypedSymbol<number>('ORDER_METADATA_KEY');
-export const OrderResourcePrefixParser: ResourcePrefixParser = {
+export const OrderResourcePrefixParser: ResourcePrefixParser<OrderMetadata> = {
 	userErrorPrefixTemplate: 'NN',
 	userErrorMessage: 'Where NN is a number. Note that this number can be of any length, but must be positive.',
-	parser: (resourceName: string, metadata: TypedSymbolMap) => {
+	parser: (resourceName: string) => {
 		const prefixEnd = resourceName.indexOf(' ');
 
 		const prefix = resourceName.slice(0, prefixEnd);
+		const newResourceName = resourceName.slice(prefix.length, resourceName.length).trim();
 		const orderingNumber = Number(prefix);
 		if (Number.isNaN(orderingNumber)) {
 			return false;
 		}
 
-		metadata.setEntry(ORDER_METADATA_KEY, orderingNumber);
-
-		return resourceName.replace(prefix, '').trim();
+		return {
+			newResourceName,
+			metadata: {
+				orderNumberDS: orderingNumber,
+			},
+		};
 	},
 };
 

@@ -4,15 +4,22 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
 import { type ErrorReturn, type ErrorReturnPromise, UnreachableErrorMessage } from '@/error/index.js';
-import type { Flatten, UnionToIntersection } from '@/type/index.js';
+import type { EmptyObject, Flatten, PrettifyHardcore, UnionToIntersection } from '@/type/index.js';
 
-export type FetchParserPromiseReturn<FPR> = ErrorReturnPromise<FPR | false>;
-export type FetchParserReturn<FPR> = ErrorReturn<FPR | false>;
+export type FetchParserPromiseReturn<FPR, _ProducesAggregateObject> = ErrorReturnPromise<FPR | false>;
+export type FetchParserReturn<FPR, _ProducesAggregateObject = unknown> = ErrorReturn<FPR | false>;
 
-type FetchParserFunction<pFPR, FPR, RA> = RA extends undefined
-	? (parentFetchParserReturn: pFPR) => FetchParserReturn<FPR> | FetchParserPromiseReturn<FPR>
-	: (parentFetchParserReturn: pFPR, runtimeArguments: RA) => FetchParserReturn<FPR> | FetchParserPromiseReturn<FPR>;
-export type TypeFunction<US, pFPR, FPR, RA, _ProducesAggregateObject> = (userSpecification: US) => FetchParserFunction<pFPR, FPR, RA>;
+export type GetFetchFetchParserReturnThatIsPassedToTheNextOne<FPF> = FPF extends FetchParserReturn<infer FPR, infer ProducesAggregateObject>
+	? ProducesAggregateObject extends true
+		? Flatten<FPR>
+		: FPR
+	: never;
+
+export type FetchParserFunction<pFPR, FPR, RA = EmptyObject, _ProducesAggregateObject = unknown> = RA extends EmptyObject
+	? (parentFetchParserReturn: pFPR) => FetchParserReturn<FPR, _ProducesAggregateObject> | FetchParserPromiseReturn<FPR, _ProducesAggregateObject>
+	: (parentFetchParserReturn: pFPR, runtimeArguments: RA) => FetchParserReturn<FPR, _ProducesAggregateObject> | FetchParserPromiseReturn<FPR, _ProducesAggregateObject>;
+
+export type TypeFunction<US, pFPR, FPR, RA, _ProducesAggregateObject> = (userSpecification: US) => FetchParserFunction<pFPR, FPR, RA, _ProducesAggregateObject>;
 export type GetTypeFunctionReturnThatIsPassedToTheNextOne<TF> = TF extends TypeFunction<any, any, infer FPR, any, infer ProducesAggregateObject>
 	? ProducesAggregateObject extends true
 		? Flatten<FPR>
@@ -20,16 +27,11 @@ export type GetTypeFunctionReturnThatIsPassedToTheNextOne<TF> = TF extends TypeF
 	: never;
 
 // TODO: Make the types of the noop function work.
-export const typeNoopFunction = defineTypeFunction<any, any, any>((_us: any) => {
-	const noopFunction = () => {
-		throw new Error(UnreachableErrorMessage('Noop function called. The logic inside fetchAndParseInternal handles noop function'));
-	};
-	return noopFunction;
-});
+export const noopFunction = function noopFunction() {
+	throw new Error(UnreachableErrorMessage('Noop function called. The logic inside fetchAndParseInternal handles noop function'));
+};
 
-export function defineTypeFunction<US, pFPR, FPR, RA = undefined, TF extends TypeFunction<US, pFPR, FPR, RA, false> = TypeFunction<US, pFPR, FPR, RA, false>>(
-	tf: TF,
-): TF {
+export function defineTypeFunction<US, pFPR, FPR, RA = EmptyObject>(tf: TypeFunction<US, pFPR, FPR, RA, false>): TypeFunction<US, pFPR, FPR, RA, false> {
 	return tf;
 }
 
@@ -38,59 +40,59 @@ interface AggregateFunctionOptions {
 	produceAggregateObjet: boolean;
 }
 
-export function defineTypeAggregateFunction<
-	US,
-	pFPR,
-	FPR,
-	RA = undefined,
-	TF extends TypeFunction<US, pFPR[], FPR[], RA, true> = TypeFunction<US, pFPR[], FPR[], RA, true>,
->(tf: TF): TypeFunction<US, pFPR, FPR, RA, true> {
-	const modifiedTF = tf as TF & AggregateFunctionOptions;
-	modifiedTF.isAggregate = true;
-	modifiedTF.produceAggregateObjet = true;
+export function defineTypeAggregateFunction<US, pFPR, FPR, RA = EmptyObject>(tf: TypeFunction<US, pFPR[], FPR[], RA, true>): TypeFunction<US, pFPR, FPR, RA, true> {
+	const modifiedTF = function (this: unknown, us: US) {
+		const fetchParserFunction = tf.apply(this, [us]);
+		const fetchParserFunctionWithAggregateOptions = fetchParserFunction as typeof fetchParserFunction & AggregateFunctionOptions;
+		fetchParserFunctionWithAggregateOptions.isAggregate = true;
+		fetchParserFunctionWithAggregateOptions.produceAggregateObjet = true;
+		return fetchParserFunctionWithAggregateOptions;
+	};
+
 	// Okay this is sort of hacky. But DSD does not need to know the *real* return types of the aggregate function.
 	// It's easier to pretend it's a normal function, because indeed the transformation is handled during runtime. Invisible to user.
 	return modifiedTF as unknown as TypeFunction<US, pFPR, FPR, RA, true>;
 }
 
-export function defineTypeAggregateToSingleFunction<
-	US,
-	pFPR,
-	FPR,
-	RA = undefined,
-	TF extends TypeFunction<US, pFPR[], FPR, RA, false> = TypeFunction<US, pFPR[], FPR, RA, false>,
->(tf: TF): TypeFunction<US, pFPR, FPR, RA, false> {
-	const modifiedTF = tf as TF & AggregateFunctionOptions;
-	modifiedTF.isAggregate = true;
-	modifiedTF.produceAggregateObjet = false;
+export function defineTypeAggregateToSingleFunction<US, pFPR, FPR, RA = EmptyObject>(
+	tf: TypeFunction<US, pFPR[], FPR, RA, false>,
+): TypeFunction<US, pFPR, FPR, RA, false> {
+	const modifiedTF = function (this: unknown, us: US) {
+		const fetchParserFunction = tf.apply(this, [us]);
+		const fetchParserFunctionWithAggregateOptions = fetchParserFunction as typeof fetchParserFunction & AggregateFunctionOptions;
+		fetchParserFunctionWithAggregateOptions.isAggregate = true;
+		fetchParserFunctionWithAggregateOptions.produceAggregateObjet = false;
+		return fetchParserFunctionWithAggregateOptions;
+	};
+
 	// Okay this is sort of hacky. But DSD does not need to know the *real* return types of the aggregate function.
 	// It's easier to pretend it's a normal function, because indeed the transformation is handled during runtime. Invisible to user.
 	return modifiedTF as TypeFunction<US, pFPR, FPR, RA, false>;
 }
 
-type DataSchemaDefinition<T extends Record<string, Record<string, any>>, pFPR> = {
+export type DataSchemaDefinition<T extends Record<string, Record<string, any>>, pFPR> = {
 	[K in keyof T]: DataSchemaDefinitionNode<T[K], pFPR>;
 };
-type DataSchemaDefinitionNode<T, pFPR> = T extends {
-	type: TypeFunction<infer US, pFPR, infer FPR, any, any>;
+export type DataSchemaDefinitionNode<T, pFPR> = T extends {
+	type: FetchParserFunction<pFPR, infer FPR, any, any>;
 	optional?: boolean;
 	pipe?: infer PType;
 }
 	? {
-			type: TypeFunction<US, pFPR, FPR, any, any>;
+			type: FetchParserFunction<pFPR, FPR, any, any>;
 			optional?: boolean;
-			pipe?: PType extends Record<string, Record<string, any>> ? DataSchemaDefinition<PType, GetTypeFunctionReturnThatIsPassedToTheNextOne<FPR>> : never;
-		} & US
+			pipe?: PType extends Record<string, Record<string, any>> ? DataSchemaDefinition<PType, GetFetchFetchParserReturnThatIsPassedToTheNextOne<FPR>> : never;
+		}
 	: {
-			type: TypeFunction<any, pFPR, any, any, any>;
+			type: FetchParserFunction<pFPR, any, any, any>;
 			optional?: boolean;
 			pipe?: unknown;
 		};
 
-type ExtractRuntimeArgumentsFromFetchParse<T> = T extends TypeFunction<any, any, any, infer RA, any> ? RA : never;
+type ExtractRuntimeArgumentsFromFetchParserFunction<FPF> = FPF extends FetchParserFunction<any, any, infer RA, any> ? RA : never;
 type ExtractRuntimeArgumentsFromDSDn<DSDn> = DSDn extends DataSchemaDefinitionNode<any, any>
 	? // biome-ignore lint/complexity/noBannedTypes: Using {} is required for this type to work properly
-		(ExtractRuntimeArgumentsFromFetchParse<DSDn['type']> extends undefined ? {} : ExtractRuntimeArgumentsFromFetchParse<DSDn['type']>) &
+		(ExtractRuntimeArgumentsFromFetchParserFunction<DSDn['type']> extends undefined ? {} : ExtractRuntimeArgumentsFromFetchParserFunction<DSDn['type']>) &
 			// biome-ignore lint/complexity/noBannedTypes: Using {} is required for this type to work properly
 			(DSDn['pipe'] extends DataSchemaDefinition<any, any> ? ExtractRuntimeArgumentsFromDSD<DSDn['pipe']> : {})
 	: never;
@@ -106,13 +108,15 @@ export function defineDataSchemaNode<const T extends Record<string, any>>(dsd: T
 	return dsd;
 }
 
-export type DataSchema<T extends DataSchemaDefinition<T, any>> = {
-	[K in keyof T as T[K] extends { optional: true } ? never : K]: DataSchemaNode<T[K]>;
-} & {
-	[K in keyof T as T[K] extends { optional: true } ? K : never]?: DataSchemaNode<T[K]>;
-};
+export type DataSchema<T extends DataSchemaDefinition<T, any>> = PrettifyHardcore<
+	{
+		[K in keyof T as T[K] extends { optional: true } ? never : K]: PrettifyHardcore<DataSchemaNode<T[K]>>;
+	} & {
+		[K in keyof T as T[K] extends { optional: true } ? K : never]?: PrettifyHardcore<DataSchemaNode<T[K]>>;
+	}
+>;
 
-export type DataSchemaNode<T> = T extends { type: TypeFunction<any, infer pFPR, infer FPR, infer _RA, infer ProducesAggregateObject>; pipe?: infer PType }
+export type DataSchemaNode<T> = T extends { type: FetchParserFunction<infer pFPR, infer FPR, any, infer ProducesAggregateObject>; pipe?: infer PType }
 	? ProducesAggregateObject extends false
 		? {
 				dataUsed: pFPR;
@@ -131,13 +135,22 @@ export type DataSchemaNode<T> = T extends { type: TypeFunction<any, infer pFPR, 
 			}
 	: never;
 
-export async function fetchAndParse<const T extends DataSchemaDefinition<T, any>>(
+type IsEmptyObject<T> = keyof T extends never ? true : false;
+
+export function fetchAndParse<T extends DataSchemaDefinition<T, any>>(dsd: T, runtimeArguments: ExtractRuntimeArgumentsFromDSD<T>): ErrorReturnPromise<DataSchema<T>>;
+
+export function fetchAndParse<T extends DataSchemaDefinition<T, any>>(
 	dsd: T,
-	runtimeArguments: ExtractRuntimeArgumentsFromDSD<T>,
+): IsEmptyObject<ExtractRuntimeArgumentsFromDSD<T>> extends true ? ErrorReturnPromise<DataSchema<T>> : never;
+
+export async function fetchAndParse<T extends DataSchemaDefinition<T, any>>(
+	dsd: T,
+	runtimeArguments?: ExtractRuntimeArgumentsFromDSD<T>,
 ): ErrorReturnPromise<DataSchema<T>> {
 	const currentPipe = dsd;
 	const currentResult = {};
-	const error = await fetchAndParseInternal(runtimeArguments as Record<string, unknown>, currentPipe, currentResult, [null, null], '');
+	const runtimeArgs = (runtimeArguments ?? {}) as Record<string, unknown>;
+	const error = await fetchAndParseInternal(runtimeArgs, currentPipe, currentResult, [null, null], '');
 	if (error) {
 		return [null, error];
 	}
@@ -157,13 +170,10 @@ async function fetchAndParseInternal(
 	const [parentFetchParserReturn, parentFetchParserError] = parentFetchParserErrorReturn;
 
 	for (const pipeName of pipeNames) {
-		const entry = currentPipe[pipeName] as { type: TypeFunction<any, any, any, any, any> & Partial<AggregateFunctionOptions>; optional?: boolean; pipe?: any };
+		const entry = currentPipe[pipeName] as { type: FetchParserFunction<any, any, any, any> & Partial<AggregateFunctionOptions>; optional?: boolean; pipe?: any };
 		const entryDebugPath = `${currentDebugPath} > ${pipeName}`;
 
-		const typeFactoryFunction = entry.type;
-
-		// To be more specific it should be entry without the `pipe`
-		const userSpecification = entry;
+		const fetchParser = entry.type;
 
 		// When a resultEntry has been created it means that this entry has been processed.
 		// One entry can be processed once.
@@ -176,7 +186,7 @@ async function fetchAndParseInternal(
 
 		let fetchParserReturn: any = null;
 		let fetchParserError: any = null;
-		if (typeFactoryFunction === typeNoopFunction) {
+		if (fetchParser === noopFunction) {
 			fetchParserReturn = parentFetchParserReturn;
 			fetchParserError = parentFetchParserError;
 
@@ -188,54 +198,50 @@ async function fetchAndParseInternal(
 
 			// We want to preserve this error.
 			resultEntryProcessed = true;
-		} else {
-			const fetchParser = typeFactoryFunction(userSpecification);
+		} else if (fetchParser.isAggregate) {
+			// ==================================================
+			// Aggregation support
+			const aggregateArguments = Array.isArray(parentFetchParserReturn) ? parentFetchParserReturn : [parentFetchParserReturn];
 
-			if (typeFactoryFunction.isAggregate) {
-				// ==================================================
-				// Aggregation support
-				const aggregateArguments = Array.isArray(parentFetchParserReturn) ? parentFetchParserReturn : [parentFetchParserReturn];
-
-				resultEntry['dataUsed'] = aggregateArguments;
-				[fetchParserReturn, fetchParserError] = await fetchParser(aggregateArguments, runtimeArguments);
-				if (fetchParserReturn === false) {
-					resultEntryProcessed = false;
-				}
-				// ==================================================
-			} else if (Array.isArray(parentFetchParserReturn)) {
-				// ==================================================
-				// Our parent returned an array. We process exactly one item from it.
-				let isProcessed = false;
-				for (const parentFetchParserReturnItem of parentFetchParserReturn) {
-					const [localFetchParserReturn, localFetchParserError] = await fetchParser(parentFetchParserReturnItem, runtimeArguments);
-					if (localFetchParserReturn === false) {
-						continue;
-					}
-
-					if (isProcessed === true) {
-						throw new Error(`Fetch parser tried processing more than one array entry from it's parent. Debug path: ${entryDebugPath}`);
-					}
-
-					isProcessed = true;
-					resultEntry['dataUsed'] = parentFetchParserReturnItem;
-					fetchParserReturn = localFetchParserReturn;
-					fetchParserError = localFetchParserError;
-				}
-
-				if (isProcessed === false) {
-					resultEntryProcessed = false;
-				}
-				// ==================================================
-			} else {
-				// ==================================================
-				// Our parent returned single element.
-				resultEntry['dataUsed'] = parentFetchParserReturn;
-				[fetchParserReturn, fetchParserError] = await fetchParser(parentFetchParserReturn, runtimeArguments);
-				if (fetchParserReturn === false) {
-					resultEntryProcessed = false;
-				}
-				// ==================================================
+			resultEntry['dataUsed'] = aggregateArguments;
+			[fetchParserReturn, fetchParserError] = await fetchParser(aggregateArguments, runtimeArguments);
+			if (fetchParserReturn === false) {
+				resultEntryProcessed = false;
 			}
+			// ==================================================
+		} else if (Array.isArray(parentFetchParserReturn)) {
+			// ==================================================
+			// Our parent returned an array. We process exactly one item from it.
+			let isProcessed = false;
+			for (const parentFetchParserReturnItem of parentFetchParserReturn) {
+				const [localFetchParserReturn, localFetchParserError] = await fetchParser(parentFetchParserReturnItem, runtimeArguments);
+				if (localFetchParserReturn === false) {
+					continue;
+				}
+
+				if (isProcessed === true) {
+					throw new Error(`Fetch parser tried processing more than one array entry from it's parent. Debug path: ${entryDebugPath}`);
+				}
+
+				isProcessed = true;
+				resultEntry['dataUsed'] = parentFetchParserReturnItem;
+				fetchParserReturn = localFetchParserReturn;
+				fetchParserError = localFetchParserError;
+			}
+
+			if (isProcessed === false) {
+				resultEntryProcessed = false;
+			}
+			// ==================================================
+		} else {
+			// ==================================================
+			// Our parent returned single element.
+			resultEntry['dataUsed'] = parentFetchParserReturn;
+			[fetchParserReturn, fetchParserError] = await fetchParser(parentFetchParserReturn, runtimeArguments);
+			if (fetchParserReturn === false) {
+				resultEntryProcessed = false;
+			}
+			// ==================================================
 		}
 
 		if (!resultEntryProcessed) {
@@ -255,7 +261,7 @@ async function fetchAndParseInternal(
 			return new Error(`The pipe object cannot be empty ${entryDebugPath}`);
 		}
 
-		if (typeFactoryFunction.produceAggregateObjet) {
+		if (fetchParser.produceAggregateObjet) {
 			const aggregate: any = [];
 			resultEntry['aggregate'] = aggregate;
 			if (fetchParserReturn) {
@@ -383,13 +389,15 @@ function modifyDSD(
 	return null;
 }
 
-export type DataSchemaErrorBounded<T extends DataSchemaDefinition<T, any>> = {
-	[K in keyof T as T[K] extends { optional: true } ? never : K]: DataSchemaNodeErrorBounded<T[K]>;
-} & {
-	[K in keyof T as T[K] extends { optional: true } ? K : never]?: DataSchemaNodeErrorBounded<T[K]>;
-};
+export type DataSchemaErrorBounded<T extends DataSchemaDefinition<T, any>> = PrettifyHardcore<
+	{
+		[K in keyof T as T[K] extends { optional: true } ? never : K]: PrettifyHardcore<DataSchemaNodeErrorBounded<T[K]>>;
+	} & {
+		[K in keyof T as T[K] extends { optional: true } ? K : never]?: PrettifyHardcore<DataSchemaNodeErrorBounded<T[K]>>;
+	}
+>;
 
-export type DataSchemaNodeErrorBounded<T> = T extends { type: TypeFunction<any, infer pFPR, infer FPR, infer _RA, infer ProducesAggregateObject>; pipe?: infer PType }
+export type DataSchemaNodeErrorBounded<T> = T extends { type: FetchParserFunction<infer pFPR, infer FPR, any, infer ProducesAggregateObject>; pipe?: infer PType }
 	? ProducesAggregateObject extends false
 		? {
 				dataUsed: pFPR;
@@ -406,7 +414,7 @@ export type DataSchemaNodeErrorBounded<T> = T extends { type: TypeFunction<any, 
 			}
 	: never;
 
-export type DataSchemaToDataSchemaErrorBounded<DS> = DS extends DataSchema<infer DSD> ? DataSchemaErrorBounded<DSD> : never;
+export type DataSchemaToDataSchemaErrorBounded<DS> = DS extends DataSchema<infer DSD extends Record<string, any>> ? DataSchemaErrorBounded<DSD> : never;
 export type DataSchemaNodeToDataSchemaNodeErrorBounded<DSN> = DSN extends DataSchemaNode<infer DSDN> ? DataSchemaNodeErrorBounded<DSDN> : never;
 
 export function dataSchemaErrorBoundary<T extends DataSchemaDefinition<T, any>, DS extends DataSchema<T>>(

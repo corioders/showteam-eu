@@ -1,3 +1,5 @@
+.turbo
+
 # Operating in pnpm-workspaces requires that
 pnpm-lock.yaml
 
