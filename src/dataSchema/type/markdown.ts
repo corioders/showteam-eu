@@ -3,11 +3,22 @@ import { MarkdownFrontmatterParser, type ParsedMarkdownFrontmatter } from '@/for
 import type { StringMarkdown } from '@/format/markdown/index.js';
 import { MarkdownKeyValueParser, type ParsedMarkdownValue } from '@/format/markdown/key-value.js';
 import { defineTypeFunction } from '../index.js';
+import type { GoogleDriveInternationalizedDocMd } from './driveCMS.js';
 
 interface MarkdownKeyValueParserUserSpec {
 	childHeaderLevel: number;
 	allowDuplicateKeys?: boolean;
 }
+
+export const typeMarkdownKeyValueRootFromGoogleInternationalizedDocParser = defineTypeFunction<
+	MarkdownKeyValueParserUserSpec,
+	GoogleDriveInternationalizedDocMd,
+	ParsedMarkdownValue[]
+>(function typeMarkdownKeyValueRootFromGoogleDocParser(us) {
+	return (intlDocMd) => {
+		return typeMarkdownKeyValueRootParser(us)(intlDocMd.doc.docMd);
+	};
+});
 
 export const typeMarkdownKeyValueRootFromGoogleDocParser = defineTypeFunction<MarkdownKeyValueParserUserSpec, DocMd, ParsedMarkdownValue[]>(
 	function typeMarkdownKeyValueRootFromGoogleDocParser(us) {
@@ -55,8 +66,8 @@ export const typeMarkdownKeyValue = defineTypeFunction<MarkdownKeyUserSpec, Pars
 	};
 });
 
-// biome-ignore lint/suspicious/noEmptyInterface: <explanation>
-interface MarkdownFrontmatterParserUserSpec {}
+// biome-ignore lint/suspicious/noConfusingVoidType: <explanation>
+type MarkdownFrontmatterParserUserSpec = void;
 
 export const typeMarkdownFrontmatterRootFromGoogleDocParser = defineTypeFunction<MarkdownFrontmatterParserUserSpec, DocMd, ParsedMarkdownFrontmatter>(
 	function typeMarkdownFrontmatterRootFromGoogleDocParser(us) {
@@ -79,8 +90,7 @@ export const typeMarkdownFrontmatterRootParser = defineTypeFunction<MarkdownFron
 	},
 );
 
-// biome-ignore lint/complexity/noBannedTypes: <explanation>
-export const typeMarkdownFrontmatterContent = defineTypeFunction<{}, ParsedMarkdownFrontmatter, StringMarkdown>(function typeMarkdownFrontmatterContent(_us) {
+export const typeMarkdownFrontmatterContent = defineTypeFunction<void, ParsedMarkdownFrontmatter, StringMarkdown>(function typeMarkdownFrontmatterContent(_us) {
 	return (parsedMarkdown) => {
 		return [parsedMarkdown.content, null];
 	};
@@ -91,8 +101,7 @@ export interface ParsedFrontmatterValue {
 	value: string;
 }
 
-// biome-ignore lint/complexity/noBannedTypes: <explanation>
-export const typeMarkdownFrontmatter = defineTypeFunction<{}, ParsedMarkdownFrontmatter, ParsedFrontmatterValue[]>(function typeMarkdownFrontmatter(_us) {
+export const typeMarkdownFrontmatter = defineTypeFunction<void, ParsedMarkdownFrontmatter, ParsedFrontmatterValue[]>(function typeMarkdownFrontmatter(_us) {
 	return (parsedMarkdown) => {
 		const frontmatterValues: ParsedFrontmatterValue[] = [...parsedMarkdown.frontmatter.mapping.entries()].map(([key, value]) => ({ key, value }));
 		return [frontmatterValues, null];

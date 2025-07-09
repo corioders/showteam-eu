@@ -3,8 +3,12 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
+export type TSError<ErrorMessage extends string> = ErrorMessage & { readonly __tsErrorTag: unique symbol };
+
 export type ErrorReturn<Result, ErrorT = Error> = [Result, null] | [null, ErrorT];
 export type ErrorReturnPromise<Result, ErrorT = Error> = Promise<ErrorReturn<Result, ErrorT>>;
+
+export type ErrorReturnResult<ErrorReturnT extends ErrorReturn<any, any>> = ErrorReturnT extends [infer ResultT, null] ? ResultT : never;
 
 export function safe<T>(throwableFn: () => T): ErrorReturn<T> {
 	try {
