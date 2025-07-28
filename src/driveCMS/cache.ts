@@ -3,22 +3,42 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
 
+import { createHash } from 'node:crypto';
+import { type ErrorReturnPromise, safePromise } from '@/error/index.js';
+import type { JsonValue } from '@/format/json/index.js';
+import { stringToURLSafeString } from '@/net/url.js';
 import { GoogleAuth } from 'googleapis-common';
 import memoize from 'memoize';
+import { type Storage as UnstorageStorage, createStorage } from 'unstorage';
+import fsDriver from 'unstorage/drivers/fs-lite';
+
+type AnyFunction = (...arguments_: readonly any[]) => any;
 
 interface OurGlobalThis {
 	// // biome-ignore lint/style/useNamingConvention: This is a readonly thing.
 	// // biome-ignore lint/suspicious/noExplicitAny: This is required by typescript
 	__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE?: Map<any, any>;
+
+	__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE?: UnstorageStorage;
 }
 const ourGlobalThis = (global ?? globalThis ?? window ?? {}) as OurGlobalThis;
 if (ourGlobalThis.__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE === undefined) {
 	ourGlobalThis.__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE = new Map();
 }
 
-const memoizeCache = ourGlobalThis.__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE;
+if (ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE === undefined) {
+	ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE = createStorage({
+		// We don't need to use cacheDriver because every function should be also memorized. This is because
+		// every function call EVEN IF using persistant cache costs us one fetch call to check if the resource has changed.
+		// driver: cacheDriver({ driver: fsDriver({ base: '.next/cache/corioders/cstd-ts-driveCMS-persistant' }) }),
+		driver: fsDriver({ base: '.next/cache/corioders/cstd-ts-driveCMS-persistant' }),
+	});
+}
 
-function memoizeDriveCMSCacheKey(functionArguments: readonly unknown[]) {
+const memoizeCache = ourGlobalThis.__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE;
+const persistantCache = ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE;
+
+function driveCMSCacheKey(functionArguments: readonly unknown[]) {
 	let key = '';
 
 	// biome-ignore lint/style/useForOf: here we need speed
@@ -57,10 +77,51 @@ function memoizeDriveCMSCacheKey(functionArguments: readonly unknown[]) {
 	return key;
 }
 
-type AnyFunction = (...arguments_: readonly any[]) => any;
+export const REMOVE_PERSISTANT_CACHE_VALUE = Symbol('INVALIDATE_PERSISTANT_CACHE');
+export interface PersistantCacheController<CachedValueT extends JsonValue> {
+	getCachedValue(): ErrorReturnPromise<CachedValueT>;
+	setCachedValue(value: CachedValueT | typeof REMOVE_PERSISTANT_CACHE_VALUE): Promise<Error | null>;
+}
+
+export interface PersistantCacheControllerThis<CachedValueT extends JsonValue> {
+	persistantCacheController: PersistantCacheController<CachedValueT>;
+}
+
+export function persistantDriveCMSCache<CachedValueT extends JsonValue, FunctionToCacheArguments extends any[] = unknown[], FunctionToCacheReturn = unknown>(
+	fn: (persistantCacheController: PersistantCacheController<CachedValueT>, ..._arguments: FunctionToCacheArguments) => FunctionToCacheReturn,
+): (..._arguments: FunctionToCacheArguments) => FunctionToCacheReturn {
+	function persistantCachedHelper(this: any, ...argumentsWithoutPCC: FunctionToCacheArguments) {
+		const argumentsCacheKey = createHash('sha1').update(driveCMSCacheKey(argumentsWithoutPCC)).digest('base64');
+		const cacheKey = `${fn.name}__${stringToURLSafeString(argumentsCacheKey)}`;
+
+		function getCachedValue() {
+			return safePromise(() => persistantCache.getItem(cacheKey)) as ErrorReturnPromise<CachedValueT>;
+		}
+
+		async function setCachedValue(value: CachedValueT | typeof REMOVE_PERSISTANT_CACHE_VALUE) {
+			if (value === REMOVE_PERSISTANT_CACHE_VALUE) {
+				const [_value, error] = await safePromise(() => persistantCache.removeItem(cacheKey));
+				return error;
+			}
+
+			const [_value, error] = await safePromise(() => persistantCache.setItem(cacheKey, value));
+			return error;
+		}
+
+		const pcc: PersistantCacheController<CachedValueT> = {
+			getCachedValue,
+			setCachedValue,
+		};
+
+		return fn.apply(this, [pcc, ...argumentsWithoutPCC]);
+	}
+
+	return persistantCachedHelper;
+}
+
 export function memoizeDriveCMS<FunctionToMemoize extends AnyFunction>(fn: FunctionToMemoize): FunctionToMemoize {
 	return memoize(fn, {
-		cacheKey: memoizeDriveCMSCacheKey,
+		cacheKey: driveCMSCacheKey,
 		cache: memoizeCache,
 	});
 }

@@ -4,10 +4,11 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
 import { CSE, type ErrorReturn, type ErrorReturnPromise, UnreachableErrorMessage, safe, safePromise } from '@/error';
+import type { AssertJsonValue } from '@/format/json/index.js';
 import { type drive_v3, google } from 'googleapis';
 import { type GaxiosPromise, type GoogleAuth, createAPIRequest } from 'googleapis-common';
 import { StatusCodes } from 'http-status-codes';
-import { memoizeDriveCMS } from './cache.js';
+import { type PersistantCacheController, memoizeDriveCMS, persistantDriveCMSCache } from './cache.js';
 import { DEPLOY_REVISION_NAME } from './const.js';
 import type { EmailAddress } from './index.js';
 import { MIMEType, type MIMETypeT, type MIMETypeTE, type Resource, type ResourceID } from './resource.js';
@@ -67,7 +68,47 @@ export const internalUNSAFEChangePermissionsToAnyoneWithLinkReader = memoizeDriv
 });
 
 export const ERR_UNABLE_TO_LIST_FILES = new Error('Unable to list files');
-export const internalListFolder = memoizeDriveCMS(internalListFolderNoCache);
+// TODO: CACHE
+export const internalListFolderCached: (googleAuth: GoogleAuth, folderID: FolderID) => ErrorReturnPromise<Resource[]> = memoizeDriveCMS(
+	persistantDriveCMSCache(async function internalListFolderPersistant(
+		_persistantCacheController: PersistantCacheController<AssertJsonValue<Resource[]>>,
+		googleAuth: GoogleAuth,
+		folderID: FolderID,
+	): ErrorReturnPromise<Resource[]> {
+		// const [cachedValue, cacheError] = await persistantCacheController.getCachedValue();
+		// if (cacheError) {
+		// 	return [null, cacheError];
+		// }
+
+		// if (cachedValue) {
+
+		// We need driveactivity api to make this work.
+
+		// ==================================================
+		// // https://stackoverflow.com/questions/69894618/how-to-use-google-service-account-to-retrieve-google-drive-activities-via-activi
+		// const a = google.driveactivity({ version: 'v2' });
+		// const b = await a.activity.query({ requestBody: { ancestorName: `items/${folderID}` } });
+		// const b = await a.activity.query({ requestBody: { ancestorName: `items/1vNcNMZJVkCWYohfqO6vPJON0PyKrl8fw` } });
+		// console.log(b);
+		// ==================================================
+
+		// 	return [cachedValue, null];
+		// }
+
+		const [listResult, listError] = await internalListFolderNoCache(googleAuth, folderID);
+		if (listError) {
+			return [null, listError];
+		}
+
+		// const cacheSetError = await persistantCacheController.setCachedValue(listResult);
+		// if (cacheSetError) {
+		// 	return [null, cacheSetError];
+		// }
+
+		return [listResult, null];
+	}),
+);
+
 export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID: FolderID): ErrorReturnPromise<Resource[]> {
 	console.log(`Listing folder: ${folderID}`);
 
@@ -129,6 +170,7 @@ export const downloadFile = memoizeDriveCMS(async function downloadFile<T = unkn
 	return [downloadResponse.data as T, null];
 });
 
+// TODO: CACHE (for offline mode)
 export const getFileDownloadURL = memoizeDriveCMS(async function getFileDownloadURL(
 	googleAuth: GoogleAuth,
 	fileID: FileID,
@@ -170,6 +212,7 @@ export interface Revision {
 	revisionID: RevisionID;
 }
 
+// TODO: CACHE (for offline mode)
 // TODO: Consider Download ALL revisions: Look at the url: "revisionBatchSize"
 export const getRevisionsFromUndocumentedAPI = memoizeDriveCMS(async function getRevisionsFromUndocumentedAPI(
 	googleAuth: GoogleAuth,

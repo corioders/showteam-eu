@@ -14,7 +14,7 @@ import {
 	type PermissionType,
 	getLatestDeployRevision,
 	getLatestRevision,
-	internalListFolder,
+	internalListFolderCached,
 	internalUNSAFEChangePermissionsToAnyoneWithLinkReader,
 } from './drive.js';
 import {
@@ -43,6 +43,9 @@ if (driveCMSJsonKeyError) {
 
 export const SERVICE_ACCOUNT_EMAIL = driveCMSJsonKey.client_email as EmailAddress;
 
+// to make this work you have to enable
+// Google Drive API
+// Google Drive Activity API
 const googleAuth = new google.auth.GoogleAuth({
 	credentials: driveCMSJsonKey,
 	scopes: ['https://www.googleapis.com/auth/drive'],
@@ -65,7 +68,7 @@ export function UNSAFEChangePermissionsToAnyoneWithLinkReader(fileID: FileID): E
 }
 
 export function listFolder(folderID: FolderID): ErrorReturnPromise<Resource[]> {
-	return internalListFolder(googleAuth, folderID);
+	return internalListFolderCached(googleAuth, folderID);
 }
 
 export function downloadDocCorrectRevisionMarkdown(docID: DocID): ErrorReturnPromise<DocMd> {

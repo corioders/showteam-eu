@@ -7,12 +7,21 @@ export type URLSafeString = string & { readonly __urlSafeStringTag: unique symbo
 export class URLSafeJSONParser<ObjectT, URLSafeStringT extends URLSafeString> {
 	encode(object: ObjectT): URLSafeStringT {
 		const json = JSON.stringify(object);
-		const base64 = Buffer.from(json).toString('base64url');
-		return base64 as URLSafeStringT;
+		return stringToURLSafeString(json) as URLSafeStringT;
 	}
 	decode(urlSafeString: URLSafeStringT): ObjectT {
-		const json = Buffer.from(urlSafeString, 'base64url').toString('utf-8');
+		const json = urlSafeStringToString(urlSafeString);
 		const parsed = JSON.parse(json);
 		return parsed as ObjectT;
 	}
+}
+
+export function stringToURLSafeString(x: string): URLSafeString {
+	const base64 = Buffer.from(x).toString('base64url');
+	return base64 as URLSafeString;
+}
+
+export function urlSafeStringToString(x: URLSafeString): string {
+	const decoded = Buffer.from(x, 'base64url').toString('utf-8');
+	return decoded;
 }

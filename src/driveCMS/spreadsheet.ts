@@ -29,6 +29,7 @@ export function isSpreadsheet(resource: Resource): resource is SpreadsheetResour
 	return resource.mimeType === MIMEType.excel;
 }
 
+// TODO: CACHE
 export const downloadSpreadsheetRevision = memoizeDriveCMS(async function downloadSpreadsheetRevision(
 	googleAuth: GoogleAuth,
 	spreadsheetID: SpreadsheetID,

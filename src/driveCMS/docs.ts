@@ -11,7 +11,7 @@ import { CSE, type ErrorReturn, type ErrorReturnPromise, UnreachableErrorMessage
 import type { StringMarkdown } from '@/format/markdown/index.js';
 import type { ImageURL } from '@/media/image/index.js';
 import { StatusCodes } from 'http-status-codes';
-import { memoizeDriveCMS } from './cache.js';
+import { type PersistantCacheController, memoizeDriveCMS, persistantDriveCMSCache } from './cache.js';
 import { type FileID, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
 import { MIMEType, type MIMETypeT, type Resource } from './resource.js';
 
@@ -51,7 +51,7 @@ export const downloadDocMarkdownRevision = memoizeDriveCMS(async function downlo
 		return [null, validationError];
 	}
 
-	const [docAsMarkdown, errorDownload] = await baseDownloadDocRevisionAndAdjustInDocMarkdownImages(googleAuth, docID, revisionID);
+	const [docAsMarkdown, errorDownload] = await baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistantCached(googleAuth, docID, revisionID);
 	if (errorDownload !== null) {
 		return [null, errorDownload];
 	}
@@ -81,7 +81,7 @@ export const downloadDocRevision = memoizeDriveCMS(async function downloadDocRev
 		return [null, validationError];
 	}
 
-	const [docAsMarkdown, errorDownload] = await baseDownloadDocRevisionAndAdjustInDocMarkdownImages(googleAuth, docID, revisionID);
+	const [docAsMarkdown, errorDownload] = await baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistantCached(googleAuth, docID, revisionID);
 	if (errorDownload !== null) {
 		return [null, errorDownload];
 	}
@@ -102,66 +102,96 @@ export const downloadDocRevision = memoizeDriveCMS(async function downloadDocRev
 
 const MARKDOWN_IMAGE_REGEX = /!\[\]\[image\d+\]/;
 const IMAGE_BASE64_MARKDOWN_DEFINITION_AT_THE_END = '[image1]: <data:image/';
-export async function baseDownloadDocRevisionAndAdjustInDocMarkdownImages(
+
+export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistantCached: (
 	googleAuth: GoogleAuth,
 	docID: DocID,
 	revisionID: RevisionID,
-): ErrorReturnPromise<StringMarkdown> {
-	const [docAsMarkdown, errorDownloadFile] = await downloadFile<StringMarkdown>(googleAuth, docID, revisionID, MIMEType.markdown);
-	if (errorDownloadFile !== null) {
-		return [null, errorDownloadFile];
-	}
+) => ErrorReturnPromise<StringMarkdown> = memoizeDriveCMS(
+	persistantDriveCMSCache(async function baseDownloadDocRevisionAndAdjustInDocMarkdownImages(
+		persistantCacheController: PersistantCacheController<StringMarkdown>,
+		googleAuth: GoogleAuth,
+		docID: DocID,
+		revisionID: RevisionID,
+	): ErrorReturnPromise<StringMarkdown> {
+		// ==================================================
+		// We don't need to check the last modification time, because this function depends on revisionID.
+		// Every revisionID represents different doc version.
 
-	if (typeof docAsMarkdown !== 'string') {
-		return [null, new CSE(ERR_EXPECTED_DOWNLOADED_DOC_STRING)];
-	}
+		const [cachedValue, cacheError] = await persistantCacheController.getCachedValue();
+		if (cacheError) {
+			return [null, cacheError];
+		}
 
-	// ==================================================
-	// Download and parse metadata used to adjust image URLs
-	const [webSource, errorGetWebSource] = await UNDOCUMENTEDapiDownloadDocWebInterfaceHtmlPage(googleAuth, docID);
-	if (errorGetWebSource !== null) {
-		return [null, errorGetWebSource];
-	}
+		if (cachedValue) {
+			return [cachedValue, null];
+		}
 
-	const [photoIDAndImageURL, errorGetInternalPhotoIDAndImageURL] = getGoogleInternalPhotoIDtoImageURLArray(webSource);
-	if (errorGetInternalPhotoIDAndImageURL !== null) {
-		return [null, errorGetInternalPhotoIDAndImageURL];
-	}
+		const [docAsMarkdown, errorDownloadFile] = await downloadFile<StringMarkdown>(googleAuth, docID, revisionID, MIMEType.markdown);
+		if (errorDownloadFile !== null) {
+			return [null, errorDownloadFile];
+		}
 
-	// No photos found
-	if (photoIDAndImageURL.length === 0) {
-		return [docAsMarkdown, null];
-	}
+		if (typeof docAsMarkdown !== 'string') {
+			return [null, new CSE(ERR_EXPECTED_DOWNLOADED_DOC_STRING)];
+		}
 
-	const [sortedPhotoIDAndImageURL, errorSort] = sortPhotoIDAndImageURLArrayBasedOnDocOrder(webSource, photoIDAndImageURL);
-	if (errorSort !== null) {
-		return [null, errorSort];
-	}
+		// ==================================================
+		// Download and parse metadata used to adjust image URLs
+		const [webSource, errorGetWebSource] = await UNDOCUMENTEDapiDownloadDocWebInterfaceHtmlPage(googleAuth, docID);
+		if (errorGetWebSource !== null) {
+			return [null, errorGetWebSource];
+		}
 
-	// ==================================================
+		const [photoIDAndImageURL, errorGetInternalPhotoIDAndImageURL] = getGoogleInternalPhotoIDtoImageURLArray(webSource);
+		if (errorGetInternalPhotoIDAndImageURL !== null) {
+			return [null, errorGetInternalPhotoIDAndImageURL];
+		}
 
-	// ==================================================
-	// Adjust image URLs
-	let docAsMarkdownAdjusted = docAsMarkdown;
+		// No photos found
+		if (photoIDAndImageURL.length === 0) {
+			const cacheSetError = await persistantCacheController.setCachedValue(docAsMarkdown);
+			if (cacheSetError) {
+				return [null, cacheSetError];
+			}
 
-	const imageURLs = sortedPhotoIDAndImageURL.map((photoIDAndImageURL) => photoIDAndImageURL.url);
-	for (const imageURL of imageURLs) {
-		// TODO: The alt text can be 99% extracted from the metadata.
-		docAsMarkdownAdjusted = docAsMarkdownAdjusted.replace(MARKDOWN_IMAGE_REGEX, `![TODO_ALT_TEXT](${imageURL})`) as StringMarkdown;
-	}
+			return [docAsMarkdown, null];
+		}
 
-	// ==================================================
-	// Remove base64 encoded definitions form the markdown
-	const imageBase64Definitions = docAsMarkdownAdjusted.indexOf(IMAGE_BASE64_MARKDOWN_DEFINITION_AT_THE_END);
-	if (imageBase64Definitions === -1) {
-		return [null, new Error(UnreachableErrorMessage('Unable to find image base64 definitions in the markdown'))];
-	}
+		const [sortedPhotoIDAndImageURL, errorSort] = sortPhotoIDAndImageURLArrayBasedOnDocOrder(webSource, photoIDAndImageURL);
+		if (errorSort !== null) {
+			return [null, errorSort];
+		}
 
-	docAsMarkdownAdjusted = docAsMarkdownAdjusted.slice(0, imageBase64Definitions - 1) as StringMarkdown;
-	// ==================================================
+		// ==================================================
+		// Adjust image URLs
+		let docAsMarkdownAdjusted = docAsMarkdown;
 
-	return [docAsMarkdownAdjusted, null];
-}
+		const imageURLs = sortedPhotoIDAndImageURL.map((photoIDAndImageURL) => photoIDAndImageURL.url);
+		for (const imageURL of imageURLs) {
+			// TODO: The alt text can be 99% extracted from the metadata.
+			docAsMarkdownAdjusted = docAsMarkdownAdjusted.replace(MARKDOWN_IMAGE_REGEX, `![TODO_ALT_TEXT](${imageURL})`) as StringMarkdown;
+		}
+
+		// ==================================================
+		// Remove base64 encoded definitions form the markdown
+		const imageBase64Definitions = docAsMarkdownAdjusted.indexOf(IMAGE_BASE64_MARKDOWN_DEFINITION_AT_THE_END);
+		if (imageBase64Definitions === -1) {
+			return [null, new Error(UnreachableErrorMessage('Unable to find image base64 definitions in the markdown'))];
+		}
+
+		docAsMarkdownAdjusted = docAsMarkdownAdjusted.slice(0, imageBase64Definitions - 1) as StringMarkdown;
+
+		// ==================================================
+		// Cache
+		const cacheSetError = await persistantCacheController.setCachedValue(docAsMarkdownAdjusted);
+		if (cacheSetError) {
+			return [null, cacheSetError];
+		}
+
+		return [docAsMarkdownAdjusted, null];
+	}),
+);
 
 export const getDocRevisions = memoizeDriveCMS(async function getDocRevisions(googleAuth: GoogleAuth, docID: DocID): ErrorReturnPromise<Revision[]> {
 	const validationError = validateDocID(docID);
