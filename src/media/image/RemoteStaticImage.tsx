@@ -14,8 +14,9 @@ import type UnstorageFsDriverType from 'unstorage/drivers/fs-lite';
 
 import { type ErrorReturnPromise, safePromise } from 'cstd-ts/error/index.js';
 import cacheDriver from 'cstd-ts/storage/unstorage/cacheDriver.mjs';
+import pLimit from 'p-limit';
 import type { ImgHTMLAttributes, JSX } from 'react';
-import { Agent, type RequestInit, fetch } from 'undici';
+import { Agent, type RequestInit, type Response, fetch } from 'undici';
 import { type Storage as UnstorageStorage, createStorage } from 'unstorage';
 import lruCacheDriver from 'unstorage/drivers/lru-cache';
 import { memoizeImages } from './cache.js';
@@ -41,6 +42,8 @@ import { validateSizesProperty } from './internalClient.mjs';
 // 25 MiB
 // const MAX_CLOUDFLARE_IMAGE_SIZE = 25 * 2 ** 20;
 
+const FETCH_CONCURRENCY_LIMIT = 3;
+const FETCH_RETRY = 3;
 const NEXTJS_FILEPATH_PREFIX = './.next/static/media';
 
 // The cache should work regardless of the environment we are in:
@@ -332,8 +335,6 @@ async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): 
 		imageURLForLogging = '<DATA URI>';
 	}
 
-	console.log(`Fetching remote image ${imageURLForLogging}`);
-
 	// const currentLastModified = await fetchRemoteImageLastModified(imageURL);
 	const cacheKey = hash(imageURL.toString(), require('node:crypto').createHash);
 
@@ -349,23 +350,14 @@ async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): 
 		// await setFetchRemoteImageCache(cacheKey, null);
 	}
 
-	// TODO: Move this calculation to cstd-ts
-	const millisecond = 1;
-	const second = millisecond * 1000;
-	const minute = second * 60;
-	const hour = minute * 60;
-	const [imageResponse, fetchError] = await safePromise(() =>
-		fetch(imageURL, {
-			signal: AbortSignal.timeout(hour),
-			dispatcher: new Agent({ connectTimeout: hour }),
-			...fetchRequestInit,
-		}),
-	);
+	const [imageResponse, fetchError] = await fetchWithRetry(imageURL, fetchRequestInit);
 	if (fetchError !== null) {
 		console.log(`FetchRemoteImage, fetch failed with error: ${fetchError}`);
 		const error = new Error(`Error while fetching image ${imageURLForLogging} response was: ${imageResponse}\n\nThe error was ${fetchError}`, { cause: fetchError });
 		return [null, error];
 	}
+
+	console.log(`Fetched remote image ${imageURLForLogging}`);
 
 	if (!imageResponse.ok || imageResponse.status !== 200) {
 		return [null, new Error(`Unable to fetch image ${imageResponse.statusText}`)];
@@ -462,4 +454,34 @@ function convertToValidFilename(x: string): string {
 
 function isDataURI(uri: string): boolean {
 	return uri.startsWith('data:');
+}
+
+const fetchConcurrencyLimit = pLimit(FETCH_CONCURRENCY_LIMIT);
+
+async function fetchWithRetry(imageURL: URL, fetchRequestInit?: RequestInit): ErrorReturnPromise<Response> {
+	let fetchTry = 0;
+	while (true) {
+		fetchTry += 1;
+
+		const millisecond = 1;
+		const second = millisecond * 1000;
+		const minute = second * 60;
+		const hour = minute * 60;
+		const [imageResponse, fetchError] = await fetchConcurrencyLimit(() =>
+			safePromise(() =>
+				fetch(imageURL, {
+					signal: AbortSignal.timeout(hour),
+					dispatcher: new Agent({ connectTimeout: hour }),
+					...fetchRequestInit,
+				}),
+			),
+		);
+		if (fetchError === null) {
+			return [imageResponse, null];
+		}
+
+		if (fetchTry >= FETCH_RETRY) {
+			return [null, fetchError];
+		}
+	}
 }
