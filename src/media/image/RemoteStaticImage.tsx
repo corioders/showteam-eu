@@ -334,8 +334,11 @@ async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): 
 	if (isDataURI(imageURLForLogging)) {
 		imageURLForLogging = '<DATA URI>';
 	}
-
 	// const currentLastModified = await fetchRemoteImageLastModified(imageURL);
+
+	// TODO: FIX FIX FIX
+	// When fetching with google drive, some images have the same data but different urls.... For example images in documents, and our system thinks
+	// they are new and downloads them again. This has to be fixed
 	const cacheKey = hash(imageURL.toString(), require('node:crypto').createHash);
 
 	// During the build this cache would be used as a de-duplication mechanism.
@@ -479,6 +482,8 @@ async function fetchWithRetry(imageURL: URL, fetchRequestInit?: RequestInit): Er
 		if (fetchError === null) {
 			return [imageResponse, null];
 		}
+
+		console.log(`Fetching remote image retry ${fetchTry}`);
 
 		if (fetchTry >= FETCH_RETRY) {
 			return [null, fetchError];

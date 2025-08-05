@@ -90,8 +90,9 @@ export function CoriodersDevelopmentOverlay() {
 				role="menuitem"
 				tabIndex={-1}
 				type="button"
-				onClick={() => {
-					invalidateDriveCMS();
+				onClick={async () => {
+					await invalidateDriveCMS();
+					window.location.reload();
 				}}
 				className="dev-tools-indicator-item"
 				style={{
