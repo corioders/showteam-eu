@@ -53,5 +53,9 @@ export default defineDriver<CacheDriverOptions, CacheDriverOptions['driver']>((o
 
 			return value;
 		},
+		async removeItem(key, opts) {
+			await cache.removeItem(key, opts);
+			await baseDriver.removeItem(key, opts);
+		},
 	};
 });

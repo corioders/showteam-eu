@@ -68,45 +68,34 @@ export const internalUNSAFEChangePermissionsToAnyoneWithLinkReader = memoizeDriv
 });
 
 export const ERR_UNABLE_TO_LIST_FILES = new Error('Unable to list files');
-// TODO: CACHE
-export const internalListFolderCached: (googleAuth: GoogleAuth, folderID: FolderID) => ErrorReturnPromise<Resource[]> = memoizeDriveCMS(
-	persistantDriveCMSCache(async function internalListFolderPersistant(
-		_persistantCacheController: PersistantCacheController<AssertJsonValue<Resource[]>>,
+export const internalListFolderPersistantCached: (googleAuth: GoogleAuth, folderID: FolderID) => ErrorReturnPromise<Resource[]> = persistantDriveCMSCache(
+	'internalListFolderPersistant',
+	async function internalListFolder(
+		persistantCacheController: PersistantCacheController<AssertJsonValue<Resource[]>>,
 		googleAuth: GoogleAuth,
 		folderID: FolderID,
 	): ErrorReturnPromise<Resource[]> {
-		// const [cachedValue, cacheError] = await persistantCacheController.getCachedValue();
-		// if (cacheError) {
-		// 	return [null, cacheError];
-		// }
+		const [cachedValue, cacheError] = await persistantCacheController.getCachedValue();
+		if (cacheError) {
+			return [null, cacheError];
+		}
 
-		// if (cachedValue) {
-
-		// We need driveactivity api to make this work.
-
-		// ==================================================
-		// // https://stackoverflow.com/questions/69894618/how-to-use-google-service-account-to-retrieve-google-drive-activities-via-activi
-		// const a = google.driveactivity({ version: 'v2' });
-		// const b = await a.activity.query({ requestBody: { ancestorName: `items/${folderID}` } });
-		// const b = await a.activity.query({ requestBody: { ancestorName: `items/1vNcNMZJVkCWYohfqO6vPJON0PyKrl8fw` } });
-		// console.log(b);
-		// ==================================================
-
-		// 	return [cachedValue, null];
-		// }
+		if (cachedValue) {
+			return [cachedValue, null];
+		}
 
 		const [listResult, listError] = await internalListFolderNoCache(googleAuth, folderID);
 		if (listError) {
 			return [null, listError];
 		}
 
-		// const cacheSetError = await persistantCacheController.setCachedValue(listResult);
-		// if (cacheSetError) {
-		// 	return [null, cacheSetError];
-		// }
+		const cacheSetError = await persistantCacheController.setCachedValue(listResult);
+		if (cacheSetError) {
+			return [null, cacheSetError];
+		}
 
 		return [listResult, null];
-	}),
+	},
 );
 
 export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID: FolderID): ErrorReturnPromise<Resource[]> {
@@ -137,6 +126,8 @@ export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID
 	return [fileOrFolderList, null];
 }
 
+// downloadFile should not be cached
+// Functions calling downloadFile should be cached. This is because sometimes downloadFile returns HUGE files that are later processed and saved much smaller to disk.
 export const downloadFile = memoizeDriveCMS(async function downloadFile<T = unknown>(
 	googleAuth: GoogleAuth,
 	fileID: FileID,
@@ -170,7 +161,8 @@ export const downloadFile = memoizeDriveCMS(async function downloadFile<T = unkn
 	return [downloadResponse.data as T, null];
 });
 
-// TODO: CACHE (for offline mode)
+// This function should not be cached because we are not caching downloadFile
+// getFileDownloadURL is used only in downloadFile
 export const getFileDownloadURL = memoizeDriveCMS(async function getFileDownloadURL(
 	googleAuth: GoogleAuth,
 	fileID: FileID,
@@ -212,66 +204,91 @@ export interface Revision {
 	revisionID: RevisionID;
 }
 
-// TODO: CACHE (for offline mode)
 // TODO: Consider Download ALL revisions: Look at the url: "revisionBatchSize"
-export const getRevisionsFromUndocumentedAPI = memoizeDriveCMS(async function getRevisionsFromUndocumentedAPI(
-	googleAuth: GoogleAuth,
-	undocumentedRevisionURL: string,
-): ErrorReturnPromise<Revision[]> {
-	const [response, errorGaxios] = await safePromise(() => {
-		return createAPIRequest({
-			options: {
-				url: undocumentedRevisionURL,
-				method: 'GET',
-			},
-			params: {},
-			requiredParams: [],
-			pathParams: [],
-			context: { _options: { auth: googleAuth } },
-		}) as GaxiosPromise<string>;
-	});
-	if (errorGaxios !== null) {
-		return [null, new Error('Gaxios API request failed', { cause: errorGaxios })];
-	}
+export const getRevisionsFromUndocumentedAPIPersistantCached: (googleAuth: GoogleAuth, undocumentedRevisionURL: string) => ErrorReturnPromise<Revision[]> =
+	persistantDriveCMSCache(
+		'getRevisionsFromUndocumentedAPI',
+		async function getRevisionsFromUndocumentedAPI(
+			persistantCacheController: PersistantCacheController<AssertJsonValue<Revision[]>>,
+			googleAuth: GoogleAuth,
+			undocumentedRevisionURL: string,
+		): ErrorReturnPromise<Revision[]> {
+			// ==================================================
+			// Cache
+			const [cachedValue, cacheError] = await persistantCacheController.getCachedValue();
+			if (cacheError) {
+				return [null, cacheError];
+			}
 
-	interface ResponseJson {
-		firstRev: number;
-		tileInfo: {
-			// start: number,
-			end: number; // RevisionID
-			// endMillis: 1728041024168,
-			// users: [Array],
-			// systemRevs: [],
-			name?: string;
-			// expandable: false,
-			// revisionMac: "VKrkaCV8b4GjzA",
-		}[];
-	}
+			if (cachedValue) {
+				return [cachedValue, null];
+			}
 
-	const jsonDataString = response.data.split('\n')[1];
-	if (!jsonDataString) {
-		return [null, new Error(UnreachableErrorMessage('jsonDataString is not defined. Google changed their code'))];
-	}
-	const [responseJson, errorJson] = safe(() => JSON.parse(jsonDataString) as ResponseJson);
-	if (errorJson !== null) {
-		return [null, new Error('Unable to json parse response data', { cause: errorJson })];
-	}
+			console.log('getRevisionsFromUndocumentedAPI', undocumentedRevisionURL);
 
-	const revisions: Revision[] = [];
-	for (const responseRevision of responseJson.tileInfo) {
-		const newRevision: Revision = {
-			revisionID: responseRevision.end as RevisionID,
-		};
-		if (responseRevision.name) {
-			newRevision.name = responseRevision.name;
-		}
+			const [response, errorGaxios] = await safePromise(() => {
+				return createAPIRequest({
+					options: {
+						url: undocumentedRevisionURL,
+						method: 'GET',
+					},
+					params: {},
+					requiredParams: [],
+					pathParams: [],
+					context: { _options: { auth: googleAuth } },
+				}) as GaxiosPromise<string>;
+			});
+			if (errorGaxios !== null) {
+				return [null, new Error('Gaxios API request failed', { cause: errorGaxios })];
+			}
 
-		revisions.push(newRevision);
-	}
+			interface ResponseJson {
+				firstRev: number;
+				tileInfo: {
+					// start: number,
+					end: number; // RevisionID
+					// endMillis: 1728041024168,
+					// users: [Array],
+					// systemRevs: [],
+					name?: string;
+					// expandable: false,
+					// revisionMac: "VKrkaCV8b4GjzA",
+				}[];
+			}
 
-	const sortedRevisions = revisions.sort((a, b) => a.revisionID - b.revisionID);
-	return [sortedRevisions, null];
-});
+			const jsonDataString = response.data.split('\n')[1];
+			if (!jsonDataString) {
+				return [null, new Error(UnreachableErrorMessage('jsonDataString is not defined. Google changed their code'))];
+			}
+			const [responseJson, errorJson] = safe(() => JSON.parse(jsonDataString) as ResponseJson);
+			if (errorJson !== null) {
+				return [null, new Error('Unable to json parse response data', { cause: errorJson })];
+			}
+
+			const revisions: Revision[] = [];
+			for (const responseRevision of responseJson.tileInfo) {
+				const newRevision: Revision = {
+					revisionID: responseRevision.end as RevisionID,
+				};
+				if (responseRevision.name) {
+					newRevision.name = responseRevision.name;
+				}
+
+				revisions.push(newRevision);
+			}
+
+			const sortedRevisions = revisions.sort((a, b) => a.revisionID - b.revisionID);
+
+			// ==================================================
+			// Cache
+			const cacheSetError = await persistantCacheController.setCachedValue(sortedRevisions);
+			if (cacheSetError) {
+				return [null, cacheSetError];
+			}
+
+			return [sortedRevisions, null];
+		},
+	);
 
 export const ERR_REVISIONS_LENGTH_IS_ZERO = new Error('Error: revisions.length === 0');
 export function getLatestRevision(revisions: Revision[]): ErrorReturn<Revision> {
@@ -292,7 +309,7 @@ export function getLatestDeployRevision(revisions: Revision[]): ErrorReturn<Revi
 	let latestDeployRevision: Revision | null = null;
 	for (let i = revisions.length - 1; i >= 0; i--) {
 		const revision = revisions[i] as Revision;
-		if (revision.name !== DEPLOY_REVISION_NAME) {
+		if (revision.name?.toLowerCase() !== DEPLOY_REVISION_NAME) {
 			continue;
 		}
 

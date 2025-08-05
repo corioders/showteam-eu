@@ -12,7 +12,7 @@ import type { StringMarkdown } from '@/format/markdown/index.js';
 import type { ImageURL } from '@/media/image/index.js';
 import { StatusCodes } from 'http-status-codes';
 import { type PersistantCacheController, memoizeDriveCMS, persistantDriveCMSCache } from './cache.js';
-import { type FileID, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPI } from './drive.js';
+import { type FileID, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPIPersistantCached } from './drive.js';
 import { MIMEType, type MIMETypeT, type Resource } from './resource.js';
 
 export type DocID = FileID & { readonly __docTag: unique symbol };
@@ -107,16 +107,17 @@ export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistantCached
 	googleAuth: GoogleAuth,
 	docID: DocID,
 	revisionID: RevisionID,
-) => ErrorReturnPromise<StringMarkdown> = memoizeDriveCMS(
-	persistantDriveCMSCache(async function baseDownloadDocRevisionAndAdjustInDocMarkdownImages(
+) => ErrorReturnPromise<StringMarkdown> = persistantDriveCMSCache(
+	'baseDownloadDocRevisionAndAdjustInDocMarkdownImages',
+	async function baseDownloadDocRevisionAndAdjustInDocMarkdownImages(
 		persistantCacheController: PersistantCacheController<StringMarkdown>,
 		googleAuth: GoogleAuth,
 		docID: DocID,
 		revisionID: RevisionID,
 	): ErrorReturnPromise<StringMarkdown> {
-		// ==================================================
 		// We don't need to check the last modification time, because this function depends on revisionID.
 		// Every revisionID represents different doc version.
+		persistantCacheController.disableAutomaticInvalidation();
 
 		const [cachedValue, cacheError] = await persistantCacheController.getCachedValue();
 		if (cacheError) {
@@ -190,7 +191,7 @@ export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistantCached
 		}
 
 		return [docAsMarkdownAdjusted, null];
-	}),
+	},
 );
 
 export const getDocRevisions = memoizeDriveCMS(async function getDocRevisions(googleAuth: GoogleAuth, docID: DocID): ErrorReturnPromise<Revision[]> {
@@ -199,7 +200,7 @@ export const getDocRevisions = memoizeDriveCMS(async function getDocRevisions(go
 		return [null, validationError];
 	}
 
-	const [revisions, err] = await getRevisionsFromUndocumentedAPI(
+	const [revisions, err] = await getRevisionsFromUndocumentedAPIPersistantCached(
 		googleAuth,
 		`https://docs.google.com/document/d/${docID}/revisions/tiles?id=${docID}&start=1&revisionBatchSize=1500&showDetailedRevisions=false&loadType=0&includes_info_params=true&cros_files=false`,
 	);

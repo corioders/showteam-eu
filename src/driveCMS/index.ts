@@ -14,7 +14,7 @@ import {
 	type PermissionType,
 	getLatestDeployRevision,
 	getLatestRevision,
-	internalListFolderCached,
+	internalListFolderPersistantCached,
 	internalUNSAFEChangePermissionsToAnyoneWithLinkReader,
 } from './drive.js';
 import {
@@ -68,7 +68,7 @@ export function UNSAFEChangePermissionsToAnyoneWithLinkReader(fileID: FileID): E
 }
 
 export function listFolder(folderID: FolderID): ErrorReturnPromise<Resource[]> {
-	return internalListFolderCached(googleAuth, folderID);
+	return internalListFolderPersistantCached(googleAuth, folderID);
 }
 
 export function downloadDocCorrectRevisionMarkdown(docID: DocID): ErrorReturnPromise<DocMd> {
