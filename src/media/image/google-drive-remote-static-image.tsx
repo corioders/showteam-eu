@@ -3,12 +3,12 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import 'server-only';
+import "server-only";
 
-import type { RemoteStaticImageProps } from 'cstd-next/media/image/RemoteStaticImage.js';
-import RemoteStaticImage from 'cstd-next/media/image/RemoteStaticImage.js';
-import { getRequestAuthHeaders } from 'cstd-ts/driveCMS/index.js';
-import { memoizeImages } from './cache.js';
+import { getRequestAuthHeaders } from "cstd-ts/driveCMS/index.js";
+
+import { memoizeImages } from "./cache.js";
+import { RemoteStaticImage, type RemoteStaticImageProps } from "./remote-static-image.jsx";
 
 export const GoogleDriveRemoteStaticImage = memoizeImages(async function GoogleDriveRemoteStaticImage(props: RemoteStaticImageProps) {
 	const fetchDriveCMSHeaders = await getRequestAuthHeaders(props.src);

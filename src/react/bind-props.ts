@@ -1,4 +1,4 @@
-import { type ComponentProps, type FunctionComponent, createElement } from 'react';
+import { type ComponentProps, createElement, type FunctionComponent } from "react";
 
 /**
  * Extract all of C’s keys except the ones from React.FC

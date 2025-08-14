@@ -3,6 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
+/** biome-ignore-all lint/style/noDefaultExport: default export is required for image declaration purposes */
 interface LocalStaticImageImport {
 	// Hash of the original image. Can be used inside the react key prop.
 	contentHash: string;
@@ -21,152 +22,152 @@ interface LocalStaticImageImport {
 // 	export default content;
 // }
 
-declare module '*.scaled' {
+declare module "*.scaled" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*avif' {
+declare module "*avif" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*dz' {
+declare module "*dz" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*fits' {
+declare module "*fits" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*gif' {
+declare module "*gif" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*heif' {
+declare module "*heif" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*input' {
+declare module "*input" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*jpeg' {
+declare module "*jpeg" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*jpg' {
+declare module "*jpg" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*jp2' {
+declare module "*jp2" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*jxl' {
+declare module "*jxl" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*png' {
+declare module "*png" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*ppm' {
+declare module "*ppm" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*raw' {
+declare module "*raw" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*svg' {
+declare module "*svg" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*tiff' {
+declare module "*tiff" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*tif' {
+declare module "*tif" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*v' {
+declare module "*v" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*webp' {
+declare module "*webp" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
 
-declare module '*AVIF' {
+declare module "*AVIF" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*DZ' {
+declare module "*DZ" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*FITS' {
+declare module "*FITS" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*GIF' {
+declare module "*GIF" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*HEIF' {
+declare module "*HEIF" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*INPUT' {
+declare module "*INPUT" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*JPEG' {
+declare module "*JPEG" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*JPG' {
+declare module "*JPG" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*JP2' {
+declare module "*JP2" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*JXL' {
+declare module "*JXL" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*PNG' {
+declare module "*PNG" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*PPM' {
+declare module "*PPM" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*RAW' {
+declare module "*RAW" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*SVG' {
+declare module "*SVG" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*TIFF' {
+declare module "*TIFF" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*TIF' {
+declare module "*TIF" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*V' {
+declare module "*V" {
 	const content: LocalStaticImageImport;
 	export default content;
 }
-declare module '*WEBP' {
+declare module "*WEBP" {
 	const content: LocalStaticImageImport;
 	export default content;
 }

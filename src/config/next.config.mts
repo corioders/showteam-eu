@@ -3,13 +3,13 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
-import type { NextConfig } from 'next';
-import { nextImageLoaderRegex } from 'next/dist/build/webpack-config.js';
-import { regexLikeCss } from 'next/dist/build/webpack/config/blocks/css/index.js';
-import { WEBPACK_RESOURCE_QUERIES } from 'next/dist/lib/constants.js';
-import type { Configuration } from 'webpack';
+import type { NextConfig } from "next";
+import { regexLikeCss } from "next/dist/build/webpack/config/blocks/css/index.js";
+import { nextImageLoaderRegex } from "next/dist/build/webpack-config.js";
+import { WEBPACK_RESOURCE_QUERIES } from "next/dist/lib/constants.js";
+import type { Configuration } from "webpack";
 
-const nextConfig: NextConfig = {
+export const nextConfig: NextConfig = {
 	images: {
 		disableStaticImages: true,
 	},
@@ -17,53 +17,55 @@ const nextConfig: NextConfig = {
 	webpack(config: Configuration, { dev: isDev, isServer }) {
 		// Fix devtool source mapping
 		if (isDev && config.output) {
-			config.output.devtoolModuleFilenameTemplate = (info: { resourcePath: string }) => info.resourcePath.replace(/\\/g, '/');
+			config.output.devtoolModuleFilenameTemplate = (info: { resourcePath: string }) => info.resourcePath.replace(/\\/g, "/");
 		}
 
 		if (!config.name) {
-			throw new Error('config.name is empty');
+			throw new Error("config.name is empty");
 		}
 
-		const isEdgeServer = config.name === 'edge-server';
+		const isEdgeServer = config.name === "edge-server";
 
 		if (!config?.module?.rules) {
-			throw new Error('config?.module?.rules not defined');
+			throw new Error("config?.module?.rules not defined");
 		}
 
 		config.module.rules.push({
-			test: nextImageLoaderRegex,
-			loader: 'cstd-next/media/image/webpack-loader/localStaticImageLoader.mjs',
+			dependency: { not: ["url"] },
 			issuer: { not: regexLikeCss },
-			dependency: { not: ['url'] },
+			loader: "cstd-next/media/image/webpack-loader/local-static-image-loader.mjs",
+			options: {
+				// Make our loader env dependent.
+				__env: JSON.stringify(process.env),
+				isDev: isDev,
+				isEdgeServer: isEdgeServer,
+				isServer: isServer,
+			},
 			resourceQuery: {
 				not: [new RegExp(WEBPACK_RESOURCE_QUERIES.metadata), new RegExp(WEBPACK_RESOURCE_QUERIES.metadataRoute), new RegExp(WEBPACK_RESOURCE_QUERIES.metadataImageMeta)],
 			},
-			options: {
-				isDev: isDev,
-				isServer: isServer,
-				isEdgeServer: isEdgeServer,
-
-				// Make our loader env dependent.
-				__env: JSON.stringify(process.env),
-			},
+			test: nextImageLoaderRegex,
 		});
 
 		if (!config.resolve?.plugins) {
-			throw new Error('config.resolve?.plugins not defined');
+			throw new Error("config.resolve?.plugins not defined");
 		}
 
+		// ==================================================
+		// TODO this code should be deprecated and removed
 		config.resolve.plugins.push({
 			apply: (resolver) => {
-				resolver.hooks.resolve.tap({ name: 'jsToJsxResolver', stage: 100 }, (resolveRequest) => {
+				resolver.hooks.resolve.tap({ name: "jsToJsxResolver", stage: 100 }, (resolveRequest) => {
 					const originalRequest = resolveRequest.request;
 					if (!originalRequest) {
 						return undefined as unknown as null;
 					}
 
-					if (originalRequest.startsWith('cstd-next') || originalRequest.startsWith('cstd-ts')) {
-						if (originalRequest.endsWith('.js')) {
+					if (originalRequest.startsWith("cstd-next") || originalRequest.startsWith("cstd-ts")) {
+						if (originalRequest.endsWith(".js")) {
+							// biome-ignore lint/nursery/noMagicNumbers: DEPRECATED CODE
 							const originalRequestWithoutExtension = originalRequest.slice(0, originalRequest.length - 3);
-							const resolvedWithJsxExtension = import.meta.resolve(`${originalRequestWithoutExtension}.jsx`).replace('file://', '');
+							const resolvedWithJsxExtension = import.meta.resolve(`${originalRequestWithoutExtension}.jsx`).replace("file://", "");
 							if (resolvedWithJsxExtension) {
 								return { ...resolveRequest, path: resolvedWithJsxExtension };
 							}
@@ -74,9 +76,8 @@ const nextConfig: NextConfig = {
 				});
 			},
 		});
+		// ==================================================
 
 		return config;
 	},
 };
-
-export default nextConfig;

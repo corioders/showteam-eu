@@ -3,48 +3,52 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
-import 'server-only';
+/** biome-ignore-all lint/style/noCommonJs: RemoteStaticImage is designed to be able to run on edge. In rare cases this will function as a fallback */
 
-import './../../../src/media/image/picture-display-style.css';
+import "server-only";
 
-import type NodeFsType from 'node:fs/promises';
-import type SharpType from 'sharp';
-import type SvgoType from 'svgo';
-import type UnstorageFsDriverType from 'unstorage/drivers/fs-lite';
+import "./../../../src/media/image/picture-display-style.css";
 
-import { type ErrorReturnPromise, safePromise } from 'cstd-ts/error/index.js';
-import cacheDriver from 'cstd-ts/storage/unstorage/cacheDriver.mjs';
-import pLimit from 'p-limit';
-import type { ImgHTMLAttributes, JSX } from 'react';
-import { Agent, type RequestInit, type Response, fetch } from 'undici';
-import { type Storage as UnstorageStorage, createStorage } from 'unstorage';
-import lruCacheDriver from 'unstorage/drivers/lru-cache';
-import { memoizeImages } from './cache.js';
-import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from './image.mjs';
+import type NodeFsType from "node:fs/promises";
+
+import { type ErrorReturnPromise, safePromise } from "cstd-ts/error/index.js";
+import cacheDriver from "cstd-ts/storage/unstorage/cache-driver.mjs";
+import { StatusCodes } from "http-status-codes";
+import pLimit from "p-limit";
+import type { ImgHTMLAttributes, JSX } from "react";
+import type SharpType from "sharp";
+import type * as SvgoType from "svgo";
+import { Agent, fetch, type RequestInit, type Response } from "undici";
+import { createStorage, type Storage as UnstorageStorage } from "unstorage";
+import type UnstorageFsDriverType from "unstorage/drivers/fs-lite";
+import lruCacheDriver from "unstorage/drivers/lru-cache";
+
+import { memoizeImages } from "./cache.js";
+import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from "./image.mjs";
 import {
 	type CalculatedSize,
-	type INTERNAL_PictureSource,
-	type INTERNAL_SVGEntry,
-	type ImageInfo,
-	type UserSpecified,
 	calculateImageSizeFromUserSpecifiedNoSVG,
 	getPictureSourcesNotSvg,
 	getSvgEntry,
 	hash,
+	type ImageInfo,
+	type INTERNAL_PictureSource,
+	type INTERNAL_SVGEntry,
 	optimizePictureSources,
 	optimizeSvg,
 	readImageInfoFromBuffer,
 	shouldOptimizeImages,
+	type UserSpecified,
 	validateUserSpecified,
-} from './internal.mjs';
-import { validateSizesProperty } from './internalClient.mjs';
+} from "./internal.mjs";
+import { validateSizesProperty } from "./internal-client.mjs";
 
 // 25 MiB
 // const MAX_CLOUDFLARE_IMAGE_SIZE = 25 * 2 ** 20;
 
 const FETCH_CONCURRENCY_LIMIT = 3;
 const FETCH_RETRY = 3;
-const NEXTJS_FILEPATH_PREFIX = './.next/static/media';
+const NEXTJS_FILEPATH_PREFIX = "./.next/static/media";
 
 // The cache should work regardless of the environment we are in:
 // Dev-server: The cache is used while developing to prevent fetching the same images
@@ -52,17 +56,19 @@ const NEXTJS_FILEPATH_PREFIX = './.next/static/media';
 // Production(edge / nodejs): While we cannot change the CND static assets
 // we can fallback to responding with base64 encoded image. If we are on the node runtime the cache could provide some speedup.
 interface OurGlobalThis {
+	// biome-ignore lint/style/useNamingConvention: We are setting global state
 	__CSTD_NEXT_IMAGES_CACHE?: UnstorageStorage;
 
+	// biome-ignore lint/style/useNamingConvention: We are setting global state
 	__CSTD_NEXT_IMAGES_DEV_CACHE?: Map<string, JSX.Element>;
 }
 
 const ourGlobalThis = (global ?? globalThis ?? window ?? {}) as OurGlobalThis;
 if (ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE === undefined) {
-	if (process.env['NEXT_IS_EXPORT_WORKER'] === 'true' || process.env.NODE_ENV === 'development') {
-		const fsDriver: typeof UnstorageFsDriverType = require('unstorage/drivers/fs-lite');
+	if (process.env["NEXT_IS_EXPORT_WORKER"] === "true" || process.env.NODE_ENV === "development") {
+		const fsDriver: typeof UnstorageFsDriverType = require("unstorage/drivers/fs-lite");
 		ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE = createStorage({
-			driver: cacheDriver({ driver: fsDriver({ base: '.next/cache/corioders/cstd-next-remote-static-image' }) }),
+			driver: cacheDriver({ driver: fsDriver({ base: ".next/cache/corioders/cstd-next-remote-static-image" }) }),
 		});
 	} else {
 		ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE = createStorage({ driver: lruCacheDriver(undefined) });
@@ -79,10 +85,10 @@ const cacheStorage = ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE;
 const _devCache = ourGlobalThis.__CSTD_NEXT_IMAGES_DEV_CACHE;
 
 // The height will be inferred form the width attribute (if any).
-export interface RemoteStaticImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src' | 'alt' | 'sizes' | 'width' | 'height'> {
+export interface RemoteStaticImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "alt" | "sizes" | "width" | "height"> {
 	src: string;
 	alt: string;
-	loading: 'eager' | 'lazy';
+	loading: "eager" | "lazy";
 	sizes?: string;
 	pictureClassName?: string;
 
@@ -119,14 +125,14 @@ DESIGN:
 // I mean, a fallback will trigger, but the fallback will not serve the optimized image.
 //
 // TODO: BLUR IMAGE DATA
-const RemoteStaticImage = memoizeImages(async function RemoteStaticImage(props: RemoteStaticImageProps) {
-	const isDevelopmentMode = process.env['NODE_ENV'] === 'development' || !shouldOptimizeImages();
+export const RemoteStaticImage = memoizeImages(async function RemoteStaticImage(props: RemoteStaticImageProps) {
+	const isDevelopmentMode = process.env["NODE_ENV"] === "development" || !shouldOptimizeImages();
 
 	// Make sure that the src provided is a valid URL
 	const imageURL = new URL(props.src);
 	const imageFilename = convertToValidFilename(props.filename ?? props.alt);
 
-	let userSpecified: UserSpecified | undefined = { width: props.width, height: props.height };
+	let userSpecified: UserSpecified | undefined = { height: props.height, width: props.width };
 	if (!(props.width || props.height)) {
 		userSpecified = undefined;
 	}
@@ -137,25 +143,16 @@ const RemoteStaticImage = memoizeImages(async function RemoteStaticImage(props: 
 
 	const userImagePropsIncorrectType: Partial<RemoteStaticImageProps> = { ...props };
 
-	// biome-ignore lint/performance/noDelete: Delete is required here
 	delete userImagePropsIncorrectType.src;
-	// biome-ignore lint/performance/noDelete: Delete is required here
 	delete userImagePropsIncorrectType.alt;
-	// biome-ignore lint/performance/noDelete: Delete is required here
 	delete userImagePropsIncorrectType.loading;
-	// biome-ignore lint/performance/noDelete: Delete is required here
 	delete userImagePropsIncorrectType.sizes;
-	// biome-ignore lint/performance/noDelete: Delete is required here
 	delete userImagePropsIncorrectType.pictureClassName;
 
-	// biome-ignore lint/performance/noDelete: Delete is required here
 	delete userImagePropsIncorrectType.width;
-	// biome-ignore lint/performance/noDelete: Delete is required here
 	delete userImagePropsIncorrectType.height;
 
-	// biome-ignore lint/performance/noDelete: Delete is required here
 	delete userImagePropsIncorrectType.filename;
-	// biome-ignore lint/performance/noDelete: Delete is required here
 	delete userImagePropsIncorrectType.fetchRequestInit;
 
 	const userImageProps = userImagePropsIncorrectType as ImgHTMLAttributes<HTMLImageElement>;
@@ -168,7 +165,7 @@ const RemoteStaticImage = memoizeImages(async function RemoteStaticImage(props: 
 
 	const imageBuffer = fetchedImage.imageBuffer;
 	const imageInfo = fetchedImage.imageInfo;
-	const isSVG = imageInfo.type === 'svg';
+	const isSVG = imageInfo.type === "svg";
 
 	let calculatedSize: CalculatedSize | undefined;
 	if (!isSVG) {
@@ -178,35 +175,35 @@ const RemoteStaticImage = memoizeImages(async function RemoteStaticImage(props: 
 	const imageOptimizationAttributes = {
 		...IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES,
 		alt: props.alt,
+		height: isSVG ? imageInfo.height : calculatedSize?.imageSizeToSetAtTheImgElement.height,
 		loading: props.loading,
 
 		width: isSVG ? imageInfo.width : calculatedSize?.imageSizeToSetAtTheImgElement.width,
-		height: isSVG ? imageInfo.height : calculatedSize?.imageSizeToSetAtTheImgElement.height,
 	};
 
 	// ==================================================
 	// ==================================================
 	// DYNAMIC ROUTE FALLBACK
 
-	if (process.env['NEXT_IS_EXPORT_WORKER'] !== 'true' && !isDevelopmentMode) {
+	if (process.env["NEXT_IS_EXPORT_WORKER"] !== "true" && !isDevelopmentMode) {
 		// Warn the user that they really should not be doing this
 		// We are not in the pre-rendering phase. We have been called from a NON static route.
 		// They are expecting us to optimize and save images while we are on the edge. When the static assets have already been deployed to a CND.
 		// This is not how it work baby.
-		console.log('!!WARNING!! You are trying to optimize images in a non-static route. This is not how it works. You should be doing this in the static route.');
+		console.log("!!WARNING!! You are trying to optimize images in a non-static route. This is not how it works. You should be doing this in the static route.");
 
 		if (isSVG) {
 			// This is the correct MIME type for svg
-			imageInfo.type += '+xml';
+			imageInfo.type += "+xml";
 		}
 
-		const stringifiedBuffer = Buffer.from(imageBuffer).toString('base64');
+		const stringifiedBuffer = Buffer.from(imageBuffer).toString("base64");
 		const imageBase64 = `data:image/${imageInfo.type};base64,${stringifiedBuffer}`;
 
 		// Return the base64 version because we cannot add more images via fs.writeSync into the nextjs's static directory
 		return (
 			<picture className={props.pictureClassName}>
-				<img {...imageOptimizationAttributes} {...userImageProps} src={imageBase64} alt={props.alt} />
+				<img {...imageOptimizationAttributes} {...userImageProps} alt={props.alt} src={imageBase64} />
 			</picture>
 		);
 	}
@@ -215,11 +212,11 @@ const RemoteStaticImage = memoizeImages(async function RemoteStaticImage(props: 
 	// ==================================================
 
 	// We can use nodejs dependencies because this code will only be run during either buildtime or development time
-	const nodeFs: typeof NodeFsType = require('node:fs/promises');
+	const nodeFs: typeof NodeFsType = require("node:fs/promises");
 
 	// If two images are byte-byte the same, then they are the same image
 	// for performance and SEO purposes it is more optimal to treat them as one image.
-	const imageSpecificHash = hash(imageBuffer, require('node:crypto').createHash);
+	const imageSpecificHash = hash(imageBuffer, require("node:crypto").createHash);
 
 	await nodeFs.mkdir(NEXTJS_FILEPATH_PREFIX, { recursive: true });
 
@@ -228,13 +225,13 @@ const RemoteStaticImage = memoizeImages(async function RemoteStaticImage(props: 
 		await optimizeSvgAndWriteToDisk(isDevelopmentMode, svgEntry, imageBuffer);
 		return (
 			<picture className={props.pictureClassName}>
-				<img {...imageOptimizationAttributes} {...userImageProps} src={svgEntry.src} alt={props.alt} />
+				<img {...imageOptimizationAttributes} {...userImageProps} alt={props.alt} src={svgEntry.src} />
 			</picture>
 		);
 	}
 
 	if (!calculatedSize) {
-		throw new Error('calculatedSize should be defined at this point');
+		throw new Error("calculatedSize should be defined at this point");
 	}
 
 	imageOptimizationAttributes.sizes = validateSizesProperty(props.sizes, calculatedSize.inferredSizes, imageFilename);
@@ -245,18 +242,17 @@ const RemoteStaticImage = memoizeImages(async function RemoteStaticImage(props: 
 	const sources: JSX.Element[] = [];
 	for (const source of pictureSources) {
 		const sourceKey = `${imageSpecificHash}${source.type}`;
-		sources.push(<source key={sourceKey} sizes={imageOptimizationAttributes.sizes} srcSet={source.srcSet} src={source.fallbackSrc} type={source.type} />);
+		sources.push(<source key={sourceKey} sizes={imageOptimizationAttributes.sizes} src={source.fallbackSrc} srcSet={source.srcSet} type={source.type} />);
 	}
 
 	const defaultImageFallbackSource = pictureSources[0];
 	return (
 		<picture className={props.pictureClassName}>
 			{sources}
-			<img {...imageOptimizationAttributes} {...userImageProps} srcSet={defaultImageFallbackSource.srcSet} src={defaultImageFallbackSource.fallbackSrc} alt={props.alt} />
+			<img {...imageOptimizationAttributes} {...userImageProps} alt={props.alt} src={defaultImageFallbackSource.fallbackSrc} srcSet={defaultImageFallbackSource.srcSet} />
 		</picture>
 	);
 });
-export default RemoteStaticImage;
 
 interface FetchedImage {
 	imageBuffer: Buffer;
@@ -269,8 +265,8 @@ interface FetchRemoteImageCacheEntry {
 }
 
 interface FetchRemoteImageMetadataCacheEntry {
-	lastModified: FetchRemoteImageCacheEntry['lastModified'];
-	imageInfo: FetchRemoteImageCacheEntry['fetchedImage']['imageInfo'];
+	lastModified: FetchRemoteImageCacheEntry["lastModified"];
+	imageInfo: FetchRemoteImageCacheEntry["fetchedImage"]["imageInfo"];
 }
 
 const FETCH_REMOTE_IMAGE_METADATA_CACHE_KEY = (x: string) => `FETCH_REMOTE_IMAGE_METADATA_CACHE_KEY:${x}`;
@@ -286,7 +282,7 @@ async function setFetchRemoteImageCache(cacheKey: string, entry: FetchRemoteImag
 		return;
 	}
 
-	const p1 = cacheStorage.setItem<FetchRemoteImageMetadataCacheEntry>(metadataCacheKey, { lastModified: entry.lastModified, imageInfo: entry.fetchedImage.imageInfo });
+	const p1 = cacheStorage.setItem<FetchRemoteImageMetadataCacheEntry>(metadataCacheKey, { imageInfo: entry.fetchedImage.imageInfo, lastModified: entry.lastModified });
 	const p2 = cacheStorage.setItemRaw(bufferCacheKey, entry.fetchedImage.imageBuffer);
 	await Promise.all([p1, p2]);
 }
@@ -332,14 +328,14 @@ async function getFetchRemoteImageCache(cacheKey: string): Promise<FetchRemoteIm
 async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): ErrorReturnPromise<FetchedImage> {
 	let imageURLForLogging = imageURL.toString();
 	if (isDataURI(imageURLForLogging)) {
-		imageURLForLogging = '<DATA URI>';
+		imageURLForLogging = "<DATA URI>";
 	}
 	// const currentLastModified = await fetchRemoteImageLastModified(imageURL);
 
 	// TODO: FIX FIX FIX
 	// When fetching with google drive, some images have the same data but different urls.... For example images in documents, and our system thinks
 	// they are new and downloads them again. This has to be fixed
-	const cacheKey = hash(imageURL.toString(), require('node:crypto').createHash);
+	const cacheKey = hash(imageURL.toString(), require("node:crypto").createHash);
 
 	// During the build this cache would be used as a de-duplication mechanism.
 	// If the same image would be requested in two routes.
@@ -362,11 +358,11 @@ async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): 
 
 	console.log(`Fetched remote image ${imageURLForLogging}`);
 
-	if (!imageResponse.ok || imageResponse.status !== 200) {
+	if (!imageResponse.ok || imageResponse.status !== StatusCodes.OK) {
 		return [null, new Error(`Unable to fetch image ${imageResponse.statusText}`)];
 	}
 
-	const lastModified = imageResponse.headers.get('Last-Modified');
+	const lastModified = imageResponse.headers.get("Last-Modified");
 	const [imageArrayBuffer, imageArrayBufferError] = await safePromise(() => imageResponse.arrayBuffer());
 	if (imageArrayBufferError !== null) {
 		return [null, imageArrayBufferError];
@@ -387,8 +383,8 @@ async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): 
 const OPTIMIZE_REMOTE_SVG_IMAGE_CACHE_KEY = (x: string) => `OPTIMIZE_REMOTE_SVG_IMAGE_CACHE_KEY:${x}`;
 
 async function optimizeSvgAndWriteToDisk(isDevelopmentMode: boolean, svgEntry: INTERNAL_SVGEntry, imageBuffer: Buffer): Promise<void> {
-	const svgo: typeof SvgoType = requireWebpackExternalDependencyMakeWebpackNotBundleIt('svgo');
-	const nodeFs: typeof NodeFsType = require('node:fs/promises');
+	const svgo: typeof SvgoType = requireWebpackExternalDependencyMakeWebpackNotBundleIt("svgo");
+	const nodeFs: typeof NodeFsType = require("node:fs/promises");
 
 	if (isDevelopmentMode) {
 		await nodeFs.writeFile(svgEntry.filepath, imageBuffer.toString());
@@ -418,8 +414,8 @@ async function optimizeImageAndWriteToDisk(
 	imageBuffer: Buffer,
 	imageFilenameToReport: string,
 ): Promise<void> {
-	const sharp: typeof SharpType = requireWebpackExternalDependencyMakeWebpackNotBundleIt('sharp');
-	const nodeFs: typeof NodeFsType = require('node:fs/promises');
+	const sharp: typeof SharpType = requireWebpackExternalDependencyMakeWebpackNotBundleIt("sharp");
+	const nodeFs: typeof NodeFsType = require("node:fs/promises");
 
 	const exportFunction = async (optimizedImageBuffer: Buffer, filepath: string) => {
 		const [_, statsError] = await safePromise(() => nodeFs.stat(filepath));
@@ -445,18 +441,18 @@ async function optimizeImageAndWriteToDisk(
 }
 
 function requireWebpackExternalDependencyMakeWebpackNotBundleIt(id: string): any {
-	// biome-ignore lint/style/useNamingConvention:
-	// biome-ignore lint/security/noGlobalEval:
-	const originalNodejsRequire__NotAffectedByWebpackBuild = eval('require') as typeof require;
+	// biome-ignore lint/security/noGlobalEval: this is a hack for webpack, we need it
+	// biome-ignore lint/style/useNamingConvention: this is a hacky function. We want it to be very verbose
+	const originalNodejsRequire__NotAffectedByWebpackBuild = eval("require") as typeof require;
 	return originalNodejsRequire__NotAffectedByWebpackBuild(id);
 }
 
 function convertToValidFilename(x: string): string {
-	return x.replaceAll(/[\/|\\:*?"<>]/g, ' ').replaceAll('\n', ' ');
+	return x.replaceAll(/[/|\\:*?"<>]/g, " ").replaceAll("\n", " ");
 }
 
 function isDataURI(uri: string): boolean {
-	return uri.startsWith('data:');
+	return uri.startsWith("data:");
 }
 
 const fetchConcurrencyLimit = pLimit(FETCH_CONCURRENCY_LIMIT);
@@ -467,14 +463,15 @@ async function fetchWithRetry(imageURL: URL, fetchRequestInit?: RequestInit): Er
 		fetchTry += 1;
 
 		const millisecond = 1;
+		// biome-ignore lint/nursery/noMagicNumbers: This is a standard multiplayer
 		const second = millisecond * 1000;
 		const minute = second * 60;
 		const hour = minute * 60;
 		const [imageResponse, fetchError] = await fetchConcurrencyLimit(() =>
 			safePromise(() =>
 				fetch(imageURL, {
-					signal: AbortSignal.timeout(hour),
 					dispatcher: new Agent({ connectTimeout: hour }),
+					signal: AbortSignal.timeout(hour),
 					...fetchRequestInit,
 				}),
 			),

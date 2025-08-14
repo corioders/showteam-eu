@@ -1,45 +1,45 @@
-'use client';
+"use client";
 
-import { type ComponentPropsWithoutRef, type ReactNode, type RefObject, useRef } from 'react';
+import { fileIDToGoogleDriveLink } from "cstd-ts/driveCMS/drive-client-side.js";
+import { getFileUploadQuestionTitle, isFileUploadQuestion, uploadFileUsingForm } from "cstd-ts/driveCMS/form-client-side.js";
+import { safePromise } from "cstd-ts/error/index.js";
+import { type ComponentPropsWithoutRef, type ReactNode, type RefObject, useRef } from "react";
 
-import CstdError from '@/error/CstdError.jsx';
-import { fileIDToGoogleDriveLink } from 'cstd-ts/driveCMS/driveClientSide.js';
-import { getFileUploadQuestionTitle, isFileUploadQuestion, uploadFileUsingForm } from 'cstd-ts/driveCMS/formClientSide.js';
-import { safePromise } from 'cstd-ts/error/index.js';
-import { useFormRendererClientContext } from './_context/_client.jsx';
+import { CstdError } from "@/error/cstd-error.jsx";
 
-export interface Props extends Omit<ComponentPropsWithoutRef<'form'>, 'children'> {
+import { useFormRendererClientContext } from "./_context/_client.jsx";
+
+export interface Props extends Omit<ComponentPropsWithoutRef<"form">, "children"> {
 	onSubmitSuccess?: (formRef: RefObject<HTMLFormElement | null>) => void;
 	onSubmitError?: (formRef: RefObject<HTMLFormElement | null>, error?: Error) => void;
 	setIsLoading?: (isLoading: boolean) => void;
 	children: ReactNode;
 }
 
-export default function FormRendererForm({ onSubmitSuccess, onSubmitError, setIsLoading, children, noValidate, onSubmit, ...props }: Props) {
+export function FormRendererForm({ onSubmitSuccess, onSubmitError, setIsLoading, children, noValidate, onSubmit, ...props }: Props) {
 	const formRef = useRef<HTMLFormElement>(null);
 	const { form } = useFormRendererClientContext();
 	if (form?.googleAPIsForm.items === undefined || form.googleAPIsForm.items.length === 0) {
-		return <CstdError error={new Error('Form has no inputs')} />;
+		return <CstdError error={new Error("Form has no inputs")} />;
 	}
 
 	return (
 		<form
-			ref={formRef}
-			// validation is handled by the onSubmit handler
 			noValidate={noValidate ?? true}
-			// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
+			// validation is handled by the onSubmit handler
+			// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
 			onSubmit={(e) => {
 				e.preventDefault();
 				if (formRef.current === null) {
 					return;
 				}
 				if (formRef.current.checkValidity() === false) {
-					const element = formRef.current.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(':invalid');
+					const element = formRef.current.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(":invalid");
 					if (element === null) {
 						return;
 					}
 					element.focus();
-					element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+					element.scrollIntoView({ behavior: "smooth", block: "center" });
 					return;
 				}
 
@@ -63,33 +63,33 @@ export default function FormRendererForm({ onSubmitSuccess, onSubmitError, setIs
 						continue;
 					}
 					for (const input of inputs) {
-						if (input instanceof HTMLInputElement && (input.type === 'radio' || input.type === 'checkbox') && !input.checked) {
+						if (input instanceof HTMLInputElement && (input.type === "radio" || input.type === "checkbox") && !input.checked) {
 							continue;
 						}
 
-						if (input instanceof HTMLInputElement && input.type === 'file') {
+						if (input instanceof HTMLInputElement && input.type === "file") {
 							const files = input.files;
 							if (!files) {
-								console.log('input.files is null');
+								console.log("input.files is null");
 								// TODO:ARCZII CO TUTAJ ROBIMTY?
 								continue;
 							}
 
 							if (files.length !== 1) {
-								console.log('uploading more than one file, or less than one file');
+								console.log("uploading more than one file, or less than one file");
 								// TODO:ARCZII CO TUTAJ ROBIMTY?
 								continue;
 							}
 
 							if (!(item.questionItem?.question?.textQuestion && item.title)) {
-								console.log('the upload item IS not a textQuestion or does not have a title');
+								console.log("the upload item IS not a textQuestion or does not have a title");
 								// TODO:ARCZII CO TUTAJ ROBIMTY?
 
 								continue;
 							}
 
 							if (!isFileUploadQuestion(item.title)) {
-								console.log('the provided short text questions is not a file upload one');
+								console.log("the provided short text questions is not a file upload one");
 								continue;
 							}
 
@@ -116,6 +116,7 @@ export default function FormRendererForm({ onSubmitSuccess, onSubmitError, setIs
 					}
 				}
 
+				// biome-ignore lint/nursery/noFloatingPromises: This is intentional
 				(async () => {
 					setIsLoading?.(true);
 
@@ -125,19 +126,19 @@ export default function FormRendererForm({ onSubmitSuccess, onSubmitError, setIs
 							continue;
 						}
 
-						console.log('FILE UPLOAD ERROR', fileUploadError);
+						console.log("FILE UPLOAD ERROR", fileUploadError);
 						onSubmitError?.(formRef, fileUploadError);
 						return;
 					}
 
 					const [_response, error] = await safePromise(() =>
 						fetch(form.formResponsePostURL, {
-							method: 'POST',
-							mode: 'no-cors',
-							headers: {
-								'Content-Type': 'application/x-www-form-urlencoded',
-							},
 							body,
+							headers: {
+								"Content-Type": "application/x-www-form-urlencoded",
+							},
+							method: "POST",
+							mode: "no-cors",
 						}),
 					);
 
@@ -151,6 +152,7 @@ export default function FormRendererForm({ onSubmitSuccess, onSubmitError, setIs
 
 				onSubmit?.(e);
 			}}
+			ref={formRef}
 			{...props}
 		>
 			{children}

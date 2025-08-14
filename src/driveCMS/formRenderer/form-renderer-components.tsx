@@ -1,8 +1,10 @@
-import CstdError from '@/error/CstdError.jsx';
-import { getFileUploadQuestionTitle, isFileUploadQuestion } from 'cstd-ts/driveCMS/formClientSide.js';
-import type { forms_v1 } from 'googleapis';
-import type { ReactNode } from 'react';
-import { serverContext } from './FormRendererRoot.jsx';
+import { getFileUploadQuestionTitle, isFileUploadQuestion } from "cstd-ts/driveCMS/form-client-side.js";
+import type { forms_v1 } from "googleapis";
+import type { ReactNode } from "react";
+
+import { CstdError } from "@/error/cstd-error.jsx";
+
+import { serverContext } from "./form-renderer-root.jsx";
 
 export interface ComponentsT {
 	radio: (props: forms_v1.Schema$Item) => ReactNode;
@@ -17,9 +19,9 @@ interface Props {
 	components?: Partial<ComponentsT>;
 }
 
-export default function FormRendererComponents(props: Props) {
+export function FormRendererComponents(props: Props) {
 	if (serverContext.form?.googleAPIsForm.items === undefined || serverContext.form.googleAPIsForm.items.length === 0) {
-		return <CstdError error={new Error('Form has no inputs')} />;
+		return <CstdError error={new Error("Form has no inputs")} />;
 	}
 
 	return serverContext.form?.googleAPIsForm.items?.map((item) => getComponent(item, { ...defaultComponents, ...props.components }));
@@ -49,13 +51,13 @@ function getComponent(item: forms_v1.Schema$Item, components: ComponentsT) {
 	}
 
 	if (item.questionItem?.question?.choiceQuestion) {
-		if (item.questionItem?.question?.choiceQuestion?.type === 'RADIO') {
+		if (item.questionItem?.question?.choiceQuestion?.type === "RADIO") {
 			return components.radio(item);
 		}
-		if (item.questionItem?.question?.choiceQuestion?.type === 'CHECKBOX') {
+		if (item.questionItem?.question?.choiceQuestion?.type === "CHECKBOX") {
 			return components.checkbox(item);
 		}
-		if (item.questionItem?.question?.choiceQuestion?.type === 'DROP_DOWN') {
+		if (item.questionItem?.question?.choiceQuestion?.type === "DROP_DOWN") {
 			return components.dropdown(item);
 		}
 	}
@@ -65,31 +67,11 @@ function getComponent(item: forms_v1.Schema$Item, components: ComponentsT) {
 	}
 
 	if (item.questionItem?.question?.fileUploadQuestion) {
-		return <CstdError error={new Error('File upload in the traditional sense does NOT work. Please refer to the documentation... TODO: Write docs')} />;
+		return <CstdError error={new Error("File upload in the traditional sense does NOT work. Please refer to the documentation... TODO: Write docs")} />;
 	}
 }
 
 const defaultComponents: ComponentsT = {
-	radio: (props) => (
-		<div key={props.itemId}>
-			{props.title}
-			{props.questionItem?.question?.choiceQuestion?.options?.map(
-				(option) =>
-					option.value && (
-						<label key={option.value}>
-							<input key={option.value} name={props.itemId as string} type="radio" value={option.value ?? ''} />
-							{option.value}
-						</label>
-					),
-			)}
-		</div>
-	),
-	textarea: (props) => (
-		<label key={props.itemId}>
-			{props.title}
-			<textarea name={props.itemId as string} />
-		</label>
-	),
 	checkbox: (props) => (
 		<div key={props.itemId}>
 			{props.title}
@@ -97,7 +79,7 @@ const defaultComponents: ComponentsT = {
 				(option) =>
 					option.value && (
 						<label key={option.value}>
-							<input key={option.value} name={props.itemId as string} type="checkbox" value={option.value ?? ''} />
+							<input key={option.value} name={props.itemId as string} type="checkbox" value={option.value ?? ""} />
 							{option.value}
 						</label>
 					),
@@ -111,12 +93,39 @@ const defaultComponents: ComponentsT = {
 				{props.questionItem?.question?.choiceQuestion?.options?.map(
 					(option) =>
 						option.value && (
-							<option key={option.value} value={option.value ?? ''}>
+							<option key={option.value} value={option.value ?? ""}>
 								{option.value}
 							</option>
 						),
 				)}
 			</select>
+		</label>
+	),
+	file: (props) => (
+		// TODO
+		<label key={props.itemId}>
+			{props.title}
+			<input name={props.itemId as string} type="file" />
+		</label>
+	),
+	radio: (props) => (
+		<div key={props.itemId}>
+			{props.title}
+			{props.questionItem?.question?.choiceQuestion?.options?.map(
+				(option) =>
+					option.value && (
+						<label key={option.value}>
+							<input key={option.value} name={props.itemId as string} type="radio" value={option.value ?? ""} />
+							{option.value}
+						</label>
+					),
+			)}
+		</div>
+	),
+	scale: (props) => (
+		<label key={props.itemId}>
+			{props.title}
+			<input name={props.itemId as string} type="radio" />
 		</label>
 	),
 	text: (props) => (
@@ -125,17 +134,10 @@ const defaultComponents: ComponentsT = {
 			<input name={props.itemId as string} />
 		</label>
 	),
-	scale: (props) => (
+	textarea: (props) => (
 		<label key={props.itemId}>
 			{props.title}
-			<input name={props.itemId as string} type="radio" />
-		</label>
-	),
-	file: (props) => (
-		// TODO
-		<label key={props.itemId}>
-			{props.title}
-			<input name={props.itemId as string} type="file" />
+			<textarea name={props.itemId as string} />
 		</label>
 	),
 };

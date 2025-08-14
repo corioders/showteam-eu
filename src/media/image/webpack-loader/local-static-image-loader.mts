@@ -3,28 +3,30 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
-import { createHash } from 'node:crypto';
-import path from 'node:path';
-import sharp from 'sharp';
-import svgo from 'svgo';
-import { createStorage } from 'unstorage';
-import fsDriver from 'unstorage/drivers/fs-lite';
-import type { LoaderDefinitionFunction } from 'webpack';
+import { createHash } from "node:crypto";
+import path from "node:path";
+
+import sharp from "sharp";
+import * as svgo from "svgo";
+import { createStorage } from "unstorage";
+import fsDriver from "unstorage/drivers/fs-lite";
+import type { LoaderDefinitionFunction } from "webpack";
+
 import {
-	type PictureSource,
-	type UserSpecified,
 	calculateImageSizeFromUserSpecifiedNoSVG,
 	getPictureSourcesNotSvg,
 	getSvgEntry,
 	hash,
 	optimizePictureSources,
 	optimizeSvg,
+	type PictureSource,
 	readImageInfoFromBuffer,
 	shouldOptimizeImages,
+	type UserSpecified,
 	validateUserSpecified,
-} from '../internal.mjs';
+} from "../internal.mjs";
 
-const cache = createStorage({ driver: fsDriver({ base: '.next/cache/corioders/cstd-next-local-static-image' }) });
+const cache = createStorage({ driver: fsDriver({ base: ".next/cache/corioders/cstd-next-local-static-image" }) });
 
 export interface LocalStaticImageImport {
 	// Hash of the original image. Can be used inside the react key prop.
@@ -33,6 +35,7 @@ export interface LocalStaticImageImport {
 	filename: string;
 }
 
+// biome-ignore lint/style/useNamingConvention: This is an internal structure. Naming convention is omitted
 export interface INTERNAL_LocalStaticImageImport extends LocalStaticImageImport {
 	// Width of the image. Width is specified by user in the import query or taken from the original image.
 	w: number;
@@ -59,7 +62,7 @@ interface InternalLowOverheadPictureSource {
 	r: string;
 
 	// Type of the picture source.
-	t: PictureSource['type'];
+	t: PictureSource["type"];
 }
 
 interface Options {
@@ -74,9 +77,9 @@ const RESOURCE_QUERY_HEIGHT_REGEX = /\?h=(?<height>\d+)\.scaled/;
 const RESOURCE_QUERY_WIDTH_ARRAY_REGEX = /\?w=(?<width>\[[\d+|,| ]*\])\.scaled/;
 const RESOURCE_QUERY_HEIGHT_ARRAY_REGEX = /\?h=(?<height>\[[\d+|,| ]*\])\.scaled/;
 
-const NEXTJS_CLIENT_BUILD_FILEPATH_PREFIX = 'static/media';
-const NEXTJS_SERVER_BUILD_FILEPATH_PREFIX = '../../static/media';
-const NEXTJS_SERVER_DEV_FILEPATH_PREFIX = '../static/media';
+const NEXTJS_CLIENT_BUILD_FILEPATH_PREFIX = "static/media";
+const NEXTJS_SERVER_BUILD_FILEPATH_PREFIX = "../../static/media";
+const NEXTJS_SERVER_DEV_FILEPATH_PREFIX = "../static/media";
 
 const EMITTED_FILES = new Set<string>();
 
@@ -103,15 +106,15 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 
 		if (widthSpecified || heightSpecified) {
 			userSpecified = {
-				width: widthSpecified ? Number(widthSpecified) : undefined,
 				height: heightSpecified ? Number(heightSpecified) : undefined,
+				width: widthSpecified ? Number(widthSpecified) : undefined,
 			};
 		}
 
 		if (widthArraySpecified || heightArraySpecified) {
 			userSpecified = {
-				width: widthArraySpecified ? JSON.parse(widthArraySpecified) : undefined,
 				height: heightArraySpecified ? JSON.parse(heightArraySpecified) : undefined,
+				width: widthArraySpecified ? JSON.parse(widthArraySpecified) : undefined,
 			};
 		}
 
@@ -163,15 +166,15 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const imageFilename = path.basename(this.resourcePath);
 	const imageInfo = readImageInfoFromBuffer(imageBuffer);
 
-	if (imageInfo.type === 'svg') {
+	if (imageInfo.type === "svg") {
 		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo, pathPrefix);
 		const importReturn: INTERNAL_LocalStaticImageImport = {
 			contentHash: imageSpecificHash,
 			filename: imageFilename,
+			g: svgEntry.src,
+			h: imageInfo.height,
 
 			w: imageInfo.width,
-			h: imageInfo.height,
-			g: svgEntry.src,
 		};
 		const importReturnString = `export default ${JSON.stringify(importReturn)}`;
 
@@ -188,15 +191,15 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const { imageSizeToSetAtTheImgElement, inferredSizes } = calculateImageSizeFromUserSpecifiedNoSVG(imageInfo, userSpecified);
 
 	const pictureSources = getPictureSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, pathPrefix, userSpecified);
-	const loPictureSources: InternalLowOverheadPictureSource[] = pictureSources.map((ps) => ({ s: ps.srcSet, r: ps.fallbackSrc, t: ps.type }));
+	const loPictureSources: InternalLowOverheadPictureSource[] = pictureSources.map((ps) => ({ r: ps.fallbackSrc, s: ps.srcSet, t: ps.type }));
 
 	const importReturn: INTERNAL_LocalStaticImageImport = {
 		contentHash: imageSpecificHash,
 		filename: imageFilename,
-
-		w: imageSizeToSetAtTheImgElement.width,
 		h: imageSizeToSetAtTheImgElement.height,
 		s: loPictureSources,
+
+		w: imageSizeToSetAtTheImgElement.width,
 		z: inferredSizes,
 	};
 	const importReturnString = `export default ${JSON.stringify(importReturn)}`;
@@ -230,4 +233,5 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 };
 
 export const raw = true;
+// biome-ignore lint/style/noDefaultExport: This default export is required because we are interacting with webpack
 export default localStaticImageLoader;

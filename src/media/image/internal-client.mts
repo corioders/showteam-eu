@@ -13,7 +13,7 @@ export function validateSizesProperty(userProvidedSizes: string | undefined, inf
 	}
 
 	if (userProvidedSizes) {
-		if (userProvidedSizes === 'auto') {
+		if (userProvidedSizes === "auto") {
 			throw new Error(`The sizes='auto' attribute does not work in Safari and Firefox, sorry... ${imageNameToReport}`);
 		}
 		return userProvidedSizes;

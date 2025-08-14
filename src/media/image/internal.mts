@@ -3,28 +3,28 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
-import type { BinaryLike, createHash as createHashType } from 'node:crypto';
-import type SharpType from 'sharp';
-import type SvgoType from 'svgo';
+/** biome-ignore-all lint/style/useNamingConvention: This file does a lot of internal work. Some weird names are required */
 
-import { type ImageType, TARGET_IMAGE_FORMATS, TARGET_IMAGE_SIZES, getListOfScaledWidths } from './image.mjs';
+import type { BinaryLike, createHash as createHashType } from "node:crypto";
 
 // TODO: Check if buffer-image-size works in the browser
-import readImageInfoFromBufferInternal from 'buffer-image-size';
+import readImageInfoFromBufferInternal from "buffer-image-size";
+import pLimit from "p-limit";
+import type SharpType from "sharp";
+import type * as SvgoType from "svgo";
 
-// Importing p-limit works on browser.
-import pLimit from 'p-limit';
-import { PERFORMANCE_PLACEHOLDER } from './performance-placeholder.mjs';
+import { getListOfScaledWidths, type ImageType, TARGET_IMAGE_FORMATS, TARGET_IMAGE_SIZES } from "./image.mjs";
+import { PERFORMANCE_PLACEHOLDER } from "./performance-placeholder.mjs";
 
-const DISABLE_PERFORMANCE_PLACEHOLDER = 'CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER';
+const DISABLE_PERFORMANCE_PLACEHOLDER = "CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER";
 
-const SKIP_IMAGE_OPTIMIZATION_FLAG = 'CORIODERS_SKIP_IMAGE_OPTIMIZATION';
-const FORCE_IMAGE_OPTIMIZATION_FLAG = 'CORIODERS_FORCE_IMAGE_OPTIMIZATION';
+const SKIP_IMAGE_OPTIMIZATION_FLAG = "CORIODERS_SKIP_IMAGE_OPTIMIZATION";
+const FORCE_IMAGE_OPTIMIZATION_FLAG = "CORIODERS_FORCE_IMAGE_OPTIMIZATION";
 const KIBIBYTE = 1024;
 const MAX_DEV_IMAGE_SIZE = 2 * KIBIBYTE;
 
 function shouldUsePerformancePlaceholder(isDevelopmentMode: boolean, imageSize: number): boolean {
-	if (process.env[DISABLE_PERFORMANCE_PLACEHOLDER] === 'true') {
+	if (process.env[DISABLE_PERFORMANCE_PLACEHOLDER] === "true") {
 		return false;
 	}
 
@@ -52,7 +52,7 @@ export function shouldOptimizeImages(): boolean {
 }
 
 export function hash(data: BinaryLike, createHash: typeof createHashType): string {
-	return createHash('shake256', { outputLength: 32 }).update(data).digest('hex');
+	return createHash("shake256", { outputLength: 32 }).update(data).digest("hex");
 }
 
 export interface ImageInfo {
@@ -104,11 +104,11 @@ export interface ImageSize {
 
 export function validateUserSpecified(userSpecified: UserSpecified) {
 	if (userSpecified.width && userSpecified.height) {
-		throw new Error('You have specified both width and height. Only one is supported, the other one is inferred while kipping the image ratio.');
+		throw new Error("You have specified both width and height. Only one is supported, the other one is inferred while kipping the image ratio.");
 	}
 
 	if (!(userSpecified.width || userSpecified.height)) {
-		throw new Error('THIS SHOULD NOT HAPPEN. The UserSpecified object was passed without height and width.');
+		throw new Error("THIS SHOULD NOT HAPPEN. The UserSpecified object was passed without height and width.");
 	}
 
 	if (Array.isArray(userSpecified.width) && userSpecified.width.length < 2) {
@@ -120,8 +120,8 @@ export function validateUserSpecified(userSpecified: UserSpecified) {
 	}
 }
 
-const NEXTJS_IMAGE_FOLDER = '.next/static/media';
-const NEXTJS_URL_PREFIX = '/_next/static/media';
+const NEXTJS_IMAGE_FOLDER = ".next/static/media";
+const NEXTJS_URL_PREFIX = "/_next/static/media";
 
 function getImageFilenameMeta(imageFilename: string, imageSpecificHash: string) {
 	return (width: number, format: ImageType) => `${imageFilename}.${imageSpecificHash}.${width.toString()}.${format}`;
@@ -148,16 +148,16 @@ export function getPictureSourcesNotSvg(
 	const usePerformancePlaceholder = shouldUsePerformancePlaceholder(isDevelopmentMode, imageInfo.imageSize);
 
 	if (usePerformancePlaceholder) {
-		imageFilename = 'PERFORMANCE_PLACEHOLDER_';
-		imageSpecificHash = 'PERFORMANCE_PLACEHOLDER';
+		imageFilename = "PERFORMANCE_PLACEHOLDER_";
+		imageSpecificHash = "PERFORMANCE_PLACEHOLDER";
 		imageSpecificHash = `PERFORMANCE_PLACEHOLDER_${imageInfo.width}_${imageInfo.height}`;
 	}
 
 	const getImageUrl = getImageUrlMeta(imageFilename, imageSpecificHash, baseURL);
 	const getImageFilepath = getImageFilepathMeta(imageFilename, imageSpecificHash, baseFilePath);
 
-	if (imageInfo.type === 'svg') {
-		throw new Error('Svg image cannot be treated as a regular image');
+	if (imageInfo.type === "svg") {
+		throw new Error("Svg image cannot be treated as a regular image");
 	}
 
 	let imageFormats = isDevelopmentMode ? [imageInfo.type] : TARGET_IMAGE_FORMATS;
@@ -193,12 +193,12 @@ export function getPictureSourcesNotSvg(
 	if (isDevelopmentMode) {
 		targetWidths = [imageInfo.width];
 		if (usePerformancePlaceholder) {
-			imageFormats = ['webp'];
+			imageFormats = ["webp"];
 		}
 	}
 	const sources: INTERNAL_PictureSource[] = [];
 	for (const targetFormat of imageFormats) {
-		let srcSetPerFormat = '';
+		let srcSetPerFormat = "";
 
 		const sharpEntries: INTERNAL_SharpEntry[] = [];
 		for (const targetWidth of targetWidths) {
@@ -209,21 +209,20 @@ export function getPictureSourcesNotSvg(
 
 			srcSetPerFormat += `${getImageUrl(targetWidth, targetFormat)} ${targetWidth}w, `;
 			sharpEntries.push({
+				cacheKey: `${imageSpecificHash}.${targetWidth}.${targetFormat}`,
+				filepath: getImageFilepath(targetWidth, targetFormat),
 				targetFormat: targetFormat,
 				targetWidth: targetWidth,
-				filepath: getImageFilepath(targetWidth, targetFormat),
-
-				cacheKey: `${imageSpecificHash}.${targetWidth}.${targetFormat}`,
 			});
 		}
 
 		// Remove the last ", "
 		srcSetPerFormat = srcSetPerFormat.slice(0, srcSetPerFormat.length - 2);
 		sources.push({
-			srcSet: srcSetPerFormat,
-			fallbackSrc: getImageUrl(sharpEntries[0].targetWidth, targetFormat),
-			type: `image/${targetFormat}`,
 			__sharpEntries: sharpEntries,
+			fallbackSrc: getImageUrl(sharpEntries[0].targetWidth, targetFormat),
+			srcSet: srcSetPerFormat,
+			type: `image/${targetFormat}`,
 		});
 	}
 
@@ -238,14 +237,16 @@ const CONCURRENCY_LIMIT = 1;
 const concurrencyLimit = pLimit(CONCURRENCY_LIMIT);
 
 function reportTime(startTime: number, wasCacheHit: boolean, imageFilenameToReport: string) {
-	let cacheHitMessage = '(cache miss)';
+	let cacheHitMessage = "(cache miss)";
 	if (wasCacheHit === true) {
-		cacheHitMessage = ' (cache hit)';
+		cacheHitMessage = " (cache hit)";
 	}
 
 	const endTime = Date.now();
+	// biome-ignore lint/nursery/noMagicNumbers: Milliseconds to seconds
 	const timeItTook = Math.round((endTime - startTime) / 1000)
 		.toString()
+		// biome-ignore lint/nursery/noMagicNumbers: Just an arbitrary number
 		.padEnd(3);
 	console.log(`Optimizing image took ${timeItTook} seconds ${cacheHitMessage}: ${imageFilenameToReport}`);
 }
@@ -262,7 +263,7 @@ export async function optimizePictureSources(
 ) {
 	if (isDevelopmentMode) {
 		if (pictureSources.length !== 1 || pictureSources[0].__sharpEntries.length !== 1) {
-			throw new Error('Expected only one source and one sharpEntry while in the development mode.');
+			throw new Error("Expected only one source and one sharpEntry while in the development mode.");
 		}
 		const theOnlySharpEntry = pictureSources[0].__sharpEntries[0];
 
@@ -276,7 +277,7 @@ export async function optimizePictureSources(
 				return;
 			}
 
-			const scaledPerformancePlaceholder = await sharp(PERFORMANCE_PLACEHOLDER).resize({ width: imageInfo.width, height: imageInfo.height }).toBuffer();
+			const scaledPerformancePlaceholder = await sharp(PERFORMANCE_PLACEHOLDER).resize({ height: imageInfo.height, width: imageInfo.width }).toBuffer();
 			await setCacheFunction(cacheKey, scaledPerformancePlaceholder);
 			await exportFunction(scaledPerformancePlaceholder, theOnlySharpEntry.filepath);
 			return;
@@ -314,10 +315,10 @@ export async function optimizePictureSources(
 
 				const localImageOptimizationFinal = imageOptimizationRotated
 					.resize({
-						width: sharpEntry.targetWidth,
 						// Prevent issues with size inference.
 						// https://github.com/lovell/sharp/issues/4353
 						fastShrinkOnLoad: false,
+						width: sharpEntry.targetWidth,
 					})
 					.toFormat(sharpEntry.targetFormat);
 
@@ -331,17 +332,17 @@ export async function optimizePictureSources(
 
 				const imageMetadata = await imageOptimization.metadata();
 				if (!(imageMetadata.width && imageMetadata.height)) {
-					throw new Error('Sharp metadata resolved without width and height');
+					throw new Error("Sharp metadata resolved without width and height");
 				}
 
 				const imageSize = {
-					width: imageMetadata.width,
 					height: imageMetadata.height,
+					width: imageMetadata.width,
 				};
 				const { height: inferredHeight } = inferImageSize(imageSize, sharpEntry.targetWidth);
 				if (inferredHeight !== info.height) {
 					console.log(
-						`!!WARNING!! The inference function is NOT working properly. Image of size ${JSON.stringify(imageSize)} and with target width of ${sharpEntry.targetWidth}. We inferred the height to be: ${inferredHeight} while sharp resized to ${JSON.stringify({ width: info.width, height: info.height })}. ${sharpEntry.filepath}`,
+						`!!WARNING!! The inference function is NOT working properly. Image of size ${JSON.stringify(imageSize)} and with target width of ${sharpEntry.targetWidth}. We inferred the height to be: ${inferredHeight} while sharp resized to ${JSON.stringify({ height: info.height, width: info.width })}. ${sharpEntry.filepath}`,
 					);
 				}
 
@@ -349,11 +350,11 @@ export async function optimizePictureSources(
 				// ==================================================
 
 				await exportFunction(optimizedImageBuffer, sharpEntry.filepath, {
-					width: info.width,
 					height: info.height,
-					type: sharpEntry.targetFormat,
 
 					imageSize: optimizedImageBuffer.length,
+					type: sharpEntry.targetFormat,
+					width: info.width,
 				});
 
 				await setCacheFunction(cacheKey, optimizedImageBuffer);
@@ -376,8 +377,8 @@ export function getSvgEntry(
 	baseFilePath: string = NEXTJS_IMAGE_FOLDER,
 	baseURL: string = NEXTJS_URL_PREFIX,
 ): INTERNAL_SVGEntry {
-	if (imageInfo.type !== 'svg') {
-		throw new Error('getSvgEntry works only for svg images');
+	if (imageInfo.type !== "svg") {
+		throw new Error("getSvgEntry works only for svg images");
 	}
 
 	const getImageUrl = getImageUrlMeta(imageFilename, imageSpecificHash, baseURL);
@@ -386,8 +387,8 @@ export function getSvgEntry(
 	// We can't depend on width. If the width changed the filename also changes and the browser invalidates the cache. Even tough only the js changed.
 	const fakeWidth = 0;
 	return {
-		src: getImageUrl(fakeWidth, 'svg'),
-		filepath: getImageFilepath(fakeWidth, 'svg'),
+		filepath: getImageFilepath(fakeWidth, "svg"),
+		src: getImageUrl(fakeWidth, "svg"),
 	};
 }
 
@@ -407,11 +408,11 @@ export function optimizeSvg(isDevelopmentMode: boolean, unsafeSvg: string, svgo:
 // Follow the issue: https://github.com/lovell/sharp/issues/4353
 function inferImageSize(currentSize: ImageSize, userSpecifiedWidth?: number, userSpecifiedHeight?: number): ImageSize {
 	validateUserSpecified({
-		width: userSpecifiedWidth,
 		height: userSpecifiedHeight,
+		width: userSpecifiedWidth,
 	});
 
-	const newSize = { width: currentSize.width, height: currentSize.height };
+	const newSize = { height: currentSize.height, width: currentSize.width };
 
 	if (userSpecifiedWidth) {
 		const ratio = currentSize.width / userSpecifiedWidth;

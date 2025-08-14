@@ -1,28 +1,30 @@
-import 'server-only';
-import MarkdownRenderer from '@/markdown/MarkdownRenderer.jsx';
-import CstdError from 'cstd-next/error/CstdError.js';
-import type { Children } from 'cstd-next/type/index.js';
-import type { Doc } from 'cstd-ts/driveCMS/docs.js';
-import { type ParsedHeaderToKeyValue, parseDocAstToHeaderKeyValue } from 'cstd-ts/driveCMS/docsParser.js';
-import { downloadDocLatestDeployRevision, downloadDocLatestRevision } from 'cstd-ts/driveCMS/index.js';
-import { MIMEType, type MIMETypeT, doesMIMETypeMatch } from 'cstd-ts/driveCMS/resource.js';
-import type { Child } from 'cstd-ts/driveCMS/resourceStructureParser/index.js';
-import type { ErrorReturn } from 'cstd-ts/error/index.js';
-import type { MapKey, MapValue } from 'cstd-ts/type/index.js';
-import type { ReactNode } from 'react';
+import "server-only";
+
+import type { Doc } from "cstd-ts/driveCMS/docs.js";
+import { type ParsedHeaderToKeyValue, parseDocAstToHeaderKeyValue } from "cstd-ts/driveCMS/docs-parser.js";
+import { downloadDocLatestDeployRevision, downloadDocLatestRevision } from "cstd-ts/driveCMS/index.js";
+import { doesMIMETypeMatch, MIMEType, type MIMETypeT } from "cstd-ts/driveCMS/resource.js";
+import type { Child } from "cstd-ts/driveCMS/resourceStructureParser/index.js";
+import type { ErrorReturn } from "cstd-ts/error/index.js";
+import type { MapKey, MapValue } from "cstd-ts/type/index.js";
+import type { ReactNode } from "react";
+
+import { CstdError } from "@/error/cstd-error.jsx";
+import { MarkdownRenderer } from "@/markdown/markdown-renderer.jsx";
+import type { Children } from "@/type/index.js";
 
 interface Components {
-	item: (props: { itemKey: MapKey<ParsedHeaderToKeyValue['mapping']>; itemValue: MapValue<ParsedHeaderToKeyValue['mapping']> }) => ReactNode;
+	item: (props: { itemKey: MapKey<ParsedHeaderToKeyValue["mapping"]>; itemValue: MapValue<ParsedHeaderToKeyValue["mapping"]> }) => ReactNode;
 	root: (props: Children<ReactNode | ReactNode[]>) => ReactNode;
 }
 
 interface Props {
-	doc: Child<MIMETypeT['docs']>;
+	doc: Child<MIMETypeT["docs"]>;
 
 	components?: Partial<Components>;
 }
 
-const IS_PREVIEW = process.env.IS_PREVIEW === 'true' || process.env.NEXT_PUBLIC_IS_PREVIEW === 'true';
+const IS_PREVIEW = process.env.IS_PREVIEW === "true" || process.env.NEXT_PUBLIC_IS_PREVIEW === "true";
 
 export async function HeaderKeyValueRenderer({ doc, ...props }: Props) {
 	if (!doesMIMETypeMatch(MIMEType.docs, doc.resource.mimeType)) {
@@ -52,7 +54,7 @@ export async function HeaderKeyValueRenderer({ doc, ...props }: Props) {
 
 	const items: ReactNode[] = [];
 	for (const [itemKey, itemValue] of keyValue.mapping) {
-		items.push(<components.item key={`${doc.resource.id}-${itemKey}`} itemKey={itemKey} itemValue={itemValue} />);
+		items.push(<components.item itemKey={itemKey} itemValue={itemValue} key={`${doc.resource.id}-${itemKey}`} />);
 	}
 
 	return <components.root>{items}</components.root>;

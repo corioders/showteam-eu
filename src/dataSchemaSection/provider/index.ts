@@ -1,7 +1,8 @@
-import type { OrderMetadata } from 'cstd-ts/dataSchema/metadata/index.js';
-import type { ObjectWithMetadata } from 'cstd-ts/dataStructure/metadata.js';
-import type { EmptyObject } from 'cstd-ts/type/index.js';
-import { type SectionsCombinedArray, defineSectionProvider } from '../index.js';
+import type { OrderMetadata } from "cstd-ts/dataSchema/metadata/index.js";
+import type { ObjectWithMetadata } from "cstd-ts/dataStructure/metadata.js";
+import type { EmptyObject } from "cstd-ts/type/index.js";
+
+import { defineSectionProvider, type SectionsCombinedArray } from "../index.js";
 
 export interface HeadingProviderProps {
 	getHeadingNumber: () => number;
@@ -23,8 +24,8 @@ export const headingNumbersProvider = defineSectionProvider<ObjectWithMetadata<O
 			};
 
 			newSectionsCombinedArray.push({
-				dsn: section.dsn,
 				component: (props) => section.component({ ...props, getHeadingNumber: getHeadingNumberFunction }),
+				dsn: section.dsn,
 			});
 		}
 

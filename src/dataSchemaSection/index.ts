@@ -1,7 +1,7 @@
-import type { DataSchema, DataSchemaDefinition, DataSchemaNode, FetchParserFunction } from 'cstd-ts/dataSchema/index.js';
-import type { ErrorReturn } from 'cstd-ts/error/index.js';
-import type { EmptyObject, PrettifyHardcore, UnionToIntersection } from 'cstd-ts/type/index.js';
-import type { FunctionComponent } from 'react';
+import type { DataSchema, DataSchemaDefinition, DataSchemaNode, FetchParserFunction } from "cstd-ts/dataSchema/index.js";
+import type { ErrorReturn } from "cstd-ts/error/index.js";
+import type { EmptyObject, PrettifyHardcore, UnionToIntersection } from "cstd-ts/type/index.js";
+import type { FunctionComponent } from "react";
 
 type SectionsDSToSectionsComponentsObject<SectionsDSD extends DataSchemaDefinition<SectionsDSD, any>, SectionDS extends DataSchema<SectionsDSD>, ProvidedProps> = {
 	[K in keyof SectionDS]: FunctionComponent<ProvidedProps & { data: SectionDS[K] }>;
@@ -40,8 +40,8 @@ export function renderSections<
 	SectionsCO extends SectionsDSToSectionsComponentsObject<SectionsDSD, SectionsDS, ExtractAllProvidedProps<SectionPs>>,
 >(sectionsDS: SectionsDS, sectionsCO: SectionsCO, providers: SectionPs): ErrorReturn<FunctionComponent<ExtractAllRequiredProps<SectionPs>>[]> {
 	const sectionsCombinedArray = Object.entries(sectionsDS).map(([sectionName, sectionDSN]) => ({
-		dsn: sectionDSN,
 		component: sectionsCO[sectionName as keyof SectionsCO],
+		dsn: sectionDSN,
 	})) as any;
 
 	let runningSectionsCombinedArray = sectionsCombinedArray;

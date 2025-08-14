@@ -1,5 +1,5 @@
-import { StatusCodes } from 'http-status-codes';
-import { revalidatePath } from 'next/cache';
+import { StatusCodes } from "http-status-codes";
+import { revalidatePath } from "next/cache";
 
 export function revalidateRoute(revalidatePathString: string, setRevalidateToken: string, revalidateTokenURLParameterName: string): (request: Request) => Response {
 	return (request: Request): Response => {

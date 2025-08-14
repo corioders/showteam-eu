@@ -3,9 +3,10 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
 
-import memoize from 'memoize';
+import memoize from "memoize";
 
 interface OurGlobalThis {
+	// biome-ignore lint/style/useNamingConvention: We are accessing the global object. This name is required
 	__CSTD_NEXT_IMAGES_MEMOIZE_CACHE?: Map<any, any>;
 }
 const ourGlobalThis = (global ?? globalThis ?? window ?? {}) as OurGlobalThis;
@@ -17,19 +18,16 @@ const memoizeCache = ourGlobalThis.__CSTD_NEXT_IMAGES_MEMOIZE_CACHE;
 
 // TODO: Merge this with the one in driveCMS/cache.ts
 function memoizeImagesCacheKey(functionArguments: readonly unknown[]) {
-	let key = '';
-
-	// biome-ignore lint/style/useForOf: here we need speed
-	for (let i = 0; i < functionArguments.length; i++) {
-		const argument = functionArguments[i];
+	let key = "";
+	for (const argument of functionArguments) {
 		const argumentType = typeof argument;
 
-		if (argumentType === 'string') {
+		if (argumentType === "string") {
 			key += argument;
 			continue;
 		}
 
-		if (argumentType === 'number' || argumentType === 'boolean') {
+		if (argumentType === "number" || argumentType === "boolean") {
 			key += String(argument);
 			continue;
 		}
@@ -39,7 +37,7 @@ function memoizeImagesCacheKey(functionArguments: readonly unknown[]) {
 			continue;
 		}
 
-		if (argumentType === 'object') {
+		if (argumentType === "object") {
 			key += JSON.stringify(argument);
 			continue;
 		}
@@ -53,7 +51,7 @@ function memoizeImagesCacheKey(functionArguments: readonly unknown[]) {
 type AnyFunction = (...arguments_: readonly any[]) => unknown;
 export function memoizeImages<FunctionToMemoize extends AnyFunction>(fn: FunctionToMemoize): FunctionToMemoize {
 	return memoize(fn, {
-		cacheKey: memoizeImagesCacheKey,
 		cache: memoizeCache,
+		cacheKey: memoizeImagesCacheKey,
 	});
 }

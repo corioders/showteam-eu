@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { invalidateDriveCMS } from 'cstd-ts/next/invalidate-drive-cms.js';
-import { Trash2Icon } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { invalidateDriveCMS } from "cstd-ts/next/invalidate-drive-cms.js";
+import { Trash2Icon } from "lucide-react";
+import { type ReactPortal, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
-export function CoriodersDevelopmentOverlay() {
+export function CoriodersDevelopmentOverlay(): ReactPortal | null {
 	const [menuContainer, setMenuContainer] = useState<Element | null>(null);
 
 	useEffect(() => {
 		const abortController = new AbortController();
 
 		function findNextPortal() {
-			const portal = document.querySelector('nextjs-portal');
+			const portal = document.querySelector("nextjs-portal");
 			if (!portal?.shadowRoot) {
 				return null;
 			}
@@ -24,7 +24,7 @@ export function CoriodersDevelopmentOverlay() {
 				return null;
 			}
 
-			const menuDiv = portal.shadowRoot.querySelector('#nextjs-dev-tools-menu>.dev-tools-indicator-inner');
+			const menuDiv = portal.shadowRoot.querySelector("#nextjs-dev-tools-menu>.dev-tools-indicator-inner");
 			if (!menuDiv) {
 				return null;
 			}
@@ -40,7 +40,7 @@ export function CoriodersDevelopmentOverlay() {
 			const observer = new MutationObserver(() => {
 				setMenuContainer(findMenu());
 			});
-			abortController.signal.addEventListener('abort', () => observer.disconnect());
+			abortController.signal.addEventListener("abort", () => observer.disconnect());
 
 			observer.observe(portal.shadowRoot, {
 				childList: true,
@@ -57,7 +57,7 @@ export function CoriodersDevelopmentOverlay() {
 					observer.disconnect();
 				}
 			});
-			abortController.signal.addEventListener('abort', () => observer.disconnect());
+			abortController.signal.addEventListener("abort", () => observer.disconnect());
 
 			observer.observe(document.body, {
 				childList: true,
@@ -85,22 +85,22 @@ export function CoriodersDevelopmentOverlay() {
 			`}
 			</style>
 			<button
+				className="dev-tools-indicator-item"
 				data-index={3}
 				data-selected={false}
-				role="menuitem"
-				tabIndex={-1}
-				type="button"
 				onClick={async () => {
 					await invalidateDriveCMS();
 					window.location.reload();
 				}}
-				className="dev-tools-indicator-item"
+				role="menuitem"
 				style={{
-					width: '100%',
-					display: 'flex',
-					alignItems: 'center',
-					cursor: 'pointer',
+					alignItems: "center",
+					cursor: "pointer",
+					display: "flex",
+					width: "100%",
 				}}
+				tabIndex={-1}
+				type="button"
 			>
 				<span className="dev-tools-indicator-label">Invalidate Cache</span>
 				<span className="dev-tools-indicator-value">

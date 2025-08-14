@@ -1,7 +1,9 @@
-import CstdError from 'cstd-next/error/CstdError.js';
-import type { FolderDescriptorChildren, TypedChildren } from 'cstd-ts/driveCMS/resourceStructureParser/index.js';
-import { getOrderedChildren } from 'cstd-ts/driveCMS/resourceStructureParser/prefix.js';
-import type { ReactNode } from 'react';
+import type { FolderDescriptorChildren, TypedChildren } from "cstd-ts/driveCMS/resourceStructureParser/index.js";
+import { type ChildWithName, getOrderedChildren } from "cstd-ts/driveCMS/resourceStructureParser/prefix.js";
+import type { ErrorReturn } from "cstd-ts/error/index.js";
+import type { ReactNode } from "react";
+
+import { CstdError } from "@/error/cstd-error.jsx";
 
 export interface SectionProps<T> {
 	section: T;
@@ -22,8 +24,8 @@ TODO: find a better name
 ?FsdRenderer?
  */
 export function SectionRenderer<FolderChildren extends FolderDescriptorChildren>(props: Props<FolderChildren>) {
-	const childrenWithName = Object.keys(props.sectionsFolder).map((name) => ({ name, child: props.sectionsFolder[name] }));
-	const [sortedChildrenWithName, sortError] = getOrderedChildren(childrenWithName);
+	const childrenWithName = Object.keys(props.sectionsFolder).map((name) => ({ child: props.sectionsFolder[name], name }));
+	const [sortedChildrenWithName, sortError]: ErrorReturn<ChildWithName[]> = getOrderedChildren(childrenWithName);
 	if (sortError) {
 		return <CstdError error={sortError} />;
 	}
@@ -38,7 +40,7 @@ export function SectionRenderer<FolderChildren extends FolderDescriptorChildren>
 
 		const Component = props.components[componentName];
 		if (!Component) {
-			return <CstdError key={`unknown-${componentName}`} error={new Error(`Unknown section ${componentName}`)} />;
+			return <CstdError error={new Error(`Unknown section ${componentName}`)} key={`unknown-${componentName}`} />;
 		}
 
 		return (
