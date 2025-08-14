@@ -9,7 +9,7 @@ export type StandardCountryISO2Code = CountryISO2Code & { readonly __tagStandard
 
 // TODO: Make this more rigorous
 export function isCountryISO2Code(x: string): x is CountryISO2Code {
-	return typeof x === 'string' && x.length === 2;
+	return typeof x === "string" && x.length === 2;
 }
 
 export function standardizeCountryISO2Code(code: CountryISO2Code): StandardCountryISO2Code {

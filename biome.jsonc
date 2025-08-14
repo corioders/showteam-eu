@@ -1,31 +1,13 @@
+// biome-ignore-all assist/source/useSortedKeys: I want this file to be in the order presented on biome website
 {
-	"$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.1.4/schema.json",
+	"root": false,
 	"extends": ["./config/biome.jsonc"],
 	"linter": {
 		"rules": {
-			"correctness": {
-				"useImportExtensions": {
-					"level": "warn",
-					"fix": "safe",
-					"options": {
-						"suggestedExtensions": {
-							"ts": {
-								"module": "js",
-								"component": "jsx"
-							}
-						}
-					}
-				}
-			},
-			"style": {
-				// This is required to make biome work with types in dataScheme type system.
-				// TODO: Figure out how to name this types so that biome is happy
-				"useNamingConvention": "off"
-			},
 			"suspicious": {
 				"noExplicitAny": "off",
-				"noConsole": "off",
-				"noConsoleLog": "off"
+				"noConsole": "off"
 			}
 		}
 	}

@@ -3,8 +3,9 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
-import type { ErrorReturn } from '@/error';
-import { ParsingDSDTFError } from './error.js';
+import type { ErrorReturn } from "@/error";
+
+import { ParsingDSDTFError } from "./error.js";
 
 /* 
 ### Specification:
@@ -33,12 +34,12 @@ Comment:::
 This is a comment
 */
 
-const KEY_SUFFIX = ':::';
-const WHITESPACE = ' ';
-const NEW_LINE = '\n';
-const ARRAY_SEPARATOR = ',';
+const KEY_SUFFIX = ":::";
+const WHITESPACE = " ";
+const NEW_LINE = "\n";
+const ARRAY_SEPARATOR = ",";
 
-const COMMENT_KEY = 'Comment';
+const COMMENT_KEY = "Comment";
 
 export interface ParsedDSDTF {
 	readonly mapping: Map<string, string>;
@@ -92,7 +93,7 @@ export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 
 	const firstToken = (dsdtfNewLineSplit[0] as string).split(WHITESPACE)[0] as string;
 	if (!isTokenAKey(firstToken)) {
-		return [null, new ParsingDSDTFError('First text line is not a valid key', `Try adding ${KEY_SUFFIX} here.`)];
+		return [null, new ParsingDSDTFError("First text line is not a valid key", `Try adding ${KEY_SUFFIX} here.`)];
 	}
 
 	const keyValueMapping = new Map<string, string>();
@@ -110,20 +111,18 @@ export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 	}
 
 	let currentKey: string | null = null;
-	let currentValue = '';
+	let currentValue = "";
 	let currentValueFirstIteration = false;
 
-	// biome-ignore lint/style/useForOf: The iterator will be used after proper errors will be implemented.
-	for (let i = 0; i < dsdtfNewLineSplit.length; i++) {
+	for (const dsdtfLine of dsdtfNewLineSplit) {
 		currentValue += NEW_LINE;
 
-		const dsdtfLine = dsdtfNewLineSplit[i];
 		const dsdtfLineWhitespaceSplit = (dsdtfLine as string).split(WHITESPACE);
 		for (let j = 0; j < dsdtfLineWhitespaceSplit.length; j++) {
 			const token = dsdtfLineWhitespaceSplit[j] as string;
 			if (isTokenAKey(token)) {
 				if (j !== 0) {
-					return [null, new Error('New keys must start on a new line')];
+					return [null, new Error("New keys must start on a new line")];
 				}
 
 				// Remove tailing NEW_LINE character. The outer loop has no way of knowing that this token is a key.
@@ -137,7 +136,7 @@ export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 				}
 
 				currentKey = stripKeySuffix(token);
-				currentValue = '';
+				currentValue = "";
 				currentValueFirstIteration = true;
 				continue;
 			}
@@ -149,7 +148,7 @@ export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
       the first NEW_LINE is before this line
       */
 			if (j === 0 && currentValue === NEW_LINE) {
-				currentValue = '';
+				currentValue = "";
 			}
 
 			// Do not append whitespace after we encounter next line && Do not append whitespace to the beginning of the currentValue.
@@ -181,7 +180,7 @@ function isTokenAKey(token: string): boolean {
 
 function stripKeySuffix(key: string): string {
 	let stripDelta = 0;
-	if (key[key.length - 1] === NEW_LINE) {
+	if (key.at(-1) === NEW_LINE) {
 		stripDelta++;
 	}
 

@@ -3,12 +3,12 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import type { MetadataBase, ObjectWithMetadata } from '@/dataStructure/metadata.js';
+import type { MetadataBase, ObjectWithMetadata } from "@/dataStructure/metadata.js";
+import { GOOGLE_DRIVE_PUBLIC_PREFIX } from "@/driveCMS/const.js";
+import { isCountryISO2Code, standardizeCountryISO2Code } from "@/internationalization/index.js";
+import type { EmptyObject, PrettifyHardcore, UnionToIntersection } from "@/type/index.js";
 
-import { GOOGLE_DRIVE_PUBLIC_PREFIX } from '@/driveCMS/const.js';
-import { isCountryISO2Code, standardizeCountryISO2Code } from '@/internationalization/index.js';
-import type { EmptyObject, PrettifyHardcore, UnionToIntersection } from '@/type/index.js';
-import type { LanguageMetadata, OrderMetadata } from '../metadata/index.js';
+import type { LanguageMetadata, OrderMetadata } from "../metadata/index.js";
 
 export type ResourcePrefixParserFunctionReturn<Metadata extends MetadataBase> =
 	| ({
@@ -40,8 +40,6 @@ export function MergeResourcePrefixParser<ResourcePrefixParsers extends Resource
 	parsers: ResourcePrefixParsers,
 ): ResourcePrefixParser<MergedMetadata> {
 	return {
-		userErrorPrefixTemplate: parsers.map((x) => x.userErrorPrefixTemplate).join(' '),
-		userErrorMessage: parsers.map((x) => x.userErrorMessage).join('\n'),
 		parser: (resourceName: string) => {
 			let runningResourceName = resourceName;
 
@@ -56,7 +54,7 @@ export function MergeResourcePrefixParser<ResourcePrefixParsers extends Resource
 
 				for (const [metadataKey, metadataValue] of Object.entries(parserReturn.metadata)) {
 					if (mergedMetadata[metadataKey]) {
-						throw new Error('Someone used the same key on the metadata object. Metadata object MUST use unique keys!');
+						throw new Error("Someone used the same key on the metadata object. Metadata object MUST use unique keys!");
 					}
 
 					mergedMetadata[metadataKey] = metadataValue;
@@ -64,40 +62,40 @@ export function MergeResourcePrefixParser<ResourcePrefixParsers extends Resource
 			}
 
 			return {
-				newResourceName: runningResourceName,
 				metadata: mergedMetadata as MergedMetadata,
+				newResourceName: runningResourceName,
 			};
 		},
+		userErrorMessage: parsers.map((x) => x.userErrorMessage).join("\n"),
+		userErrorPrefixTemplate: parsers.map((x) => x.userErrorPrefixTemplate).join(" "),
 	};
 }
 
 export function StringResourcePrefixParserFactory(prefix: string): ResourcePrefixParser<EmptyObject> {
 	return {
-		userErrorPrefixTemplate: prefix,
 		parser: (resourceName: string) => {
 			if (resourceName.startsWith(prefix)) {
 				return {
-					newResourceName: resourceName.replace(prefix, '').trim(),
 					metadata: {},
+					newResourceName: resourceName.replace(prefix, "").trim(),
 				};
 			}
 
 			return false;
 		},
+		userErrorPrefixTemplate: prefix,
 	};
 }
 
 export const NoPrefix: ResourcePrefixParser<EmptyObject> = {
-	userErrorPrefixTemplate: 'no prefix required ',
-	userErrorMessage: 'no prefix required',
 	parser: (resourceName: string) => {
-		return { newResourceName: resourceName, metadata: {} };
+		return { metadata: {}, newResourceName: resourceName };
 	},
+	userErrorMessage: "no prefix required",
+	userErrorPrefixTemplate: "no prefix required ",
 };
 
 export const LanguageResourcePrefixParser: ResourcePrefixParser<LanguageMetadata> = {
-	userErrorPrefixTemplate: 'XX',
-	userErrorMessage: 'Where XX is a 2 letter country code',
 	parser: (resourceName: string) => {
 		if (resourceName.length < 2) {
 			return false;
@@ -110,19 +108,19 @@ export const LanguageResourcePrefixParser: ResourcePrefixParser<LanguageMetadata
 		}
 
 		return {
-			newResourceName,
 			metadata: {
 				countryCodeDS: standardizeCountryISO2Code(countryPrefix),
 			},
+			newResourceName,
 		};
 	},
+	userErrorMessage: "Where XX is a 2 letter country code",
+	userErrorPrefixTemplate: "XX",
 };
 
 export const OrderResourcePrefixParser: ResourcePrefixParser<OrderMetadata> = {
-	userErrorPrefixTemplate: 'NN',
-	userErrorMessage: 'Where NN is a number. Note that this number can be of any length, but must be positive.',
 	parser: (resourceName: string) => {
-		const prefixEnd = resourceName.indexOf(' ');
+		const prefixEnd = resourceName.indexOf(" ");
 
 		const prefix = resourceName.slice(0, prefixEnd);
 		const newResourceName = resourceName.slice(prefix.length, resourceName.length).trim();
@@ -132,12 +130,14 @@ export const OrderResourcePrefixParser: ResourcePrefixParser<OrderMetadata> = {
 		}
 
 		return {
-			newResourceName,
 			metadata: {
 				orderNumberDS: orderingNumber,
 			},
+			newResourceName,
 		};
 	},
+	userErrorMessage: "Where NN is a number. Note that this number can be of any length, but must be positive.",
+	userErrorPrefixTemplate: "NN",
 };
 
 export const PublicPrefixParser = StringResourcePrefixParserFactory(GOOGLE_DRIVE_PUBLIC_PREFIX);

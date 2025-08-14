@@ -3,10 +3,12 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, April 2025
 
-import type { ErrorReturnPromise } from '@/error/index.js';
-import type { FirebaseApp, FirebaseError } from 'firebase/app';
-import { type UserCredential, createUserWithEmailAndPassword, getAuth, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
-import { firebaseSafePromise } from './error.js';
+import type { FirebaseApp, FirebaseError } from "firebase/app";
+import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged, signInWithEmailAndPassword, type UserCredential } from "firebase/auth";
+
+import type { ErrorReturnPromise } from "@/error/index.js";
+
+import { firebaseSafePromise } from "./error.js";
 
 export async function firebaseSignupUserWithEmailAndPassword(firebaseApp: FirebaseApp, email: string, password: string): ErrorReturnPromise<UserCredential> {
 	const auth = getAuth(firebaseApp);
@@ -43,17 +45,17 @@ export async function firebaseLogout(firebaseApp: FirebaseApp): Promise<Error | 
 const REQUIREMENTS_REGEX = /\[(?<requirements>.*)\]/;
 function switchFirebaseLoginError(error: FirebaseError): Error {
 	switch (error.code) {
-		case 'auth/email-already-in-use':
-			return new Error('Email already in use', { cause: error });
-		case 'auth/invalid-email':
-			return new Error('Invalid email', { cause: error });
-		case 'auth/operation-not-allowed':
-			return new Error('Operation not allowed', { cause: error });
-		case 'auth/invalid-credential':
-			return new Error('Invalid credential', { cause: error });
-		case 'auth/password-does-not-meet-requirements': {
+		case "auth/email-already-in-use":
+			return new Error("Email already in use", { cause: error });
+		case "auth/invalid-email":
+			return new Error("Invalid email", { cause: error });
+		case "auth/operation-not-allowed":
+			return new Error("Operation not allowed", { cause: error });
+		case "auth/invalid-credential":
+			return new Error("Invalid credential", { cause: error });
+		case "auth/password-does-not-meet-requirements": {
 			const requirements = error.message.match(REQUIREMENTS_REGEX);
-			const requirementsText = requirements?.groups?.['requirements'] ?? '';
+			const requirementsText = requirements?.groups?.["requirements"] ?? "";
 			return new Error(`Weak password: ${requirementsText}`, { cause: error });
 		}
 		default:

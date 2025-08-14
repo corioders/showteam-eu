@@ -3,16 +3,20 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
 
-import { createHash } from 'node:crypto';
-import { CORIODERS_INVALIDATE_PERSISTANT_CACHE } from '@/const.js';
-import { type ErrorReturnPromise, safePromise } from '@/error/index.js';
-import type { JsonValue } from '@/format/json/index.js';
-import { stringToURLSafeString } from '@/net/url.js';
-import cacheDriver from '@/storage/unstorage/cacheDriver.mjs';
-import { GoogleAuth } from 'googleapis-common';
-import memoize from 'memoize';
-import { type Storage as UnstorageStorage, createStorage } from 'unstorage';
-import fsDriver from 'unstorage/drivers/fs-lite';
+/** biome-ignore-all lint/style/useNamingConvention: This file does a lot of global shenanigans, we need to use our names */
+
+import { createHash } from "node:crypto";
+
+import { GoogleAuth } from "googleapis-common";
+import memoize from "memoize";
+import { createStorage, type Storage as UnstorageStorage } from "unstorage";
+import fsDriver from "unstorage/drivers/fs-lite";
+
+import { CORIODERS_INVALIDATE_PERSISTANT_CACHE } from "@/const.js";
+import { type ErrorReturnPromise, safePromise } from "@/error/index.js";
+import type { JsonValue } from "@/format/json/index.js";
+import { stringToURLSafeString } from "@/net/url.js";
+import cacheDriver from "@/storage/unstorage/cache-driver.mjs";
 
 type AnyFunction = (...arguments_: readonly any[]) => any;
 
@@ -32,7 +36,7 @@ if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE) {
 	ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE = createStorage({
 		// We don't need to use cacheDriver because every function should be also memorized. This is because
 		// every function call EVEN IF using persistant cache costs us one fetch call to check if the resource has changed.
-		driver: cacheDriver({ driver: fsDriver({ base: '.next/cache/corioders/cstd-ts-driveCMS-persistant' }) }),
+		driver: cacheDriver({ driver: fsDriver({ base: ".next/cache/corioders/cstd-ts-driveCMS-persistant" }) }),
 		// driver: fsDriver({ base: '.next/cache/corioders/cstd-ts-driveCMS-persistant' }),
 	});
 }
@@ -52,19 +56,16 @@ const persistantCacheDisableAutomaticInvalidationMap = ourGlobalThis.__CSTD_TS_D
 const memoizeCache = ourGlobalThis.__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE;
 
 function driveCMSCacheKey(functionArguments: readonly unknown[]) {
-	let key = '';
-
-	// biome-ignore lint/style/useForOf: here we need speed
-	for (let i = 0; i < functionArguments.length; i++) {
-		const argument = functionArguments[i];
+	let key = "";
+	for (const argument of functionArguments) {
 		const argumentType = typeof argument;
 
-		if (argumentType === 'string') {
+		if (argumentType === "string") {
 			key += argument;
 			continue;
 		}
 
-		if (argumentType === 'number' || argumentType === 'boolean') {
+		if (argumentType === "number" || argumentType === "boolean") {
 			key += String(argument);
 			continue;
 		}
@@ -79,7 +80,7 @@ function driveCMSCacheKey(functionArguments: readonly unknown[]) {
 			continue;
 		}
 
-		if (argumentType === 'object') {
+		if (argumentType === "object") {
 			key += JSON.stringify(argument);
 			continue;
 		}
@@ -90,7 +91,7 @@ function driveCMSCacheKey(functionArguments: readonly unknown[]) {
 	return key;
 }
 
-export const REMOVE_PERSISTANT_CACHE_VALUE = Symbol('INVALIDATE_PERSISTANT_CACHE');
+export const REMOVE_PERSISTANT_CACHE_VALUE = Symbol("INVALIDATE_PERSISTANT_CACHE");
 export interface PersistantCacheController<CachedValueT extends JsonValue> {
 	getCachedValue(): ErrorReturnPromise<CachedValueT>;
 	setCachedValue(value: CachedValueT | typeof REMOVE_PERSISTANT_CACHE_VALUE): Promise<Error | null>;
@@ -127,7 +128,7 @@ export function persistantDriveCMSCache<CachedValueT extends JsonValue, Function
 	fn: (persistantCacheController: PersistantCacheController<CachedValueT>, ..._arguments: FunctionToCacheArguments) => Promise<FunctionToCacheReturn>,
 ): (..._arguments: FunctionToCacheArguments) => Promise<FunctionToCacheReturn> {
 	async function persistantCachedHelper(this: any, ...argumentsWithoutPCC: FunctionToCacheArguments) {
-		const argumentsCacheKey = createHash('sha1').update(driveCMSCacheKey(argumentsWithoutPCC)).digest('base64');
+		const argumentsCacheKey = createHash("sha1").update(driveCMSCacheKey(argumentsWithoutPCC)).digest("base64");
 		const cacheKey = `${cacheNamePreferablyFunctionName}__${stringToURLSafeString(argumentsCacheKey)}` as CacheKey;
 
 		// ==================================================
@@ -170,9 +171,9 @@ export function persistantDriveCMSCache<CachedValueT extends JsonValue, Function
 		}
 
 		const pcc: PersistantCacheController<CachedValueT> = {
+			disableAutomaticInvalidation,
 			getCachedValue,
 			setCachedValue,
-			disableAutomaticInvalidation,
 		};
 
 		// ==================================================
@@ -199,7 +200,7 @@ export function persistantDriveCMSCache<CachedValueT extends JsonValue, Function
 
 export function memoizeDriveCMS<FunctionToMemoize extends AnyFunction>(fn: FunctionToMemoize): FunctionToMemoize {
 	return memoize(fn, {
-		cacheKey: driveCMSCacheKey,
 		cache: memoizeCache,
+		cacheKey: driveCMSCacheKey,
 	});
 }

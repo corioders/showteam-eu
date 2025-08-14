@@ -59,7 +59,7 @@ function errorIs(error: Error, target: Error): boolean {
 		return true;
 	}
 
-	if ('cause' in error && error.cause instanceof Error) {
+	if ("cause" in error && error.cause instanceof Error) {
 		return errorIs(error.cause, target);
 	}
 

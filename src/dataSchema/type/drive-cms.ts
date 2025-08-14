@@ -3,25 +3,26 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import type { MetadataBase, ObjectWithMetadata } from '@/dataStructure/metadata.js';
-import { type DocMd, type DocResource, isDoc } from '@/driveCMS/docs.js';
-import { type FolderID, type FolderResource, isFolder } from '@/driveCMS/drive.js';
-import { getImageDownloadURL, getPublicImageDownloadURL, isImage } from '@/driveCMS/image.js';
-import { downloadDocCorrectRevisionMarkdown, listFolder } from '@/driveCMS/index.js';
-import type { Resource } from '@/driveCMS/resource.js';
-import { type MarkdownDoc, parseMarkdownDocWithMetadata } from '@/format/markdown/index.js';
-import type { CountryISO2Code } from '@/internationalization/index.js';
-import type { ImageURL } from '@/media/image/index.js';
+import type { MetadataBase, ObjectWithMetadata } from "@/dataStructure/metadata.js";
+import { type DocMd, type DocResource, isDoc } from "@/driveCMS/docs.js";
+import { type FolderID, type FolderResource, isFolder } from "@/driveCMS/drive.js";
+import { getImageDownloadURL, getPublicImageDownloadURL, isImage } from "@/driveCMS/image.js";
+import { downloadDocCorrectRevisionMarkdown, listFolder } from "@/driveCMS/index.js";
+import type { Resource } from "@/driveCMS/resource.js";
+import { type MarkdownDoc, parseMarkdownDocWithMetadata } from "@/format/markdown/index.js";
+import type { CountryISO2Code } from "@/internationalization/index.js";
+import type { ImageURL } from "@/media/image/index.js";
+
 import {
-	type FetchParserFunction,
-	type FetchParserFunctionPromise,
 	defineTypeAggregateFunction,
 	defineTypeAggregateFunctionPromise,
 	defineTypeAggregateToSingleFunctionPromise,
 	defineTypeFunction,
 	defineTypeFunctionPromise,
-} from '../index.js';
-import { LanguageResourcePrefixParser, type ResourcePrefixParser } from './driveCMSPrefix.js';
+	type FetchParserFunction,
+	type FetchParserFunctionPromise,
+} from "../index.js";
+import { LanguageResourcePrefixParser, type ResourcePrefixParser } from "./drive-cms-prefix.js";
 
 // TODO: Make resource with metadata generic over the metadata.
 export type ResourceWithMetadata<Metadata extends MetadataBase> = {
@@ -38,8 +39,8 @@ function parseResourceMetadata<Metadata extends MetadataBase>(resources: Resourc
 		}
 
 		recourseWithMetadata.push({
-			resource: { ...resource, name: prefixParserReturn.newResourceName },
 			metadata: prefixParserReturn.metadata,
+			resource: { ...resource, name: prefixParserReturn.newResourceName },
 		});
 	}
 
@@ -48,8 +49,8 @@ function parseResourceMetadata<Metadata extends MetadataBase>(resources: Resourc
 
 function copyResourceWithMetadata<Metadata extends MetadataBase>(resourceWithMetadata: ResourceWithMetadata<Metadata>): ResourceWithMetadata<Metadata> {
 	return {
-		resource: { ...resourceWithMetadata.resource },
 		metadata: { ...resourceWithMetadata.metadata },
+		resource: { ...resourceWithMetadata.resource },
 	};
 }
 
@@ -68,11 +69,11 @@ export const typeGoogleDriveSingleResourcePrefix = defineTypeFunction(function t
 
 		const newResourceWithMetadata: ResourceWithMetadata<Metadata> = {
 			...resourceWithMetadata,
+			metadata: prefixParserReturn.metadata,
 			resource: {
 				...resourceWithMetadata.resource,
 				name: prefixParserReturn.newResourceName,
 			},
-			metadata: prefixParserReturn.metadata,
 		};
 
 		return [newResourceWithMetadata, null];
@@ -354,7 +355,7 @@ export interface GoogleDriveInternationalizedDocMd {
 export const typeGoogleDriveInternationalizedDoc = defineTypeAggregateToSingleFunctionPromise(function typeGoogleDriveInternationalizedDoc<Metadata extends MetadataBase>(
 	us: GoogleDriveInternationalizedDocUserSpec<Metadata>,
 ): FetchParserFunctionPromise<ResourceWithMetadata<Metadata>[], GoogleDriveInternationalizedDocMd, GoogleDriveInternationalizedDocRuntimeArguments> {
-	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
+	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
 	return async (resourcesWithMetadata, runtimeArguments) => {
 		let defaultInternationalizeDocMd: GoogleDriveInternationalizedDocMd | null = null;
 		let selectedIntlDoc: GoogleDriveInternationalizedDocMd | null = null;
@@ -374,6 +375,20 @@ export const typeGoogleDriveInternationalizedDoc = defineTypeAggregateToSingleFu
 				continue;
 			}
 
+			const [intlDoc, intlDocError] = typeGoogleDriveSingleResourcePrefix({ prefix: LanguageResourcePrefixParser })(userPrefixedResourceWithMetadata);
+			if (intlDocError) {
+				return [null, intlDocError];
+			}
+			if (!intlDoc) {
+				continue;
+			}
+
+			if (us.documentName) {
+				if (intlDoc.resource.name !== us.documentName) {
+					continue;
+				}
+			}
+
 			const [docMarkdown, downloadError] = await downloadDocCorrectRevisionMarkdown(resource.id);
 			if (downloadError) {
 				return [null, downloadError];
@@ -384,15 +399,6 @@ export const typeGoogleDriveInternationalizedDoc = defineTypeAggregateToSingleFu
 					doc: docMarkdown,
 					resource: resource,
 				};
-			}
-
-			const [intlDoc, intlDocError] = typeGoogleDriveSingleResourcePrefix({ prefix: LanguageResourcePrefixParser })(userPrefixedResourceWithMetadata);
-			if (intlDocError) {
-				return [null, intlDocError];
-			}
-
-			if (!intlDoc) {
-				continue;
 			}
 
 			if (intlDoc.metadata.countryCodeDS === runtimeArguments.lang) {

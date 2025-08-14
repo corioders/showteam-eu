@@ -3,23 +3,25 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
 
-import { type ErrorReturnPromise, UnreachableErrorMessage, safePromise } from '@/error/index.js';
-import { type forms_v1, google } from 'googleapis';
-import type { GoogleAuth } from 'googleapis-common';
-import { StatusCodes } from 'http-status-codes';
-import { memoizeDriveCMS } from './cache.js';
-import { type FileID, type FolderID, createFolder, internalListFolderNoCache, isFolder } from './drive.js';
-import { getFileUploadQuestionTitle, isFileUploadQuestion } from './formClientSide.js';
-import type { Resource } from './resource.js';
+import { type forms_v1, google } from "googleapis";
+import type { GoogleAuth } from "googleapis-common";
+import { StatusCodes } from "http-status-codes";
+
+import { type ErrorReturnPromise, safePromise, UnreachableErrorMessage } from "@/error/index.js";
+
+import { memoizeDriveCMS } from "./cache.js";
+import { createFolder, type FileID, type FolderID, internalListFolderNoCache, isFolder } from "./drive.js";
+import { getFileUploadQuestionTitle, isFileUploadQuestion } from "./form-client-side.js";
+import type { Resource } from "./resource.js";
 
 export type FormID = FileID & { readonly __formTag: unique symbol };
 export interface FormResource extends Resource {
 	id: FormID;
-	mimeType: 'application/vnd.google-apps.form';
+	mimeType: "application/vnd.google-apps.form";
 }
 
 export function isForm(resource: Resource): resource is FormResource {
-	return resource.mimeType === 'application/vnd.google-apps.form';
+	return resource.mimeType === "application/vnd.google-apps.form";
 }
 
 export interface Form {
@@ -45,7 +47,7 @@ export const getForm = memoizeDriveCMS(async function getForm(
 	isPreview: boolean,
 	fileUploadOptions?: FileUploadOptions,
 ): ErrorReturnPromise<Form> {
-	const formsAPI = google.forms({ version: 'v1', auth: googleAuth });
+	const formsAPI = google.forms({ auth: googleAuth, version: "v1" });
 
 	const [gaxiosFormResponse, requestError] = await safePromise(() =>
 		formsAPI.forms.get({
@@ -70,7 +72,7 @@ export const getForm = memoizeDriveCMS(async function getForm(
 
 	const responseURI = googleAPIsForm.responderUri;
 	if (!responseURI) {
-		return [null, new Error(UnreachableErrorMessage('responseURI is empty. Google changed something'))];
+		return [null, new Error(UnreachableErrorMessage("responseURI is empty. Google changed something"))];
 	}
 	const [questionSubmitIDs, errorGetQuestionSubmitIDs] = await getRealQuestionSubmitIDFromUndocumentedAPI(responseURI);
 	if (errorGetQuestionSubmitIDs !== null) {
@@ -78,7 +80,7 @@ export const getForm = memoizeDriveCMS(async function getForm(
 	}
 
 	if (!googleAPIsForm.items) {
-		return [null, new Error(UnreachableErrorMessage('googleAPIsForm.items is empty. Google changed something'))];
+		return [null, new Error(UnreachableErrorMessage("googleAPIsForm.items is empty. Google changed something"))];
 	}
 
 	for (let i = 0; i < googleAPIsForm.items.length; i++) {
@@ -89,14 +91,14 @@ export const getForm = memoizeDriveCMS(async function getForm(
 
 	const responderViewURL = new URL(responseURI);
 
-	const pathSegments = responderViewURL.pathname.split('/');
-	const formResponderID = pathSegments[pathSegments.length - 2];
+	const pathSegments = responderViewURL.pathname.split("/");
+	const formResponderID = pathSegments.at(-2);
 
 	const formResponsePostURL = `https://docs.google.com/forms/u/0/d/e/${formResponderID}/formResponse`;
 
 	const form: Form = {
-		googleAPIsForm: googleAPIsForm,
 		formResponsePostURL,
+		googleAPIsForm: googleAPIsForm,
 	};
 
 	const fileUploadQuestionsTitles: Set<string> = new Set();
@@ -116,7 +118,7 @@ export const getForm = memoizeDriveCMS(async function getForm(
 	if (fileUploadQuestionsTitles.size > 0) {
 		const fileUploadQuestionsFolders: Record<string, FolderID> = {};
 		if (!fileUploadOptions) {
-			return [null, new Error('File upload options were not provided while this form requires form upload. Call up your Digital team.')];
+			return [null, new Error("File upload options were not provided while this form requires form upload. Call up your Digital team.")];
 		}
 
 		const [rootUploadFolderList, rootUploadFolderListError] = await internalListFolderNoCache(googleAuth, fileUploadOptions.targetGoogleDriveFolderID);
@@ -156,7 +158,7 @@ export const getForm = memoizeDriveCMS(async function getForm(
 	}
 
 	if (googleAPIsForm.publishSettings?.publishState?.isPublished !== true && googleAPIsForm.publishSettings?.publishState?.isAcceptingResponses !== false) {
-		return [null, new Error('While not in preview mode: Form is not published or accepting responses... Is this the expected behavior?')];
+		return [null, new Error("While not in preview mode: Form is not published or accepting responses... Is this the expected behavior?")];
 	}
 
 	return [form, null];
@@ -173,22 +175,25 @@ async function getRealQuestionSubmitIDFromUndocumentedAPI(responseURI: string): 
 		return [null, formResponseTextError];
 	}
 
-	let data = formResponseText.split('FB_PUBLIC_LOAD_DATA_ = ')[1];
+	let data = formResponseText.split("FB_PUBLIC_LOAD_DATA_ = ")[1];
 	if (!data) {
-		return [null, new Error(UnreachableErrorMessage('FB_PUBLIC_LOAD_DATA_ split failed. Google changed something.'))];
+		return [null, new Error(UnreachableErrorMessage("FB_PUBLIC_LOAD_DATA_ split failed. Google changed something."))];
 	}
-	data = data.substring(0, data.indexOf(';'));
+	data = data.substring(0, data.indexOf(";"));
 	const parsedData = JSON.parse(data) as unknown[];
-	const flattenedData = parsedData.flat(100);
+
+	const FlatDepth = 100;
+	const flattenedData = parsedData.flat(FlatDepth);
 
 	const ids: number[] = [];
 	for (let i = 0; i < flattenedData.length; i++) {
-		if (typeof flattenedData[i] !== 'string') {
+		if (typeof flattenedData[i] !== "string") {
 			continue;
 		}
 
-		const id = flattenedData[i + 3];
-		if (typeof id !== 'number') {
+		const IdIndexOffset = 3;
+		const id = flattenedData[i + IdIndexOffset];
+		if (typeof id !== "number") {
 			continue;
 		}
 

@@ -3,14 +3,14 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
-import type { GoogleAuth } from 'googleapis-common';
+import type { GoogleAuth } from "googleapis-common";
+import { type WorkBook as XlsxWorkBook, read as xlsxRead } from "xlsx";
 
-import { type WorkBook as XlsxWorkBook, read as xlsxRead } from 'xlsx';
+import { type ErrorReturnPromise, safe, safePromise } from "@/error";
 
-import { type ErrorReturnPromise, safe, safePromise } from '@/error';
-import { memoizeDriveCMS } from './cache.js';
-import { type FileID, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPIPersistantCached } from './drive.js';
-import { MIMEType, type MIMETypeT, type Resource } from './resource.js';
+import { memoizeDriveCMS } from "./cache.js";
+import { downloadFile, type FileID, getRevisionsFromUndocumentedAPIPersistantCached, type Revision, type RevisionID } from "./drive.js";
+import { MIMEType, type MIMETypeT, type Resource } from "./resource.js";
 
 export type SpreadsheetID = FileID & { readonly __spreadsheetTag: unique symbol };
 
@@ -22,7 +22,7 @@ export interface Spreadsheet {
 
 export interface SpreadsheetResource extends Resource {
 	id: SpreadsheetID;
-	mimeType: MIMETypeT['excel'];
+	mimeType: MIMETypeT["excel"];
 }
 
 export function isSpreadsheet(resource: Resource): resource is SpreadsheetResource {

@@ -3,9 +3,10 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import type { ErrorReturn } from '@/error/index.js';
-import { type ParsedDSDTF, parseDSDTF } from '@/format/deadSimpleDataTextFormat/index.js';
-import { type StringMarkdown, markdownStringToPlainText } from './index.js';
+import type { ErrorReturn } from "@/error/index.js";
+import { type ParsedDSDTF, parseDSDTF } from "@/format/deadSimpleDataTextFormat/index.js";
+
+import { markdownStringToPlainText, type StringMarkdown } from "./index.js";
 
 export interface ParsedMarkdownFrontmatter {
 	frontmatter: ParsedDSDTF;
@@ -13,7 +14,7 @@ export interface ParsedMarkdownFrontmatter {
 }
 
 export function MarkdownFrontmatterParser(markdown: StringMarkdown): ErrorReturn<ParsedMarkdownFrontmatter> {
-	const [_empty, frontmatterRaw, content] = markdown.split('===');
+	const [_empty, frontmatterRaw, content] = markdown.split("===");
 
 	if (!frontmatterRaw) {
 		return [
@@ -28,7 +29,7 @@ to the beginning of the document.`),
 		];
 	}
 	let frontmatter = frontmatterRaw.trim();
-	if (frontmatter.endsWith('\\')) {
+	if (frontmatter.endsWith("\\")) {
 		frontmatter = frontmatter.slice(0, -1);
 	}
 	frontmatter = frontmatter.trim();
@@ -44,13 +45,13 @@ to the beginning of the document.`),
 	}
 
 	if (!content) {
-		return [null, new Error('No content. Check if you have added `===` to the end of the frontmatter.')];
+		return [null, new Error("No content. Check if you have added `===` to the end of the frontmatter.")];
 	}
 
 	return [
 		{
-			frontmatter: dsdtf,
 			content: content as StringMarkdown,
+			frontmatter: dsdtf,
 		},
 		null,
 	];

@@ -3,34 +3,35 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
 
-import type { ValueOf } from '@/type/index.js';
-import type { DocResource } from './docs.js';
-import type { FileResource, FolderResource } from './drive.js';
-import type { FormResource } from './form.js';
-import type { ImageResource } from './image.js';
-import type { SpreadsheetResource } from './spreadsheet.js';
+import type { ValueOf } from "@/type/index.js";
+
+import type { DocResource } from "./docs.js";
+import type { FileResource, FolderResource } from "./drive.js";
+import type { FormResource } from "./form.js";
+import type { ImageResource } from "./image.js";
+import type { SpreadsheetResource } from "./spreadsheet.js";
 
 // https://developers.google.com/drive/api/guides/ref-export-formats
 export type MIMETypeT = typeof MIMEType;
 // MIMETypeTEnum
 export type MIMETypeTE = ValueOf<MIMETypeT>;
 export const MIMEType = {
-	csv: 'text/csv',
-	markdown: 'text/markdown',
+	csv: "text/csv",
+	docs: "application/vnd.google-apps.document",
+	docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 
-	folder: 'application/vnd.google-apps.folder',
-	docs: 'application/vnd.google-apps.document',
-	form: 'application/vnd.google-apps.form',
+	excel: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 
-	excel: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-	docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+	folder: "application/vnd.google-apps.folder",
+	form: "application/vnd.google-apps.form",
 
-	image: 'image/*',
+	image: "image/*",
+	markdown: "text/markdown",
 } as const;
 
 type MIMETypeMatcherFunction = (mimeType: string) => boolean;
 const MIMETypeMatcher: Partial<Record<MIMETypeTE, MIMETypeMatcherFunction>> = {
-	[MIMEType.image]: (mimeType: string) => mimeType.startsWith('image/'),
+	[MIMEType.image]: (mimeType: string) => mimeType.startsWith("image/"),
 } as const;
 
 export function doesMIMETypeMatch(targetType: MIMETypeTE, x: string): boolean {

@@ -3,23 +3,24 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, January 2025
 
-import type { TxtDocumentNode } from '@textlint/ast-node-types';
-import { parse } from '@textlint/markdown-to-ast';
-import { type GaxiosPromise, type GoogleAuth, createAPIRequest } from 'googleapis-common';
+import type { TxtDocumentNode } from "@textlint/ast-node-types";
+import { parse } from "@textlint/markdown-to-ast";
+import { createAPIRequest, type GoogleAuth } from "googleapis-common";
+import { StatusCodes } from "http-status-codes";
 
-import { CSE, type ErrorReturn, type ErrorReturnPromise, UnreachableErrorMessage, safePromise } from '@/error';
-import type { StringMarkdown } from '@/format/markdown/index.js';
-import type { ImageURL } from '@/media/image/index.js';
-import { StatusCodes } from 'http-status-codes';
-import { type PersistantCacheController, memoizeDriveCMS, persistantDriveCMSCache } from './cache.js';
-import { type FileID, type Revision, type RevisionID, downloadFile, getRevisionsFromUndocumentedAPIPersistantCached } from './drive.js';
-import { MIMEType, type MIMETypeT, type Resource } from './resource.js';
+import { CSE, type ErrorReturn, type ErrorReturnPromise, safePromise, UnreachableErrorMessage } from "@/error";
+import type { StringMarkdown } from "@/format/markdown/index.js";
+import type { ImageURL } from "@/media/image/index.js";
+
+import { memoizeDriveCMS, type PersistantCacheController, persistantDriveCMSCache } from "./cache.js";
+import { downloadFile, type FileID, getRevisionsFromUndocumentedAPIPersistantCached, type Revision, type RevisionID } from "./drive.js";
+import { MIMEType, type MIMETypeT, type Resource } from "./resource.js";
 
 export type DocID = FileID & { readonly __docTag: unique symbol };
 
-export const ERR_DOC_ID_EMPTY = new Error('Doc ID cannot be empty');
+export const ERR_DOC_ID_EMPTY = new Error("Doc ID cannot be empty");
 export function validateDocID(docID: DocID): Error | null {
-	if (docID === '' || !docID) {
+	if (docID === "" || !docID) {
 		return new CSE(ERR_DOC_ID_EMPTY);
 	}
 
@@ -28,7 +29,7 @@ export function validateDocID(docID: DocID): Error | null {
 
 export interface DocResource extends Resource {
 	id: DocID;
-	mimeType: MIMETypeT['docs'];
+	mimeType: MIMETypeT["docs"];
 }
 
 export function isDoc(resource: Resource): resource is DocResource {
@@ -40,7 +41,7 @@ export interface DocMd {
 	docID: DocID;
 }
 
-export const ERR_EXPECTED_DOWNLOADED_DOC_STRING = new Error('Expected the downloaded doc to be a string. Because MIME type of markdown was provided.');
+export const ERR_EXPECTED_DOWNLOADED_DOC_STRING = new Error("Expected the downloaded doc to be a string. Because MIME type of markdown was provided.");
 export const downloadDocMarkdownRevision = memoizeDriveCMS(async function downloadDocMarkdownRevision(
 	googleAuth: GoogleAuth,
 	docID: DocID,
@@ -57,9 +58,8 @@ export const downloadDocMarkdownRevision = memoizeDriveCMS(async function downlo
 	}
 
 	const doc: DocMd = {
-		docMd: docAsMarkdown as StringMarkdown,
-
 		docID: docID,
+		docMd: docAsMarkdown as StringMarkdown,
 	};
 
 	return [doc, null];
@@ -96,19 +96,19 @@ export const downloadDocRevision = memoizeDriveCMS(async function downloadDocRev
 
 		return [doc, null];
 	} catch (error) {
-		return [null, new Error('@textlint/markdown-to-ast parse failed', { cause: error })];
+		return [null, new Error("@textlint/markdown-to-ast parse failed", { cause: error })];
 	}
 });
 
 const MARKDOWN_IMAGE_REGEX = /!\[\]\[image\d+\]/;
-const IMAGE_BASE64_MARKDOWN_DEFINITION_AT_THE_END = '[image1]: <data:image/';
+const IMAGE_BASE64_MARKDOWN_DEFINITION_AT_THE_END = "[image1]: <data:image/";
 
 export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistantCached: (
 	googleAuth: GoogleAuth,
 	docID: DocID,
 	revisionID: RevisionID,
 ) => ErrorReturnPromise<StringMarkdown> = persistantDriveCMSCache(
-	'baseDownloadDocRevisionAndAdjustInDocMarkdownImages',
+	"baseDownloadDocRevisionAndAdjustInDocMarkdownImages",
 	async function baseDownloadDocRevisionAndAdjustInDocMarkdownImages(
 		persistantCacheController: PersistantCacheController<StringMarkdown>,
 		googleAuth: GoogleAuth,
@@ -133,7 +133,7 @@ export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistantCached
 			return [null, errorDownloadFile];
 		}
 
-		if (typeof docAsMarkdown !== 'string') {
+		if (typeof docAsMarkdown !== "string") {
 			return [null, new CSE(ERR_EXPECTED_DOWNLOADED_DOC_STRING)];
 		}
 
@@ -178,7 +178,7 @@ export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistantCached
 		// Remove base64 encoded definitions form the markdown
 		const imageBase64Definitions = docAsMarkdownAdjusted.indexOf(IMAGE_BASE64_MARKDOWN_DEFINITION_AT_THE_END);
 		if (imageBase64Definitions === -1) {
-			return [null, new Error(UnreachableErrorMessage('Unable to find image base64 definitions in the markdown'))];
+			return [null, new Error(UnreachableErrorMessage("Unable to find image base64 definitions in the markdown"))];
 		}
 
 		docAsMarkdownAdjusted = docAsMarkdownAdjusted.slice(0, imageBase64Definitions - 1) as StringMarkdown;
@@ -218,8 +218,8 @@ interface GoogleInternalPhotoIDAndImageURL {
 	url: ImageURL;
 }
 
-const DOCS_MODEL_CHUNK_START_STRING = '>DOCS_modelChunk = ';
-const DOCS_MODEL_CHUNK_END_STRING = '; DOCS_modelChunkLoadStart ';
+const DOCS_MODEL_CHUNK_START_STRING = ">DOCS_modelChunk = ";
+const DOCS_MODEL_CHUNK_END_STRING = "; DOCS_modelChunkLoadStart ";
 function sortPhotoIDAndImageURLArrayBasedOnDocOrder(
 	source: GoogleInternalWebInterfacePageSource,
 	array: GoogleInternalPhotoIDAndImageURL[],
@@ -228,12 +228,12 @@ function sortPhotoIDAndImageURLArrayBasedOnDocOrder(
 
 	const searchStartIndex = source.indexOf(DOCS_MODEL_CHUNK_START_STRING);
 	if (searchStartIndex === -1) {
-		return [null, new Error(UnreachableErrorMessage('Google changed something: Unable to find searchStartIndex'))];
+		return [null, new Error(UnreachableErrorMessage("Google changed something: Unable to find searchStartIndex"))];
 	}
 
 	const searchEndIndex = source.indexOf(DOCS_MODEL_CHUNK_END_STRING);
 	if (searchEndIndex === -1) {
-		return [null, new Error(UnreachableErrorMessage('Google changed something: Unable to find searchEndIndex'))];
+		return [null, new Error(UnreachableErrorMessage("Google changed something: Unable to find searchEndIndex"))];
 	}
 
 	const docsModelChunkString = source.slice(searchStartIndex + DOCS_MODEL_CHUNK_START_STRING.length, searchEndIndex);
@@ -264,13 +264,13 @@ function sortPhotoIDAndImageURLArrayBasedOnDocOrder(
 			const kixID = photoIDtoKixID.get(photoIDAndImageURL.id);
 			if (!kixID) {
 				mapError = new Error(UnreachableErrorMessage(`Google changed something: Unable to find photo ID ${photoIDAndImageURL.id} in kixIDtoSPI`));
-				return;
+				return undefined;
 			}
 
 			const spi = kixIDtoSPI.get(kixID);
 			if (!spi) {
 				mapError = new Error(UnreachableErrorMessage(`Google changed something: Unable to find kixID ${kixID} in kixIDtoSPI`));
-				return;
+				return undefined;
 			}
 			const sortNumber = spi;
 
@@ -287,7 +287,7 @@ function sortPhotoIDAndImageURLArrayBasedOnDocOrder(
 	return [sortedArray, null];
 }
 
-const COMMON_URL_PART = 'https://lh7-rt.googleusercontent.com/docsz/';
+const COMMON_URL_PART = "https://lh7-rt.googleusercontent.com/docsz/";
 const URL_START_INDEX_TO_ID_END_INDEX_OFFSET = 4;
 function getGoogleInternalPhotoIDtoImageURLArray(source: GoogleInternalWebInterfacePageSource): ErrorReturn<GoogleInternalPhotoIDAndImageURL[]> {
 	const photoIDAndImageURL: GoogleInternalPhotoIDAndImageURL[] = [];
@@ -304,11 +304,11 @@ function getGoogleInternalPhotoIDtoImageURLArray(source: GoogleInternalWebInterf
 
 		const escapedURL = source.slice(urlStartIndex, endQuoteIndex);
 		if (!escapedURL) {
-			return [null, new Error(UnreachableErrorMessage('Google changed something: We matched urlStartIndex and endQuoteIndex, but escapedURL is empty...'))];
+			return [null, new Error(UnreachableErrorMessage("Google changed something: We matched urlStartIndex and endQuoteIndex, but escapedURL is empty..."))];
 		}
 
 		// We are replacing the escaped equal sign, with a real one. I don't think pulling a whole lib to do just this is necessary.
-		const decodedURL = escapedURL.replace('\\u003d', '=') as ImageURL;
+		const decodedURL = escapedURL.replace("\\u003d", "=") as ImageURL;
 
 		const photoIDEndIndex = urlStartIndex - URL_START_INDEX_TO_ID_END_INDEX_OFFSET;
 		const photoIDStartIndex = source.lastIndexOf(`"`, photoIDEndIndex);
@@ -316,7 +316,7 @@ function getGoogleInternalPhotoIDtoImageURLArray(source: GoogleInternalWebInterf
 		// We need to shift one to the right because we are off one.
 		const photoID = source.slice(photoIDStartIndex + 1, photoIDEndIndex + 1) as GoogleInternalPhotoID;
 		if (!photoID) {
-			return [null, new Error(UnreachableErrorMessage('Google changed something: We matched photoIDStartIndex and photoIDEndIndex, but photoID is empty...'))];
+			return [null, new Error(UnreachableErrorMessage("Google changed something: We matched photoIDStartIndex and photoIDEndIndex, but photoID is empty..."))];
 		}
 
 		photoIDAndImageURL.push({
@@ -332,16 +332,16 @@ async function UNDOCUMENTEDapiDownloadDocWebInterfaceHtmlPage(googleAuth: Google
 	const undocumentedDownloadURL = `https://docs.google.com/document/d/${docID}/edit`;
 
 	const [response, errorGaxios] = await safePromise(() => {
-		return createAPIRequest({
+		return createAPIRequest<string>({
+			context: { _options: { auth: googleAuth } },
 			options: {
+				method: "GET",
 				url: undocumentedDownloadURL,
-				method: 'GET',
 			},
 			params: {},
-			requiredParams: [],
 			pathParams: [],
-			context: { _options: { auth: googleAuth } },
-		}) as GaxiosPromise<string>;
+			requiredParams: [],
+		});
 	});
 
 	if (errorGaxios !== null) {
@@ -353,7 +353,7 @@ async function UNDOCUMENTEDapiDownloadDocWebInterfaceHtmlPage(googleAuth: Google
 	}
 
 	if (!response.data) {
-		return [null, new Error('Gaxios API request failed: response.data is empty')];
+		return [null, new Error("Gaxios API request failed: response.data is empty")];
 	}
 
 	return [response.data as GoogleInternalWebInterfacePageSource, null];

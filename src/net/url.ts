@@ -17,11 +17,11 @@ export class URLSafeJSONParser<ObjectT, URLSafeStringT extends URLSafeString> {
 }
 
 export function stringToURLSafeString(x: string): URLSafeString {
-	const base64 = Buffer.from(x).toString('base64url');
+	const base64 = Buffer.from(x).toString("base64url");
 	return base64 as URLSafeString;
 }
 
 export function urlSafeStringToString(x: URLSafeString): string {
-	const decoded = Buffer.from(x, 'base64url').toString('utf-8');
+	const decoded = Buffer.from(x, "base64url").toString("utf-8");
 	return decoded;
 }

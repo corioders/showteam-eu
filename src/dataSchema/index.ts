@@ -3,8 +3,10 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import { type ErrorReturn, type ErrorReturnPromise, type TSError, UnreachableErrorMessage } from '@/error/index.js';
-import type { EmptyObject, Flatten, PrettifyHardcore, UnionToIntersection } from '@/type/index.js';
+/** biome-ignore-all lint/style/useNamingConvention: We want to use our names for type parameters */
+
+import { type ErrorReturn, type ErrorReturnPromise, type TSError, UnreachableErrorMessage } from "@/error/index.js";
+import type { EmptyObject, Flatten, PrettifyHardcore, UnionToIntersection } from "@/type/index.js";
 
 export type FetchParserPromiseReturn<FPRT, _TakesAggregateObject, _ProducesAggregateObject> = ErrorReturnPromise<FPRT | false>;
 export type FetchParserReturn<FPRT, _TakesAggregateObject, _ProducesAggregateObject> = ErrorReturn<FPRT | false>;
@@ -28,7 +30,7 @@ export type TypeFunction<US, pFPR, FPR, RA, _TakesAggregateObject, _ProducesAggr
 type NoopFunction = FetchParserFunction<any, any> & { readonly __noopFunctionTag: unique symbol };
 
 export const noopTypeFunction = function noopTypeFunction() {
-	throw new Error(UnreachableErrorMessage('Noop type function called. The logic inside fetchAndParseInternal handles noop type function'));
+	throw new Error(UnreachableErrorMessage("Noop type function called. The logic inside fetchAndParseInternal handles noop type function"));
 } as unknown as NoopFunction;
 
 export function defineTypeFunction<US, pFPR, FPR, RA = EmptyObject>(
@@ -142,9 +144,9 @@ export type DataSchemaDefinitionNode<T, pFPR = unknown> = T extends {
 type ExtractRuntimeArgumentsFromFetchParserFunction<FPF> = FPF extends FetchParserFunctionInternal<any, any, infer RA, any, any, any> ? RA : never;
 type ExtractRuntimeArgumentsFromDSDn<DSDn> = DSDn extends DataSchemaDefinitionNode<any, any>
 	? // biome-ignore lint/complexity/noBannedTypes: Using {} is required for this type to work properly
-		(ExtractRuntimeArgumentsFromFetchParserFunction<DSDn['type']> extends undefined ? {} : ExtractRuntimeArgumentsFromFetchParserFunction<DSDn['type']>) &
+		(ExtractRuntimeArgumentsFromFetchParserFunction<DSDn["type"]> extends undefined ? {} : ExtractRuntimeArgumentsFromFetchParserFunction<DSDn["type"]>) &
 			// biome-ignore lint/complexity/noBannedTypes: Using {} is required for this type to work properly
-			(DSDn['pipe'] extends DataSchemaDefinition<any, any> ? ExtractRuntimeArgumentsFromDSD<DSDn['pipe']> : {})
+			(DSDn["pipe"] extends DataSchemaDefinition<any, any> ? ExtractRuntimeArgumentsFromDSD<DSDn["pipe"]> : {})
 	: never;
 type ExtractRuntimeArgumentsFromDSD<DSD> = DSD extends DataSchemaDefinition<any, any>
 	? UnionToIntersection<{ [K in keyof DSD]: ExtractRuntimeArgumentsFromDSDn<DSD[K]> }[keyof DSD]>
@@ -156,7 +158,7 @@ export function defineDataSchema<const T extends DataSchemaDefinition<T, void>>(
 
 type InferDataSchemaNodeParentReturn<T> = T extends DataSchemaDefinitionNode<T, infer pFPF> ? pFPF : never;
 type IfPFpfIsNeverError<pFPF> = [pFPF] extends [never]
-	? TSError<'You provided two or more type functions at the same level that take DIFFERENT inputs. Please revise your DSDN. Or there is another error with your DSDN definition'>
+	? TSError<"You provided two or more type functions at the same level that take DIFFERENT inputs. Please revise your DSDN. Or there is another error with your DSDN definition">
 	: pFPF;
 
 export function defineDataSchemaNode<const T extends Record<string, any>, pFPF extends InferDataSchemaNodeParentReturn<T>>(
@@ -180,7 +182,7 @@ export type DataSchemaNode<T> = T extends { type: NoopFunction; pipe?: infer PTy
 					result: ErrorReturn<FPR>;
 					next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchema<PType> : never) : never;
 				}>
-			: {
+			: PrettifyHardcore<{
 					dataUsed: PrettifyHardcore<pFPR>;
 					result: ErrorReturn<FPR>;
 					aggregate: T extends { pipe: PType }
@@ -189,7 +191,7 @@ export type DataSchemaNode<T> = T extends { type: NoopFunction; pipe?: infer PTy
 								next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchema<PType> : never) : never;
 							}>[]
 						: never;
-				}
+				}>
 		: never;
 
 type IsEmptyObject<T> = keyof T extends never ? true : false;
@@ -207,7 +209,7 @@ export async function fetchAndParse<T extends DataSchemaDefinition<T, any>>(
 	const currentPipe = dsd;
 	const currentResult = {};
 	const runtimeArgs = (runtimeArguments ?? {}) as Record<string, unknown>;
-	const error = await fetchAndParseInternal(runtimeArgs, currentPipe, currentResult, [null, null], '');
+	const error = await fetchAndParseInternal(runtimeArgs, currentPipe, currentResult, [null, null], "");
 	if (error) {
 		return [null, error];
 	}
@@ -215,7 +217,7 @@ export async function fetchAndParse<T extends DataSchemaDefinition<T, any>>(
 	return [currentResult as DataSchema<T>, null];
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: <explanation>
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
 async function fetchAndParseInternal(
 	runtimeArguments: Record<string, unknown>,
 	currentPipe: Record<string, Record<string, unknown>>,
@@ -264,7 +266,7 @@ async function fetchAndParseInternal(
 			// Aggregation support
 			const aggregateArguments = Array.isArray(parentFetchParserReturn) ? parentFetchParserReturn : [parentFetchParserReturn];
 
-			resultEntry['dataUsed'] = aggregateArguments;
+			resultEntry["dataUsed"] = aggregateArguments;
 			[fetchParserReturn, fetchParserError] = await fetchParser(aggregateArguments, runtimeArguments);
 			if (fetchParserReturn === false) {
 				resultEntryProcessed = false;
@@ -285,7 +287,7 @@ async function fetchAndParseInternal(
 				}
 
 				isProcessed = true;
-				resultEntry['dataUsed'] = parentFetchParserReturnItem;
+				resultEntry["dataUsed"] = parentFetchParserReturnItem;
 				fetchParserReturn = localFetchParserReturn;
 				fetchParserError = localFetchParserError;
 			}
@@ -297,7 +299,7 @@ async function fetchAndParseInternal(
 		} else {
 			// ==================================================
 			// Our parent returned single element.
-			resultEntry['dataUsed'] = parentFetchParserReturn;
+			resultEntry["dataUsed"] = parentFetchParserReturn;
 			[fetchParserReturn, fetchParserError] = await fetchParser(parentFetchParserReturn, runtimeArguments);
 			if (fetchParserReturn === false) {
 				resultEntryProcessed = false;
@@ -314,7 +316,7 @@ async function fetchAndParseInternal(
 
 		currentResult[pipeName] = resultEntry;
 		const nextPipe = entry.pipe;
-		resultEntry['result'] = [fetchParserReturn, fetchParserError];
+		resultEntry["result"] = [fetchParserReturn, fetchParserError];
 		if (!nextPipe) {
 			continue;
 		}
@@ -324,7 +326,7 @@ async function fetchAndParseInternal(
 
 		if (fetchParser.produceAggregateObjet) {
 			const aggregate: any = [];
-			resultEntry['aggregate'] = aggregate;
+			resultEntry["aggregate"] = aggregate;
 			if (fetchParserReturn) {
 				if (!Array.isArray(fetchParserReturn)) {
 					return new Error(`Fetch parser did not return an array but it is an aggregate function. ${entryDebugPath}`);
@@ -335,17 +337,17 @@ async function fetchAndParseInternal(
 					const result = {};
 					await fetchAndParseInternal(runtimeArguments, nextPipe, result, [fetchParserReturnItem, null], `${entryDebugPath}[${i}]`);
 					aggregate.push({
-						result: [fetchParserReturnItem, null],
 						next: result,
+						result: [fetchParserReturnItem, null],
 					});
 				}
 			}
 		} else {
-			resultEntry['next'] = {};
+			resultEntry["next"] = {};
 			await fetchAndParseInternal(
 				runtimeArguments,
 				nextPipe,
-				resultEntry['next'] as Record<string, Record<string, unknown>>,
+				resultEntry["next"] as Record<string, Record<string, unknown>>,
 				[fetchParserReturn, fetchParserError],
 				entryDebugPath,
 			);
@@ -364,16 +366,16 @@ type ExtractAllDataSchemaNodes<DSD> = DSD extends DataSchemaDefinition<any, any>
 export type RemovePipeAtCutPoints<DSD, CutPoints> = DSD extends DataSchemaDefinition<any, any>
 	? {
 			[K in keyof DSD]: DSD[K] extends CutPoints
-				? PrettifyHardcore<Omit<DSD[K], 'pipe'>>
+				? PrettifyHardcore<Omit<DSD[K], "pipe">>
 				: DSD[K] extends { pipe: infer P }
 					? DSD[K] extends { pipe: DataSchemaDefinition<any, any> }
-						? PrettifyHardcore<Omit<DSD[K], 'pipe'> & { pipe: PrettifyHardcore<RemovePipeAtCutPoints<P, CutPoints>> }>
+						? PrettifyHardcore<Omit<DSD[K], "pipe"> & { pipe: PrettifyHardcore<RemovePipeAtCutPoints<P, CutPoints>> }>
 						: DSD[K]
 					: DSD[K];
 		}
 	: never;
 
-const CUT_POINT_DONE_KEY = '_DSD_INTERNAL_CUT_POINT_DONE';
+const CUT_POINT_DONE_KEY = "_DSD_INTERNAL_CUT_POINT_DONE";
 export function cutoffDataSchemaDefinition<
 	const T extends DataSchemaDefinition<T, any>,
 	const CutPoint extends ExtractAllDataSchemaNodes<T>,
@@ -428,8 +430,7 @@ function modifyDSD(
 			}
 
 			cutPoint[CUT_POINT_DONE_KEY] = true;
-			// biome-ignore lint/performance/noDelete: <explanation>
-			delete cloned['pipe'];
+			delete cloned["pipe"];
 			continue;
 		}
 
@@ -437,11 +438,11 @@ function modifyDSD(
 			continue;
 		}
 
-		if (!original['pipe']) {
+		if (!original["pipe"]) {
 			continue;
 		}
 
-		const err = modifyDSD(original['pipe'] as Record<string, Record<string, unknown>>, cloned['pipe'] as Record<string, Record<string, unknown>>, cutPoint);
+		const err = modifyDSD(original["pipe"] as Record<string, Record<string, unknown>>, cloned["pipe"] as Record<string, Record<string, unknown>>, cutPoint);
 		if (err) {
 			return err;
 		}
@@ -496,7 +497,7 @@ export function dataSchemaErrorBoundary<T extends DataSchemaDefinition<T, any>, 
 
 	if (errorsSet.size > 0) {
 		const errors = [...errorsSet.values()];
-		return [null, new AggregateError(errors, errors.map((e) => e.message).join('\n'))];
+		return [null, new AggregateError(errors, errors.map((e) => e.message).join("\n"))];
 	}
 
 	return [dataSchema as unknown as DataSchemaToDataSchemaErrorBounded<DS>, null];
@@ -529,7 +530,7 @@ function dataSchemaErrorBoundaryRecursive(dataSchemaNode: any, errors: Set<Error
 
 function deepClone<T>(value: T): T {
 	// Handle null explicitly (typeof null === 'object')
-	if (value === null || typeof value !== 'object') {
+	if (value === null || typeof value !== "object") {
 		return value;
 	}
 
@@ -570,7 +571,7 @@ function deepClone<T>(value: T): T {
 	if (value.constructor === Object || !value.constructor) {
 		const cloned: Record<string, unknown> = {};
 		for (const key in value) {
-			if (Object.prototype.hasOwnProperty.call(value, key)) {
+			if (Object.hasOwn(value, key)) {
 				cloned[key] = deepClone(value[key]);
 			}
 		}

@@ -3,9 +3,10 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
 
-import { type ErrorReturn, UnreachableErrorMessage } from '@/error/index.js';
-import { type StringMarkdown, markdownStringToPlainText } from '@/format/markdown/index.js';
-import type { TxtDocumentNode } from '@textlint/ast-node-types';
+import type { TxtDocumentNode } from "@textlint/ast-node-types";
+
+import { type ErrorReturn, UnreachableErrorMessage } from "@/error/index.js";
+import { markdownStringToPlainText, type StringMarkdown } from "@/format/markdown/index.js";
 
 /**
  * @deprecated Please use the parse functionality in format/markdown
@@ -28,7 +29,7 @@ export interface ParsedHeaderToKeyValue {
 /**
  * @deprecated Please use the parse functionality in format/markdown
  */
-export const ERR_MAPPING_EMPTY = new Error('Mapping is empty');
+export const ERR_MAPPING_EMPTY = new Error("Mapping is empty");
 
 /**
  * @deprecated Please use the parse functionality in format/markdown
@@ -44,10 +45,10 @@ export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: P
 		for (let i = startIndex; i < astChildren.length; i++) {
 			const currentChild = astChildren[i];
 			if (!currentChild) {
-				return [null, new Error(UnreachableErrorMessage('Current child was not found'))];
+				return [null, new Error(UnreachableErrorMessage("Current child was not found"))];
 			}
 
-			if (currentChild.type === 'Header' && currentChild.depth === keyHeaderDepth) {
+			if (currentChild.type === "Header" && currentChild.depth === keyHeaderDepth) {
 				return [i, null];
 			}
 		}
@@ -58,16 +59,16 @@ export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: P
 	for (let i = 0; i < astChildren.length; i++) {
 		const currentChild = astChildren[i];
 		if (!currentChild) {
-			return [null, new Error(UnreachableErrorMessage('Current child was not found'))];
+			return [null, new Error(UnreachableErrorMessage("Current child was not found"))];
 		}
-		if (currentChild.type !== 'Header' || currentChild.depth !== keyHeaderDepth) {
+		if (currentChild.type !== "Header" || currentChild.depth !== keyHeaderDepth) {
 			continue;
 		}
 
 		const headerChild = currentChild;
 
 		const firstHeaderChild = headerChild.children[0];
-		if (firstHeaderChild?.type !== 'Str') {
+		if (firstHeaderChild?.type !== "Str") {
 			return [null, new Error(`Expected the heading ${keyHeaderDepth} with text inside, got heading ${keyHeaderDepth} with ${firstHeaderChild?.type}`)];
 		}
 
@@ -102,8 +103,8 @@ export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: P
 	}
 
 	const parsedHeaderToKeyValue: ParsedHeaderToKeyValue = {
-		mapping: mapping,
 		keyToMarkdownKeyMapping: keyToMarkdownKeyMapping,
+		mapping: mapping,
 	};
 
 	return [parsedHeaderToKeyValue, null];

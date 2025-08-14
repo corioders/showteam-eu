@@ -6,12 +6,12 @@
 export class ParsingDSDTFError extends Error {
 	constructor(message: string, help: string) {
 		super();
-		this.message = `${message}\nHelp:${colorHTMLString(help, 'green')}`;
+		this.message = `${message}\nHelp:${colorHTMLString(help, "green")}`;
 	}
 }
 
 export function imitateNeighborhoodBeforeString(dsdtfNewLineSplit: string[], tokenLineIndex: number): string {
-	let neighborhood = '';
+	let neighborhood = "";
 
 	const oneBefore = tokenLineIndex - 1;
 	if (oneBefore >= 0) {
@@ -22,7 +22,7 @@ export function imitateNeighborhoodBeforeString(dsdtfNewLineSplit: string[], tok
 }
 
 export function imitateNeighborhoodAfterString(dsdtfNewLineSplit: string[], tokenLineIndex: number): string {
-	let neighborhood = '';
+	let neighborhood = "";
 
 	const oneAfter = tokenLineIndex + 1;
 	if (oneAfter < dsdtfNewLineSplit.length) {

@@ -3,9 +3,10 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
-import type { ParsedDSDTF } from '@/format/deadSimpleDataTextFormat';
-import type { ValueOf } from '@/type';
-import type { DateTime } from 'luxon';
+import type { DateTime } from "luxon";
+
+import type { ParsedDSDTF } from "@/format/deadSimpleDataTextFormat";
+import type { ValueOf } from "@/type";
 
 // TODO: Support multi-staged scenes.
 export interface Agenda {
@@ -33,10 +34,10 @@ export function isActivityType(x: string): x is ActivityType {
 
 export type ActivityType = ValueOf<typeof ACTIVITY_TYPE>;
 export const ACTIVITY_TYPE = {
-	break: 'Break',
-	other: 'Other',
-	keynote: 'Keynote',
-	panel: 'Panel',
+	break: "Break",
+	keynote: "Keynote",
+	other: "Other",
+	panel: "Panel",
 } as const;
 
 export interface BreakActivity {

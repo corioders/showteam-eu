@@ -3,10 +3,11 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
-import { newTypedSymbol } from '@/dataStructure/index.js';
-import { type ErrorReturn, UnreachableErrorMessage } from '@/error/index.js';
-import { isASCII } from '@/string/index.js';
-import type { Child, ChildMetadata } from './index.js';
+import { newTypedSymbol } from "@/dataStructure/index.js";
+import { type ErrorReturn, UnreachableErrorMessage } from "@/error/index.js";
+import { isASCII } from "@/string/index.js";
+
+import type { Child, ChildMetadata } from "./index.js";
 
 // ParseResourcePrefixFunction parses resourceName and returns resourceName without prefix
 // If ParseResourcePrefixFunction returns false, this means that the resourceName does not satisfy the prefix
@@ -20,8 +21,6 @@ export interface ResourcePrefixParser {
 
 export function MergeResourcePrefixParser(parsers: ResourcePrefixParser[]): ResourcePrefixParser {
 	return {
-		userErrorPrefixTemplate: parsers.map((x) => x.userErrorPrefixTemplate).join(' '),
-		userErrorMessage: parsers.map((x) => x.userErrorMessage).join('\n'),
 		parser: (resourceName: string, metadata: ChildMetadata) => {
 			let parsed = resourceName;
 			for (const parser of parsers) {
@@ -33,28 +32,28 @@ export function MergeResourcePrefixParser(parsers: ResourcePrefixParser[]): Reso
 			}
 			return parsed;
 		},
+		userErrorMessage: parsers.map((x) => x.userErrorMessage).join("\n"),
+		userErrorPrefixTemplate: parsers.map((x) => x.userErrorPrefixTemplate).join(" "),
 	};
 }
 
 export function StringResourcePrefixParserFactory(prefix: string): ResourcePrefixParser {
 	return {
-		userErrorPrefixTemplate: prefix,
 		parser: (resourceName: string, _: ChildMetadata) => {
 			if (resourceName.startsWith(prefix)) {
-				return resourceName.replace(prefix, '').trim();
+				return resourceName.replace(prefix, "").trim();
 			}
 
 			return false;
 		},
+		userErrorPrefixTemplate: prefix,
 	};
 }
 
 export type LanguagePrefix = string & { __tagLanguagePrefix: symbol };
 // TODO: This should not be exported. But we need it for now. Fix.
-export const LANGUAGE_METADATA_KEY = newTypedSymbol<LanguagePrefix>('LANGUAGE_METADATA_KEY');
+export const LANGUAGE_METADATA_KEY = newTypedSymbol<LanguagePrefix>("LANGUAGE_METADATA_KEY");
 export const LanguageResourcePrefixParser: ResourcePrefixParser = {
-	userErrorPrefixTemplate: 'XX',
-	userErrorMessage: 'Where XX is a 2 letter country code',
 	parser: (resourceName: string, metadata: ChildMetadata) => {
 		if (resourceName.length < 2) {
 			return false;
@@ -72,17 +71,17 @@ export const LanguageResourcePrefixParser: ResourcePrefixParser = {
 			return false;
 		}
 
-		return resourceName.replace(prefix, '').trim();
+		return resourceName.replace(prefix, "").trim();
 	},
+	userErrorMessage: "Where XX is a 2 letter country code",
+	userErrorPrefixTemplate: "XX",
 };
 
 export type OrderingPrefix = string & { __tagLanguage: symbol };
-const ORDER_METADATA_KEY = newTypedSymbol<number>('ORDER_METADATA_KEY');
+const ORDER_METADATA_KEY = newTypedSymbol<number>("ORDER_METADATA_KEY");
 export const OrderResourcePrefixParser: ResourcePrefixParser = {
-	userErrorPrefixTemplate: 'NN',
-	userErrorMessage: 'Where NN is a number. Note that this number can be of any length, but must be positive.',
 	parser: (resourceName: string, metadata: ChildMetadata) => {
-		const prefixEnd = resourceName.indexOf(' ');
+		const prefixEnd = resourceName.indexOf(" ");
 
 		const prefix = resourceName.slice(0, prefixEnd);
 		const orderingNumber = Number(prefix);
@@ -92,8 +91,10 @@ export const OrderResourcePrefixParser: ResourcePrefixParser = {
 
 		metadata.setEntry(ORDER_METADATA_KEY, orderingNumber);
 
-		return resourceName.replace(prefix, '').trim();
+		return resourceName.replace(prefix, "").trim();
 	},
+	userErrorMessage: "Where NN is a number. Note that this number can be of any length, but must be positive.",
+	userErrorPrefixTemplate: "NN",
 };
 
 // TODO: This type should not exist. We need to rethink the whole thing.
@@ -116,7 +117,7 @@ export function getOrderedChildren(children: ChildWithName[]): ErrorReturn<Child
 		const bOrder = b.child.metadata.getEntry(ORDER_METADATA_KEY);
 
 		if (aOrder === null || bOrder === null) {
-			throw new Error(UnreachableErrorMessage('Order is undefined'));
+			throw new Error(UnreachableErrorMessage("Order is undefined"));
 		}
 
 		return aOrder - bOrder;

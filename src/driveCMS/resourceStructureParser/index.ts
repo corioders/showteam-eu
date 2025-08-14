@@ -3,13 +3,17 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
 
-import { TypedSymbolMap, newTypedSymbol } from '@/dataStructure/index.js';
-import { GOOGLE_DRIVE_PUBLIC_PREFIX } from '@/driveCMS/const.js';
-import { type FolderID, type FolderResource, isFolder } from '@/driveCMS/drive.js';
-import { listFolder } from '@/driveCMS/index.js';
-import { MIMEType, type MIMETypeT, type MIMETypeTE, type MIMETypeToResourceType, type Resource, doesMIMETypeMatch } from '@/driveCMS/resource.js';
-import type { ErrorReturnPromise } from '@/error/index.js';
-import { memoizeDriveCMS } from '../cache.js';
+/** biome-ignore-all lint/suspicious/useGuardForIn: NO EXPLANATION THIS FILE THIS CODE IS DEPRECATED */
+/** biome-ignore-all lint/style/useNamingConvention: NO EXPLANATION THIS FILE THIS CODE IS DEPRECATED */
+
+import { newTypedSymbol, TypedSymbolMap } from "@/dataStructure/index.js";
+import { GOOGLE_DRIVE_PUBLIC_PREFIX } from "@/driveCMS/const.js";
+import { type FolderID, type FolderResource, isFolder } from "@/driveCMS/drive.js";
+import { listFolder } from "@/driveCMS/index.js";
+import { doesMIMETypeMatch, MIMEType, type MIMETypeT, type MIMETypeTE, type MIMETypeToResourceType, type Resource } from "@/driveCMS/resource.js";
+import type { ErrorReturnPromise } from "@/error/index.js";
+
+import { memoizeDriveCMS } from "../cache.js";
 import {
 	LANGUAGE_METADATA_KEY,
 	LanguageResourcePrefixParser,
@@ -17,9 +21,9 @@ import {
 	OrderResourcePrefixParser,
 	type ResourcePrefixParser,
 	StringResourcePrefixParserFactory,
-} from './prefix.js';
+} from "./prefix.js";
 
-const NAME_NOT_IMPORTANT_PREFIX = 'CORIODERS_CHILD_DESCRIPTOR_NAME_NOT_SPECIFIED';
+const NAME_NOT_IMPORTANT_PREFIX = "CORIODERS_CHILD_DESCRIPTOR_NAME_NOT_SPECIFIED";
 export const NAME_NOT_IMPORTANT = () => `${NAME_NOT_IMPORTANT_PREFIX} ${Math.random()}`;
 
 export const PublicPrefixParser = StringResourcePrefixParserFactory(GOOGLE_DRIVE_PUBLIC_PREFIX);
@@ -62,14 +66,14 @@ export interface FolderStructure<FSD extends FolderStructureDescriptor> {
 	rootFolder: FolderID;
 
 	// The mapping is between child name and the child itself.
-	children: TypedChildren<FSD['children']>;
+	children: TypedChildren<FSD["children"]>;
 }
 
 // TODO: This type is unholy.
 export type TypedChildren<FSDChildren> = {
 	[K in keyof FSDChildren]: FSDChildren[K] extends ChildDescriptor<infer ChildMIME>
-		? ChildMIME extends MIMETypeT['folder']
-			? FolderChild<Extract<FSDChildren[K], ChildFolderDescriptor>['children']>
+		? ChildMIME extends MIMETypeT["folder"]
+			? FolderChild<Extract<FSDChildren[K], ChildFolderDescriptor>["children"]>
 			: Child<ChildMIME>
 		: never;
 };
@@ -82,7 +86,7 @@ export interface Child<T extends MIMETypeTE = MIMETypeTE> {
 	metadata: ChildMetadata;
 }
 
-const RESOURCE_NAME_WITHOUT_PREFIX_METADATA_KEY = newTypedSymbol('NAME_WITHOUT_PREFIX_METADATA_KEY');
+const RESOURCE_NAME_WITHOUT_PREFIX_METADATA_KEY = newTypedSymbol("NAME_WITHOUT_PREFIX_METADATA_KEY");
 export interface FolderChild<FolderChildren> extends Child {
 	resource: FolderResource;
 
@@ -111,23 +115,23 @@ export const fetchAndParseFolderStructure = memoizeDriveCMS(async function fetch
 
 	const rootFolder: FolderResource = {
 		id: fsd.rootFolderID,
-		mimeType: 'application/vnd.google-apps.folder',
-		name: '<ROOT FOLDER -- NO NAME>',
+		mimeType: "application/vnd.google-apps.folder",
+		name: "<ROOT FOLDER -- NO NAME>",
 	};
 
 	const [rootFolderList, errorLisRootFolder] = await listFolder(fsd.rootFolderID);
 	if (errorLisRootFolder) {
-		return [null, new Error('Unable to list root folder')];
+		return [null, new Error("Unable to list root folder")];
 	}
 
 	const fs = {
-		rootFolder: fsd.rootFolderID,
 		children: {},
+		rootFolder: fsd.rootFolderID,
 	};
 	const errors = await fetchAndParseChildStructure(fs.children, rootFolder, rootFolderList, fsd.children, language);
 	if (errors) {
 		const errorMessages = errors.map((x) => x.message);
-		const joinedErrorMessages = errorMessages.join('\n');
+		const joinedErrorMessages = errorMessages.join("\n");
 		return [null, new AggregateError(errors, `Unable to parse and fetch folder:\n ${joinedErrorMessages}`, { cause: errors })];
 	}
 
@@ -247,9 +251,9 @@ async function fetchAndParseChildStructure<T>(
 
 				found = true;
 				const child = {
+					metadata: childMetadata,
 					// parentFolder: parentFolder,
 					resource: childResource as MIMETypeToResourceType<typeof childResource.mimeType>,
-					metadata: childMetadata,
 				};
 				childrenMatchedToThisChildDescriptor.push(child);
 				fsChildren[resourceNameWithoutPrefix] = child;
@@ -280,17 +284,17 @@ async function fetchAndParseChildStructure<T>(
 
 			found = true;
 			const child = {
+				metadata: childMetadata,
 				// parentFolder: parentFolder,
 				resource: childResource as MIMETypeToResourceType<typeof childResource.mimeType>,
-				metadata: childMetadata,
 			};
 			childrenMatchedToThisChildDescriptor.push(child);
 			fsChildren[resourceNameWithoutPrefix] = child;
 		}
 
 		if (!found && computedRequired) {
-			let help = '';
-			const prefixParserHelp = computedResourcePrefixParser.userErrorMessage ?? '';
+			let help = "";
+			const prefixParserHelp = computedResourcePrefixParser.userErrorMessage ?? "";
 			if (prefixParserHelp) {
 				help = `\n\nPrefix parser help: ${prefixParserHelp}`;
 			}

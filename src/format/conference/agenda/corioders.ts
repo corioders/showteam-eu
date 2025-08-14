@@ -3,10 +3,12 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
-import { type ParsedDSDTF, getAsArray, parseDSDTF } from '@/format/deadSimpleDataTextFormat';
-import { DateTime } from 'luxon';
-import { type CellAddress, type WorkSheet, type WorkBook as XlsxWorkBook, utils as xlsxUtils } from 'xlsx';
-import { ACTIVITY_TYPE, type Activity, type Agenda, type AgendaDay, type Speaker, isActivityType } from './index.js';
+import { DateTime } from "luxon";
+import { type CellAddress, type WorkSheet, type WorkBook as XlsxWorkBook, utils as xlsxUtils } from "xlsx";
+
+import { getAsArray, type ParsedDSDTF, parseDSDTF } from "@/format/deadSimpleDataTextFormat";
+
+import { ACTIVITY_TYPE, type Activity, type Agenda, type AgendaDay, isActivityType, type Speaker } from "./index.js";
 
 /*
 ## Specification:
@@ -35,13 +37,13 @@ Example: https://docs.google.com/spreadsheets/d/1aEkg5CM9NZWF0cYPkziqlmfIJxruunV
 // TODO(2):
 // Add time zone support.
 
-const UNDERSCORE = '_';
-const DAY_SHEET_PREFIX = 'public_day_';
-const DATE_FORMAT = 'dd.MM.yyyy';
+const UNDERSCORE = "_";
+const DAY_SHEET_PREFIX = "public_day_";
+const DATE_FORMAT = "dd.MM.yyyy";
 
 const TIME_TITLE_CELL: CellAddress = { c: 0, r: 0 };
-const TIME_TITLE_CELL_TEXT = 'Time';
-const TIME_FORMAT = 'HH:mm';
+const TIME_TITLE_CELL_TEXT = "Time";
+const TIME_FORMAT = "HH:mm";
 const TIME_TIME_DELTA_MINUTES = 5;
 
 const FIRST_STAGE_TITLE_ROW_CELL: CellAddress = { c: 1, r: 0 };
@@ -65,28 +67,27 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 		// TODO: Provide an error if this does not work
 		const [_public, _day, N, date] = dayNameUnderscoreSplit;
 		if (!date) {
-			throw new Error('date is not defined');
+			throw new Error("date is not defined");
 		}
 
 		// TODO: Provide an error if N cannot be parsed.
 		const NParsed = Number(N);
 		if (expectedDayNumber !== NParsed) {
-			throw new Error('expectedDayNumber !== Number(N)');
+			throw new Error("expectedDayNumber !== Number(N)");
 		}
 		expectedDayNumber++;
 
 		// TODO: Provide an error if this does not work.
 		const dateParsed = DateTime.fromFormat(date, DATE_FORMAT);
 		if (dateParsed.isValid === false) {
-			throw new Error('dateParsed.isValid === false');
+			throw new Error("dateParsed.isValid === false");
 		}
 
 		daysSheetNames.push(sheetName);
 		agenda.days.push({
+			activities: [],
 			date: dateParsed,
 			dayNumber: NParsed,
-
-			activities: [],
 		});
 	}
 
@@ -95,11 +96,11 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 		const daySheetName = daysSheetNames[i] as string;
 		const daySheet = workbook.Sheets[daySheetName] as WorkSheet;
 
-		if (daySheet['!ref'] === undefined) {
+		if (daySheet["!ref"] === undefined) {
 			throw new Error(`daySheet['!ref'] === undefined`);
 		}
 
-		if (daySheet['!merges'] === undefined) {
+		if (daySheet["!merges"] === undefined) {
 			throw new Error(`daySheet["!merges"] === undefined`);
 		}
 		// const { r: daySheetMaxRow, c: daySheetMaxColumn } = xlsxUtils.decode_cell(daySheet["!ref"]);
@@ -116,7 +117,7 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 		// Validate the day sheet. According to the specification.
 		// 2.A.
 		if (getCellFormattedText(TIME_TITLE_CELL) !== TIME_TITLE_CELL_TEXT) {
-			throw new Error('daySheet[xlsxUtils.encode_cell(TIME_ROW_TITLE_CELL)] !== TIME_ROW_TITLE_CELL_TEXT');
+			throw new Error("daySheet[xlsxUtils.encode_cell(TIME_ROW_TITLE_CELL)] !== TIME_ROW_TITLE_CELL_TEXT");
 		}
 
 		const parsedTimeCache: Map<string, DateTime> = new Map();
@@ -130,20 +131,20 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 
 		while (true) {
 			timeRowIndex++;
-			const timeTextCellAddress = { r: timeRowIndex, c: TIME_TITLE_CELL.c };
+			const timeTextCellAddress = { c: TIME_TITLE_CELL.c, r: timeRowIndex };
 			timeText = getCellFormattedText(timeTextCellAddress);
 			if (timeText === undefined) {
 				break;
 			}
 
-			const nextTimeCellAddress = { r: timeRowIndex + 1, c: TIME_TITLE_CELL.c };
+			const nextTimeCellAddress = { c: TIME_TITLE_CELL.c, r: timeRowIndex + 1 };
 			const nextTimeText = getCellFormattedText(nextTimeCellAddress);
 			const nextTimeTextIsUndefined = nextTimeText === undefined;
 
 			// TODO: Provide an error if this does not work.
 			const time = DateTime.fromFormat(timeText, TIME_FORMAT);
 			if (time.isValid === false) {
-				throw new Error('time.isValid === false');
+				throw new Error("time.isValid === false");
 			}
 			parsedTimeCache.set(parsedTimeCacheFormatKey(timeTextCellAddress), time);
 
@@ -151,14 +152,14 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 				const lastTime = parsedTimeCache.get(lastTimeParsedTimeKey);
 				// This should never happen.s
 				if (lastTime === undefined) {
-					throw new Error('lastTime === undefined');
+					throw new Error("lastTime === undefined");
 				}
 
 				// 2.C
 				if (nextTimeTextIsUndefined !== true) {
 					// 2.B
-					if (time.diff(lastTime).as('minutes') !== TIME_TIME_DELTA_MINUTES) {
-						throw new Error('time.diff(lastTime).minutes !== TIME_ROW_TIME_DELTA_MINUTES');
+					if (time.diff(lastTime).as("minutes") !== TIME_TIME_DELTA_MINUTES) {
+						throw new Error("time.diff(lastTime).minutes !== TIME_ROW_TIME_DELTA_MINUTES");
 					}
 				}
 			}
@@ -172,23 +173,23 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 		const stageColumnIndex = FIRST_STAGE_TITLE_ROW_CELL.c;
 
 		// Sort merges according to their row starting position, as the !merges property stores them in their creation order.
-		daySheet['!merges'].sort((a, b) => a.s.r - b.s.r);
-		for (const merge of daySheet['!merges']) {
+		daySheet["!merges"].sort((a, b) => a.s.r - b.s.r);
+		for (const merge of daySheet["!merges"]) {
 			if (merge.s.c !== merge.e.c) {
-				throw new Error('merge.s.c !== merge.e.c');
+				throw new Error("merge.s.c !== merge.e.c");
 			}
 
 			if (merge.s.c !== stageColumnIndex) {
-				throw new Error('merge.s.c !== stageColumnIndex. Merge outside of stageN column');
+				throw new Error("merge.s.c !== stageColumnIndex. Merge outside of stageN column");
 			}
 
 			// This should never happen.
 			if (merge.e.r < merge.s.r) {
-				throw new Error('merge.e.r < merge.s.r');
+				throw new Error("merge.e.r < merge.s.r");
 			}
 
 			if (merge.e.r > lastTimeRowIndex) {
-				throw new Error('merge.e.r > lastTimeRowIndex');
+				throw new Error("merge.e.r > lastTimeRowIndex");
 			}
 
 			const activityStartTimeCellAddress = { c: TIME_TITLE_CELL.c, r: merge.s.r - 1 };
@@ -199,20 +200,20 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 			}
 
 			if (activityStartTime === undefined) {
-				throw new Error('activityStartTime === undefined');
+				throw new Error("activityStartTime === undefined");
 			}
 
 			// TODO: Add support for no end time
 			const activityEndTimeCellAddress = { c: TIME_TITLE_CELL.c, r: merge.e.r };
 			const activityEndTime = parsedTimeCache.get(parsedTimeCacheFormatKey(activityEndTimeCellAddress));
 			if (activityEndTime === undefined) {
-				throw new Error('activityEndTime === undefined');
+				throw new Error("activityEndTime === undefined");
 			}
 
 			const activityTextCellAddress = merge.s;
 			const activityText = getCellFormattedText(activityTextCellAddress);
 			if (activityText === undefined) {
-				throw new Error('activityText === undefined');
+				throw new Error("activityText === undefined");
 			}
 
 			const [activityDSDTF, err] = parseDSDTF(activityText);
@@ -230,43 +231,43 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 }
 
 function parseActivityDSDTF(dsdtf: ParsedDSDTF, startTime: DateTime, endTime: DateTime): Activity {
-	const Type = dsdtf.mapping.get('Type');
+	const Type = dsdtf.mapping.get("Type");
 	if (Type === undefined) {
-		throw new Error('Activity type must be defined');
+		throw new Error("Activity type must be defined");
 	}
 
 	if (isActivityType(Type) === false) {
 		throw new Error(`Activity type must be one of ${Object.values(ACTIVITY_TYPE)}`);
 	}
 
-	if (Type === 'Break') {
+	if (Type === "Break") {
 		return {
+			end: endTime,
 			other: dsdtf,
 			start: startTime,
-			end: endTime,
 
 			type: Type,
 		};
 	}
 
-	const Name = dsdtf.mapping.get('Name');
+	const Name = dsdtf.mapping.get("Name");
 	if (Name === undefined) {
 		throw new Error(`Activity of type: ${Type} requires the field 'Name'`);
 	}
 
-	if (Type === 'Other') {
+	if (Type === "Other") {
 		return {
+			end: endTime,
+			name: Name,
 			other: dsdtf,
 			start: startTime,
-			end: endTime,
 
 			type: Type,
-			name: Name,
 		};
 	}
 
-	if (Type === 'Keynote') {
-		const SpeakerName = dsdtf.mapping.get('Speaker');
+	if (Type === "Keynote") {
+		const SpeakerName = dsdtf.mapping.get("Speaker");
 		if (SpeakerName === undefined) {
 			throw new Error(`Activity of type: ${Type} requires the field 'Speaker'`);
 		}
@@ -274,18 +275,18 @@ function parseActivityDSDTF(dsdtf: ParsedDSDTF, startTime: DateTime, endTime: Da
 		const Speaker = parseSpeaker(SpeakerName);
 
 		return {
-			other: dsdtf,
-			start: startTime,
 			end: endTime,
+			name: Name,
+			other: dsdtf,
+			speaker: Speaker,
+			start: startTime,
 
 			type: Type,
-			name: Name,
-			speaker: Speaker,
 		};
 	}
 
-	if (Type === 'Panel') {
-		const SpeakerNames = getAsArray(dsdtf, 'Speakers');
+	if (Type === "Panel") {
+		const SpeakerNames = getAsArray(dsdtf, "Speakers");
 		if (SpeakerNames === undefined) {
 			throw new Error(`Activity of type: ${Type} requires the field 'Speakers'`);
 		}
@@ -298,7 +299,7 @@ function parseActivityDSDTF(dsdtf: ParsedDSDTF, startTime: DateTime, endTime: Da
 			Speakers.push(parseSpeaker(SpeakerName));
 		}
 
-		const ModeratorName = dsdtf.mapping.get('Moderator');
+		const ModeratorName = dsdtf.mapping.get("Moderator");
 		if (ModeratorName === undefined) {
 			throw new Error(`Activity of type: ${Type} requires the field 'Moderator'`);
 		}
@@ -306,25 +307,25 @@ function parseActivityDSDTF(dsdtf: ParsedDSDTF, startTime: DateTime, endTime: Da
 		const Moderator = parseSpeaker(ModeratorName);
 
 		return {
-			other: dsdtf,
-			start: startTime,
 			end: endTime,
+			moderator: Moderator,
+			name: Name,
+			other: dsdtf,
+			speakers: Speakers,
+			start: startTime,
 
 			type: Type,
-			name: Name,
-			speakers: Speakers,
-			moderator: Moderator,
 		};
 	}
 
-	throw new Error('Invalid activity type');
+	throw new Error("Invalid activity type");
 }
 
 export function parseSpeaker(speakerName: string): Speaker {
 	// TODO
 	return {
 		name: speakerName,
-		photoURL: '/images/summit/agenda.svg',
-		role: 'TODO',
+		photoURL: "/images/summit/agenda.svg",
+		role: "TODO",
 	};
 }

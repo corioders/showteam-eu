@@ -1,9 +1,10 @@
-import type { DocMd } from '@/driveCMS/docs.js';
-import { MarkdownFrontmatterParser, type ParsedMarkdownFrontmatter } from '@/format/markdown/frontmatter.js';
-import type { StringMarkdown } from '@/format/markdown/index.js';
-import { MarkdownKeyValueParser, type ParsedMarkdownValue } from '@/format/markdown/key-value.js';
-import { defineTypeFunction } from '../index.js';
-import type { GoogleDriveInternationalizedDocMd } from './driveCMS.js';
+import type { DocMd } from "@/driveCMS/docs.js";
+import { MarkdownFrontmatterParser, type ParsedMarkdownFrontmatter } from "@/format/markdown/frontmatter.js";
+import type { StringMarkdown } from "@/format/markdown/index.js";
+import { MarkdownKeyValueParser, type ParsedMarkdownValue } from "@/format/markdown/key-value.js";
+
+import { defineTypeFunction } from "../index.js";
+import type { GoogleDriveInternationalizedDocMd } from "./drive-cms.js";
 
 interface MarkdownKeyValueParserUserSpec {
 	childHeaderLevel: number;
@@ -31,7 +32,7 @@ export const typeMarkdownKeyValueRootFromGoogleDocParser = defineTypeFunction<Ma
 export const typeMarkdownKeyValueRootParser = defineTypeFunction<MarkdownKeyValueParserUserSpec, StringMarkdown, ParsedMarkdownValue[]>(
 	function typeMarkdownKeyValueRootParser(us) {
 		return (stringMarkdown) => {
-			const [parsedMarkdown, parseError] = MarkdownKeyValueParser(stringMarkdown, { headerLevel: us.childHeaderLevel, allowDuplicateKeys: us.allowDuplicateKeys });
+			const [parsedMarkdown, parseError] = MarkdownKeyValueParser(stringMarkdown, { allowDuplicateKeys: us.allowDuplicateKeys, headerLevel: us.childHeaderLevel });
 			if (parseError) {
 				return [null, parseError];
 			}
@@ -66,8 +67,18 @@ export const typeMarkdownKeyValue = defineTypeFunction<MarkdownKeyUserSpec, Pars
 	};
 });
 
-// biome-ignore lint/suspicious/noConfusingVoidType: <explanation>
+// biome-ignore lint/suspicious/noConfusingVoidType: This void type is required for DSD to work as expected
 type MarkdownFrontmatterParserUserSpec = void;
+
+export const typeMarkdownFrontmatterRootFromGoogleInternationalizedDocParser = defineTypeFunction<
+	MarkdownFrontmatterParserUserSpec,
+	GoogleDriveInternationalizedDocMd,
+	ParsedMarkdownFrontmatter
+>(function typeMarkdownFrontmatterRootFromGoogleInternationalizedDocParser(us) {
+	return (intlDocMd) => {
+		return typeMarkdownFrontmatterRootParser(us)(intlDocMd.doc.docMd);
+	};
+});
 
 export const typeMarkdownFrontmatterRootFromGoogleDocParser = defineTypeFunction<MarkdownFrontmatterParserUserSpec, DocMd, ParsedMarkdownFrontmatter>(
 	function typeMarkdownFrontmatterRootFromGoogleDocParser(us) {

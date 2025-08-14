@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
 
-import type { FileID } from './drive.js';
+import type { FileID } from "./drive.js";
 
 export function fileIDToGoogleDriveLink(fileID: FileID): string {
 	return `https://drive.google.com/file/d/${fileID}/view`;

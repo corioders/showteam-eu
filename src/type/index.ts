@@ -6,11 +6,11 @@
 export type ValueOf<T> = T[keyof T];
 
 export function isBlob(x: unknown): x is Blob {
-	if (typeof Blob === 'undefined') {
+	if (typeof Blob === "undefined") {
 		return false;
 	}
 
-	return x instanceof Blob || Object.prototype.toString.call(x) === '[object Blob]';
+	return x instanceof Blob || Object.prototype.toString.call(x) === "[object Blob]";
 }
 
 export type ArrayElement<A> = A extends readonly (infer T)[] ? T : never;

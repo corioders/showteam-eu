@@ -3,9 +3,10 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
 
-import { type ErrorReturnPromise, safePromise } from '@/error/index.js';
-import type { FileID, FolderID } from './drive.js';
-import type { Form } from './form.js';
+import { type ErrorReturnPromise, safePromise } from "@/error/index.js";
+
+import type { FileID, FolderID } from "./drive.js";
+import type { Form } from "./form.js";
 
 function getCoriodersFormUploadWorkerUploadPath(coriodersFormUploadWorkerURL: string, targetFolderID: FolderID) {
 	return `${coriodersFormUploadWorkerURL}/upload/${targetFolderID}`;
@@ -14,7 +15,7 @@ function getCoriodersFormUploadWorkerUploadPath(coriodersFormUploadWorkerURL: st
 export async function uploadFileUsingForm(form: Form, file: File, shortQuestionTitle: string): ErrorReturnPromise<FileID> {
 	const fileUploadOptions = form.fileUpload;
 	if (!fileUploadOptions) {
-		return [null, new Error('File upload options were not provided while this form requires form upload. Call up your Digital team.')];
+		return [null, new Error("File upload options were not provided while this form requires form upload. Call up your Digital team.")];
 	}
 
 	const targetFolderID = fileUploadOptions.fileUploadQuestionsFolders[shortQuestionTitle];
@@ -25,13 +26,13 @@ export async function uploadFileUsingForm(form: Form, file: File, shortQuestionT
 	const uploadURL = getCoriodersFormUploadWorkerUploadPath(fileUploadOptions.coriodersFormUploadWorkerURL, targetFolderID);
 
 	const formUploadWorkerForm = new FormData();
-	formUploadWorkerForm.append('file', file);
+	formUploadWorkerForm.append("file", file);
 
 	const [formUploadWorkerResponse, formUploadWorkerResponseError] = await safePromise(() =>
 		fetch(uploadURL, {
-			method: 'POST',
 			body: formUploadWorkerForm,
-			mode: 'cors',
+			method: "POST",
+			mode: "cors",
 		}),
 	);
 	if (formUploadWorkerResponseError) {
@@ -47,12 +48,12 @@ export async function uploadFileUsingForm(form: Form, file: File, shortQuestionT
 	return [uploadedFileID, null];
 }
 
-const fileUploadQuestionPrefix = 'FileUpload';
+const fileUploadQuestionPrefix = "FileUpload";
 
 export function isFileUploadQuestion(title: string): boolean {
 	return title.startsWith(fileUploadQuestionPrefix);
 }
 
 export function getFileUploadQuestionTitle(title: string): string {
-	return title.replace(fileUploadQuestionPrefix, '').trim();
+	return title.replace(fileUploadQuestionPrefix, "").trim();
 }

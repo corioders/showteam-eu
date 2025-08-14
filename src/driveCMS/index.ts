@@ -3,40 +3,40 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
-import { IS_PREVIEW } from '@/const.js';
-import { type ErrorReturnPromise, safe } from '@/error';
-import { google } from 'googleapis';
-import { type Doc, type DocID, type DocMd, downloadDocMarkdownRevision, downloadDocRevision, getDocRevisions } from './docs.js';
+import { google } from "googleapis";
+
+import { IS_PREVIEW } from "@/const.js";
+import { type ErrorReturnPromise, safe } from "@/error";
+
+import { type Doc, type DocID, type DocMd, downloadDocMarkdownRevision, downloadDocRevision, getDocRevisions } from "./docs.js";
 import {
 	type FileID,
 	type FolderID,
-	type PermissionRole,
-	type PermissionType,
 	getLatestDeployRevision,
 	getLatestRevision,
-	internalListFolderPersistantCached,
-	internalUNSAFEChangePermissionsToAnyoneWithLinkReader,
-} from './drive.js';
-import {
 	addPermission as internalAddPermission,
 	clearAllPermissions as internalClearAllPermissions,
 	copyPermissions as internalCopyPermissions,
 	createFolder as internalCreateFolder,
+	internalListFolderPersistantCached,
 	simpleFileUpload as internalSimpleFileUpload,
-} from './drive.js';
-import { type FileUploadOptions, type Form, type FormID, getForm as internalGetForm } from './form.js';
-import type { Resource, ResourceID } from './resource.js';
-import { type Spreadsheet, type SpreadsheetID, downloadSpreadsheetRevision, getSheetRevisions } from './spreadsheet.js';
+	internalUNSAFEChangePermissionsToAnyoneWithLinkReader,
+	type PermissionRole,
+	type PermissionType,
+} from "./drive.js";
+import { type FileUploadOptions, type Form, type FormID, getForm as internalGetForm } from "./form.js";
+import type { Resource, ResourceID } from "./resource.js";
+import { downloadSpreadsheetRevision, getSheetRevisions, type Spreadsheet, type SpreadsheetID } from "./spreadsheet.js";
 
-if (typeof process.env['CORIODERS_DRIVE_CMS_KEY'] !== 'string') {
+if (typeof process.env["CORIODERS_DRIVE_CMS_KEY"] !== "string") {
 	throw new Error(
-		'Unable to initialize drive cms, missing the `CORIODERS_DRIVE_CMS_KEY` environment variable. See https://medium.com/@matheodaly.md/using-google-drive-api-with-python-and-a-service-account-d6ae1f6456c2',
+		"Unable to initialize drive cms, missing the `CORIODERS_DRIVE_CMS_KEY` environment variable. See https://medium.com/@matheodaly.md/using-google-drive-api-with-python-and-a-service-account-d6ae1f6456c2",
 	);
 }
 
 export type EmailAddress = string & { readonly __emailAddressTag: unique symbol };
 
-const [driveCMSJsonKey, driveCMSJsonKeyError] = safe(() => JSON.parse(process.env['CORIODERS_DRIVE_CMS_KEY'] as string));
+const [driveCMSJsonKey, driveCMSJsonKeyError] = safe(() => JSON.parse(process.env["CORIODERS_DRIVE_CMS_KEY"] as string));
 if (driveCMSJsonKeyError) {
 	throw new Error(`Unable to initialize drive cms, CORIODERS_DRIVE_CMS_KEY is not a valid JSON: ${driveCMSJsonKeyError.message}`, { cause: driveCMSJsonKeyError });
 }
@@ -48,10 +48,10 @@ export const SERVICE_ACCOUNT_EMAIL = driveCMSJsonKey.client_email as EmailAddres
 // Google Drive Activity API
 const googleAuth = new google.auth.GoogleAuth({
 	credentials: driveCMSJsonKey,
-	scopes: ['https://www.googleapis.com/auth/drive'],
+	scopes: ["https://www.googleapis.com/auth/drive"],
 });
 
-export async function getRequestAuthHeaders(url: string): Promise<{ [index: string]: string }> {
+export async function getRequestAuthHeaders(url: string): Promise<Headers> {
 	return await googleAuth.getRequestHeaders(url);
 }
 
@@ -187,7 +187,7 @@ export function addPermission(
 	targetResourceID: ResourceID,
 	emailAddress: EmailAddress,
 	permissionRole: PermissionRole,
-	permissionType: PermissionType = 'user',
+	permissionType: PermissionType = "user",
 ): Promise<Error | null> {
 	return internalAddPermission(googleAuth, targetResourceID, emailAddress, permissionRole, permissionType);
 }

@@ -3,10 +3,11 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
-import { type ErrorReturn, safe } from '@/error/index.js';
-import { type ParsedDSDTF, parseDSDTF } from '@/format/deadSimpleDataTextFormat/index.js';
-import { remark } from 'remark';
-import strip from 'strip-markdown';
+import { remark } from "remark";
+import strip from "strip-markdown";
+
+import { type ErrorReturn, safe } from "@/error/index.js";
+import { type ParsedDSDTF, parseDSDTF } from "@/format/deadSimpleDataTextFormat/index.js";
 
 export type StringMarkdown = string & { readonly __markdownTag: unique symbol };
 
@@ -42,7 +43,7 @@ export interface MarkdownDoc {
 
 /**  @deprecated use MarkdownFrontmatterParser instead */
 export function parseMarkdownDocWithMetadata(docMd: string): ErrorReturn<MarkdownDoc> {
-	let [_empty, frontmatter, content] = docMd.split('===');
+	let [_empty, frontmatter, content] = docMd.split("===");
 
 	if (!frontmatter) {
 		return [
@@ -59,7 +60,7 @@ to the beginning of the document.`),
 
 	frontmatter = frontmatter.trim();
 
-	if (frontmatter.endsWith('\\')) {
+	if (frontmatter.endsWith("\\")) {
 		frontmatter = frontmatter.slice(0, -1);
 	}
 	frontmatter = frontmatter.trim();
@@ -69,19 +70,19 @@ to the beginning of the document.`),
 		return [null, error];
 	}
 
-	const title = dsdtf.mapping.get('Title')?.trim();
+	const title = dsdtf.mapping.get("Title")?.trim();
 	if (!title) {
-		return [null, new Error('Title is not defined')];
+		return [null, new Error("Title is not defined")];
 	}
 
-	const description = dsdtf.mapping.get('Description')?.trim();
+	const description = dsdtf.mapping.get("Description")?.trim();
 	if (!description) {
-		return [null, new Error('Description is not defined')];
+		return [null, new Error("Description is not defined")];
 	}
 
 	if (!content) {
-		return [null, new Error('No post content, check if you have added === to the end of the metadata')];
+		return [null, new Error("No post content, check if you have added === to the end of the metadata")];
 	}
 
-	return [{ metadata: { title, description, other: dsdtf }, content }, null];
+	return [{ content, metadata: { description, other: dsdtf, title } }, null];
 }

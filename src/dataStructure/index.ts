@@ -9,7 +9,7 @@ export function newTypedSymbol<T>(name: string): TypedSymbol<T> {
 }
 
 export class TypedSymbolMap {
-	private _storage: Map<symbol, unknown>;
+	private readonly _storage: Map<symbol, unknown>;
 	constructor() {
 		this._storage = new Map();
 	}

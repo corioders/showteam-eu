@@ -2,13 +2,15 @@
 // Unauthorized copying of this file, via any medium is strictly prohibited
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
-import { type ErrorReturn, safe } from '@/error';
-import sizeOf from 'buffer-image-size';
+
+import sizeOf from "buffer-image-size";
+
+import { type ErrorReturn, safe } from "@/error";
 
 export interface ImageSize {
 	width: number;
 	height: number;
-	type: 'bmp' | 'cur' | 'dds' | 'gif' | 'ico' | 'jpg' | 'png' | 'psd' | 'svg' | 'webp';
+	type: "bmp" | "cur" | "dds" | "gif" | "ico" | "jpg" | "png" | "psd" | "svg" | "webp";
 }
 
 export function imageSize(responseBuffer: Buffer): ErrorReturn<ImageSize> {
