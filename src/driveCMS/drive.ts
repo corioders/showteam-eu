@@ -104,7 +104,12 @@ export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID
 	console.log(`Listing folder: ${folderID}`);
 
 	const driveAPI = google.drive({ auth: googleAuth, version: "v3" });
-	const [fileOrFolderListResponse, errorList] = await safePromise(() => driveAPI.files.list({ q: `'${folderID}' in parents` }));
+	const [fileOrFolderListResponse, errorList] = await safePromise(() =>
+		driveAPI.files.list({
+			fields: "files(id, name, mimeType, shortcutDetails(targetId))",
+			q: `'${folderID}' in parents`,
+		}),
+	);
 	if (errorList !== null) {
 		return [null, new Error(`Error while listing files: ${errorList}`, { cause: errorList })];
 	}
@@ -118,6 +123,40 @@ export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID
 		if (typeof fileOrFolder.name !== "string") {
 			return [null, new Error(`fileOrFolder.name is not of type string. But of type: ${typeof fileOrFolder.name}`)];
 		}
+
+		if (fileOrFolder.mimeType === MIMEType.shortcut) {
+			const shortcutTargetID = fileOrFolder.shortcutDetails?.targetId;
+			if (typeof shortcutTargetID !== "string") {
+				return [null, new Error("fileOrFolder.mimeType is MIMEType.shortcut but fileOrFolder.shortcutDetails are undefined.")];
+			}
+
+			const [targetFileResponse, targetFileFetchError] = await safePromise(() =>
+				driveAPI.files.get({
+					fields: "id, name, mimeType",
+					fileId: shortcutTargetID,
+				}),
+			);
+			if (targetFileFetchError || targetFileResponse.status !== StatusCodes.OK || targetFileResponse.data.id === undefined) {
+				return [
+					null,
+					new Error(`Unable to resolve shortcut. Error: ${targetFileFetchError}. Status: ${targetFileResponse?.statusText}`, { cause: targetFileFetchError }),
+				];
+			}
+
+			const targetFile = targetFileResponse.data;
+			if (typeof targetFile.name !== "string") {
+				return [null, new Error(`Unable to resolve shortcut. targetFile.name is not of type string. But of type: ${typeof fileOrFolder.name}`)];
+			}
+
+			fileOrFolderList.push({
+				id: targetFile.id as ResourceID,
+				mimeType: targetFile.mimeType as MIMETypeTE,
+				name: targetFile.name,
+			});
+
+			continue;
+		}
+
 		fileOrFolderList.push({
 			id: fileOrFolder.id as ResourceID,
 			mimeType: fileOrFolder.mimeType as MIMETypeTE,

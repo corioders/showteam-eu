@@ -6,8 +6,9 @@
 import { google } from "googleapis";
 
 import { IS_PREVIEW } from "@/const.js";
-import { type ErrorReturnPromise, safe } from "@/error";
+import { type ErrorReturnPromise, safe, safePromise } from "@/error";
 
+import { memoizeDriveCMS } from "./cache.js";
 import { type Doc, type DocID, type DocMd, downloadDocMarkdownRevision, downloadDocRevision, getDocRevisions } from "./docs.js";
 import {
 	type FileID,
@@ -51,9 +52,9 @@ const googleAuth = new google.auth.GoogleAuth({
 	scopes: ["https://www.googleapis.com/auth/drive"],
 });
 
-export async function getRequestAuthHeaders(url: string): Promise<Headers> {
-	return await googleAuth.getRequestHeaders(url);
-}
+export const getRequestAuthHeaders = memoizeDriveCMS(async function getRequestAuthHeaders(url: string): ErrorReturnPromise<Headers> {
+	return safePromise(() => googleAuth.getRequestHeaders(url));
+});
 
 export function getForm(formID: FormID, isPreview: boolean, fileUploadOptions?: FileUploadOptions): ErrorReturnPromise<Form> {
 	return internalGetForm(googleAuth, formID, isPreview, fileUploadOptions);

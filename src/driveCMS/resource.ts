@@ -15,18 +15,21 @@ import type { SpreadsheetResource } from "./spreadsheet.js";
 export type MIMETypeT = typeof MIMEType;
 // MIMETypeTEnum
 export type MIMETypeTE = ValueOf<MIMETypeT>;
+
+// biome-ignore assist/source/useSortedKeys: We like our own ordering more
 export const MIMEType = {
 	csv: "text/csv",
-	docs: "application/vnd.google-apps.document",
-	docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-
-	excel: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+	markdown: "text/markdown",
 
 	folder: "application/vnd.google-apps.folder",
+	docs: "application/vnd.google-apps.document",
 	form: "application/vnd.google-apps.form",
+	shortcut: "application/vnd.google-apps.shortcut",
+
+	excel: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+	docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 
 	image: "image/*",
-	markdown: "text/markdown",
 } as const;
 
 type MIMETypeMatcherFunction = (mimeType: string) => boolean;
@@ -52,6 +55,10 @@ export interface Resource {
 	mimeType: MIMETypeTE;
 }
 
+/**
+ *  @deprecated
+ * This is used only in resourceStructureParser
+ */
 export type MIMETypeToResourceType<T extends MIMETypeTE> = MIMETypeToResourceTypeMapping[T];
 type MIMETypeToResourceTypeMapping = {
 	[MIMEType.csv]: FileResource;
@@ -60,6 +67,7 @@ type MIMETypeToResourceTypeMapping = {
 	[MIMEType.folder]: FolderResource;
 	[MIMEType.docs]: DocResource;
 	[MIMEType.form]: FormResource;
+	[MIMEType.shortcut]: FileResource;
 
 	[MIMEType.excel]: SpreadsheetResource;
 	[MIMEType.docx]: FileResource;

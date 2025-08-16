@@ -13,8 +13,8 @@
 		"rootDir": "src",
 		"skipLibCheck": true,
 		"sourceMap": true,
-		"target": "esnext",
 		// "sourceRoot": "../../packages/corioders-lib/cstd-ts/src",
+		"target": "esnext",
 		"tsBuildInfoFile": "./build/tsconfig.tsbuildinfo",
 		"typeRoots": ["./node_modules/@types"]
 	},

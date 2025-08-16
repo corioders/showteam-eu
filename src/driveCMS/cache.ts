@@ -184,7 +184,7 @@ export function persistantDriveCMSCache<CachedValueT extends JsonValue, Function
 			if (!disableAutomaticInvalidationFlag) {
 				const removeItemError = await setCachedValue(REMOVE_PERSISTANT_CACHE_VALUE);
 				if (removeItemError) {
-					console.error(`Erro while invalidating cache ${removeItemError}`);
+					console.error(`Error while invalidating cache ${removeItemError}`);
 					// TODO: Figure out what to do....
 				}
 			}
