@@ -7,10 +7,13 @@ import "server-only";
 
 import { getRequestAuthHeaders } from "cstd-ts/driveCMS/index.js";
 
-import { memoizeImages } from "./cache.js";
 import { RemoteStaticImage, type RemoteStaticImageProps } from "./remote-static-image.jsx";
 
-export const GoogleDriveRemoteStaticImage = memoizeImages(async function GoogleDriveRemoteStaticImage(props: RemoteStaticImageProps) {
-	const fetchDriveCMSHeaders = await getRequestAuthHeaders(props.src);
+export const GoogleDriveRemoteStaticImage = async function GoogleDriveRemoteStaticImage(props: RemoteStaticImageProps) {
+	const [fetchDriveCMSHeaders, headersError] = await getRequestAuthHeaders(props.src);
+	if (headersError) {
+		return <RemoteStaticImage {...props} />;
+	}
+
 	return <RemoteStaticImage fetchRequestInit={{ headers: fetchDriveCMSHeaders }} {...props} />;
-});
+};

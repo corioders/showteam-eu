@@ -32,3 +32,20 @@ export const headingNumbersProvider = defineSectionProvider<ObjectWithMetadata<O
 		return [newSectionsCombinedArray, null];
 	},
 );
+
+export const sortingProvider = defineSectionProvider<ObjectWithMetadata<OrderMetadata>, EmptyObject, EmptyObject>(function sortingProvider(sectionsCombinedArray) {
+	const sortedSections = sectionsCombinedArray
+		.map(({ component, dsn }) => ({ component, dsn, order: dsn.dataUsed.metadata.orderNumberDS }))
+		.sort((a, b) => a.order - b.order);
+
+	const newSectionsCombinedArray: SectionsCombinedArray<ObjectWithMetadata<OrderMetadata>, any> = [];
+
+	for (const section of sortedSections) {
+		newSectionsCombinedArray.push({
+			component: (props) => section.component(props),
+			dsn: section.dsn,
+		});
+	}
+
+	return [newSectionsCombinedArray, null];
+});
