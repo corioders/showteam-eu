@@ -8,10 +8,12 @@ export interface HeadingProviderProps {
 	getHeadingNumber: () => number;
 }
 
+const ERROR_SECTION_ORDER = -100;
+
 export const headingNumbersProvider = defineSectionProvider<ObjectWithMetadata<OrderMetadata>, HeadingProviderProps, EmptyObject>(
 	function headingNumbersProvider(sectionsCombinedArray) {
 		const sortedSections = sectionsCombinedArray
-			.map(({ component, dsn }) => ({ component, dsn, order: dsn.dataUsed.metadata.orderNumberDS }))
+			.map(({ component, dsn }) => ({ component, dsn, order: dsn.dataUsed?.metadata.orderNumberDS ?? ERROR_SECTION_ORDER }))
 			.sort((a, b) => a.order - b.order);
 
 		const newSectionsCombinedArray: SectionsCombinedArray<ObjectWithMetadata<OrderMetadata>, any> = [];
@@ -35,7 +37,7 @@ export const headingNumbersProvider = defineSectionProvider<ObjectWithMetadata<O
 
 export const sortingProvider = defineSectionProvider<ObjectWithMetadata<OrderMetadata>, EmptyObject, EmptyObject>(function sortingProvider(sectionsCombinedArray) {
 	const sortedSections = sectionsCombinedArray
-		.map(({ component, dsn }) => ({ component, dsn, order: dsn.dataUsed.metadata.orderNumberDS }))
+		.map(({ component, dsn }) => ({ component, dsn, order: dsn.dataUsed?.metadata.orderNumberDS ?? ERROR_SECTION_ORDER }))
 		.sort((a, b) => a.order - b.order);
 
 	const newSectionsCombinedArray: SectionsCombinedArray<ObjectWithMetadata<OrderMetadata>, any> = [];
