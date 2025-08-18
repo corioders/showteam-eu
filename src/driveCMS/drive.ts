@@ -124,6 +124,10 @@ export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID
 			return [null, new Error(`fileOrFolder.name is not of type string. But of type: ${typeof fileOrFolder.name}`)];
 		}
 
+		// ==================================================
+		// Shortcut resolution
+		//
+		// We should not be falling into recursive folder trees, because we are only resolving one step deep.
 		if (fileOrFolder.mimeType === MIMEType.shortcut) {
 			const shortcutTargetID = fileOrFolder.shortcutDetails?.targetId;
 			if (typeof shortcutTargetID !== "string") {

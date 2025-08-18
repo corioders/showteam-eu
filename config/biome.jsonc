@@ -11,7 +11,7 @@
 		"ignoreUnknown": false,
 		"maxSize": 2097152,
 		// Ignore the 'build' folder
-		"includes": ["**", "!**/build"]
+		"includes": ["**", "!**/build", "!package.json"]
 	},
 	"formatter": {
 		"enabled": true,

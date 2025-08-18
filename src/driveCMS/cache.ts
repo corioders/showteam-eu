@@ -26,6 +26,7 @@ interface OurGlobalThis {
 	__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE?: UnstorageStorage;
 	__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_INVALIDATION_MAP?: Map<CacheKey, boolean>;
 	__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DISABLE_AUTOMATIC_INVALIDATION_MAP?: Map<CacheKey, boolean>;
+	__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DEBOUNCE_FUNCTION_CALLS?: Map<CacheKey, Promise<unknown>>;
 }
 const ourGlobalThis = (global ?? globalThis ?? window ?? {}) as OurGlobalThis;
 if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE) {
@@ -49,9 +50,14 @@ if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DISABLE_AUTOMATIC_INVALI
 	ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DISABLE_AUTOMATIC_INVALIDATION_MAP = new Map();
 }
 
+if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DEBOUNCE_FUNCTION_CALLS) {
+	ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DEBOUNCE_FUNCTION_CALLS = new Map();
+}
+
 const persistantCache = ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE;
 const persistantCacheInvalidationMap = ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_INVALIDATION_MAP;
 const persistantCacheDisableAutomaticInvalidationMap = ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DISABLE_AUTOMATIC_INVALIDATION_MAP;
+const persistantCacheDebounceFunctionCalls = ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DEBOUNCE_FUNCTION_CALLS;
 
 const memoizeCache = ourGlobalThis.__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE;
 
@@ -113,11 +119,21 @@ export function invalidate() {
 	for (const cacheKey of persistantCacheInvalidationMap.keys()) {
 		persistantCacheInvalidationMap.set(cacheKey, true);
 	}
+
+	for (const cacheKey of persistantCacheDebounceFunctionCalls.keys()) {
+		persistantCacheDebounceFunctionCalls.delete(cacheKey);
+	}
 }
 
 function getInvalidationFlag(cacheKey: CacheKey): boolean {
 	if (CORIODERS_INVALIDATE_PERSISTANT_CACHE) {
-		return true;
+		// TLDR: We don't just return true because, it leads to duplicate invalidation.
+		//
+		// Lets assume that here we just: return true;
+		// When listFolder(1) is called, the persistant cache is cleared because getInvalidationFlag return true, it's cached and we continue with out life.
+		// When listFolder(1) is called again the persistant cache is cleared AGAIN because getInvalidationFlag return true, even though we already have the latest data.
+		// We must take into account persistantCacheInvalidationMap state.
+		return persistantCacheInvalidationMap.get(cacheKey) ?? true;
 	}
 
 	return persistantCacheInvalidationMap.get(cacheKey) ?? false;
@@ -130,6 +146,14 @@ export function persistantDriveCMSCache<CachedValueT extends JsonValue, Function
 	async function persistantCachedHelper(this: any, ...argumentsWithoutPCC: FunctionToCacheArguments) {
 		const argumentsCacheKey = createHash("sha1").update(driveCMSCacheKey(argumentsWithoutPCC)).digest("base64");
 		const cacheKey = `${cacheNamePreferablyFunctionName}__${stringToURLSafeString(argumentsCacheKey)}` as CacheKey;
+
+		const debouncePromise = persistantCacheDebounceFunctionCalls.get(cacheKey) as Promise<FunctionToCacheReturn>;
+		if (debouncePromise) {
+			return debouncePromise;
+		}
+
+		const thisComputationDebouncePromiseResolvers = Promise.withResolvers<FunctionToCacheReturn>();
+		persistantCacheDebounceFunctionCalls.set(cacheKey, thisComputationDebouncePromiseResolvers.promise);
 
 		// ==================================================
 		// Setup state used for invalidation
@@ -192,7 +216,12 @@ export function persistantDriveCMSCache<CachedValueT extends JsonValue, Function
 
 		// ==================================================
 		// Function call
-		return fn.apply(this, [pcc, ...argumentsWithoutPCC]);
+
+		fn.apply(this, [pcc, ...argumentsWithoutPCC])
+			.then(thisComputationDebouncePromiseResolvers.resolve)
+			.catch(thisComputationDebouncePromiseResolvers.reject);
+
+		return thisComputationDebouncePromiseResolvers.promise;
 	}
 
 	return persistantCachedHelper;

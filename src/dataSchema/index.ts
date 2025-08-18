@@ -178,12 +178,12 @@ export type DataSchemaNode<T> = T extends { type: NoopFunction; pipe?: infer PTy
 	: T extends { type: FetchParserFunctionInternal<infer pFPR, infer FPR, any, any, infer ProducesAggregateObject, any>; pipe?: infer PType }
 		? ProducesAggregateObject extends false
 			? PrettifyHardcore<{
-					dataUsed: PrettifyHardcore<pFPR>;
+					dataUsed?: PrettifyHardcore<pFPR>;
 					result: ErrorReturn<FPR>;
 					next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchema<PType> : never) : never;
 				}>
 			: PrettifyHardcore<{
-					dataUsed: PrettifyHardcore<pFPR>;
+					dataUsed?: PrettifyHardcore<pFPR>;
 					result: ErrorReturn<FPR>;
 					aggregate: T extends { pipe: PType }
 						? PrettifyHardcore<{
@@ -462,12 +462,12 @@ export type DataSchemaNodeErrorBounded<T> = T extends { type: NoopFunction; pipe
 	: T extends { type: FetchParserFunctionInternal<infer pFPR, infer FPR, any, any, infer ProducesAggregateObject, any>; pipe?: infer PType }
 		? ProducesAggregateObject extends false
 			? PrettifyHardcore<{
-					dataUsed: PrettifyHardcore<pFPR>;
+					dataUsed?: PrettifyHardcore<pFPR>;
 					result: FPR;
 					next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchemaErrorBounded<PType> : never) : never;
 				}>
 			: {
-					dataUsed: PrettifyHardcore<pFPR>;
+					dataUsed?: PrettifyHardcore<pFPR>;
 					result: FPR;
 					aggregate: T extends { pipe: PType }
 						? PrettifyHardcore<{
