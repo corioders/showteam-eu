@@ -5,25 +5,7 @@
 
 import type { ImgHTMLAttributes } from "react";
 
-export type ImageType =
-	| "avif"
-	| "dz"
-	| "fits"
-	| "gif"
-	| "heif"
-	| "input"
-	| "jpeg"
-	| "jpg"
-	| "jp2"
-	| "jxl"
-	| "png"
-	| "ppm"
-	| "raw"
-	| "svg"
-	| "tiff"
-	| "tif"
-	| "v"
-	| "webp";
+export type ImageType = "jpeg" | "png" | "webp" | "gif" | "avif" | "tiff" | "svg";
 
 export const IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES: ImgHTMLAttributes<HTMLImageElement> = {
 	decoding: "async",

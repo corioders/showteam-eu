@@ -7,10 +7,9 @@
 
 import type { BinaryLike, createHash as createHashType } from "node:crypto";
 
-// TODO: Check if buffer-image-size works in the browser
-import readImageInfoFromBufferInternal from "buffer-image-size";
 import pLimit from "p-limit";
 import type SharpType from "sharp";
+import sharp from "sharp";
 import type * as SvgoType from "svgo";
 
 import { getListOfScaledWidths, type ImageType, TARGET_IMAGE_FORMATS, TARGET_IMAGE_SIZES } from "./image.mjs";
@@ -64,11 +63,16 @@ export interface ImageInfo {
 }
 
 // TODO readImageInfoFromBufferInternal throws
-export function readImageInfoFromBuffer(imageBuffer: Buffer): ImageInfo {
+export async function readImageInfoFromBuffer(imageBuffer: Buffer): Promise<ImageInfo> {
 	const imageSize = imageBuffer.length;
+	const imageMetadata = await sharp(imageBuffer).metadata();
 
+	// biome-ignore assist/source/useSortedKeys: We like to have it in the same order as in the interface.
 	return {
-		...(readImageInfoFromBufferInternal(imageBuffer) as ImageInfo),
+		width: imageMetadata.width,
+		height: imageMetadata.height,
+		type: imageMetadata.format as ImageType,
+
 		imageSize: imageSize,
 	};
 }
@@ -268,7 +272,7 @@ export async function optimizePictureSources(
 		const theOnlySharpEntry = pictureSources[0].__sharpEntries[0];
 
 		if (shouldUsePerformancePlaceholder(isDevelopmentMode, imageBuffer.length)) {
-			const imageInfo = readImageInfoFromBuffer(imageBuffer);
+			const imageInfo = await readImageInfoFromBuffer(imageBuffer);
 			const cacheKey = `PERFORMANCE_PLACEHOLDER_${imageInfo.width}_${imageInfo.height}`;
 
 			const cachedScaledPerformancePlaceholder = await getCacheFunction(cacheKey);

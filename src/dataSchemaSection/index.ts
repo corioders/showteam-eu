@@ -7,7 +7,7 @@ type SectionsDSToSectionsComponentsObject<SectionsDSD extends DataSchemaDefiniti
 	[K in keyof SectionDS]: FunctionComponent<ProvidedProps & { data: SectionDS[K] }>;
 };
 
-type TypedDataUsed<DataUsedType> = DataSchemaNode<{ type: FetchParserFunction<DataUsedType, never, EmptyObject, false> }>;
+type TypedDataUsed<DataUsedType> = DataSchemaNode<{ as: FetchParserFunction<DataUsedType, never, EmptyObject, false> }>;
 interface SectionsCombined<DataUsedType, ProvidedProps> {
 	dsn: TypedDataUsed<DataUsedType>;
 	component: FunctionComponent<ProvidedProps>;

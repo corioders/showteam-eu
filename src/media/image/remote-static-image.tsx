@@ -369,7 +369,7 @@ async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): 
 	}
 
 	const imageBuffer = Buffer.from(imageArrayBuffer);
-	const imageInfo = readImageInfoFromBuffer(imageBuffer);
+	const imageInfo = await readImageInfoFromBuffer(imageBuffer);
 
 	const fetchedImage: FetchedImage = {
 		imageBuffer,

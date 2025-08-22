@@ -11,7 +11,7 @@ import { FormRendererClientContextProvider } from "./_context/_client.jsx";
 
 export interface Props {
 	formID: FormID;
-	fileUploadOptions?: FileUploadOptions;
+	fileUploadOptions: FileUploadOptions | undefined;
 	children: ReactNode;
 }
 
