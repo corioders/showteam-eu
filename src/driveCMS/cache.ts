@@ -12,7 +12,7 @@ import memoize from "memoize";
 import { createStorage, type Storage as UnstorageStorage } from "unstorage";
 import fsDriver from "unstorage/drivers/fs-lite";
 
-import { CORIODERS_INVALIDATE_PERSISTANT_CACHE } from "@/const.js";
+import { CORIODERS_INVALIDATE_PERSISTENT_CACHE } from "@/const.js";
 import { type ErrorReturnPromise, safePromise } from "@/error/index.js";
 import type { JsonValue } from "@/format/json/index.js";
 import { stringToURLSafeString } from "@/net/url.js";
@@ -23,41 +23,41 @@ type AnyFunction = (...arguments_: readonly any[]) => any;
 interface OurGlobalThis {
 	__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE?: Map<any, any>;
 
-	__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE?: UnstorageStorage;
-	__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_INVALIDATION_MAP?: Map<CacheKey, boolean>;
-	__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DISABLE_AUTOMATIC_INVALIDATION_MAP?: Map<CacheKey, boolean>;
-	__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DEBOUNCE_FUNCTION_CALLS?: Map<CacheKey, Promise<unknown>>;
+	__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE?: UnstorageStorage;
+	__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_INVALIDATION_MAP?: Map<CacheKey, boolean>;
+	__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_DISABLE_AUTOMATIC_INVALIDATION_MAP?: Map<CacheKey, boolean>;
+	__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_DEBOUNCE_FUNCTION_CALLS?: Map<CacheKey, Promise<unknown>>;
 }
 const ourGlobalThis = (global ?? globalThis ?? window ?? {}) as OurGlobalThis;
 if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE) {
 	ourGlobalThis.__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE = new Map();
 }
 
-if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE) {
-	ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE = createStorage({
+if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE) {
+	ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE = createStorage({
 		// We don't need to use cacheDriver because every function should be also memorized. This is because
-		// every function call EVEN IF using persistant cache costs us one fetch call to check if the resource has changed.
-		driver: cacheDriver({ driver: fsDriver({ base: ".next/cache/corioders/cstd-ts-driveCMS-persistant" }) }),
-		// driver: fsDriver({ base: '.next/cache/corioders/cstd-ts-driveCMS-persistant' }),
+		// every function call EVEN IF using persistent cache costs us one fetch call to check if the resource has changed.
+		driver: cacheDriver({ driver: fsDriver({ base: ".next/cache/corioders/cstd-ts-driveCMS-persistent" }) }),
+		// driver: fsDriver({ base: '.next/cache/corioders/cstd-ts-driveCMS-persistent' }),
 	});
 }
 
-if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_INVALIDATION_MAP) {
-	ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_INVALIDATION_MAP = new Map();
+if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_INVALIDATION_MAP) {
+	ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_INVALIDATION_MAP = new Map();
 }
 
-if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DISABLE_AUTOMATIC_INVALIDATION_MAP) {
-	ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DISABLE_AUTOMATIC_INVALIDATION_MAP = new Map();
+if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_DISABLE_AUTOMATIC_INVALIDATION_MAP) {
+	ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_DISABLE_AUTOMATIC_INVALIDATION_MAP = new Map();
 }
 
-if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DEBOUNCE_FUNCTION_CALLS) {
-	ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DEBOUNCE_FUNCTION_CALLS = new Map();
+if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_DEBOUNCE_FUNCTION_CALLS) {
+	ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_DEBOUNCE_FUNCTION_CALLS = new Map();
 }
 
-const persistantCache = ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE;
-const persistantCacheInvalidationMap = ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_INVALIDATION_MAP;
-const persistantCacheDisableAutomaticInvalidationMap = ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DISABLE_AUTOMATIC_INVALIDATION_MAP;
-const persistantCacheDebounceFunctionCalls = ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTANT_CACHE_DEBOUNCE_FUNCTION_CALLS;
+const persistentCache = ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE;
+const persistentCacheInvalidationMap = ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_INVALIDATION_MAP;
+const persistentCacheDisableAutomaticInvalidationMap = ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_DISABLE_AUTOMATIC_INVALIDATION_MAP;
+const persistentCacheDebounceFunctionCalls = ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_DEBOUNCE_FUNCTION_CALLS;
 
 const memoizeCache = ourGlobalThis.__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE;
 
@@ -97,18 +97,18 @@ function driveCMSCacheKey(functionArguments: readonly unknown[]) {
 	return key;
 }
 
-export const REMOVE_PERSISTANT_CACHE_VALUE = Symbol("INVALIDATE_PERSISTANT_CACHE");
-export interface PersistantCacheController<CachedValueT extends JsonValue> {
+export const REMOVE_PERSISTENT_CACHE_VALUE = Symbol("INVALIDATE_PERSISTENT_CACHE");
+export interface PersistentCacheController<CachedValueT extends JsonValue> {
 	getCachedValue(): ErrorReturnPromise<CachedValueT>;
-	setCachedValue(value: CachedValueT | typeof REMOVE_PERSISTANT_CACHE_VALUE): Promise<Error | null>;
+	setCachedValue(value: CachedValueT | typeof REMOVE_PERSISTENT_CACHE_VALUE): Promise<Error | null>;
 
 	// disableAutomaticInvalidation allows for more optimal (manual) invalidation strategies.
 	// For example. List folder must be invalidated automatically, but downloadDoc has more efficient manual invalidation strategy.
 	disableAutomaticInvalidation(): void;
 }
 
-export interface PersistantCacheControllerThis<CachedValueT extends JsonValue> {
-	persistantCacheController: PersistantCacheController<CachedValueT>;
+export interface PersistentCacheControllerThis<CachedValueT extends JsonValue> {
+	persistentCacheController: PersistentCacheController<CachedValueT>;
 }
 
 type CacheKey = string & { readonly __cacheKeyTag: unique symbol };
@@ -116,72 +116,75 @@ type CacheKey = string & { readonly __cacheKeyTag: unique symbol };
 export function invalidate() {
 	memoizeCache.clear();
 
-	for (const cacheKey of persistantCacheInvalidationMap.keys()) {
-		persistantCacheInvalidationMap.set(cacheKey, true);
+	for (const cacheKey of persistentCacheInvalidationMap.keys()) {
+		persistentCacheInvalidationMap.set(cacheKey, true);
 	}
 
-	for (const cacheKey of persistantCacheDebounceFunctionCalls.keys()) {
-		persistantCacheDebounceFunctionCalls.delete(cacheKey);
+	for (const cacheKey of persistentCacheDebounceFunctionCalls.keys()) {
+		persistentCacheDebounceFunctionCalls.delete(cacheKey);
 	}
 }
 
 function getInvalidationFlag(cacheKey: CacheKey): boolean {
-	if (CORIODERS_INVALIDATE_PERSISTANT_CACHE) {
+	if (CORIODERS_INVALIDATE_PERSISTENT_CACHE) {
 		// TLDR: We don't just return true because, it leads to duplicate invalidation.
 		//
 		// Lets assume that here we just: return true;
-		// When listFolder(1) is called, the persistant cache is cleared because getInvalidationFlag return true, it's cached and we continue with out life.
-		// When listFolder(1) is called again the persistant cache is cleared AGAIN because getInvalidationFlag return true, even though we already have the latest data.
-		// We must take into account persistantCacheInvalidationMap state.
-		return persistantCacheInvalidationMap.get(cacheKey) ?? true;
+		// When listFolder(1) is called, the persistent cache is cleared because getInvalidationFlag return true, it's cached and we continue with out life.
+		// When listFolder(1) is called again the persistent cache is cleared AGAIN because getInvalidationFlag return true, even though we already have the latest data.
+		// We must take into account persistentCacheInvalidationMap state.
+		return persistentCacheInvalidationMap.get(cacheKey) ?? true;
 	}
 
-	return persistantCacheInvalidationMap.get(cacheKey) ?? false;
+	return persistentCacheInvalidationMap.get(cacheKey) ?? false;
 }
 
-export function persistantDriveCMSCache<CachedValueT extends JsonValue, FunctionToCacheArguments extends any[] = unknown[], FunctionToCacheReturn = unknown>(
+export function persistentDriveCMSCache<CachedValueT extends JsonValue, FunctionToCacheArguments extends any[] = unknown[], FunctionToCacheReturn = unknown>(
 	cacheNamePreferablyFunctionName: string,
-	fn: (persistantCacheController: PersistantCacheController<CachedValueT>, ..._arguments: FunctionToCacheArguments) => Promise<FunctionToCacheReturn>,
+	fn: (persistentCacheController: PersistentCacheController<CachedValueT>, ..._arguments: FunctionToCacheArguments) => Promise<FunctionToCacheReturn>,
 ): (..._arguments: FunctionToCacheArguments) => Promise<FunctionToCacheReturn> {
-	async function persistantCachedHelper(this: any, ...argumentsWithoutPCC: FunctionToCacheArguments) {
+	async function persistentCachedHelper(this: any, ...argumentsWithoutPCC: FunctionToCacheArguments) {
 		const argumentsCacheKey = createHash("sha1").update(driveCMSCacheKey(argumentsWithoutPCC)).digest("base64");
 		const cacheKey = `${cacheNamePreferablyFunctionName}__${stringToURLSafeString(argumentsCacheKey)}` as CacheKey;
 
-		const debouncePromise = persistantCacheDebounceFunctionCalls.get(cacheKey) as Promise<FunctionToCacheReturn>;
+		const debouncePromise = persistentCacheDebounceFunctionCalls.get(cacheKey) as Promise<FunctionToCacheReturn>;
 		if (debouncePromise) {
+			// console.debug("DEBOUNCE");
 			return debouncePromise;
 		}
 
 		const thisComputationDebouncePromiseResolvers = Promise.withResolvers<FunctionToCacheReturn>();
-		persistantCacheDebounceFunctionCalls.set(cacheKey, thisComputationDebouncePromiseResolvers.promise);
+		persistentCacheDebounceFunctionCalls.set(cacheKey, thisComputationDebouncePromiseResolvers.promise);
 
 		// ==================================================
 		// Setup state used for invalidation
-		if (!persistantCacheInvalidationMap.has(cacheKey)) {
-			persistantCacheInvalidationMap.set(cacheKey, false);
-		}
-
 		const invalidationFlag = getInvalidationFlag(cacheKey);
 
-		if (!persistantCacheDisableAutomaticInvalidationMap.has(cacheKey)) {
-			persistantCacheDisableAutomaticInvalidationMap.set(cacheKey, false);
+		if (!persistentCacheInvalidationMap.has(cacheKey)) {
+			persistentCacheInvalidationMap.set(cacheKey, false);
 		}
 
-		const disableAutomaticInvalidationFlag = persistantCacheDisableAutomaticInvalidationMap.get(cacheKey) ?? false;
+		if (!persistentCacheDisableAutomaticInvalidationMap.has(cacheKey)) {
+			persistentCacheDisableAutomaticInvalidationMap.set(cacheKey, false);
+		}
+
+		const disableAutomaticInvalidationFlag = persistentCacheDisableAutomaticInvalidationMap.get(cacheKey) ?? false;
 
 		// ==================================================
-		// PersistantCacheController definition
+		// PersistentCacheController definition
 		function getCachedValue() {
-			return safePromise(() => persistantCache.getItem(cacheKey)) as ErrorReturnPromise<CachedValueT>;
+			return safePromise(() => persistentCache.getItem(cacheKey)) as ErrorReturnPromise<CachedValueT>;
 		}
 
-		async function setCachedValue(value: CachedValueT | typeof REMOVE_PERSISTANT_CACHE_VALUE) {
-			if (value === REMOVE_PERSISTANT_CACHE_VALUE) {
-				const [_value, error] = await safePromise(() => persistantCache.removeItem(cacheKey));
+		async function setCachedValue(value: CachedValueT | typeof REMOVE_PERSISTENT_CACHE_VALUE) {
+			// console.debug("set cache", cacheKey, process.pid);
+
+			if (value === REMOVE_PERSISTENT_CACHE_VALUE) {
+				const [_value, error] = await safePromise(() => persistentCache.removeItem(cacheKey));
 				return error;
 			}
 
-			const [_value, error] = await safePromise(() => persistantCache.setItem(cacheKey, value));
+			const [_value, error] = await safePromise(() => persistentCache.setItem(cacheKey, value));
 			return error;
 		}
 
@@ -191,10 +194,10 @@ export function persistantDriveCMSCache<CachedValueT extends JsonValue, Function
 			// When a function is double cached meaning, downloadDoc calls -> downloadDocInternal and both of them want manual invalidation.
 			// Will it work?
 			// ==================================================
-			persistantCacheDisableAutomaticInvalidationMap.set(cacheKey, true);
+			persistentCacheDisableAutomaticInvalidationMap.set(cacheKey, true);
 		}
 
-		const pcc: PersistantCacheController<CachedValueT> = {
+		const pcc: PersistentCacheController<CachedValueT> = {
 			disableAutomaticInvalidation,
 			getCachedValue,
 			setCachedValue,
@@ -203,10 +206,10 @@ export function persistantDriveCMSCache<CachedValueT extends JsonValue, Function
 		// ==================================================
 		// Invalidation logic
 		if (invalidationFlag) {
-			persistantCacheInvalidationMap.set(cacheKey, false);
+			persistentCacheInvalidationMap.set(cacheKey, false);
 
 			if (!disableAutomaticInvalidationFlag) {
-				const removeItemError = await setCachedValue(REMOVE_PERSISTANT_CACHE_VALUE);
+				const removeItemError = await setCachedValue(REMOVE_PERSISTENT_CACHE_VALUE);
 				if (removeItemError) {
 					console.error(`Error while invalidating cache ${removeItemError}`);
 					// TODO: Figure out what to do....
@@ -224,7 +227,7 @@ export function persistantDriveCMSCache<CachedValueT extends JsonValue, Function
 		return thisComputationDebouncePromiseResolvers.promise;
 	}
 
-	return persistantCachedHelper;
+	return persistentCachedHelper;
 }
 
 export function memoizeDriveCMS<FunctionToMemoize extends AnyFunction>(fn: FunctionToMemoize): FunctionToMemoize {

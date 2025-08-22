@@ -19,7 +19,7 @@ import {
 	clearAllPermissions as internalClearAllPermissions,
 	copyPermissions as internalCopyPermissions,
 	createFolder as internalCreateFolder,
-	internalListFolderPersistantCached,
+	internalListFolderPersistentCached,
 	simpleFileUpload as internalSimpleFileUpload,
 	internalUNSAFEChangePermissionsToAnyoneWithLinkReader,
 	type PermissionRole,
@@ -69,7 +69,7 @@ export function UNSAFEChangePermissionsToAnyoneWithLinkReader(fileID: FileID): E
 }
 
 export function listFolder(folderID: FolderID): ErrorReturnPromise<Resource[]> {
-	return internalListFolderPersistantCached(googleAuth, folderID);
+	return internalListFolderPersistentCached(googleAuth, folderID);
 }
 
 export function downloadDocCorrectRevisionMarkdown(docID: DocID): ErrorReturnPromise<DocMd> {

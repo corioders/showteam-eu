@@ -9,7 +9,7 @@ import { type WorkBook as XlsxWorkBook, read as xlsxRead } from "xlsx";
 import { type ErrorReturnPromise, safe, safePromise } from "@/error";
 
 import { memoizeDriveCMS } from "./cache.js";
-import { downloadFile, type FileID, getRevisionsFromUndocumentedAPIPersistantCached, type Revision, type RevisionID } from "./drive.js";
+import { downloadFile, type FileID, getRevisionsFromUndocumentedAPIPersistentCached, type Revision, type RevisionID } from "./drive.js";
 import { MIMEType, type MIMETypeT, type Resource } from "./resource.js";
 
 export type SpreadsheetID = FileID & { readonly __spreadsheetTag: unique symbol };
@@ -61,7 +61,7 @@ export const downloadSpreadsheetRevision = memoizeDriveCMS(async function downlo
 });
 
 export const getSheetRevisions = memoizeDriveCMS(async function getSheetRevisions(googleAuth: GoogleAuth, spreadsheetId: SpreadsheetID): ErrorReturnPromise<Revision[]> {
-	const [revisions, err] = await getRevisionsFromUndocumentedAPIPersistantCached(
+	const [revisions, err] = await getRevisionsFromUndocumentedAPIPersistentCached(
 		googleAuth,
 		`https://docs.google.com/spreadsheets/d/${spreadsheetId}/revisions/tiles?id=${spreadsheetId}&start=1&revisionBatchSize=1500&showDetailedRevisions=false&loadType=0&includes_info_params=true&cros_files=false`,
 	);

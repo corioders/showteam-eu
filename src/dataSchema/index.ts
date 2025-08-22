@@ -29,7 +29,7 @@ export type TypeFunction<US, pFPR, FPR, RA, _TakesAggregateObject, _ProducesAggr
 
 type NoopFunction = FetchParserFunction<any, any> & { readonly __noopFunctionTag: unique symbol };
 
-export const noopTypeFunction = function noopTypeFunction() {
+export const typeNoopFunction = function noopTypeFunction() {
 	throw new Error(UnreachableErrorMessage("Noop type function called. The logic inside fetchAndParseInternal handles noop type function"));
 } as unknown as NoopFunction;
 
@@ -116,27 +116,27 @@ type GetFetchParserReturnPassedToChild<FPR, ProducesAggregateObject> = ProducesA
 type ModifyPFprToGetCorrectArrayOrNotArrayType<pFPR, TakesAggregateObject, _ProducesAggregateObject> = TakesAggregateObject extends true ? pFPR[] : pFPR;
 
 export type DataSchemaDefinitionNode<T, pFPR = unknown> = T extends {
-	type: FetchParserFunctionInternal<any, infer FPR, any, infer TakesAggregateObject, infer ProducesAggregateObject, any>;
+	as: FetchParserFunctionInternal<any, infer FPR, any, infer TakesAggregateObject, infer ProducesAggregateObject, any>;
 	optional?: boolean;
 	pipe?: infer PType;
 }
 	? T extends {
-			type: NoopFunction;
+			as: NoopFunction;
 			optional?: boolean;
 			pipe?: infer PType;
 		}
 		? {
-				type: NoopFunction;
+				as: NoopFunction;
 				optional?: boolean;
 				pipe?: PType extends Record<string, Record<string, any>> ? DataSchemaDefinition<PType, pFPR> : never;
 			}
 		: {
-				type: FetchParserFunctionInternal<ModifyPFprToGetCorrectArrayOrNotArrayType<pFPR, TakesAggregateObject, ProducesAggregateObject>, FPR, any, any, any, any>;
+				as: FetchParserFunctionInternal<ModifyPFprToGetCorrectArrayOrNotArrayType<pFPR, TakesAggregateObject, ProducesAggregateObject>, FPR, any, any, any, any>;
 				optional?: boolean;
 				pipe?: PType extends Record<string, Record<string, any>> ? DataSchemaDefinition<PType, GetFetchParserReturnPassedToChild<FPR, ProducesAggregateObject>> : never;
 			}
 	: {
-			type: FetchParserFunctionInternal<any, any, any, any, any, any>;
+			as: FetchParserFunctionInternal<any, any, any, any, any, any>;
 			optional?: boolean;
 			pipe?: unknown;
 		};
@@ -144,7 +144,7 @@ export type DataSchemaDefinitionNode<T, pFPR = unknown> = T extends {
 type ExtractRuntimeArgumentsFromFetchParserFunction<FPF> = FPF extends FetchParserFunctionInternal<any, any, infer RA, any, any, any> ? RA : never;
 type ExtractRuntimeArgumentsFromDSDn<DSDn> = DSDn extends DataSchemaDefinitionNode<any, any>
 	? // biome-ignore lint/complexity/noBannedTypes: Using {} is required for this type to work properly
-		(ExtractRuntimeArgumentsFromFetchParserFunction<DSDn["type"]> extends undefined ? {} : ExtractRuntimeArgumentsFromFetchParserFunction<DSDn["type"]>) &
+		(ExtractRuntimeArgumentsFromFetchParserFunction<DSDn["as"]> extends undefined ? {} : ExtractRuntimeArgumentsFromFetchParserFunction<DSDn["as"]>) &
 			// biome-ignore lint/complexity/noBannedTypes: Using {} is required for this type to work properly
 			(DSDn["pipe"] extends DataSchemaDefinition<any, any> ? ExtractRuntimeArgumentsFromDSD<DSDn["pipe"]> : {})
 	: never;
@@ -173,9 +173,9 @@ export type DataSchema<T extends DataSchemaDefinition<T, any>> = {
 	[K in keyof T as T[K] extends { optional: true } ? K : never]?: DataSchemaNode<T[K]>;
 };
 
-export type DataSchemaNode<T> = T extends { type: NoopFunction; pipe?: infer PType }
+export type DataSchemaNode<T> = T extends { as: NoopFunction; pipe?: infer PType }
 	? { next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchema<PType> : never) : never }
-	: T extends { type: FetchParserFunctionInternal<infer pFPR, infer FPR, any, any, infer ProducesAggregateObject, any>; pipe?: infer PType }
+	: T extends { as: FetchParserFunctionInternal<infer pFPR, infer FPR, any, any, infer ProducesAggregateObject, any>; pipe?: infer PType }
 		? ProducesAggregateObject extends false
 			? PrettifyHardcore<{
 					dataUsed?: PrettifyHardcore<pFPR>;
@@ -196,25 +196,18 @@ export type DataSchemaNode<T> = T extends { type: NoopFunction; pipe?: infer PTy
 
 type IsEmptyObject<T> = keyof T extends never ? true : false;
 
-export function fetchAndParse<T extends DataSchemaDefinition<T, any>>(dsd: T, runtimeArguments: ExtractRuntimeArgumentsFromDSD<T>): ErrorReturnPromise<DataSchema<T>>;
+export function fetchAndParse<T extends DataSchemaDefinition<T, any>>(dsd: T, runtimeArguments: ExtractRuntimeArgumentsFromDSD<T>): Promise<DataSchema<T>>;
 
 export function fetchAndParse<T extends DataSchemaDefinition<T, any>>(
 	dsd: T,
-): IsEmptyObject<ExtractRuntimeArgumentsFromDSD<T>> extends true ? ErrorReturnPromise<DataSchema<T>> : never;
+): IsEmptyObject<ExtractRuntimeArgumentsFromDSD<T>> extends true ? Promise<DataSchema<T>> : never;
 
-export async function fetchAndParse<T extends DataSchemaDefinition<T, any>>(
-	dsd: T,
-	runtimeArguments?: ExtractRuntimeArgumentsFromDSD<T>,
-): ErrorReturnPromise<DataSchema<T>> {
+export async function fetchAndParse<T extends DataSchemaDefinition<T, any>>(dsd: T, runtimeArguments?: ExtractRuntimeArgumentsFromDSD<T>): Promise<DataSchema<T>> {
 	const currentPipe = dsd;
 	const currentResult = {};
 	const runtimeArgs = (runtimeArguments ?? {}) as Record<string, unknown>;
-	const error = await fetchAndParseInternal(runtimeArgs, currentPipe, currentResult, [null, null], "");
-	if (error) {
-		return [null, error];
-	}
-
-	return [currentResult as DataSchema<T>, null];
+	await fetchAndParseInternal(runtimeArgs, currentPipe, currentResult, [null, null], "");
+	return currentResult as DataSchema<T>;
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
@@ -224,42 +217,38 @@ async function fetchAndParseInternal(
 	currentResult: Record<string, Record<string, unknown>>,
 	parentFetchParserErrorReturn: ErrorReturn<unknown>,
 	currentDebugPath: string,
-): Promise<Error | null> {
+): Promise<void> {
 	const pipeNames = Object.keys(currentPipe);
 	const [parentFetchParserReturn, parentFetchParserError] = parentFetchParserErrorReturn;
 
 	for (const pipeName of pipeNames) {
 		const entry = currentPipe[pipeName] as {
-			type: FetchParserFunctionInternal<any, any, any, any, any, any> & Partial<AggregateFunctionOptions>;
+			as: FetchParserFunctionInternal<any, any, any, any, any, any> & Partial<AggregateFunctionOptions>;
 			optional?: boolean;
 			pipe?: any;
 		};
 		const entryDebugPath = `${currentDebugPath} > ${pipeName}`;
 
-		const fetchParser = entry.type;
-
-		// When a resultEntry has been created it means that this entry has been processed.
-		// One entry can be processed once.
-		if (currentResult[pipeName]) {
-			return new Error(`Fetch parser tried processing two array entries from it's parent. Debug path: ${entryDebugPath}`);
-		}
+		const fetchParser = entry.as;
 
 		const resultEntry: Record<string, unknown> = {};
 		let resultEntryProcessed = true;
 
 		let fetchParserReturn: any = null;
 		let fetchParserError: any = null;
-		if (fetchParser === noopTypeFunction) {
+
+		if (parentFetchParserError) {
+			fetchParserReturn = null;
+			fetchParserError = parentFetchParserError;
+		} else if (currentResult[pipeName]) {
+			// When a resultEntry has been created it means that this entry has been processed.
+			// One entry can be processed once.
+			fetchParserError = new Error(`Fetch parser tried processing two array entries from it's parent. Debug path: ${entryDebugPath}`);
+		} else if (fetchParser === typeNoopFunction) {
 			fetchParserReturn = parentFetchParserReturn;
 			fetchParserError = parentFetchParserError;
 
 			// Noop function executed successfully.
-			resultEntryProcessed = true;
-		} else if (parentFetchParserError) {
-			fetchParserReturn = null;
-			fetchParserError = parentFetchParserError;
-
-			// We want to preserve this error.
 			resultEntryProcessed = true;
 		} else if (fetchParser.isAggregate) {
 			// ==================================================
@@ -283,7 +272,8 @@ async function fetchAndParseInternal(
 				}
 
 				if (isProcessed === true) {
-					throw new Error(`Fetch parser tried processing more than one array entry from it's parent. Debug path: ${entryDebugPath}`);
+					fetchParserError = new Error(`Fetch parser tried processing more than one array entry from it's parent. Debug path: ${entryDebugPath}`);
+					break;
 				}
 
 				isProcessed = true;
@@ -307,7 +297,7 @@ async function fetchAndParseInternal(
 			// ==================================================
 		}
 
-		if (!resultEntryProcessed) {
+		if (!resultEntryProcessed && !fetchParserError) {
 			if (entry.optional) {
 				continue;
 			}
@@ -321,7 +311,7 @@ async function fetchAndParseInternal(
 			continue;
 		}
 		if (Object.keys(nextPipe).length === 0) {
-			return new Error(`The pipe object cannot be empty ${entryDebugPath}`);
+			throw new Error(`Logical DSD error. This error is not caused by bad data. The pipe object cannot be empty ${entryDebugPath}`);
 		}
 
 		if (fetchParser.produceAggregateObjet) {
@@ -329,7 +319,9 @@ async function fetchAndParseInternal(
 			resultEntry["aggregate"] = aggregate;
 			if (fetchParserReturn) {
 				if (!Array.isArray(fetchParserReturn)) {
-					return new Error(`Fetch parser did not return an array but it is an aggregate function. ${entryDebugPath}`);
+					throw new Error(
+						`Logical DSD error. This error is not caused by bad data. Fetch parser did not return an array but it is an aggregate function. ${entryDebugPath}`,
+					);
 				}
 
 				for (let i = 0; i < fetchParserReturn.length; i++) {
@@ -353,8 +345,6 @@ async function fetchAndParseInternal(
 			);
 		}
 	}
-
-	return null;
 }
 
 type ExtractAllDataSchemaNodes<DSD> = DSD extends DataSchemaDefinition<any, any>
@@ -380,43 +370,39 @@ export function cutoffDataSchemaDefinition<
 	const T extends DataSchemaDefinition<T, any>,
 	const CutPoint extends ExtractAllDataSchemaNodes<T>,
 	const CutPoints extends readonly CutPoint[],
->(originalDSD: T, cutPointNodes: CutPoints): ErrorReturn<RemovePipeAtCutPoints<T, CutPoints[number]>> {
+>(originalDSD: T, cutPointNodes: CutPoints): RemovePipeAtCutPoints<T, CutPoints[number]> {
 	const clonedDSD = deepClone(originalDSD);
 
 	const cutPoints = cutPointNodes as unknown as Record<string, unknown>[];
 	for (const cutPoint of cutPoints) {
-		const err = modifyDSD(originalDSD, clonedDSD, cutPoint as Record<string, unknown>);
-		if (err) {
-			return [null, err];
-		}
+		modifyDSD(originalDSD, clonedDSD, cutPoint as Record<string, unknown>);
 	}
 
 	for (const cutPoint of cutPoints) {
 		if (!cutPoint[CUT_POINT_DONE_KEY]) {
-			return [
-				null,
-				new Error(`Error you provided more cut points than necessary. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`),
-			];
+			throw new Error(
+				`Logical error. Error you provided more cut points than necessary. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`,
+			);
 		}
 
 		delete cutPoint[CUT_POINT_DONE_KEY];
 	}
 
 	const shallowDSD = clonedDSD as unknown as RemovePipeAtCutPoints<T, CutPoints[number]>;
-	return [shallowDSD, null];
+	return shallowDSD;
 }
 
 function modifyDSD(
 	originalDSD: Record<string, Record<string, unknown>>,
 	clonedDSD: Record<string, Record<string, unknown>> | undefined,
 	cutPoint: Record<string, unknown>,
-): Error | null {
+): void {
 	if (cutPoint[CUT_POINT_DONE_KEY]) {
-		return null;
+		return;
 	}
 
 	if (!clonedDSD) {
-		return new Error(`Error you provided cut points where one is their parent. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`);
+		throw new Error(`Error you provided cut points where one is their parent. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`);
 	}
 
 	const pipeKeys = Object.keys(originalDSD);
@@ -426,7 +412,7 @@ function modifyDSD(
 
 		if (original === cutPoint) {
 			if (original[CUT_POINT_DONE_KEY]) {
-				return new Error(`Error you provided more cut points than necessary. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`);
+				throw new Error(`Error you provided more cut points than necessary. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`);
 			}
 
 			cutPoint[CUT_POINT_DONE_KEY] = true;
@@ -442,13 +428,8 @@ function modifyDSD(
 			continue;
 		}
 
-		const err = modifyDSD(original["pipe"] as Record<string, Record<string, unknown>>, cloned["pipe"] as Record<string, Record<string, unknown>>, cutPoint);
-		if (err) {
-			return err;
-		}
+		modifyDSD(original["pipe"] as Record<string, Record<string, unknown>>, cloned["pipe"] as Record<string, Record<string, unknown>>, cutPoint);
 	}
-
-	return null;
 }
 
 export type DataSchemaErrorBounded<T extends DataSchemaDefinition<T, any>> = {
@@ -457,9 +438,9 @@ export type DataSchemaErrorBounded<T extends DataSchemaDefinition<T, any>> = {
 	[K in keyof T as T[K] extends { optional: true } ? K : never]?: DataSchemaNodeErrorBounded<T[K]>;
 };
 
-export type DataSchemaNodeErrorBounded<T> = T extends { type: NoopFunction; pipe?: infer PType }
+export type DataSchemaNodeErrorBounded<T> = T extends { as: NoopFunction; pipe?: infer PType }
 	? { next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchemaErrorBounded<PType> : never) : never }
-	: T extends { type: FetchParserFunctionInternal<infer pFPR, infer FPR, any, any, infer ProducesAggregateObject, any>; pipe?: infer PType }
+	: T extends { as: FetchParserFunctionInternal<infer pFPR, infer FPR, any, any, infer ProducesAggregateObject, any>; pipe?: infer PType }
 		? ProducesAggregateObject extends false
 			? PrettifyHardcore<{
 					dataUsed?: PrettifyHardcore<pFPR>;
@@ -497,7 +478,8 @@ export function dataSchemaErrorBoundary<T extends DataSchemaDefinition<T, any>, 
 
 	if (errorsSet.size > 0) {
 		const errors = [...errorsSet.values()];
-		return [null, new AggregateError(errors, errors.map((e) => e.message).join("\n"))];
+		const errorMessage = `${errors.map((e) => e.message).join("\n")}`;
+		return [null, new AggregateError(errors, errorMessage)];
 	}
 
 	return [dataSchema as unknown as DataSchemaToDataSchemaErrorBounded<DS>, null];

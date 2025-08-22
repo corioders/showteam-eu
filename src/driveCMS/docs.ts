@@ -12,8 +12,8 @@ import { CSE, type ErrorReturn, type ErrorReturnPromise, safePromise, Unreachabl
 import type { StringMarkdown } from "@/format/markdown/index.js";
 import type { ImageURL } from "@/media/image/index.js";
 
-import { memoizeDriveCMS, type PersistantCacheController, persistantDriveCMSCache } from "./cache.js";
-import { downloadFile, type FileID, getRevisionsFromUndocumentedAPIPersistantCached, type Revision, type RevisionID } from "./drive.js";
+import { memoizeDriveCMS, type PersistentCacheController, persistentDriveCMSCache } from "./cache.js";
+import { downloadFile, type FileID, getRevisionsFromUndocumentedAPIPersistentCached, type Revision, type RevisionID } from "./drive.js";
 import { MIMEType, type MIMETypeT, type Resource } from "./resource.js";
 
 export type DocID = FileID & { readonly __docTag: unique symbol };
@@ -52,7 +52,7 @@ export const downloadDocMarkdownRevision = memoizeDriveCMS(async function downlo
 		return [null, validationError];
 	}
 
-	const [docAsMarkdown, errorDownload] = await baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistantCached(googleAuth, docID, revisionID);
+	const [docAsMarkdown, errorDownload] = await baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistentCached(googleAuth, docID, revisionID);
 	if (errorDownload !== null) {
 		return [null, errorDownload];
 	}
@@ -81,7 +81,7 @@ export const downloadDocRevision = memoizeDriveCMS(async function downloadDocRev
 		return [null, validationError];
 	}
 
-	const [docAsMarkdown, errorDownload] = await baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistantCached(googleAuth, docID, revisionID);
+	const [docAsMarkdown, errorDownload] = await baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistentCached(googleAuth, docID, revisionID);
 	if (errorDownload !== null) {
 		return [null, errorDownload];
 	}
@@ -103,23 +103,23 @@ export const downloadDocRevision = memoizeDriveCMS(async function downloadDocRev
 const MARKDOWN_IMAGE_REGEX = /!\[\]\[image\d+\]/;
 const IMAGE_BASE64_MARKDOWN_DEFINITION_AT_THE_END = "[image1]: <data:image/";
 
-export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistantCached: (
+export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistentCached: (
 	googleAuth: GoogleAuth,
 	docID: DocID,
 	revisionID: RevisionID,
-) => ErrorReturnPromise<StringMarkdown> = persistantDriveCMSCache(
+) => ErrorReturnPromise<StringMarkdown> = persistentDriveCMSCache(
 	"baseDownloadDocRevisionAndAdjustInDocMarkdownImages",
 	async function baseDownloadDocRevisionAndAdjustInDocMarkdownImages(
-		persistantCacheController: PersistantCacheController<StringMarkdown>,
+		persistentCacheController: PersistentCacheController<StringMarkdown>,
 		googleAuth: GoogleAuth,
 		docID: DocID,
 		revisionID: RevisionID,
 	): ErrorReturnPromise<StringMarkdown> {
 		// We don't need to check the last modification time, because this function depends on revisionID.
 		// Every revisionID represents different doc version.
-		persistantCacheController.disableAutomaticInvalidation();
+		persistentCacheController.disableAutomaticInvalidation();
 
-		const [cachedValue, cacheError] = await persistantCacheController.getCachedValue();
+		const [cachedValue, cacheError] = await persistentCacheController.getCachedValue();
 		if (cacheError) {
 			return [null, cacheError];
 		}
@@ -151,7 +151,7 @@ export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistantCached
 
 		// No photos found
 		if (photoIDAndImageURL.length === 0) {
-			const cacheSetError = await persistantCacheController.setCachedValue(docAsMarkdown);
+			const cacheSetError = await persistentCacheController.setCachedValue(docAsMarkdown);
 			if (cacheSetError) {
 				return [null, cacheSetError];
 			}
@@ -185,7 +185,7 @@ export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistantCached
 
 		// ==================================================
 		// Cache
-		const cacheSetError = await persistantCacheController.setCachedValue(docAsMarkdownAdjusted);
+		const cacheSetError = await persistentCacheController.setCachedValue(docAsMarkdownAdjusted);
 		if (cacheSetError) {
 			return [null, cacheSetError];
 		}
@@ -200,7 +200,7 @@ export const getDocRevisions = memoizeDriveCMS(async function getDocRevisions(go
 		return [null, validationError];
 	}
 
-	const [revisions, err] = await getRevisionsFromUndocumentedAPIPersistantCached(
+	const [revisions, err] = await getRevisionsFromUndocumentedAPIPersistentCached(
 		googleAuth,
 		`https://docs.google.com/document/d/${docID}/revisions/tiles?id=${docID}&start=1&revisionBatchSize=1500&showDetailedRevisions=false&loadType=0&includes_info_params=true&cros_files=false`,
 	);

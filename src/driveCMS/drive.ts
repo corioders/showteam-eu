@@ -10,7 +10,7 @@ import { StatusCodes } from "http-status-codes";
 import { CSE, type ErrorReturn, type ErrorReturnPromise, safe, safePromise, UnreachableErrorMessage } from "@/error";
 import type { AssertJsonValue } from "@/format/json/index.js";
 
-import { memoizeDriveCMS, type PersistantCacheController, persistantDriveCMSCache } from "./cache.js";
+import { memoizeDriveCMS, type PersistentCacheController, persistentDriveCMSCache } from "./cache.js";
 import { DEPLOY_REVISION_NAME } from "./const.js";
 import type { EmailAddress } from "./index.js";
 import { MIMEType, type MIMETypeT, type MIMETypeTE, type Resource, type ResourceID } from "./resource.js";
@@ -70,14 +70,14 @@ export const internalUNSAFEChangePermissionsToAnyoneWithLinkReader = memoizeDriv
 });
 
 export const ERR_UNABLE_TO_LIST_FILES = new Error("Unable to list files");
-export const internalListFolderPersistantCached: (googleAuth: GoogleAuth, folderID: FolderID) => ErrorReturnPromise<Resource[]> = persistantDriveCMSCache(
-	"internalListFolderPersistant",
+export const internalListFolderPersistentCached: (googleAuth: GoogleAuth, folderID: FolderID) => ErrorReturnPromise<Resource[]> = persistentDriveCMSCache(
+	"internalListFolderPersistent",
 	async function internalListFolder(
-		persistantCacheController: PersistantCacheController<AssertJsonValue<Resource[]>>,
+		persistentCacheController: PersistentCacheController<AssertJsonValue<Resource[]>>,
 		googleAuth: GoogleAuth,
 		folderID: FolderID,
 	): ErrorReturnPromise<Resource[]> {
-		const [cachedValue, cacheError] = await persistantCacheController.getCachedValue();
+		const [cachedValue, cacheError] = await persistentCacheController.getCachedValue();
 		if (cacheError) {
 			return [null, cacheError];
 		}
@@ -91,7 +91,7 @@ export const internalListFolderPersistantCached: (googleAuth: GoogleAuth, folder
 			return [null, listError];
 		}
 
-		const cacheSetError = await persistantCacheController.setCachedValue(listResult);
+		const cacheSetError = await persistentCacheController.setCachedValue(listResult);
 		if (cacheSetError) {
 			return [null, cacheSetError];
 		}
@@ -250,17 +250,17 @@ export interface Revision {
 }
 
 // TODO: Consider Download ALL revisions: Look at the url: "revisionBatchSize"
-export const getRevisionsFromUndocumentedAPIPersistantCached: (googleAuth: GoogleAuth, undocumentedRevisionURL: string) => ErrorReturnPromise<Revision[]> =
-	persistantDriveCMSCache(
+export const getRevisionsFromUndocumentedAPIPersistentCached: (googleAuth: GoogleAuth, undocumentedRevisionURL: string) => ErrorReturnPromise<Revision[]> =
+	persistentDriveCMSCache(
 		"getRevisionsFromUndocumentedAPI",
 		async function getRevisionsFromUndocumentedAPI(
-			persistantCacheController: PersistantCacheController<AssertJsonValue<Revision[]>>,
+			persistentCacheController: PersistentCacheController<AssertJsonValue<Revision[]>>,
 			googleAuth: GoogleAuth,
 			undocumentedRevisionURL: string,
 		): ErrorReturnPromise<Revision[]> {
 			// ==================================================
 			// Cache
-			const [cachedValue, cacheError] = await persistantCacheController.getCachedValue();
+			const [cachedValue, cacheError] = await persistentCacheController.getCachedValue();
 			if (cacheError) {
 				return [null, cacheError];
 			}
@@ -326,7 +326,7 @@ export const getRevisionsFromUndocumentedAPIPersistantCached: (googleAuth: Googl
 
 			// ==================================================
 			// Cache
-			const cacheSetError = await persistantCacheController.setCachedValue(sortedRevisions);
+			const cacheSetError = await persistentCacheController.setCachedValue(sortedRevisions);
 			if (cacheSetError) {
 				return [null, cacheSetError];
 			}
