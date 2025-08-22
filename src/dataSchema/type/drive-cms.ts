@@ -178,7 +178,10 @@ export const typeGoogleDriveFolder = defineTypeAggregateFunctionPromise(function
 	};
 });
 
-export interface GoogleDriveImageUserSpec<Metadata extends MetadataBase> extends GoogleDriveResourcePrefixUserSpec<Metadata> {}
+export interface GoogleDriveImageUserSpec<Metadata extends MetadataBase> extends GoogleDriveResourcePrefixUserSpec<Metadata> {
+	imageName?: string;
+}
+
 export interface GoogleDriveImage<Metadata extends MetadataBase> {
 	downloadURL: ImageURL;
 	resourceWithMetadata: ResourceWithMetadata<Metadata>;
@@ -228,6 +231,12 @@ export const typeGoogleDriveSingleImagePrivateURL = defineTypeFunction(function 
 		}
 		if (prefixError) {
 			return [null, prefixError];
+		}
+
+		if (us.imageName) {
+			if (newResourceWithMetadata.resource.name !== us.imageName) {
+				return [false, null];
+			}
 		}
 
 		const image: GoogleDriveImage<Metadata> = {

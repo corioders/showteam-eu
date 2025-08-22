@@ -123,6 +123,10 @@ export function invalidate() {
 	for (const cacheKey of persistentCacheDebounceFunctionCalls.keys()) {
 		persistentCacheDebounceFunctionCalls.delete(cacheKey);
 	}
+
+	for (const cacheKey of persistentCacheDebounceFunctionCalls.keys()) {
+		persistentCacheDebounceFunctionCalls.delete(cacheKey);
+	}
 }
 
 function getInvalidationFlag(cacheKey: CacheKey): boolean {
