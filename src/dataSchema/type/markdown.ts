@@ -3,7 +3,7 @@ import { MarkdownFrontmatterParser, type ParsedMarkdownFrontmatter } from "@/for
 import type { StringMarkdown } from "@/format/markdown/index.js";
 import { MarkdownKeyValueParser, type ParsedMarkdownValue } from "@/format/markdown/key-value.js";
 
-import { defineTypeFunction } from "../index.js";
+import { defineTypeAggregateFunction, defineTypeFunction } from "../index.js";
 import type { GoogleDriveInternationalizedDocMd } from "./drive-cms.js";
 
 interface MarkdownKeyValueParserUserSpec {
@@ -54,6 +54,31 @@ export const typeMarkdownKeyValueParser = defineTypeFunction<MarkdownKeyValuePar
 			}
 
 			return typeMarkdownKeyValueRootParser(us)(parsedMarkdownValue.valueMarkdown);
+		};
+	},
+);
+
+export type ParsedMarkdownValueArrayParent = ParsedMarkdownValue[] & { parent: ParsedMarkdownValue };
+
+export const typeMarkdownKeyValueAggregateParser = defineTypeAggregateFunction<MarkdownKeyValueParserUserSpec, ParsedMarkdownValue, ParsedMarkdownValueArrayParent>(
+	function typeMarkdownKeyValueParser(us) {
+		return (parsedMarkdownValues) => {
+			const doubleParsedMarkdownValues: ParsedMarkdownValueArrayParent[] = [];
+			for (const parsedMarkdownValue of parsedMarkdownValues) {
+				const [doubleParsedMarkdownValue, doubleParsedError] = typeMarkdownKeyValueRootParser(us)(parsedMarkdownValue.valueMarkdown);
+				if (doubleParsedError) {
+					return [null, doubleParsedError];
+				}
+				if (!doubleParsedMarkdownValue) {
+					continue;
+				}
+
+				const doubleParsedMarkdownValueArrayParent = doubleParsedMarkdownValue as ParsedMarkdownValueArrayParent;
+				doubleParsedMarkdownValueArrayParent.parent = parsedMarkdownValue;
+				doubleParsedMarkdownValues.push(doubleParsedMarkdownValueArrayParent);
+			}
+
+			return [doubleParsedMarkdownValues, null];
 		};
 	},
 );

@@ -371,6 +371,7 @@ export function cutoffDataSchemaDefinition<
 	const CutPoint extends ExtractAllDataSchemaNodes<T>,
 	const CutPoints extends readonly CutPoint[],
 >(originalDSD: T, cutPointNodes: CutPoints): RemovePipeAtCutPoints<T, CutPoints[number]> {
+	// TODO: Figure out if this deep clone is deep enough... We had problems with errorBoundary
 	const clonedDSD = deepClone(originalDSD);
 
 	const cutPoints = cutPointNodes as unknown as Record<string, unknown>[];
@@ -447,7 +448,7 @@ export type DataSchemaNodeErrorBounded<T> = T extends { as: NoopFunction; pipe?:
 					result: FPR;
 					next: PType extends Record<string, Record<string, any>> ? (PType extends DataSchemaDefinition<PType, any> ? DataSchemaErrorBounded<PType> : never) : never;
 				}>
-			: {
+			: PrettifyHardcore<{
 					dataUsed?: PrettifyHardcore<pFPR>;
 					result: FPR;
 					aggregate: T extends { pipe: PType }
@@ -460,7 +461,7 @@ export type DataSchemaNodeErrorBounded<T> = T extends { as: NoopFunction; pipe?:
 									: never;
 							}>[]
 						: never;
-				}
+				}>
 		: never;
 
 export type DataSchemaToDataSchemaErrorBounded<DS> = DS extends DataSchema<infer DSD extends Record<string, any>> ? DataSchemaErrorBounded<DSD> : never;
@@ -471,7 +472,7 @@ export function dataSchemaErrorBoundary<T extends DataSchemaDefinition<T, any>, 
 ): ErrorReturn<DataSchemaToDataSchemaErrorBounded<DS>, AggregateError> {
 	const errorsSet: Set<Error> = new Set();
 
-	const dataSchema = deepClone(originalDataSchema);
+	const dataSchema = structuredClone(originalDataSchema);
 	for (const dataSchemaNode of Object.values(dataSchema)) {
 		dataSchemaErrorBoundaryRecursive(dataSchemaNode, errorsSet);
 	}

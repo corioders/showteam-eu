@@ -24,6 +24,12 @@ import {
 } from "../index.js";
 import { LanguageResourcePrefixParser, type ResourcePrefixParser } from "./drive-cms-prefix.js";
 
+interface DebugConfig {
+	__debug?: {
+		logResult?: boolean;
+	};
+}
+
 // TODO: Make resource with metadata generic over the metadata.
 export type ResourceWithMetadata<Metadata extends MetadataBase> = {
 	resource: Resource;
@@ -155,6 +161,7 @@ export const typeGoogleDriveFolder = defineTypeAggregateFunctionPromise(function
 >(
 	us: GoogleDriveFolderUserSpec<Metadata>,
 ): FetchParserFunctionPromise<ResourceWithMetadata<ParentMetadata>[], ResourceWithMetadataArrayParent<Metadata, ParentMetadata>[]> {
+	const usDebug = us as DebugConfig;
 	return async (resourcesWithMetadata) => {
 		const childrenWithMetadataList: ResourceWithMetadataArrayParent<Metadata, ParentMetadata>[] = [];
 
@@ -167,6 +174,10 @@ export const typeGoogleDriveFolder = defineTypeAggregateFunctionPromise(function
 			const [children, listError] = await listFolder(resource.id);
 			if (listError) {
 				return [null, listError];
+			}
+
+			if (usDebug?.__debug?.logResult) {
+				console.log(children);
 			}
 
 			const childrenWithMetadata = parseResourceMetadata(children, us.childPrefix) as ResourceWithMetadataArrayParent<Metadata, ParentMetadata>;
@@ -235,6 +246,7 @@ export const typeGoogleDriveSingleImagePrivateURL = defineTypeFunction(function 
 
 		if (us.imageName) {
 			if (newResourceWithMetadata.resource.name !== us.imageName) {
+				console.log(newResourceWithMetadata.resource.name, us.imageName);
 				return [false, null];
 			}
 		}

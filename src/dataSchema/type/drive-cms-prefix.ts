@@ -71,13 +71,29 @@ export function MergeResourcePrefixParser<ResourcePrefixParsers extends Resource
 	};
 }
 
-export function StringResourcePrefixParserFactory(prefix: string): ResourcePrefixParser<EmptyObject> {
+export interface StringResourcePrefixParserFactoryOptions {
+	caseSensitive?: boolean;
+}
+export function StringResourcePrefixParserFactory(prefix: string, options?: StringResourcePrefixParserFactoryOptions): ResourcePrefixParser<EmptyObject> {
+	const caseInsensitive = !options?.caseSensitive;
+
 	return {
 		parser: (resourceName: string) => {
-			if (resourceName.startsWith(prefix)) {
+			let resourceNameForProcessing = resourceName;
+			let prefixForProcessing = prefix;
+
+			if (caseInsensitive) {
+				resourceNameForProcessing = resourceName.toUpperCase();
+				prefixForProcessing = prefix.toUpperCase();
+			}
+
+			if (resourceNameForProcessing.startsWith(prefixForProcessing)) {
+				// Remove the public prefix while keeping the original case.
+				const resourceNameWithoutPrefix = resourceName.slice(prefixForProcessing.length, -1);
+
 				return {
 					metadata: {},
-					newResourceName: resourceName.replace(prefix, "").trim(),
+					newResourceName: resourceNameWithoutPrefix.trim(),
 				};
 			}
 
