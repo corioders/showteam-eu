@@ -13,3 +13,7 @@ export function isASCII(x: string): boolean {
 
 	return true;
 }
+
+export function capitalize(text: string) {
+	return text.charAt(0).toUpperCase() + text.slice(1);
+}
