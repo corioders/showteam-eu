@@ -22,11 +22,11 @@ export interface Spreadsheet {
 
 export interface SpreadsheetResource extends Resource {
 	id: SpreadsheetID;
-	mimeType: MIMETypeT["excel"];
+	mimeType: MIMETypeT["spreadsheet"];
 }
 
 export function isSpreadsheet(resource: Resource): resource is SpreadsheetResource {
-	return resource.mimeType === MIMEType.excel;
+	return resource.mimeType === MIMEType.spreadsheet;
 }
 
 // TODO: CACHE

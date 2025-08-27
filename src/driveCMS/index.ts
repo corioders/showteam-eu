@@ -140,6 +140,14 @@ export async function downloadDocLatestDeployRevision(docID: DocID): ErrorReturn
 	return downloadDocRevision(googleAuth, docID, latestDeployRevision.revisionID);
 }
 
+export function downloadSpreadsheetCorrectRevision(spreadsheetID: SpreadsheetID): ErrorReturnPromise<Spreadsheet> {
+	if (IS_PREVIEW) {
+		return downloadSpreadsheetLatestRevision(spreadsheetID);
+	}
+
+	return downloadSpreadsheetLatestDeployRevision(spreadsheetID);
+}
+
 export async function downloadSpreadsheetLatestRevision(spreadsheetID: SpreadsheetID): ErrorReturnPromise<Spreadsheet> {
 	const [revisions, errorGetRevisions] = await getSheetRevisions(googleAuth, spreadsheetID);
 	if (errorGetRevisions !== null) {

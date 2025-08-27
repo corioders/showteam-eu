@@ -7,8 +7,9 @@ import type { MetadataBase, ObjectWithMetadata } from "@/dataStructure/metadata.
 import { type DocMd, type DocResource, isDoc } from "@/driveCMS/docs.js";
 import { type FolderID, type FolderResource, isFolder } from "@/driveCMS/drive.js";
 import { getImageDownloadURL, getPublicImageDownloadURL, isImage } from "@/driveCMS/image.js";
-import { downloadDocCorrectRevisionMarkdown, listFolder } from "@/driveCMS/index.js";
+import { downloadDocCorrectRevisionMarkdown, downloadSpreadsheetCorrectRevision, listFolder } from "@/driveCMS/index.js";
 import type { Resource } from "@/driveCMS/resource.js";
+import { isSpreadsheet, type Spreadsheet } from "@/driveCMS/spreadsheet.js";
 import { type MarkdownDoc, parseMarkdownDocWithMetadata } from "@/format/markdown/index.js";
 import type { CountryISO2Code } from "@/internationalization/index.js";
 import type { ImageURL } from "@/media/image/index.js";
@@ -460,3 +461,39 @@ export const typeGoogleDriveSingleDocWithMetadata = defineTypeFunction<GoogleDri
 		};
 	},
 );
+
+export interface GoogleDriveSingleSpreadsheetUserSpec<Metadata extends MetadataBase> extends GoogleDriveResourcePrefixUserSpec<Metadata> {
+	spreadsheetName?: string;
+}
+
+export const typeGoogleDriveSingleSpreadsheet = defineTypeFunctionPromise(function typeGoogleDriveSingleSpreadsheet<Metadata extends MetadataBase>(
+	us: GoogleDriveSingleSpreadsheetUserSpec<Metadata>,
+): FetchParserFunctionPromise<ResourceWithMetadata<Metadata>, Spreadsheet> {
+	return async (resourceWithMetadata) => {
+		const resource = resourceWithMetadata.resource;
+		if (!isSpreadsheet(resource)) {
+			return [false, null];
+		}
+
+		const [userPrefixedResourceWithMetadata, userPrefixError] = typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
+		if (userPrefixedResourceWithMetadata === false) {
+			return [false, null];
+		}
+		if (userPrefixError) {
+			return [null, userPrefixError];
+		}
+
+		if (us.spreadsheetName) {
+			if (userPrefixedResourceWithMetadata.resource.name !== us.spreadsheetName) {
+				return [false, null];
+			}
+		}
+
+		const [docMarkdown, downloadError] = await downloadSpreadsheetCorrectRevision(resource.id);
+		if (downloadError) {
+			return [null, downloadError];
+		}
+
+		return [docMarkdown, null];
+	};
+});

@@ -25,6 +25,7 @@ export const MIMEType = {
 	docs: "application/vnd.google-apps.document",
 	form: "application/vnd.google-apps.form",
 	shortcut: "application/vnd.google-apps.shortcut",
+	spreadsheet: "application/vnd.google-apps.spreadsheet",
 
 	excel: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 	docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -68,6 +69,7 @@ type MIMETypeToResourceTypeMapping = {
 	[MIMEType.docs]: DocResource;
 	[MIMEType.form]: FormResource;
 	[MIMEType.shortcut]: FileResource;
+	[MIMEType.spreadsheet]: SpreadsheetResource;
 
 	[MIMEType.excel]: SpreadsheetResource;
 	[MIMEType.docx]: FileResource;

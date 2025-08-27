@@ -73,6 +73,7 @@ export function MergeResourcePrefixParser<ResourcePrefixParsers extends Resource
 
 export interface StringResourcePrefixParserFactoryOptions {
 	caseSensitive?: boolean;
+	keepNonSpacedTextThatIsAttachedToPrefix?: boolean;
 }
 export function StringResourcePrefixParserFactory(prefix: string, options?: StringResourcePrefixParserFactoryOptions): ResourcePrefixParser<EmptyObject> {
 	const caseInsensitive = !options?.caseSensitive;
@@ -88,8 +89,15 @@ export function StringResourcePrefixParserFactory(prefix: string, options?: Stri
 			}
 
 			if (resourceNameForProcessing.startsWith(prefixForProcessing)) {
+				let resourceNameWithoutPrefix: string;
+
 				// Remove the public prefix while keeping the original case.
-				const resourceNameWithoutPrefix = resourceName.slice(prefixForProcessing.length, -1);
+				if (!options?.keepNonSpacedTextThatIsAttachedToPrefix) {
+					const spaceIndex = resourceName.indexOf(" ");
+					resourceNameWithoutPrefix = resourceName.slice(spaceIndex);
+				} else {
+					resourceNameWithoutPrefix = resourceName.slice(prefixForProcessing.length);
+				}
 
 				return {
 					metadata: {},
