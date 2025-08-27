@@ -21,11 +21,10 @@ export function CstdError(props: Props): ReactNode {
 	}
 
 	return (
-		<div className="max-w-full">
-			<h1 className="font-extrabold">ERROR:</h1>
-			{/* TODO: Artala fix this overflow */}
-			<pre className="max-w-screen overflow-scroll whitespace-pre-wrap break-words">{String(props.error)}</pre>
-		</div>
+		<pre className="w-full max-w-lg whitespace-pre-wrap p-6">
+			<h1 className="mb-2 font-black text-3xl">ERROR:</h1>
+			<p className="text-wrap">{String(props.error).replaceAll("\n", "\n\n")}</p>
+		</pre>
 	);
 }
 

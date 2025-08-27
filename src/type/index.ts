@@ -1,3 +1,5 @@
-export interface Children<T> {
-	children: T;
+import type { ReactNode } from "react";
+
+export interface Children {
+	children: ReactNode;
 }
