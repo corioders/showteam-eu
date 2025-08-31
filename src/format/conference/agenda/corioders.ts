@@ -272,7 +272,7 @@ function parseActivityDSDTF(dsdtf: ParsedDSDTF, startTime: DateTime, endTime: Da
 			throw new Error(`Activity of type: ${Type} requires the field 'Speaker'`);
 		}
 
-		const Speaker = parseSpeaker(SpeakerName);
+		const Speaker = parseSpeaker(SpeakerName, "Speaker");
 
 		return {
 			end: endTime,
@@ -296,7 +296,7 @@ function parseActivityDSDTF(dsdtf: ParsedDSDTF, startTime: DateTime, endTime: Da
 
 		const Speakers: Speaker[] = [];
 		for (const SpeakerName of SpeakerNames) {
-			Speakers.push(parseSpeaker(SpeakerName));
+			Speakers.push(parseSpeaker(SpeakerName, "Speaker"));
 		}
 
 		const ModeratorName = dsdtf.mapping.get("Moderator");
@@ -304,7 +304,7 @@ function parseActivityDSDTF(dsdtf: ParsedDSDTF, startTime: DateTime, endTime: Da
 			throw new Error(`Activity of type: ${Type} requires the field 'Moderator'`);
 		}
 
-		const Moderator = parseSpeaker(ModeratorName);
+		const Moderator = parseSpeaker(ModeratorName, "Moderator");
 
 		return {
 			end: endTime,
@@ -321,11 +321,11 @@ function parseActivityDSDTF(dsdtf: ParsedDSDTF, startTime: DateTime, endTime: Da
 	throw new Error("Invalid activity type");
 }
 
-export function parseSpeaker(speakerName: string): Speaker {
+export function parseSpeaker(speakerName: string, speakerRole: Speaker["role"]): Speaker {
 	// TODO
 	return {
 		name: speakerName,
 		photoURL: "/images/summit/agenda.svg",
-		role: "TODO",
+		role: speakerRole,
 	};
 }

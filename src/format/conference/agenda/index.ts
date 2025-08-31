@@ -23,7 +23,7 @@ export interface Speaker {
 	name: string;
 
 	photoURL: string;
-	role?: string;
+	role: "Speaker" | "Moderator" | (string & {});
 }
 
 export type Activity = BreakActivity | OtherActivity | KeynoteActivity | PanelActivity;
