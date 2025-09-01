@@ -23,6 +23,7 @@ import {
 	type FetchParserFunction,
 	type FetchParserFunctionPromise,
 } from "../index.js";
+import type { OrderMetadata } from "../metadata/index.js";
 import { LanguageResourcePrefixParser, type ResourcePrefixParser } from "./drive-cms-prefix.js";
 
 interface DebugConfig {
@@ -151,6 +152,7 @@ export const typeGoogleDriveSingleFolder = defineTypeFunctionPromise(function ty
 
 export interface GoogleDriveFolderUserSpec<Metadata extends MetadataBase> {
 	childPrefix: ResourcePrefixParser<Metadata>;
+	prefix?: ResourcePrefixParser<any>;
 }
 
 export type ResourceWithMetadataArrayParent<Metadata extends MetadataBase, ParentMetadata extends MetadataBase> = ResourceWithMetadata<Metadata>[] & {
@@ -163,14 +165,42 @@ export const typeGoogleDriveFolder = defineTypeAggregateFunctionPromise(function
 	us: GoogleDriveFolderUserSpec<Metadata>,
 ): FetchParserFunctionPromise<ResourceWithMetadata<ParentMetadata>[], ResourceWithMetadataArrayParent<Metadata, ParentMetadata>[]> {
 	const usDebug = us as DebugConfig;
+	// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO Remove for DSDv2
 	return async (resourcesWithMetadata) => {
-		const childrenWithMetadataList: ResourceWithMetadataArrayParent<Metadata, ParentMetadata>[] = [];
+		let childrenWithMetadataList: ResourceWithMetadataArrayParent<Metadata, ParentMetadata>[] = [];
 
+		// ==================================================
+		// TODO Remove for DSDv2
+		let sort = true;
+		// ==================================================
 		for (const resourceWithMetadata of resourcesWithMetadata) {
 			const resource = resourceWithMetadata.resource;
 			if (!isFolder(resource)) {
 				continue;
 			}
+
+			let folderResourceWithMetadata = resourceWithMetadata;
+			if (us.prefix) {
+				const [newResourceWithMetadata, prefixError] = typeGoogleDriveSingleResourcePrefix({ prefix: us.prefix })(resourceWithMetadata);
+				if (newResourceWithMetadata === false) {
+					return [false, null];
+				}
+				if (prefixError) {
+					return [null, prefixError];
+				}
+
+				folderResourceWithMetadata = newResourceWithMetadata;
+			}
+
+			// ==================================================
+			// TODO Remove for DSDv2
+			if (folderResourceWithMetadata) {
+				const orderingNumber = (folderResourceWithMetadata?.metadata as unknown as OrderMetadata)?.orderNumberDS;
+				if (orderingNumber === undefined) {
+					sort = false;
+				}
+			}
+			// ==================================================
 
 			const [children, listError] = await listFolder(resource.id);
 			if (listError) {
@@ -182,9 +212,22 @@ export const typeGoogleDriveFolder = defineTypeAggregateFunctionPromise(function
 			}
 
 			const childrenWithMetadata = parseResourceMetadata(children, us.childPrefix) as ResourceWithMetadataArrayParent<Metadata, ParentMetadata>;
-			childrenWithMetadata.parent = resourceWithMetadata;
+			childrenWithMetadata.parent = folderResourceWithMetadata;
+
 			childrenWithMetadataList.push(childrenWithMetadata);
 		}
+
+		// ==================================================
+		// TODO Remove for DSDv2
+		if (sort) {
+			childrenWithMetadataList = childrenWithMetadataList.sort((a, b) => {
+				const aOrder = (a.parent.metadata as unknown as OrderMetadata).orderNumberDS;
+				const bOrder = (b.parent.metadata as unknown as OrderMetadata).orderNumberDS;
+
+				return aOrder - bOrder;
+			});
+		}
+		// ==================================================
 
 		return [childrenWithMetadataList, null];
 	};

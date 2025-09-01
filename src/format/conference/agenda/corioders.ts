@@ -48,8 +48,9 @@ const TIME_TIME_DELTA_MINUTES = 5;
 
 const FIRST_STAGE_TITLE_ROW_CELL: CellAddress = { c: 1, r: 0 };
 
+// TODO: refactor....
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
-export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPreview: boolean): Promise<Agenda> {
+export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPreview: boolean, languageIndex: number = 0): Promise<Agenda> {
 	const agenda: Agenda = {
 		days: [],
 	};
@@ -221,7 +222,7 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 				throw err;
 			}
 
-			const activity = parseActivityDSDTF(activityDSDTF, activityStartTime, activityEndTime);
+			const activity = parseActivityDSDTF(activityDSDTF, activityStartTime, activityEndTime, languageIndex);
 
 			(agendaDay as AgendaDay).activities.push(activity);
 		}
@@ -230,7 +231,7 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 	return agenda;
 }
 
-function parseActivityDSDTF(dsdtf: ParsedDSDTF, startTime: DateTime, endTime: DateTime): Activity {
+function parseActivityDSDTF(dsdtf: ParsedDSDTF, startTime: DateTime, endTime: DateTime, languageIndex: number): Activity {
 	const Type = dsdtf.mapping.get("Type");
 	if (Type === undefined) {
 		throw new Error("Activity type must be defined");
@@ -250,10 +251,12 @@ function parseActivityDSDTF(dsdtf: ParsedDSDTF, startTime: DateTime, endTime: Da
 		};
 	}
 
-	const Name = dsdtf.mapping.get("Name");
-	if (Name === undefined) {
+	const nameFromMapping = dsdtf.mapping.get("Name");
+	if (nameFromMapping === undefined) {
 		throw new Error(`Activity of type: ${Type} requires the field 'Name'`);
 	}
+
+	const Name = (nameFromMapping.split("//").at(languageIndex) ?? nameFromMapping).trim();
 
 	if (Type === "Other") {
 		return {
