@@ -36,22 +36,22 @@ export class CaptureStackError extends Error {
 }
 export const CSE = CaptureStackError;
 
-export function ErrorIs(error: Error, target: Error): boolean {
+export function errorIs(error: Error, target: Error): boolean {
 	if (error == null || target == null) {
 		return error === target;
 	}
 
-	return errorIs(error, target);
+	return errorIsInternal(error, target);
 }
 
-function errorIs(error: Error, target: Error): boolean {
+function errorIsInternal(error: Error, target: Error): boolean {
 	if (error === target) {
 		return true;
 	}
 
 	if (error instanceof AggregateError) {
 		for (const err of error.errors) {
-			if (err instanceof Error && errorIs(err, target)) {
+			if (err instanceof Error && errorIsInternal(err, target)) {
 				return true;
 			}
 		}
@@ -60,12 +60,21 @@ function errorIs(error: Error, target: Error): boolean {
 	}
 
 	if ("cause" in error && error.cause instanceof Error) {
-		return errorIs(error.cause, target);
+		return errorIsInternal(error.cause, target);
 	}
 
 	return false;
 }
 
-export function UnreachableErrorMessage(userMessage: string): string {
+export function unreachableErrorMessage(userMessage: string): string {
 	return `'!!UNREACHABLE!! CONTACT CODE OWNER !!UNREACHABLE!! ${userMessage}`;
+}
+
+export function errorArrayToAggregateError(errors: Error[], additionalMessage?: string): AggregateError {
+	let errorMessage = `${errors.map((e) => e.message).join("\n")}`;
+	if (additionalMessage) {
+		errorMessage = `${additionalMessage}\n${errorMessage}`;
+	}
+
+	return new AggregateError(errors, errorMessage);
 }

@@ -4,7 +4,7 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
 import { newTypedSymbol } from "@/dataStructure/index.js";
-import { type ErrorReturn, UnreachableErrorMessage } from "@/error/index.js";
+import { type ErrorReturn, unreachableErrorMessage } from "@/error/index.js";
 import { isASCII } from "@/string/index.js";
 
 import type { Child, ChildMetadata } from "./index.js";
@@ -117,7 +117,7 @@ export function getOrderedChildren(children: ChildWithName[]): ErrorReturn<Child
 		const bOrder = b.child.metadata.getEntry(ORDER_METADATA_KEY);
 
 		if (aOrder === null || bOrder === null) {
-			throw new Error(UnreachableErrorMessage("Order is undefined"));
+			throw new Error(unreachableErrorMessage("Order is undefined"));
 		}
 
 		return aOrder - bOrder;

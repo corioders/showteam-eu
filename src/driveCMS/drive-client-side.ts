@@ -5,6 +5,8 @@
 
 import type { FileID } from "./drive.js";
 
-export function fileIDToGoogleDriveLink(fileID: FileID): string {
-	return `https://drive.google.com/file/d/${fileID}/view`;
+export type GoogleDriveFileURL = string & { readonly __uploadedFileGoogleDriveURLTag: unique symbol };
+
+export function fileIDToGoogleDriveLink(fileID: FileID): GoogleDriveFileURL {
+	return `https://drive.google.com/file/d/${fileID}/view` as GoogleDriveFileURL;
 }

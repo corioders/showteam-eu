@@ -8,7 +8,7 @@ import { parse } from "@textlint/markdown-to-ast";
 import { createAPIRequest, type GoogleAuth } from "googleapis-common";
 import { StatusCodes } from "http-status-codes";
 
-import { CSE, type ErrorReturn, type ErrorReturnPromise, safePromise, UnreachableErrorMessage } from "@/error";
+import { CSE, type ErrorReturn, type ErrorReturnPromise, safePromise, unreachableErrorMessage } from "@/error";
 import type { StringMarkdown } from "@/format/markdown/index.js";
 import type { ImageURL } from "@/media/image/index.js";
 
@@ -178,7 +178,7 @@ export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistentCached
 		// Remove base64 encoded definitions form the markdown
 		const imageBase64Definitions = docAsMarkdownAdjusted.indexOf(IMAGE_BASE64_MARKDOWN_DEFINITION_AT_THE_END);
 		if (imageBase64Definitions === -1) {
-			return [null, new Error(UnreachableErrorMessage("Unable to find image base64 definitions in the markdown"))];
+			return [null, new Error(unreachableErrorMessage("Unable to find image base64 definitions in the markdown"))];
 		}
 
 		docAsMarkdownAdjusted = docAsMarkdownAdjusted.slice(0, imageBase64Definitions - 1) as StringMarkdown;
@@ -228,12 +228,12 @@ function sortPhotoIDAndImageURLArrayBasedOnDocOrder(
 
 	const searchStartIndex = source.indexOf(DOCS_MODEL_CHUNK_START_STRING);
 	if (searchStartIndex === -1) {
-		return [null, new Error(UnreachableErrorMessage("Google changed something: Unable to find searchStartIndex"))];
+		return [null, new Error(unreachableErrorMessage("Google changed something: Unable to find searchStartIndex"))];
 	}
 
 	const searchEndIndex = source.indexOf(DOCS_MODEL_CHUNK_END_STRING);
 	if (searchEndIndex === -1) {
-		return [null, new Error(UnreachableErrorMessage("Google changed something: Unable to find searchEndIndex"))];
+		return [null, new Error(unreachableErrorMessage("Google changed something: Unable to find searchEndIndex"))];
 	}
 
 	const docsModelChunkString = source.slice(searchStartIndex + DOCS_MODEL_CHUNK_START_STRING.length, searchEndIndex);
@@ -263,13 +263,13 @@ function sortPhotoIDAndImageURLArrayBasedOnDocOrder(
 		.map((photoIDAndImageURL) => {
 			const kixID = photoIDtoKixID.get(photoIDAndImageURL.id);
 			if (!kixID) {
-				mapError = new Error(UnreachableErrorMessage(`Google changed something: Unable to find photo ID ${photoIDAndImageURL.id} in kixIDtoSPI`));
+				mapError = new Error(unreachableErrorMessage(`Google changed something: Unable to find photo ID ${photoIDAndImageURL.id} in kixIDtoSPI`));
 				return undefined;
 			}
 
 			const spi = kixIDtoSPI.get(kixID);
 			if (!spi) {
-				mapError = new Error(UnreachableErrorMessage(`Google changed something: Unable to find kixID ${kixID} in kixIDtoSPI`));
+				mapError = new Error(unreachableErrorMessage(`Google changed something: Unable to find kixID ${kixID} in kixIDtoSPI`));
 				return undefined;
 			}
 			const sortNumber = spi;
@@ -304,7 +304,7 @@ function getGoogleInternalPhotoIDtoImageURLArray(source: GoogleInternalWebInterf
 
 		const escapedURL = source.slice(urlStartIndex, endQuoteIndex);
 		if (!escapedURL) {
-			return [null, new Error(UnreachableErrorMessage("Google changed something: We matched urlStartIndex and endQuoteIndex, but escapedURL is empty..."))];
+			return [null, new Error(unreachableErrorMessage("Google changed something: We matched urlStartIndex and endQuoteIndex, but escapedURL is empty..."))];
 		}
 
 		// We are replacing the escaped equal sign, with a real one. I don't think pulling a whole lib to do just this is necessary.
@@ -316,7 +316,7 @@ function getGoogleInternalPhotoIDtoImageURLArray(source: GoogleInternalWebInterf
 		// We need to shift one to the right because we are off one.
 		const photoID = source.slice(photoIDStartIndex + 1, photoIDEndIndex + 1) as GoogleInternalPhotoID;
 		if (!photoID) {
-			return [null, new Error(UnreachableErrorMessage("Google changed something: We matched photoIDStartIndex and photoIDEndIndex, but photoID is empty..."))];
+			return [null, new Error(unreachableErrorMessage("Google changed something: We matched photoIDStartIndex and photoIDEndIndex, but photoID is empty..."))];
 		}
 
 		photoIDAndImageURL.push({

@@ -5,7 +5,7 @@
 
 /** biome-ignore-all lint/style/useNamingConvention: We want to use our names for type parameters */
 
-import { type ErrorReturn, type ErrorReturnPromise, type TSError, UnreachableErrorMessage } from "@/error/index.js";
+import { type ErrorReturn, type ErrorReturnPromise, type TSError, unreachableErrorMessage } from "@/error/index.js";
 import type { EmptyObject, Flatten, PrettifyHardcore, UnionToIntersection } from "@/type/index.js";
 
 export type FetchParserPromiseReturn<FPRT, _TakesAggregateObject, _ProducesAggregateObject> = ErrorReturnPromise<FPRT | false>;
@@ -30,7 +30,7 @@ export type TypeFunction<US, pFPR, FPR, RA, _TakesAggregateObject, _ProducesAggr
 type NoopFunction = FetchParserFunction<any, any> & { readonly __noopFunctionTag: unique symbol };
 
 export const typeNoopFunction = function noopTypeFunction() {
-	throw new Error(UnreachableErrorMessage("Noop type function called. The logic inside fetchAndParseInternal handles noop type function"));
+	throw new Error(unreachableErrorMessage("Noop type function called. The logic inside fetchAndParseInternal handles noop type function"));
 } as unknown as NoopFunction;
 
 export function defineTypeFunction<US, pFPR, FPR, RA = EmptyObject>(

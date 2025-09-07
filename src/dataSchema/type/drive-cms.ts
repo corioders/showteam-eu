@@ -6,8 +6,10 @@
 import type { MetadataBase, ObjectWithMetadata } from "@/dataStructure/metadata.js";
 import { type DocMd, type DocResource, isDoc } from "@/driveCMS/docs.js";
 import { type FolderID, type FolderResource, isFolder } from "@/driveCMS/drive.js";
+import { type FileUploadOptions, isForm } from "@/driveCMS/form.js";
+import type { Form } from "@/driveCMS/form-client-side.js";
 import { getImageDownloadURL, getPublicImageDownloadURL, isImage } from "@/driveCMS/image.js";
-import { downloadDocCorrectRevisionMarkdown, downloadSpreadsheetCorrectRevision, listFolder } from "@/driveCMS/index.js";
+import { downloadDocCorrectRevisionMarkdown, downloadSpreadsheetCorrectRevision, getForm, listFolder } from "@/driveCMS/index.js";
 import type { Resource } from "@/driveCMS/resource.js";
 import { isSpreadsheet, type Spreadsheet } from "@/driveCMS/spreadsheet.js";
 import { type MarkdownDoc, parseMarkdownDocWithMetadata } from "@/format/markdown/index.js";
@@ -109,6 +111,7 @@ export const typeGoogleDriveRootFolder = defineTypeFunctionPromise(function type
 });
 
 export interface GoogleDriveSingleFolderUserSpec<Metadata extends MetadataBase> {
+	// TODO: rename childPrefix to prefixChild for nice sorting
 	childPrefix: ResourcePrefixParser<Metadata>;
 	prefix?: ResourcePrefixParser<any>;
 	name?: string;
@@ -146,6 +149,15 @@ export const typeGoogleDriveSingleFolder = defineTypeFunctionPromise(function ty
 		}
 
 		const childrenWithMetadata = parseResourceMetadata(children, us.childPrefix);
+
+		// ==================================================
+		// TODO Remove for DSDv2
+		// DSDv2 will have good support for parents
+		for (const child of childrenWithMetadata) {
+			(child as unknown as { ___parent: FolderResource }).___parent = folderResource;
+		}
+		// ==================================================
+
 		return [childrenWithMetadata, null];
 	};
 });
@@ -183,10 +195,21 @@ export const typeGoogleDriveFolder = defineTypeAggregateFunctionPromise(function
 			if (us.prefix) {
 				const [newResourceWithMetadata, prefixError] = typeGoogleDriveSingleResourcePrefix({ prefix: us.prefix })(resourceWithMetadata);
 				if (newResourceWithMetadata === false) {
-					return [false, null];
+					continue;
+
+					// ==================================================
+					// TODO Fix this function to also return errors
+					// DSDv2
+					// return [false, null];
+					// ==================================================
 				}
 				if (prefixError) {
-					return [null, prefixError];
+					continue;
+					// ==================================================
+					// TODO Fix this function to also return errors
+					// DSDv2
+					// return [null, prefixError];
+					// ==================================================
 				}
 
 				folderResourceWithMetadata = newResourceWithMetadata;
@@ -208,6 +231,8 @@ export const typeGoogleDriveFolder = defineTypeAggregateFunctionPromise(function
 			}
 
 			if (usDebug?.__debug?.logResult) {
+				console.log("typeGoogleDriveFolder DEBUG");
+				console.log(resource);
 				console.log(children);
 			}
 
@@ -540,3 +565,83 @@ export const typeGoogleDriveSingleSpreadsheet = defineTypeFunctionPromise(functi
 		return [docMarkdown, null];
 	};
 });
+
+export interface GoogleDriveSingleFormUserSpec<Metadata extends MetadataBase> extends GoogleDriveResourcePrefixUserSpec<Metadata> {
+	formName?: string;
+	fileUploadOptions?: {
+		enabled: boolean;
+		permissions?: FileUploadOptions["permissions"];
+	};
+}
+
+export const typeGoogleDriveSingleForm = defineTypeFunctionPromise(function typeGoogleDriveSingleForm<Metadata extends MetadataBase>(
+	us: GoogleDriveSingleFormUserSpec<Metadata>,
+): FetchParserFunctionPromise<ResourceWithMetadata<Metadata>, Form> {
+	return async (resourceWithMetadata) => {
+		const formResource = resourceWithMetadata.resource;
+		if (!isForm(formResource)) {
+			return [false, null];
+		}
+
+		const [userPrefixedResourceWithMetadata, userPrefixError] = typeGoogleDriveSingleResourcePrefix(us)(resourceWithMetadata);
+		if (userPrefixedResourceWithMetadata === false) {
+			return [false, null];
+		}
+		if (userPrefixError) {
+			return [null, userPrefixError];
+		}
+
+		if (us.formName) {
+			if (userPrefixedResourceWithMetadata.resource.name !== us.formName) {
+				return [false, null];
+			}
+		}
+
+		if (us.fileUploadOptions?.enabled) {
+			// ==================================================
+			// TODO Remove for DSDv2
+			// DSDv2 will have good support for parents
+			const parent = (resourceWithMetadata as unknown as { ___parent: FolderResource }).___parent;
+			// ==================================================
+
+			const fileUploadOptions: FileUploadOptions = {
+				parentFolderToTheRootUploadFolder: parent.id,
+			};
+
+			if (us.fileUploadOptions.permissions) {
+				fileUploadOptions.permissions = us.fileUploadOptions.permissions;
+			}
+
+			return getForm(formResource.id, fileUploadOptions);
+		}
+
+		return getForm(formResource.id);
+	};
+});
+
+// async function setupPermissionsForCreatedFormUploadFolder(formID: FormID, createdUploadFolderID: FolderID): Promise<Error | null> {
+// 	const formClearPermissionsError = await clearAllPermissions(formID, [SERVICE_ACCOUNT_EMAIL]);
+
+// 	console.log(formClearPermissionsError);
+
+// 	const formAddPermissionsError = await addPermission(formID, WORK_RODO_GOOGLE_ACCOUNT_EMAIL, "writer");
+// 	if (formAddPermissionsError) {
+// 		return formAddPermissionsError;
+// 	}
+
+// 	const clearPermissionsError = await clearAllPermissions(createdUploadFolderID, [SERVICE_ACCOUNT_EMAIL]);
+
+// 	console.log(clearPermissionsError);
+
+// 	const addPermissionsError = await addPermission(createdUploadFolderID, WORK_RODO_GOOGLE_ACCOUNT_EMAIL, "writer");
+// 	if (addPermissionsError) {
+// 		return addPermissionsError;
+// 	}
+
+// 	const addPermissionError = await addPermission(createdUploadFolderID, CORIODERS_FORM_UPLOAD_SERVICE_ACCOUNT_EMAIL, "writer");
+// 	if (addPermissionError) {
+// 		return addPermissionError;
+// 	}
+
+// 	return null;
+// }

@@ -5,7 +5,7 @@
 
 import type { TxtDocumentNode } from "@textlint/ast-node-types";
 
-import { type ErrorReturn, UnreachableErrorMessage } from "@/error/index.js";
+import { type ErrorReturn, unreachableErrorMessage } from "@/error/index.js";
 import { markdownStringToPlainText, type StringMarkdown } from "@/format/markdown/index.js";
 
 /**
@@ -45,7 +45,7 @@ export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: P
 		for (let i = startIndex; i < astChildren.length; i++) {
 			const currentChild = astChildren[i];
 			if (!currentChild) {
-				return [null, new Error(UnreachableErrorMessage("Current child was not found"))];
+				return [null, new Error(unreachableErrorMessage("Current child was not found"))];
 			}
 
 			if (currentChild.type === "Header" && currentChild.depth === keyHeaderDepth) {
@@ -59,7 +59,7 @@ export function parseDocAstToHeaderKeyValue(docAST: TxtDocumentNode, options?: P
 	for (let i = 0; i < astChildren.length; i++) {
 		const currentChild = astChildren[i];
 		if (!currentChild) {
-			return [null, new Error(UnreachableErrorMessage("Current child was not found"))];
+			return [null, new Error(unreachableErrorMessage("Current child was not found"))];
 		}
 		if (currentChild.type !== "Header" || currentChild.depth !== keyHeaderDepth) {
 			continue;
