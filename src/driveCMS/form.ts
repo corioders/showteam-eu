@@ -10,13 +10,14 @@ import type { GoogleAuth } from "googleapis-common";
 import { StatusCodes } from "http-status-codes";
 
 import { IS_PREVIEW } from "@/const.js";
-import { type ErrorReturn, type ErrorReturnPromise, errorArrayToAggregateError, safePromise, unreachableErrorMessage } from "@/error/index.js";
+import { type ErrorReturn, type ErrorReturnPromise, errorArrayToAggregateError, safe, safePromise, unreachableErrorMessage } from "@/error/index.js";
 import type { ImageURL } from "@/media/image/index.js";
 import type { EmailAddress } from "@/media/personal/index.js";
 
 import { memoizeDriveCMS } from "./cache.js";
 import type { FileID, FolderID } from "./drive.js";
 import {
+	type FileUploadQuestionIDToFolderID,
 	FORM_QUESTION_TYPE,
 	type Form,
 	type FormImage,
@@ -32,6 +33,10 @@ import {
 	getFileUploadQuestionTitle,
 	type InternalFormQuestionFile,
 	isFileUploadQuestion,
+	OTHER_QUESTION_ID_SUFFIX,
+	type OtherOption,
+	type PerSectionQuestionIDs,
+	type QuestionNameAttributeID,
 } from "./form-client-side.js";
 import { addPermission, getFolderIDorCreateIfNotExistent } from "./index.js";
 import type { Resource } from "./resource.js";
@@ -98,6 +103,10 @@ export const getForm = memoizeDriveCMS(async function getForm(googleAuth: Google
 		return [null, new Error(unreachableErrorMessage("googleAPIsForm.items is empty. Google changed something"))];
 	}
 
+	if (questionSubmitIDs.length !== googleAPIsForm.items.length) {
+		return [null, new Error(unreachableErrorMessage("Something failed with real question ids extraction: questionSubmitIDs.length !== googleAPIsForm.items.length"))];
+	}
+
 	for (let i = 0; i < googleAPIsForm.items.length; i++) {
 		(googleAPIsForm.items[i] as { itemId: string }).itemId = `entry.${String(questionSubmitIDs[i])}`;
 	}
@@ -113,18 +122,38 @@ export const getForm = memoizeDriveCMS(async function getForm(googleAuth: Google
 		return [null, errorFileUploadFunctionOptions];
 	}
 
-	const [sections, sectionsParseError] = await googleAPIsFormToSections(googleAPIsForm, fileUploadFunctionOptions);
-	if (sectionsParseError) {
-		return [null, sectionsParseError];
+	const [googleAPIsFormToSectionsReturn, googleAPIsFormToSectionsError] = await googleAPIsFormToSections(googleAPIsForm, fileUploadFunctionOptions);
+	if (googleAPIsFormToSectionsError) {
+		return [null, googleAPIsFormToSectionsError];
 	}
 
 	const form: Form = {
-		responsePostURL: formResponsePostURL,
-		sections: sections,
+		sections: googleAPIsFormToSectionsReturn.sections,
+		formClientData: {
+			perSectionQuestionIDs: googleAPIsFormToSectionsReturn.perSectionQuestionIDs,
+			responsePostURL: formResponsePostURL,
+
+			// biome-ignore lint/style/useNamingConvention: TODO
+			__internal_temp_waitingForDSDv2_perQuestionIDInternationalizedValueToRealValueMapping: {},
+		},
 	};
 
-	if (fileUploadOptions) {
-		form.fileUploadEnabled = true;
+	// ==================================================
+	// Read the comment in the formClientData type
+	const numberOfSections = googleAPIsFormToSectionsReturn.sections.length;
+	if (numberOfSections > 1) {
+		let pageHistory = "0";
+		for (let i = 1; i < numberOfSections; i++) {
+			pageHistory = `${pageHistory},${i}`;
+		}
+		form.formClientData.pageHistory = pageHistory;
+	}
+	// ==================================================
+
+	if (fileUploadFunctionOptions) {
+		// We want to set form.formClientData.fileUpload ONLY when file upload is enabled with fileUploadFunctionOptions. This is because,
+		// setting form.formClientData.fileUpload gives the form-client.tsx a sign
+		form.formClientData.fileUpload = googleAPIsFormToSectionsReturn.fileUploadQuestionIDToFolderID;
 	}
 
 	if (IS_PREVIEW) {
@@ -176,21 +205,25 @@ async function fileUploadOptionsToFileUploadFunctionOptions(
 	return [fileUploadFunctionOptions, null];
 }
 
+interface GoogleAPIsFormToSectionsReturn {
+	sections: FormSection[];
+	perSectionQuestionIDs: PerSectionQuestionIDs;
+	fileUploadQuestionIDToFolderID: FileUploadQuestionIDToFolderID;
+}
+
 async function googleAPIsFormToSections(
 	googleAPIsForm: forms_v1.Schema$Form,
 	fileUploadFunctionOptions: FileUploadFunctionOptions | undefined,
-): ErrorReturnPromise<FormSection[]> {
+): ErrorReturnPromise<GoogleAPIsFormToSectionsReturn> {
 	const formTitle = googleAPIsForm.info?.title;
-	if (formTitle === undefined || formTitle === null) {
-		const message = `googleAPIsForm.info?.title is undefined. Google changed something or there is a logic error. ${JSON.stringify(googleAPIsForm.info, null, 2)}`;
-		return [null, new Error(unreachableErrorMessage(message))];
-	}
 
-	const newEmptySection = (title: string, description: string | undefined | null) => {
+	const newEmptySection = (title: string | undefined | null, description: string | undefined | null) => {
 		const section: FormSection = {
 			questions: [],
-			title: title,
 		};
+		if (title) {
+			section.title = title;
+		}
 		if (description) {
 			section.description = description;
 		}
@@ -198,8 +231,13 @@ async function googleAPIsFormToSections(
 		return section;
 	};
 
+	const globalFileUploadQuestionIDToFolderID: FileUploadQuestionIDToFolderID = {};
+
 	const sections: FormSection[] = [];
 	let currentSection: FormSection = newEmptySection(formTitle, googleAPIsForm.info?.description);
+
+	const perSectionQuestionIDs: QuestionNameAttributeID[][] = [];
+	let currentSectionQuestionNameAttributeID: QuestionNameAttributeID[] = [];
 
 	const items = googleAPIsForm.items;
 	if (!items) {
@@ -210,42 +248,63 @@ async function googleAPIsFormToSections(
 	for (const item of items) {
 		if (item.pageBreakItem) {
 			const sectionTitle = item.title;
-			if (sectionTitle === undefined || sectionTitle === null) {
-				formQuestionErrors.push(new Error(unreachableErrorMessage("section title is not defined or null")));
-				continue;
-			}
 
 			sections.push(currentSection);
+			perSectionQuestionIDs.push(currentSectionQuestionNameAttributeID);
+
 			currentSection = newEmptySection(sectionTitle, item.description);
+			currentSectionQuestionNameAttributeID = [];
 			continue;
 		}
 
-		const [formQuestion, formQuestionError] = await googleAPIsItemToFormQuestion(item, fileUploadFunctionOptions);
-		if (formQuestionError) {
-			formQuestionErrors.push(formQuestionError);
+		const [googleAPIsItemToFormQuestionReturn, googleAPIsItemToFormQuestionReturnError] = await googleAPIsItemToFormQuestion(item, fileUploadFunctionOptions);
+		if (googleAPIsItemToFormQuestionReturnError) {
+			formQuestionErrors.push(googleAPIsItemToFormQuestionReturnError);
 			continue;
 		}
 
-		currentSection.questions.push(formQuestion);
+		const { parsedQuestion, questionIDs, fileUploadQuestionIDToFolderID } = googleAPIsItemToFormQuestionReturn;
+		if (fileUploadQuestionIDToFolderID) {
+			for (const [key, value] of Object.entries(fileUploadQuestionIDToFolderID)) {
+				// We need to do this as because Object.entries cannot comprehend that the keys of fileUploadQuestionIDToFolderID are already of type QuestionNameAttributeID
+				globalFileUploadQuestionIDToFolderID[key as QuestionNameAttributeID] = value;
+			}
+		}
+
+		for (const questionID of questionIDs) {
+			currentSectionQuestionNameAttributeID.push(questionID);
+		}
+		currentSection.questions.push(parsedQuestion);
 	}
+
 	sections.push(currentSection);
+	perSectionQuestionIDs.push(currentSectionQuestionNameAttributeID);
 
 	if (formQuestionErrors.length > 0) {
 		return [null, errorArrayToAggregateError(formQuestionErrors, "Unable to parse items:")];
 	}
 
-	return [sections, null];
+	return [{ sections, perSectionQuestionIDs, fileUploadQuestionIDToFolderID: globalFileUploadQuestionIDToFolderID }, null];
+}
+
+interface GoogleAPIsItemToFormQuestionReturn {
+	parsedQuestion: FormQuestion;
+	questionIDs: QuestionNameAttributeID[];
+
+	fileUploadQuestionIDToFolderID?: FileUploadQuestionIDToFolderID;
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO? I think I do not want to break it down to smaller functions.
 async function googleAPIsItemToFormQuestion(
 	item: forms_v1.Schema$Item,
 	fileUploadFunctionOptions: FileUploadFunctionOptions | undefined,
-): ErrorReturnPromise<FormQuestion> {
-	const itemID = item.itemId;
+): ErrorReturnPromise<GoogleAPIsItemToFormQuestionReturn> {
+	const itemID = item.itemId as QuestionNameAttributeID | undefined;
 	if (!itemID) {
 		return [null, new Error(unreachableErrorMessage("item.itemId is not defined"))];
 	}
+
+	const questionIDs: QuestionNameAttributeID[] = [itemID];
 
 	const title = item.title;
 	if (title === undefined || title === null) {
@@ -254,7 +313,7 @@ async function googleAPIsItemToFormQuestion(
 
 	const questionItem = item.questionItem?.question;
 	if (!questionItem) {
-		return [null, new Error(unreachableErrorMessage("item.questionItem is not defined"))];
+		return [null, new Error(`Unsupported question type ${JSON.stringify(item, null, 2)}`)];
 	}
 
 	const questionItemImage = parseItemImage(item.questionItem?.image);
@@ -293,10 +352,16 @@ async function googleAPIsItemToFormQuestion(
 			const parsedQuestion: FormQuestionCheckbox = {
 				type: FORM_QUESTION_TYPE.checkbox,
 				...parsedCommonQuestion,
-				...parsedOptionsImageReturn,
+				hasImageInOptions: parsedOptionsImageReturn.hasImageInOptions,
+				options: parsedOptionsImageReturn.options,
 			};
 
-			return [parsedQuestion, null];
+			if (parsedOptionsImageReturn.hasOtherOption) {
+				parsedQuestion.otherOption = parseOtherOption(itemID);
+				questionIDs.push(parsedQuestion.otherOption.otherOptionQuestionNameAttributeID);
+			}
+
+			return [{ parsedQuestion, questionIDs }, null];
 		}
 
 		if (questionItem.choiceQuestion.type === "DROP_DOWN") {
@@ -311,22 +376,28 @@ async function googleAPIsItemToFormQuestion(
 				...parsedCommonQuestion,
 			};
 
-			return [parsedQuestion, null];
+			return [{ parsedQuestion, questionIDs }, null];
 		}
 
 		if (questionItem.choiceQuestion.type === "RADIO") {
-			const [parsedOptionsReturn, optionsParseError] = parseOptionsImage(choiceQuestionOptions);
+			const [parsedOptionsImageReturn, optionsParseError] = parseOptionsImage(choiceQuestionOptions);
 			if (optionsParseError) {
 				return [null, optionsParseError];
 			}
 
 			const parsedQuestion: FormQuestionRadio = {
 				type: FORM_QUESTION_TYPE.radio,
-				...parsedOptionsReturn,
 				...parsedCommonQuestion,
+				hasImageInOptions: parsedOptionsImageReturn.hasImageInOptions,
+				options: parsedOptionsImageReturn.options,
 			};
 
-			return [parsedQuestion, null];
+			if (parsedOptionsImageReturn.hasOtherOption) {
+				parsedQuestion.otherOption = parseOtherOption(itemID);
+				questionIDs.push(parsedQuestion.otherOption.otherOptionQuestionNameAttributeID);
+			}
+
+			return [{ parsedQuestion, questionIDs }, null];
 		}
 	}
 
@@ -354,7 +425,7 @@ async function googleAPIsItemToFormQuestion(
 			parsedQuestion.minLabel = questionItem.scaleQuestion.lowLabel;
 		}
 
-		return [parsedQuestion, null];
+		return [{ parsedQuestion, questionIDs }, null];
 	}
 
 	if (questionItem.textQuestion) {
@@ -364,7 +435,7 @@ async function googleAPIsItemToFormQuestion(
 				...parsedCommonQuestion,
 			};
 
-			return [parsedQuestion, null];
+			return [{ parsedQuestion, questionIDs }, null];
 		}
 
 		if (isFileUploadQuestion(title)) {
@@ -384,7 +455,10 @@ async function googleAPIsItemToFormQuestion(
 				internalUploadFolderID: uploadFolderID,
 			};
 
-			return [parsedQuestion, null];
+			const fileUploadQuestionIDToFolderID: FileUploadQuestionIDToFolderID = {};
+			fileUploadQuestionIDToFolderID[itemID] = uploadFolderID;
+
+			return [{ parsedQuestion, questionIDs, fileUploadQuestionIDToFolderID }, null];
 		}
 
 		const parsedQuestion: FormQuestionText = {
@@ -392,10 +466,16 @@ async function googleAPIsItemToFormQuestion(
 			...parsedCommonQuestion,
 		};
 
-		return [parsedQuestion, null];
+		return [{ parsedQuestion, questionIDs }, null];
 	}
 
 	return [null, new Error(`Unsupported question type ${JSON.stringify(questionItem, null, 2)}`)];
+}
+
+function parseOtherOption(itemID: string): OtherOption {
+	return {
+		otherOptionQuestionNameAttributeID: `${itemID}${OTHER_QUESTION_ID_SUFFIX}` as QuestionNameAttributeID,
+	};
 }
 
 async function getOrCreateFileUploadFolderID(fileUploadQuestionTitle: string, fileUploadFunctionOptions: FileUploadFunctionOptions): ErrorReturnPromise<FolderID> {
@@ -441,13 +521,20 @@ function parseOptions(options: forms_v1.Schema$Option[]): ErrorReturn<string[]> 
 
 interface ParseOptionsImageReturn {
 	hasImageInOptions: boolean;
+	hasOtherOption: boolean;
 	options: FormQuestionOptionImage[];
 }
 
 function parseOptionsImage(options: forms_v1.Schema$Option[]): ErrorReturn<ParseOptionsImageReturn> {
 	let hasImageInOptions = false;
+	let hasOtherOption = false;
 	const parsedOptions: FormQuestionOptionImage[] = [];
 	for (const option of options) {
+		if (option.isOther) {
+			hasOtherOption = true;
+			continue;
+		}
+
 		const value = option.value;
 		if (value === undefined || value === null) {
 			return [null, new Error(unreachableErrorMessage("option.value is undefined or null"))];
@@ -468,12 +555,15 @@ function parseOptionsImage(options: forms_v1.Schema$Option[]): ErrorReturn<Parse
 		{
 			hasImageInOptions,
 			options: parsedOptions,
+			hasOtherOption,
 		},
 		null,
 	];
 }
 
-async function getRealQuestionSubmitIDFromUndocumentedAPI(responseURI: string): ErrorReturnPromise<number[]> {
+const REQUIRED_SIGN_IN_MARKER = `data-sign-in-to-continue="true"`;
+
+async function getRealQuestionSubmitIDFromUndocumentedAPI(responseURI: string): ErrorReturnPromise<(number | undefined)[]> {
 	const [formResponse, formResponseError] = await safePromise(() => fetch(responseURI));
 	if (formResponseError) {
 		return [null, formResponseError];
@@ -482,6 +572,11 @@ async function getRealQuestionSubmitIDFromUndocumentedAPI(responseURI: string): 
 	const [formResponseText, formResponseTextError] = await safePromise(() => formResponse.text());
 	if (formResponseTextError) {
 		return [null, formResponseTextError];
+	}
+
+	if (formResponseText.includes(REQUIRED_SIGN_IN_MARKER)) {
+		const hint = `Hint: Corioders Forms work only if the underlying google form does NOT require users to be signed in. Check if this form enables some options that make signing-in mandatory"\n - Make sure the 'Limit to 1 response' option is NOT checked.\n - Check if the 'Collect email addresses' option is on 'Do no collect' or 'Responders input'.\n - Also check for any native file upload questions, if they are present replace them with custom corioders file upload question.`;
+		return [null, new Error(`Error: The form you provided requires users to be signed in with their emails. This is not supported on non-google websites.\n${hint}`)];
 	}
 
 	if (!formResponse.ok) {
@@ -495,27 +590,50 @@ async function getRealQuestionSubmitIDFromUndocumentedAPI(responseURI: string): 
 		return [null, new Error(unreachableErrorMessage("FB_PUBLIC_LOAD_DATA_ split failed. Google changed something."))];
 	}
 	data = data.substring(0, data.indexOf(";"));
-	const parsedData = JSON.parse(data) as unknown[];
-
-	const FlatDepth = 100;
-	const flattenedData = parsedData.flat(FlatDepth);
-
-	const ids: number[] = [];
-	for (let i = 0; i < flattenedData.length; i++) {
-		if (typeof flattenedData[i] !== "string") {
-			continue;
-		}
-
-		const IdIndexOffset = 3;
-		const id = flattenedData[i + IdIndexOffset];
-		if (typeof id !== "number") {
-			continue;
-		}
-
-		ids.push(id);
+	const [parsedData, jsonParseError] = safe(() => JSON.parse(data) as unknown[]);
+	if (jsonParseError) {
+		return [null, jsonParseError];
 	}
 
-	const filteredIds = ids.filter((id) => id !== 0 && id !== 1);
+	const [questionIDs, extractError] = extractQuestionIdsFromUndocumentedAPIParsedData(parsedData);
+	if (extractError) {
+		return [null, extractError];
+	}
 
-	return [filteredIds, null];
+	return [questionIDs, null];
+}
+
+function extractQuestionIdsFromUndocumentedAPIParsedData(formData: any[]): ErrorReturn<(number | undefined)[]> {
+	if (!Array.isArray(formData) || formData.length < 2 || !Array.isArray(formData[1])) {
+		return [null, new Error(unreachableErrorMessage("The data format is not valid"))];
+	}
+
+	const questions: any[] = formData[1][1];
+	const questionIds: (number | undefined)[] = [];
+
+	// We push all of these undefined because we need to maintain the same length as the `questions` array.
+	for (const question of questions) {
+		const questionDataIndex = 4;
+		const questionData = question.at(questionDataIndex);
+		if (!questionData) {
+			questionIds.push(undefined);
+			continue;
+		}
+
+		const questionDataArray = questionData.at(0);
+		if (!questionDataArray) {
+			questionIds.push(undefined);
+			continue;
+		}
+
+		const questionID = questionDataArray.at(0);
+		if (typeof questionID !== "number") {
+			questionIds.push(undefined);
+			continue;
+		}
+
+		questionIds.push(questionID);
+	}
+
+	return [questionIds, null];
 }

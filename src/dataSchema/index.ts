@@ -5,6 +5,8 @@
 
 /** biome-ignore-all lint/style/useNamingConvention: We want to use our names for type parameters */
 
+// TODO: dsdV2, make optional work nice + add the ability to define custom help messages in dsd
+
 import { type ErrorReturn, type ErrorReturnPromise, type TSError, unreachableErrorMessage } from "@/error/index.js";
 import type { EmptyObject, Flatten, PrettifyHardcore, UnionToIntersection } from "@/type/index.js";
 

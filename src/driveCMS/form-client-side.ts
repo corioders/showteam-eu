@@ -24,16 +24,21 @@ export const FORM_QUESTION_TYPE = {
 	file: "file",
 } as const;
 
+export type QuestionNameAttributeID = string & { readonly __tagQuestionNameAttributeID: unique symbol };
+
 export interface FormImage {
 	url: ImageURL;
 	width: number;
 }
 
+export interface OtherOption {
+	otherOptionQuestionNameAttributeID: QuestionNameAttributeID;
+}
 export interface FormQuestion {
 	type: FormQuestionTypeValue;
 	title: string;
 	required: boolean;
-	questionNameAttributeID: string;
+	questionNameAttributeID: QuestionNameAttributeID;
 
 	description?: string;
 	image?: FormImage;
@@ -48,6 +53,7 @@ export interface FormQuestionCheckbox extends FormQuestion {
 	type: FormQuestionType["checkbox"];
 	hasImageInOptions: boolean;
 	options: FormQuestionOptionImage[];
+	otherOption?: OtherOption;
 }
 
 export function isFormQuestionCheckbox(q: FormQuestion): q is FormQuestionCheckbox {
@@ -67,6 +73,7 @@ export interface FormQuestionRadio extends FormQuestion {
 	type: FormQuestionType["radio"];
 	hasImageInOptions: boolean;
 	options: FormQuestionOptionImage[];
+	otherOption?: OtherOption;
 }
 
 export function isFormQuestionRadio(q: FormQuestion): q is FormQuestionRadio {
@@ -115,7 +122,7 @@ export function isFormQuestionFile(q: FormQuestion): q is FormQuestionFile {
 }
 
 export interface FormSection {
-	title: string;
+	title?: string;
 	description?: string;
 
 	questions: FormQuestion[];
@@ -123,23 +130,28 @@ export interface FormSection {
 
 export interface Form {
 	sections: FormSection[];
-	responsePostURL: string;
-	fileUploadEnabled?: boolean;
+	formClientData: FormClientData;
 }
 
-export type FileUploadIDToFolderID = Record<string, FolderID | undefined>;
-export interface FormSmallClientSideFileUploadOptions {
-	fileUploadIDToFolderID: FileUploadIDToFolderID;
-}
+export type FileUploadQuestionIDToFolderID = Record<QuestionNameAttributeID, FolderID | undefined>;
+export type PerSectionQuestionIDs = QuestionNameAttributeID[][];
 
-export type PerSectionQuestionIDs = string[][];
-
-export interface FormSmallClientSide {
+export interface FormClientData {
 	perSectionQuestionIDs: PerSectionQuestionIDs;
 	responsePostURL: string;
 
-	fileUpload?: FormSmallClientSideFileUploadOptions;
+	// This is came form testing how google forms behave when multiple sections are involved. When so the client also sends
+	// in its formData body a key named pageHistory with "0,1,2,3" if the form has 4 sections. It goes intuitively for any other number
+	// of sections.
+	pageHistory?: string;
+
+	fileUpload?: FileUploadQuestionIDToFolderID;
+
+	// biome-ignore lint/style/useNamingConvention: TODO
+	__internal_temp_waitingForDSDv2_perQuestionIDInternationalizedValueToRealValueMapping: Record<string, Record<string, string>>;
 }
+
+export const OTHER_QUESTION_ID_SUFFIX = ".other_option_response";
 
 const FILE_UPLOAD_QUESTION_PREFIX = "FileUpload:::";
 export function isFileUploadQuestion(title: string): boolean {

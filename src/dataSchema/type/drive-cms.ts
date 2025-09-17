@@ -315,7 +315,6 @@ export const typeGoogleDriveSingleImagePrivateURL = defineTypeFunction(function 
 
 		if (us.imageName) {
 			if (newResourceWithMetadata.resource.name !== us.imageName) {
-				console.log(newResourceWithMetadata.resource.name, us.imageName);
 				return [false, null];
 			}
 		}
