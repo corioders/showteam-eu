@@ -1,37 +1,49 @@
 "use client";
 
-import type { FileUploadIDToFolderID, FormSmallClientSide, PerSectionQuestionIDs } from "cstd-ts/driveCMS/form-client-side.js";
+// TODO: make form client validate the data we are getting. I need to know if a q is required or not + what is the type, then we can provide more accurate errors
+// during development + in production. Otherwise the question if we are sending a valid body to google is left on the user of this component.
+
+import {
+	type FileUploadQuestionIDToFolderID,
+	type FormClientData,
+	OTHER_QUESTION_ID_SUFFIX,
+	type PerSectionQuestionIDs,
+	type QuestionNameAttributeID,
+} from "cstd-ts/driveCMS/form-client-side.js";
 import { type ErrorReturnPromise, safePromise } from "cstd-ts/error/index.js";
-import { type ComponentPropsWithoutRef, type RefObject, useRef } from "react";
+import { type ComponentProps, type RefObject, useImperativeHandle, useRef } from "react";
 
 import type { UploadFile } from "@/driveCMS/file-upload/file-upload-client.js";
 import { CstdError } from "@/error/cstd-error.jsx";
 
-export interface Props extends ComponentPropsWithoutRef<"form"> {
+export interface Props extends ComponentProps<"form"> {
 	onSubmitSuccess?: (formRef: RefObject<HTMLFormElement | null>) => void;
 	onSubmitError?: (formRef: RefObject<HTMLFormElement | null>, error?: Error) => void;
 	setIsLoading?: (isLoading: boolean) => void;
 	onBeforeSubmit?: (formRef: RefObject<HTMLFormElement | null>) => void;
 
-	formSmallClientSide: FormSmallClientSide;
+	formClientData: FormClientData;
 	fileUploadFunction?: UploadFile;
 }
 
 export function FormClient({
+	ref,
 	onSubmitSuccess,
 	onSubmitError,
 	setIsLoading,
-	formSmallClientSide,
+	formClientData,
 	fileUploadFunction,
 	onSubmit,
 	onBeforeSubmit,
 	noValidate,
 	...props
 }: Props) {
-	const formRef = useRef<HTMLFormElement>(null);
+	const innerRef = useRef<HTMLFormElement | null>(null);
+
+	useImperativeHandle(ref, () => innerRef.current as HTMLFormElement);
 
 	let fileUploadConvertOptions: FileUploadConvertOptions | undefined;
-	if (formSmallClientSide.fileUpload) {
+	if (formClientData.fileUpload) {
 		if (!fileUploadFunction) {
 			const error = new Error("props.fileUploadFunction is not provided while this form requires file upload. Call up your Digital team.");
 			return <CstdError error={error} />;
@@ -39,7 +51,7 @@ export function FormClient({
 
 		fileUploadConvertOptions = {
 			fileUploadFunction: fileUploadFunction,
-			fileUploadIDToFolderID: formSmallClientSide.fileUpload.fileUploadIDToFolderID,
+			fileUploadIDToFolderID: formClientData.fileUpload,
 		};
 	}
 
@@ -50,13 +62,13 @@ export function FormClient({
 			noValidate={noValidate ?? true}
 			onSubmit={async (event) => {
 				event.preventDefault();
-				onBeforeSubmit?.(formRef);
-				if (formRef.current === null) {
+				onBeforeSubmit?.(innerRef);
+				if (innerRef.current === null) {
 					return;
 				}
 
-				if (formRef.current.checkValidity() === false) {
-					const element = formRef.current.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(":invalid");
+				if (innerRef.current.checkValidity() === false) {
+					const element = innerRef.current.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(":invalid");
 					if (element === null) {
 						return;
 					}
@@ -65,14 +77,18 @@ export function FormClient({
 					return;
 				}
 
-				const collectedInputs = collectInputs(formRef.current, formSmallClientSide.perSectionQuestionIDs);
-				const inputBody = convertNotFileUploadInputsToGoogleFormsAPIBody(collectedInputs, formSmallClientSide.fileUpload?.fileUploadIDToFolderID);
+				const collectedInputs = collectInputs(innerRef.current, formClientData.perSectionQuestionIDs);
+				const inputBody = convertNotFileUploadInputsToGoogleFormsAPIBody(
+					collectedInputs,
+					fileUploadConvertOptions?.fileUploadIDToFolderID,
+					formClientData.__internal_temp_waitingForDSDv2_perQuestionIDInternationalizedValueToRealValueMapping,
+				);
 
 				setIsLoading?.(true);
 				if (fileUploadConvertOptions) {
 					const [fileUploadInputBody, fileUploadError] = await convertFileUploadInputsToGoogleFormsAPIBody(collectedInputs, fileUploadConvertOptions);
 					if (fileUploadError) {
-						onSubmitError?.(formRef, fileUploadError);
+						onSubmitError?.(innerRef, fileUploadError);
 						return;
 					}
 
@@ -81,8 +97,15 @@ export function FormClient({
 					}
 				}
 
+				// ==================================================
+				// Read the comment in the formClientData type
+				if (formClientData.pageHistory) {
+					inputBody.append("pageHistory", formClientData.pageHistory);
+				}
+				// ==================================================
+
 				const [_response, error] = await safePromise(() =>
-					fetch(formSmallClientSide.responsePostURL, {
+					fetch(formClientData.responsePostURL, {
 						body: inputBody,
 						headers: {
 							"Content-Type": "application/x-www-form-urlencoded",
@@ -92,14 +115,22 @@ export function FormClient({
 					}),
 				);
 				if (error !== null) {
-					onSubmitError?.(formRef, error);
+					onSubmitError?.(innerRef, error);
 					return;
 				}
 
-				onSubmitSuccess?.(formRef);
+				// This case will always hit. We have no way of knowing if the request failed or not.
+				// if (!response.ok) {
+				// 	// We cannot read anything from the response because of mode: "no-cors"
+				// 	// TODO: Consider submitting the form to our nextjs backend. Then forms with and without file transfer will be treated the same way.
+				// 	onSubmitError?.(innerRef, new Error("Unknown error occurred while submitting form."));
+				// 	return;
+				// }
+
+				onSubmitSuccess?.(innerRef);
 				onSubmit?.(event);
 			}}
-			ref={formRef}
+			ref={innerRef}
 		/>
 	);
 }
@@ -133,23 +164,54 @@ function collectInputs(form: HTMLFormElement, perSectionQuestionIDs: PerSectionQ
 // TODO: validation??
 function convertNotFileUploadInputsToGoogleFormsAPIBody(
 	inputs: CollectInputsQuerySelectorElementTypes[],
-	fileUploadIDToFolderID: FileUploadIDToFolderID | undefined,
+	fileUploadIDToFolderID: FileUploadQuestionIDToFolderID | undefined,
+	// biome-ignore lint/style/useNamingConvention: TODO
+	tem__internal_temp_waitingForDSDv2_perQuestionIDInternationalizedValueToRealValueMappingMapping: Record<string, Record<string, string>>,
 ): URLSearchParams {
 	const body = new URLSearchParams();
+
+	const selectedOtherOptionsIDs: Set<QuestionNameAttributeID> = new Set();
+
 	for (const input of inputs) {
 		// biome-ignore lint/complexity/useOptionalChain: Well. This cannot be changed into an optional chain.
-		if (fileUploadIDToFolderID && fileUploadIDToFolderID[input.name]) {
+		if (fileUploadIDToFolderID && fileUploadIDToFolderID[input.name as QuestionNameAttributeID]) {
 			continue;
 		}
 
-		body.append(input.name, input.value);
+		if (tem__internal_temp_waitingForDSDv2_perQuestionIDInternationalizedValueToRealValueMappingMapping[input.name]) {
+			if (tem__internal_temp_waitingForDSDv2_perQuestionIDInternationalizedValueToRealValueMappingMapping[input.name][input.value]) {
+				body.append(input.name, tem__internal_temp_waitingForDSDv2_perQuestionIDInternationalizedValueToRealValueMappingMapping[input.name][input.value]);
+				continue;
+			}
+		}
+
+		if (input.value) {
+			if (input.name.endsWith(OTHER_QUESTION_ID_SUFFIX)) {
+				selectedOtherOptionsIDs.add(input.name as QuestionNameAttributeID);
+			}
+
+			body.append(input.name, input.value);
+		}
 	}
+
+	// ==================================================
+	// This behaviour was observed while reading google forms network tab.
+
+	// biome-ignore lint/style/useNamingConvention: This is a const like every other
+	const OTHER_OPTION_BASE_OPTION_MARKER = "__other_option__";
+	for (const selectedOtherOptionID of selectedOtherOptionsIDs) {
+		const selectedOtherOptionBaseID = selectedOtherOptionID.replace(OTHER_QUESTION_ID_SUFFIX, "").trim() as QuestionNameAttributeID;
+
+		body.append(selectedOtherOptionBaseID, OTHER_OPTION_BASE_OPTION_MARKER);
+	}
+
+	// ==================================================
 
 	return body;
 }
 
 interface FileUploadConvertOptions {
-	fileUploadIDToFolderID: FileUploadIDToFolderID;
+	fileUploadIDToFolderID: FileUploadQuestionIDToFolderID;
 	fileUploadFunction: UploadFile;
 }
 
@@ -161,7 +223,7 @@ async function convertFileUploadInputsToGoogleFormsAPIBody(
 	const body = new URLSearchParams();
 
 	for (const input of inputs) {
-		const uploadFolderID = fileUpload.fileUploadIDToFolderID[input.name];
+		const uploadFolderID = fileUpload.fileUploadIDToFolderID[input.name as QuestionNameAttributeID];
 		if (!uploadFolderID) {
 			continue;
 		}
@@ -170,6 +232,11 @@ async function convertFileUploadInputsToGoogleFormsAPIBody(
 		const files = fileInput.files;
 		if (!files) {
 			return [null, new Error("File input.files is null")];
+		}
+
+		// No files to upload. To be consistent in how inputs without a value are skipped, we skip it here too.
+		if (files.length === 0) {
+			continue;
 		}
 
 		if (files.length !== 1) {

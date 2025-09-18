@@ -1,6 +1,4 @@
-import type { FolderID } from "cstd-ts/driveCMS/drive.js";
 import {
-	type Form,
 	type FormQuestion,
 	type FormQuestionCheckbox,
 	type FormQuestionDropdown,
@@ -9,8 +7,7 @@ import {
 	type FormQuestionScale,
 	type FormQuestionText,
 	type FormQuestionTextarea,
-	type FormSmallClientSide,
-	type InternalFormQuestionFile,
+	type FormSection,
 	isFormQuestionCheckbox,
 	isFormQuestionDropdown,
 	isFormQuestionFile,
@@ -34,66 +31,33 @@ export interface FormComponents {
 }
 
 export interface RenderedFormSection {
-	title: string;
+	title?: string;
 	description?: string;
 
 	questions: ReactNode[];
 }
 
-export interface RenderedFormSections {
-	sections: RenderedFormSection[];
-
-	formSmallClientSide: FormSmallClientSide;
-}
-
-export function renderFormSections(form: Form, userComponents?: Partial<FormComponents>): RenderedFormSections {
+export function renderFormSections(sections: FormSection[], userComponents?: Partial<FormComponents>): RenderedFormSection[] {
 	const components = { ...defaultComponents, ...userComponents };
 	const renderedFormSections: RenderedFormSection[] = [];
 
-	const perSectionQuestionIDs: string[][] = [];
-	const fileUploadIDToFolderID: Record<string, FolderID> = {};
-
-	for (const formSection of form.sections) {
+	for (const formSection of sections) {
 		const renderedQuestions: ReactNode[] = [];
-		const questionIDs: string[] = [];
 		for (const question of formSection.questions) {
 			renderedQuestions.push(<RenderQuestion components={components} key={question.questionNameAttributeID} question={question} />);
-			questionIDs.push(question.questionNameAttributeID);
-
-			if (isFormQuestionFile(question)) {
-				const internalFileUploadQuestion = question as InternalFormQuestionFile;
-				fileUploadIDToFolderID[question.questionNameAttributeID] = internalFileUploadQuestion.internalUploadFolderID;
-			}
 		}
-
-		perSectionQuestionIDs.push(questionIDs);
 
 		// biome-ignore assist/source/useSortedKeys: We want the attributes to be in the interface order
 		const renderedFormSection: RenderedFormSection = {
 			title: formSection.title,
 			description: formSection.description,
-
 			questions: renderedQuestions,
 		};
 
 		renderedFormSections.push(renderedFormSection);
 	}
 
-	const formSmallClientSide: FormSmallClientSide = {
-		perSectionQuestionIDs: perSectionQuestionIDs,
-		responsePostURL: form.responsePostURL,
-	};
-
-	if (form.fileUploadEnabled) {
-		formSmallClientSide.fileUpload = {
-			fileUploadIDToFolderID: fileUploadIDToFolderID,
-		};
-	}
-
-	return {
-		formSmallClientSide,
-		sections: renderedFormSections,
-	};
+	return renderedFormSections;
 }
 
 interface RenderQuestionProps {
