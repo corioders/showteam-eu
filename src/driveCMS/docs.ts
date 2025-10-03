@@ -109,16 +109,15 @@ export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistentCached
 	revisionID: RevisionID,
 ) => ErrorReturnPromise<StringMarkdown> = persistentDriveCMSCache(
 	"baseDownloadDocRevisionAndAdjustInDocMarkdownImages",
+	// We don't need to check the last modification time, because this function depends on revisionID.
+	// Every revisionID represents different doc version.
+	{ disableAutomaticInvalidation: true },
 	async function baseDownloadDocRevisionAndAdjustInDocMarkdownImages(
 		persistentCacheController: PersistentCacheController<StringMarkdown>,
 		googleAuth: GoogleAuth,
 		docID: DocID,
 		revisionID: RevisionID,
 	): ErrorReturnPromise<StringMarkdown> {
-		// We don't need to check the last modification time, because this function depends on revisionID.
-		// Every revisionID represents different doc version.
-		persistentCacheController.disableAutomaticInvalidation();
-
 		const [cachedValue, cacheError] = await persistentCacheController.getCachedValue();
 		if (cacheError) {
 			return [null, cacheError];

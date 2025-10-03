@@ -71,6 +71,7 @@ export const internalUNSAFEChangePermissionsToAnyoneWithLinkReader = memoizeDriv
 export const ERR_UNABLE_TO_LIST_FILES = new Error("Unable to list files");
 export const internalListFolderPersistentCached: (googleAuth: GoogleAuth, folderID: FolderID) => ErrorReturnPromise<Resource[]> = persistentDriveCMSCache(
 	"internalListFolderPersistent",
+	null,
 	async function internalListFolder(
 		persistentCacheController: PersistentCacheController<AssertJsonValue<Resource[]>>,
 		googleAuth: GoogleAuth,
@@ -154,7 +155,8 @@ export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID
 			fileOrFolderList.push({
 				id: targetFile.id as ResourceID,
 				mimeType: targetFile.mimeType as MIMETypeTE,
-				name: targetFile.name,
+				// Leave the shortcut name.
+				name: fileOrFolder.name,
 			});
 
 			continue;
@@ -252,6 +254,7 @@ export interface Revision {
 export const getRevisionsFromUndocumentedAPIPersistentCached: (googleAuth: GoogleAuth, undocumentedRevisionURL: string) => ErrorReturnPromise<Revision[]> =
 	persistentDriveCMSCache(
 		"getRevisionsFromUndocumentedAPI",
+		null,
 		async function getRevisionsFromUndocumentedAPI(
 			persistentCacheController: PersistentCacheController<AssertJsonValue<Revision[]>>,
 			googleAuth: GoogleAuth,

@@ -120,6 +120,7 @@ export interface GoogleDriveSingleFolderUserSpec<Metadata extends MetadataBase> 
 export const typeGoogleDriveSingleFolder = defineTypeFunctionPromise(function typeGoogleDriveSingleFolder<Metadata extends MetadataBase>(
 	us: GoogleDriveSingleFolderUserSpec<Metadata>,
 ): FetchParserFunctionPromise<ResourceWithMetadata<any>, ResourceWithMetadata<Metadata>[]> {
+	const usDebug = us as DebugConfig;
 	return async (resourceWithMetadata) => {
 		const resource = resourceWithMetadata.resource;
 		if (!isFolder(resource)) {
@@ -146,6 +147,12 @@ export const typeGoogleDriveSingleFolder = defineTypeFunctionPromise(function ty
 		const [children, listError] = await listFolder(folderResource.id);
 		if (listError) {
 			return [null, listError];
+		}
+
+		if (usDebug.__debug?.logResult) {
+			console.log("DEBUG typeGoogleDriveSingleFolder");
+
+			console.log("listing", folderResource, "got us", children);
 		}
 
 		const childrenWithMetadata = parseResourceMetadata(children, us.childPrefix);

@@ -317,7 +317,7 @@ async function fetchAndParseInternal(
 		}
 
 		if (fetchParser.produceAggregateObjet) {
-			const aggregate: any = [];
+			const aggregate: any[] = [];
 			resultEntry["aggregate"] = aggregate;
 			if (fetchParserReturn) {
 				if (!Array.isArray(fetchParserReturn)) {
@@ -326,15 +326,21 @@ async function fetchAndParseInternal(
 					);
 				}
 
+				const fetchAndParseInternalExecutorPromises: Promise<void>[] = [];
 				for (let i = 0; i < fetchParserReturn.length; i++) {
-					const fetchParserReturnItem = fetchParserReturn[i];
-					const result = {};
-					await fetchAndParseInternal(runtimeArguments, nextPipe, result, [fetchParserReturnItem, null], `${entryDebugPath}[${i}]`);
-					aggregate.push({
-						next: result,
-						result: [fetchParserReturnItem, null],
-					});
+					const fetchAndParseInternalExecutorPromise = (async (iteration: number) => {
+						const fetchParserReturnItem = fetchParserReturn[iteration];
+						const result = {};
+						await fetchAndParseInternal(runtimeArguments, nextPipe, result, [fetchParserReturnItem, null], `${entryDebugPath}[${iteration}]`);
+						aggregate[iteration] = {
+							next: result,
+							result: [fetchParserReturnItem, null],
+						};
+					})(i);
+					fetchAndParseInternalExecutorPromises.push(fetchAndParseInternalExecutorPromise);
 				}
+
+				await Promise.all(fetchAndParseInternalExecutorPromises);
 			}
 		} else {
 			resultEntry["next"] = {};

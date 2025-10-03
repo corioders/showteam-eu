@@ -73,6 +73,10 @@ export const typeMarkdownKeyValueAggregateParser = defineTypeAggregateFunction<M
 					continue;
 				}
 
+				if (doubleParsedMarkdownValue.length === 0) {
+					continue;
+				}
+
 				const doubleParsedMarkdownValueArrayParent = doubleParsedMarkdownValue as ParsedMarkdownValueArrayParent;
 				doubleParsedMarkdownValueArrayParent.parent = parsedMarkdownValue;
 				doubleParsedMarkdownValues.push(doubleParsedMarkdownValueArrayParent);
