@@ -1,6 +1,6 @@
 "use client";
 
-import { invalidateDriveCMS } from "cstd-ts/next/invalidate-drive-cms.js";
+import { invalidate } from "cstd-ts/next/invalidate-cache-server-action.js";
 import { type ReactPortal, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -88,7 +88,7 @@ export function CoriodersDevelopmentOverlay(): ReactPortal | null {
 				data-index={3}
 				data-selected={false}
 				onClick={async () => {
-					await invalidateDriveCMS();
+					await invalidate();
 					window.location.reload();
 				}}
 				role="menuitem"
