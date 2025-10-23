@@ -12,10 +12,10 @@ import type SharpType from "sharp";
 import sharp from "sharp";
 import type * as SvgoType from "svgo";
 
+import { CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER } from "@/const.js";
+
 import { getListOfScaledWidths, type ImageType, TARGET_IMAGE_FORMATS, TARGET_IMAGE_SIZES } from "./image.mjs";
 import { PERFORMANCE_PLACEHOLDER } from "./performance-placeholder.mjs";
-
-const DISABLE_PERFORMANCE_PLACEHOLDER = "CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER";
 
 const SKIP_IMAGE_OPTIMIZATION_FLAG = "CORIODERS_SKIP_IMAGE_OPTIMIZATION";
 const FORCE_IMAGE_OPTIMIZATION_FLAG = "CORIODERS_FORCE_IMAGE_OPTIMIZATION";
@@ -23,7 +23,7 @@ const KIBIBYTE = 1024;
 const MAX_DEV_IMAGE_SIZE = 2 * KIBIBYTE;
 
 function shouldUsePerformancePlaceholder(isDevelopmentMode: boolean, imageSize: number): boolean {
-	if (process.env[DISABLE_PERFORMANCE_PLACEHOLDER] === "true") {
+	if (CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER) {
 		return false;
 	}
 

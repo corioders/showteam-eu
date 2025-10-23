@@ -23,6 +23,8 @@ import { createStorage, type Storage as UnstorageStorage } from "unstorage";
 import type UnstorageFsDriverType from "unstorage/drivers/fs-lite";
 import lruCacheDriver from "unstorage/drivers/lru-cache";
 
+import { CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER } from "@/const.js";
+
 import { memoizeImages } from "./cache.js";
 import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from "./image.mjs";
 import {
@@ -129,7 +131,14 @@ DESIGN:
 // I mean, a fallback will trigger, but the fallback will not serve the optimized image.
 //
 // TODO: BLUR IMAGE DATA
-export const RemoteStaticImage = memoizeImages(async function RemoteStaticImage(props: RemoteStaticImageProps) {
+export const RemoteStaticImage = function RemoteStaticImage(props: RemoteStaticImageProps) {
+	return RemoteStaticImageMemorized(props, CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER);
+};
+
+const RemoteStaticImageMemorized = memoizeImages(async function RemoteStaticImageMemorized(
+	props: RemoteStaticImageProps,
+	_invalidateCacheOn_CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER_EnvChange: boolean,
+) {
 	const isDevelopmentMode = process.env["NODE_ENV"] === "development" || !shouldOptimizeImages();
 
 	// Make sure that the src provided is a valid URL
