@@ -38,8 +38,6 @@ export const nextConfig: NextConfig = {
 			issuer: { not: regexLikeCss },
 			loader: "cstd-next/media/image/webpack-loader/local-static-image-loader.mjs",
 			options: {
-				// Make our loader env dependent.
-				__env: JSON.stringify(process.env),
 				isDev: isDev,
 				isEdgeServer: isEdgeServer,
 				isServer: isServer,

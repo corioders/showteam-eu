@@ -23,7 +23,7 @@ const KIBIBYTE = 1024;
 const MAX_DEV_IMAGE_SIZE = 2 * KIBIBYTE;
 
 function shouldUsePerformancePlaceholder(isDevelopmentMode: boolean, imageSize: number): boolean {
-	if (CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER) {
+	if (CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER()) {
 		return false;
 	}
 

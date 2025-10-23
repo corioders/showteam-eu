@@ -132,7 +132,7 @@ DESIGN:
 //
 // TODO: BLUR IMAGE DATA
 export const RemoteStaticImage = function RemoteStaticImage(props: RemoteStaticImageProps) {
-	return RemoteStaticImageMemorized(props, CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER);
+	return RemoteStaticImageMemorized(props, CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER());
 };
 
 const RemoteStaticImageMemorized = memoizeImages(async function RemoteStaticImageMemorized(

@@ -4,8 +4,9 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
 import { createHash } from "node:crypto";
-import path from "node:path";
+import path, { join } from "node:path";
 
+import { parseDotEnv } from "cstd-ts/runtime/env.js";
 import sharp from "sharp";
 import * as svgo from "svgo";
 import { createStorage } from "unstorage";
@@ -82,6 +83,7 @@ const NEXTJS_SERVER_BUILD_FILEPATH_PREFIX = "../../static/media";
 const NEXTJS_SERVER_DEV_FILEPATH_PREFIX = "../static/media";
 
 const EMITTED_FILES = new Set<string>();
+const PARSED_DOTENV_CACHE = new Map<string, Record<string, string>>();
 
 // TODO: BLUUUR
 //
@@ -91,6 +93,41 @@ const EMITTED_FILES = new Set<string>();
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
 const localStaticImageLoader: LoaderDefinitionFunction = async function localStaticImageLoader(this, contentNotRawType) {
 	this.cacheable(true);
+
+	// The 'optimizePictureSources' and 'getPictureSourcesNotSvg' internal functions are using the .env variable 'CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER'
+	// We need to tell webpack that this loader is dependent on the .env file
+	const root = this.rootContext || process.cwd();
+	const envFilePath = join(root, ".env");
+	this.addDependency(envFilePath);
+
+	// ==================================================
+	// Here unfortunately we need to reload the contents of .env ourselves. Nextjs is too slow.
+	// Next will reload these files and update process.env but only AFTER this loader has finished,
+	// so the user would need to update .env twice for this loader to notice the change in CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER
+	// This is why we reload it here.
+	const envFileContents = await new Promise<Buffer>((resolve) => {
+		this.fs.readFile(envFilePath, (err, result) => {
+			if (err) {
+				throw err;
+			}
+
+			if (!result) {
+				throw new Error("Unable to read .env file");
+			}
+
+			resolve(result);
+		});
+	});
+
+	const envFileContentsString = envFileContents.toString();
+	let parsedDotEnv = PARSED_DOTENV_CACHE.get(envFileContentsString);
+	if (!parsedDotEnv) {
+		parsedDotEnv = parseDotEnv(envFileContentsString);
+		PARSED_DOTENV_CACHE.set(envFileContentsString, parsedDotEnv);
+	}
+
+	process.env["CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER"] = parsedDotEnv["CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER"];
+	// ==================================================
 
 	const imageBuffer = contentNotRawType as unknown as Buffer;
 	const options = this.getOptions() as Options;
