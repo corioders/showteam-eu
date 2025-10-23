@@ -67,8 +67,12 @@ const ourGlobalThis = (global ?? globalThis ?? window ?? {}) as OurGlobalThis;
 if (ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE === undefined) {
 	if (process.env["NEXT_IS_EXPORT_WORKER"] === "true" || process.env.NODE_ENV === "development") {
 		const fsDriver: typeof UnstorageFsDriverType = require("unstorage/drivers/fs-lite");
+		const HALF_GIGABYTE_IN_BYTES = 536_870_912;
 		ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE = createStorage({
-			driver: cacheDriver({ driver: fsDriver({ base: ".next/cache/corioders/cstd-next-remote-static-image" }) }),
+			driver: cacheDriver({
+				cacheDriver: lruCacheDriver({ maxSize: HALF_GIGABYTE_IN_BYTES }),
+				driver: fsDriver({ base: ".next/cache/corioders/cstd-next-remote-static-image" }),
+			}),
 		});
 	} else {
 		ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE = createStorage({ driver: lruCacheDriver(undefined) });
