@@ -99,34 +99,44 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 	const root = this.rootContext || process.cwd();
 	const envFilePath = join(root, ".env");
 	this.addDependency(envFilePath);
+	this.addMissingDependency(envFilePath);
 
 	// ==================================================
 	// Here unfortunately we need to reload the contents of .env ourselves. Nextjs is too slow.
 	// Next will reload these files and update process.env but only AFTER this loader has finished,
 	// so the user would need to update .env twice for this loader to notice the change in CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER
 	// This is why we reload it here.
-	const envFileContents = await new Promise<Buffer>((resolve) => {
+	const envFileContents = await new Promise<Buffer | false>((resolve) => {
 		this.fs.readFile(envFilePath, (err, result) => {
 			if (err) {
-				throw err;
+				if (err.code === "ENOENT") {
+					resolve(false);
+					return;
+				}
+
+				throw new Error(`local-static-image-loader: Unable to read .env file: ${err.message}`, { cause: err });
 			}
 
 			if (!result) {
-				throw new Error("Unable to read .env file");
+				throw new Error("local-static-image-loader: Unable to read .env file");
 			}
 
 			resolve(result);
 		});
 	});
 
-	const envFileContentsString = envFileContents.toString();
-	let parsedDotEnv = PARSED_DOTENV_CACHE.get(envFileContentsString);
-	if (!parsedDotEnv) {
-		parsedDotEnv = parseDotEnv(envFileContentsString);
-		PARSED_DOTENV_CACHE.set(envFileContentsString, parsedDotEnv);
+	// Env file does not exist. We are in a ci pipeline or the env is already set.
+	if (!envFileContents) {
+		const envFileContentsString = envFileContents.toString();
+		let parsedDotEnv = PARSED_DOTENV_CACHE.get(envFileContentsString);
+		if (!parsedDotEnv) {
+			parsedDotEnv = parseDotEnv(envFileContentsString);
+			PARSED_DOTENV_CACHE.set(envFileContentsString, parsedDotEnv);
+		}
+
+		process.env["CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER"] = parsedDotEnv["CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER"];
 	}
 
-	process.env["CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER"] = parsedDotEnv["CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER"];
 	// ==================================================
 
 	const imageBuffer = contentNotRawType as unknown as Buffer;
