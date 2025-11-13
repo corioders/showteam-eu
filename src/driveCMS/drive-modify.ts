@@ -147,7 +147,16 @@ export async function internalCreateFolder(googleAuth: GoogleAuth, parentFolderI
 	return [newFolderId, null];
 }
 
-export async function internalGetFolderIDorCreateIfNotExistent(googleAuth: GoogleAuth, parentFolderID: FolderID, folderName: string): ErrorReturnPromise<FolderID> {
+export interface GetFolderIDorCreateIfNotExistentReturn {
+	folderID: FolderID;
+	created: boolean;
+}
+
+export async function internalGetFolderIDorCreateIfNotExistent(
+	googleAuth: GoogleAuth,
+	parentFolderID: FolderID,
+	folderName: string,
+): ErrorReturnPromise<GetFolderIDorCreateIfNotExistentReturn> {
 	console.log(`createIfNotExist: parent: ${parentFolderID} name ${folderName}`);
 	const drive = google.drive({ auth: googleAuth, version: "v3" });
 
@@ -156,14 +165,23 @@ export async function internalGetFolderIDorCreateIfNotExistent(googleAuth: Googl
 		return [null, errorParentFolderList];
 	}
 
+	let foundFolderID: FolderID | null = null;
 	for (const folder of parentFolderList) {
 		if (!isFolder(folder)) {
 			continue;
 		}
 
 		if (folder.name === folderName) {
-			return [folder.id, null];
+			if (foundFolderID) {
+				const errorMessage = `internalGetFolderIDorCreateIfNotExistent: Multiple folders with the same name ${folderName}. Parent folder ID: ${parentFolderID}.\nHint: remove the duplicate folders.`;
+				return [null, new Error(errorMessage)];
+			}
+			foundFolderID = folder.id;
 		}
+	}
+
+	if (foundFolderID) {
+		return [{ created: false, folderID: foundFolderID }, null];
 	}
 
 	console.log(`createIfNotExist creating... ${parentFolderID} name: ${folderName}`);
@@ -189,7 +207,7 @@ export async function internalGetFolderIDorCreateIfNotExistent(googleAuth: Googl
 	// Plus list the parent again and figure out if we have 2 folders or one. Google Drive allows for two folders of the same name
 
 	const newFolderID = folder.data.id as FolderID;
-	return [newFolderID, null];
+	return [{ created: true, folderID: newFolderID }, null];
 }
 
 export async function internalCopyPermissions(googleAuth: GoogleAuth, sourceResourceID: ResourceID, targetResourceID: ResourceID): Promise<Error | null> {

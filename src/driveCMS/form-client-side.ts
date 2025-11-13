@@ -3,12 +3,10 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, May 2025
 
-import { type ErrorReturnPromise, safePromise } from "@/error/index.js";
 import type { ImageURL } from "@/media/image/index.js";
 import type { ValueOf } from "@/type/index.js";
 
-import type { FileID, FolderID } from "./drive.js";
-import { fileIDToGoogleDriveLink, type GoogleDriveFileURL } from "./drive-client-side.js";
+import type { FolderID } from "./drive.js";
 
 export type FormQuestionTypeValue = ValueOf<FormQuestionType>;
 export type FormQuestionType = typeof FORM_QUESTION_TYPE;
@@ -160,34 +158,4 @@ export function isFileUploadQuestion(title: string): boolean {
 
 export function getFileUploadQuestionTitle(title: string): string {
 	return title.replace(FILE_UPLOAD_QUESTION_PREFIX, "").trim();
-}
-
-function getCoriodersFormUploadWorkerUploadPath(coriodersFormUploadWorkerURL: string, targetFolderID: FolderID) {
-	return `${coriodersFormUploadWorkerURL}/upload/${targetFolderID}`;
-}
-
-export async function uploadFileUsingForm(file: File, uploadFolderID: FolderID): ErrorReturnPromise<GoogleDriveFileURL> {
-	const uploadURL = getCoriodersFormUploadWorkerUploadPath(process.env["NEXT_PUBLIC_CORIODERS_FORM_UPLOAD_WORKER_URL"] as string, uploadFolderID);
-
-	const formUploadWorkerForm = new FormData();
-	formUploadWorkerForm.append("file", file);
-
-	const [formUploadWorkerResponse, formUploadWorkerResponseError] = await safePromise(() =>
-		fetch(uploadURL, {
-			body: formUploadWorkerForm,
-			method: "POST",
-			mode: "cors",
-		}),
-	);
-	if (formUploadWorkerResponseError) {
-		return [null, formUploadWorkerResponseError];
-	}
-	if (!formUploadWorkerResponse.ok) {
-		return [null, new Error(`Error while uploading file: ${formUploadWorkerResponse.statusText}`)];
-	}
-
-	const formUploadWorkerResponseText = await formUploadWorkerResponse.text();
-	const uploadedFileID = formUploadWorkerResponseText as FileID;
-
-	return [fileIDToGoogleDriveLink(uploadedFileID), null];
 }

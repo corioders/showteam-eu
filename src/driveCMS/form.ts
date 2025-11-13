@@ -180,13 +180,15 @@ async function fileUploadOptionsToFileUploadFunctionOptions(
 		return [undefined, null];
 	}
 
-	const [rootUploadFolderID, errorRootUploadFolderID] = await getFolderIDorCreateIfNotExistent(
+	const [getFolderIDorCreateIfNotExistentReturn, errorRootUploadFolderID] = await getFolderIDorCreateIfNotExistent(
 		fileUploadOptions.parentFolderToTheRootUploadFolder,
 		`${formName} ${FORMS_UPLOAD_FOLDER_NAME}`,
 	);
 	if (errorRootUploadFolderID) {
 		return [null, errorRootUploadFolderID];
 	}
+
+	const rootUploadFolderID = getFolderIDorCreateIfNotExistentReturn.folderID;
 
 	if (fileUploadOptions.permissions?.additionalAllowedEmailAddresses) {
 		for (const emailAddress of fileUploadOptions.permissions.additionalAllowedEmailAddresses) {
@@ -484,10 +486,15 @@ async function getOrCreateFileUploadFolderID(fileUploadQuestionTitle: string, fi
 		return [null, new Error(duplicateErrorMessage)];
 	}
 
-	const [fileUploadFolderID, errorGetOrCreate] = await getFolderIDorCreateIfNotExistent(fileUploadFunctionOptions.rootUploadFolderID, fileUploadQuestionTitle);
+	const [getFolderIDorCreateIfNotExistentReturn, errorGetOrCreate] = await getFolderIDorCreateIfNotExistent(
+		fileUploadFunctionOptions.rootUploadFolderID,
+		fileUploadQuestionTitle,
+	);
 	if (errorGetOrCreate) {
 		return [null, errorGetOrCreate];
 	}
+
+	const fileUploadFolderID = getFolderIDorCreateIfNotExistentReturn.folderID;
 
 	return [fileUploadFolderID, null];
 }

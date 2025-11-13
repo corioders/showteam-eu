@@ -23,6 +23,7 @@ import {
 	type PermissionType,
 } from "./drive.js";
 import {
+	type GetFolderIDorCreateIfNotExistentReturn,
 	internalAddPermission,
 	internalClearAllPermissions,
 	internalCopyPermissions,
@@ -236,6 +237,6 @@ export function addPermission(
 	return internalAddPermission(defaultGoogleAuth, targetResourceID, emailAddress, permissionRole, permissionType);
 }
 
-export function getFolderIDorCreateIfNotExistent(parentFolderID: FolderID, folderName: string): ErrorReturnPromise<FolderID> {
+export function getFolderIDorCreateIfNotExistent(parentFolderID: FolderID, folderName: string): ErrorReturnPromise<GetFolderIDorCreateIfNotExistentReturn> {
 	return internalGetFolderIDorCreateIfNotExistent(defaultGoogleAuth, parentFolderID, folderName);
 }
