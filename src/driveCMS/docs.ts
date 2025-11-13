@@ -8,7 +8,7 @@ import { parse } from "@textlint/markdown-to-ast";
 import { createAPIRequest, type GoogleAuth } from "googleapis-common";
 import { StatusCodes } from "http-status-codes";
 
-import { CSE, type ErrorReturn, type ErrorReturnPromise, safePromise, unreachableErrorMessage } from "@/error";
+import { CSE, type ErrorReturn, type ErrorReturnPromise, errorIsInArray, safe, safePromise, unreachableErrorMessage } from "@/error";
 import type { StringMarkdown } from "@/format/markdown/index.js";
 import type { ImageURL } from "@/media/image/index.js";
 
@@ -219,39 +219,82 @@ interface GoogleInternalPhotoIDAndImageURL {
 
 const DOCS_MODEL_CHUNK_START_STRING = ">DOCS_modelChunk = ";
 const DOCS_MODEL_CHUNK_END_STRING = "; DOCS_modelChunkLoadStart ";
+
+const ERR_UNABLE_FIND_SEARCH_START_INDEX = new Error(unreachableErrorMessage("Google changed something: Unable to find searchStartIndex"));
+const ERR_UNABLE_FIND_SEARCH_END_INDEX = new Error(unreachableErrorMessage("Google changed something: Unable to find searchEndIndex"));
+
+// These errors can be omitted if startIndex > 0
+const NON_CRITICAL_EXTRACT_SINGLE_DOCS_MODEL_CHUNK_ERRORS = [ERR_UNABLE_FIND_SEARCH_START_INDEX, ERR_UNABLE_FIND_SEARCH_END_INDEX];
+
 function sortPhotoIDAndImageURLArrayBasedOnDocOrder(
 	source: GoogleInternalWebInterfacePageSource,
 	array: GoogleInternalPhotoIDAndImageURL[],
 ): ErrorReturn<GoogleInternalPhotoIDAndImageURL[]> {
+	type DocsModelChunk = any;
+	function extractSingleDocsModelChunk(
+		source: GoogleInternalWebInterfacePageSource,
+		startIndex: number,
+	): ErrorReturn<{ docsModelChunk: DocsModelChunk; endIndex: number }> {
+		const searchStartIndex = source.indexOf(DOCS_MODEL_CHUNK_START_STRING, startIndex);
+		if (searchStartIndex === -1) {
+			return [null, new CSE(ERR_UNABLE_FIND_SEARCH_START_INDEX)];
+		}
+
+		const searchEndIndex = source.indexOf(DOCS_MODEL_CHUNK_END_STRING, startIndex);
+		if (searchEndIndex === -1) {
+			return [null, new CSE(ERR_UNABLE_FIND_SEARCH_END_INDEX)];
+		}
+
+		const docsModelChunkString = source.slice(searchStartIndex + DOCS_MODEL_CHUNK_START_STRING.length, searchEndIndex);
+		const [docsModelChunkOrNot, jsonParingError] = safe(() => JSON.parse(docsModelChunkString));
+		if (jsonParingError) {
+			return [null, jsonParingError];
+		}
+
+		let docsModelChunk: DocsModelChunk = null;
+		if ("chunk" in docsModelChunkOrNot) {
+			docsModelChunk = docsModelChunkOrNot.chunk;
+		} else {
+			docsModelChunk = docsModelChunkOrNot;
+		}
+
+		return [{ docsModelChunk, endIndex: searchEndIndex + 1 }, null];
+	}
+
 	const copyArray: GoogleInternalPhotoIDAndImageURL[] = array.slice();
 
-	const searchStartIndex = source.indexOf(DOCS_MODEL_CHUNK_START_STRING);
-	if (searchStartIndex === -1) {
-		return [null, new Error(unreachableErrorMessage("Google changed something: Unable to find searchStartIndex"))];
-	}
+	const docsModelChunks: DocsModelChunk[] = [];
+	let startIndex = 0;
+	while (true) {
+		const [extractSingleDocsModelChunkReturn, extractSingleDocsModelChunkError] = extractSingleDocsModelChunk(source, startIndex);
+		if (extractSingleDocsModelChunkError) {
+			if (docsModelChunks.length === 0 || !errorIsInArray(extractSingleDocsModelChunkError, NON_CRITICAL_EXTRACT_SINGLE_DOCS_MODEL_CHUNK_ERRORS)) {
+				return [null, extractSingleDocsModelChunkError];
+			}
 
-	const searchEndIndex = source.indexOf(DOCS_MODEL_CHUNK_END_STRING);
-	if (searchEndIndex === -1) {
-		return [null, new Error(unreachableErrorMessage("Google changed something: Unable to find searchEndIndex"))];
-	}
+			break;
+		}
 
-	const docsModelChunkString = source.slice(searchStartIndex + DOCS_MODEL_CHUNK_START_STRING.length, searchEndIndex);
-	const docsModelChunk = JSON.parse(docsModelChunkString);
+		docsModelChunks.push(extractSingleDocsModelChunkReturn.docsModelChunk);
+		startIndex = extractSingleDocsModelChunkReturn.endIndex;
+	}
 
 	// kix is an ID used to mark every "entity" on the docs page. Paragraph, image, etc...
 	// spi is an indication where on page is this specific entity.
 	// We have to map GoogleInternalPhotoID to kixID and then sort these kixID by SPI.
 	const kixIDtoSPI = new Map<string, number>();
 	const photoIDtoKixID = new Map<string, string>();
-	for (const chunk of docsModelChunk) {
-		if (chunk.spi) {
-			kixIDtoSPI.set(chunk.id, chunk.spi);
-		}
+	for (const docsModelChunk of docsModelChunks) {
+		for (const smallChunk of docsModelChunk) {
+			if (smallChunk.spi) {
+				kixIDtoSPI.set(smallChunk.id, smallChunk.spi);
+			}
 
-		// this is where the photoID is stored
-		const iCid = chunk.epm?.ee_eo?.i_cid;
-		if (iCid) {
-			photoIDtoKixID.set(iCid, chunk.id);
+			// this is where the photoID is stored
+			const iCid = smallChunk.epm?.ee_eo?.i_cid;
+			if (iCid) {
+				photoIDtoKixID.set(iCid, smallChunk.id);
+			}
 		}
 	}
 
@@ -260,9 +303,10 @@ function sortPhotoIDAndImageURLArrayBasedOnDocOrder(
 	let mapError: Error | null = null;
 	const arrayWithIndexInSource = copyArray
 		.map((photoIDAndImageURL) => {
-			const kixID = photoIDtoKixID.get(photoIDAndImageURL.id);
+			const rawPhotoID = photoIDAndImageURL.id;
+			const kixID = photoIDtoKixID.get(rawPhotoID);
 			if (!kixID) {
-				mapError = new Error(unreachableErrorMessage(`Google changed something: Unable to find photo ID ${photoIDAndImageURL.id} in kixIDtoSPI`));
+				mapError = new Error(unreachableErrorMessage(`Google changed something: Unable to find photo ID ${rawPhotoID} in kixIDtoSPI`));
 				return undefined;
 			}
 

@@ -36,6 +36,16 @@ export class CaptureStackError extends Error {
 }
 export const CSE = CaptureStackError;
 
+export function errorIsInArray(error: Error, targets: Error[]): boolean {
+	for (const target of targets) {
+		if (errorIs(error, target)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 export function errorIs(error: Error, target: Error): boolean {
 	if (error == null || target == null) {
 		return error === target;
