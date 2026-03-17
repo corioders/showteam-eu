@@ -9,7 +9,6 @@ import type { BinaryLike, createHash as createHashType } from "node:crypto";
 
 import pLimit from "p-limit";
 import type SharpType from "sharp";
-import sharp from "sharp";
 import type * as SvgoType from "svgo";
 
 import { CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER } from "@/const.js";
@@ -63,11 +62,10 @@ export interface ImageInfo {
 }
 
 // TODO readImageInfoFromBufferInternal throws
-export async function readImageInfoFromBuffer(imageBuffer: Buffer): Promise<ImageInfo> {
+export async function readImageInfoFromBuffer(imageBuffer: Buffer, sharp: typeof SharpType): Promise<ImageInfo> {
 	const imageSize = imageBuffer.length;
 	const imageMetadata = await sharp(imageBuffer).metadata();
 
-	// biome-ignore assist/source/useSortedKeys: We like to have it in the same order as in the interface.
 	return {
 		width: imageMetadata.width,
 		height: imageMetadata.height,
@@ -124,7 +122,6 @@ export function validateUserSpecified(userSpecified: UserSpecified) {
 	}
 }
 
-const NEXTJS_IMAGE_FOLDER = ".next/static/media";
 const NEXTJS_URL_PREFIX = "/_next/static/media";
 
 function getImageFilenameMeta(imageFilename: string, imageSpecificHash: string) {
@@ -144,7 +141,7 @@ export function getPictureSourcesNotSvg(
 	imageSpecificHashArg: string,
 	imageInfo: ImageInfo,
 	baseFilePath: string,
-	userSpecified?: UserSpecified,
+	userSpecified: UserSpecified | undefined,
 	baseURL: string = NEXTJS_URL_PREFIX,
 ): INTERNAL_PictureSource[] {
 	let imageFilename = imageFilenameArg;
@@ -247,10 +244,9 @@ function reportTime(startTime: number, wasCacheHit: boolean, imageFilenameToRepo
 	}
 
 	const endTime = Date.now();
-	// biome-ignore lint/nursery/noMagicNumbers: Milliseconds to seconds
 	const timeItTook = Math.round((endTime - startTime) / 1000)
 		.toString()
-		// biome-ignore lint/nursery/noMagicNumbers: Just an arbitrary number
+		// Just an arbitrary number
 		.padEnd(3);
 	console.log(`Optimizing image took ${timeItTook} seconds ${cacheHitMessage}: ${imageFilenameToReport}`);
 }
@@ -272,7 +268,7 @@ export async function optimizePictureSources(
 		const theOnlySharpEntry = pictureSources[0].__sharpEntries[0];
 
 		if (shouldUsePerformancePlaceholder(isDevelopmentMode, imageBuffer.length)) {
-			const imageInfo = await readImageInfoFromBuffer(imageBuffer);
+			const imageInfo = await readImageInfoFromBuffer(imageBuffer, sharp);
 			const cacheKey = `PERFORMANCE_PLACEHOLDER_${imageInfo.width}_${imageInfo.height}`;
 
 			const cachedScaledPerformancePlaceholder = await getCacheFunction(cacheKey);
@@ -378,7 +374,7 @@ export function getSvgEntry(
 	imageFilename: string,
 	imageSpecificHash: string,
 	imageInfo: ImageInfo,
-	baseFilePath: string = NEXTJS_IMAGE_FOLDER,
+	baseFilePath: string,
 	baseURL: string = NEXTJS_URL_PREFIX,
 ): INTERNAL_SVGEntry {
 	if (imageInfo.type !== "svg") {

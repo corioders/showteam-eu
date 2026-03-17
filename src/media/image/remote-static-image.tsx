@@ -50,7 +50,14 @@ import { validateSizesProperty } from "./internal-client.mjs";
 
 const FETCH_CONCURRENCY_LIMIT = 3;
 const FETCH_RETRY = 3;
-const NEXTJS_FILEPATH_PREFIX = "./.next/static/media";
+let NextjsFilepathPrefix = "./.next/static/media";
+
+import nextPackageJson from "next/package.json";
+
+const nextMajorVersion = Number(nextPackageJson.version.split(".")[0]);
+if (nextMajorVersion >= 16 && process.env.NODE_ENV === "development") {
+	NextjsFilepathPrefix = "./.next/dev/static/media";
+}
 
 // The cache should work regardless of the environment we are in:
 // Dev-server: The cache is used while developing to prevent fetching the same images
@@ -231,10 +238,10 @@ const RemoteStaticImageMemorized = memoizeImages(async function RemoteStaticImag
 	// for performance and SEO purposes it is more optimal to treat them as one image.
 	const imageSpecificHash = hash(imageBuffer, require("node:crypto").createHash);
 
-	await nodeFs.mkdir(NEXTJS_FILEPATH_PREFIX, { recursive: true });
+	await nodeFs.mkdir(NextjsFilepathPrefix, { recursive: true });
 
 	if (isSVG) {
-		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo);
+		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo, NextjsFilepathPrefix);
 		await optimizeSvgAndWriteToDisk(isDevelopmentMode, svgEntry, imageBuffer);
 		return (
 			<picture className={props.pictureClassName}>
@@ -249,7 +256,7 @@ const RemoteStaticImageMemorized = memoizeImages(async function RemoteStaticImag
 
 	imageOptimizationAttributes.sizes = validateSizesProperty(props.sizes, calculatedSize.inferredSizes, imageFilename);
 
-	const pictureSources = getPictureSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, NEXTJS_FILEPATH_PREFIX, userSpecified);
+	const pictureSources = getPictureSourcesNotSvg(isDevelopmentMode, imageFilename, imageSpecificHash, imageInfo, NextjsFilepathPrefix, userSpecified);
 	await optimizeImageAndWriteToDisk(isDevelopmentMode, pictureSources, imageBuffer, imageFilename);
 
 	const sources: JSX.Element[] = [];
@@ -339,6 +346,8 @@ async function getFetchRemoteImageCache(cacheKey: string): Promise<FetchRemoteIm
 // }
 
 async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): ErrorReturnPromise<FetchedImage> {
+	const sharp: typeof SharpType = requireWebpackExternalDependencyMakeWebpackNotBundleIt("sharp");
+
 	let imageURLForLogging = imageURL.toString();
 	if (isDataURI(imageURLForLogging)) {
 		imageURLForLogging = "<DATA URI>";
@@ -382,7 +391,7 @@ async function fetchRemoteImage(imageURL: URL, fetchRequestInit?: RequestInit): 
 	}
 
 	const imageBuffer = Buffer.from(imageArrayBuffer);
-	const imageInfo = await readImageInfoFromBuffer(imageBuffer);
+	const imageInfo = await readImageInfoFromBuffer(imageBuffer, sharp);
 
 	const fetchedImage: FetchedImage = {
 		imageBuffer,
@@ -476,7 +485,6 @@ async function fetchWithRetry(imageURL: URL, fetchRequestInit?: RequestInit): Er
 		fetchTry += 1;
 
 		const millisecond = 1;
-		// biome-ignore lint/nursery/noMagicNumbers: This is a standard multiplayer
 		const second = millisecond * 1000;
 		const minute = second * 60;
 		const hour = minute * 60;

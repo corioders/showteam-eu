@@ -211,7 +211,7 @@ const localStaticImageLoader: LoaderDefinitionFunction = async function localSta
 
 	const imageSpecificHash = hash(imageBuffer, createHash);
 	const imageFilename = path.basename(this.resourcePath);
-	const imageInfo = await readImageInfoFromBuffer(imageBuffer);
+	const imageInfo = await readImageInfoFromBuffer(imageBuffer, sharp);
 
 	if (imageInfo.type === "svg") {
 		const svgEntry = getSvgEntry(imageFilename, imageSpecificHash, imageInfo, pathPrefix);

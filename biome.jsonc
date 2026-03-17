@@ -1,8 +1,10 @@
 // biome-ignore-all assist/source/useSortedKeys: I want this file to be in the order presented on biome website
 {
 	"root": false,
-	"$schema": "https://biomejs.dev/schemas/2.1.4/schema.json",
-	"extends": ["./../cstd-ts/config/biome.jsonc"],
+	"$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+	"extends": [
+		"./../cstd-ts/config/biome.jsonc"
+	],
 	"linter": {
 		"rules": {
 			"suspicious": {
