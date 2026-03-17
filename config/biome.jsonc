@@ -1,7 +1,12 @@
 // biome-ignore-all assist/source/useSortedKeys: I want this file to be in the order presented on biome website
 {
-	"$schema": "https://biomejs.dev/schemas/2.1.4/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
 	"root": false,
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		}
+	},
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
@@ -17,21 +22,25 @@
 		"enabled": true,
 		"indentStyle": "tab",
 		"lineWidth": 170,
-		"formatWithErrors": false
+		"formatWithErrors": false,
+		"lineEnding": "lf"
 	},
 	"linter": {
 		"enabled": true,
 		"domains": {
-			"react": "all",
-			"next": "all",
-			"project": "all"
+			"react": "recommended",
+			"next": "recommended",
+			"turborepo": "recommended",
+			"tailwind": "recommended"
+			// "project": "recommended",
 		},
 		"rules": {
-			"a11y": {},
 			"complexity": {
 				"noExcessiveCognitiveComplexity": {
 					"level": "warn",
-					"options": { "maxAllowedComplexity": 20 }
+					"options": {
+						"maxAllowedComplexity": 20
+					}
 				},
 				"noUselessStringConcat": "error",
 				// This rule interferes with the noPropertyAccessFromIndexSignature typescript compiler flag
@@ -48,29 +57,6 @@
 				// "useImportExtensions": {},
 			},
 			"nursery": {
-				// "noAwaitInLoop": "info",
-				"noConstantBinaryExpression": "warn",
-				"noFloatingPromises": "warn",
-				"noGlobalDirnameFilename": "warn",
-				// Typescript struggles with type inference when using explicit coercion
-				// "noImplicitCoercion": "warn",
-				"noMagicNumbers": "warn",
-				"noNoninteractiveElementInteractions": "warn",
-				// process.env is used by nextjs to provide env information. Forcing to import process, makes this feature unusable on client-components
-				// "noProcessGlobal": "warn",
-				"noReactPropAssign": "warn",
-				// "noSecrets": "warn",
-				"noTsIgnore": "warn",
-				"noUnassignedVariables": "warn",
-				"noUselessBackrefInRegex": "warn",
-				"noUselessEscapeInString": "warn",
-				"useIndexOf": "warn",
-				"useIterableCallbackReturn": "warn",
-				"useNumericSeparators": "warn",
-				"useObjectSpread": "warn",
-				"useParseIntRadix": "warn",
-				"useReadonlyClassProperties": "warn",
-				"useSingleJsDocAsterisk": "warn",
 				// TODO: Follow this issue: https://github.com/biomejs/biome/issues/1274
 				"useSortedClasses": {
 					"level": "error",
@@ -78,14 +64,10 @@
 					"options": {
 						"functions": ["clsx", "cva", "tw", "tw.*"]
 					}
-				},
-				"useSymbolDescription": "warn",
-				"useUnifiedTypeSignature": "warn"
+				}
 			},
 			"performance": {
 				"noBarrelFile": "warn",
-				// The fix proposed by this rule is misleading
-				// "noDelete": "warn",
 				"noReExportAll": "warn",
 				"useTopLevelRegex": "warn"
 			},
@@ -96,7 +78,6 @@
 				"noExportedImports": "warn",
 				"noImplicitBoolean": "warn",
 				"noNamespace": "warn",
-				"noNonNullAssertion": "warn",
 				"noParameterAssign": "warn",
 				"noParameterProperties": "warn",
 				"noShoutyConstants": "warn",
@@ -117,7 +98,6 @@
 					"options": {
 						"strictCase": false,
 						"requireAscii": true,
-						// "match": "%?(.+?)[.](.+)", // Since v2.0.0
 						"filenameCases": ["kebab-case"]
 					}
 				},
@@ -125,7 +105,9 @@
 				"useFragmentSyntax": "warn",
 				"useNamingConvention": {
 					"level": "warn",
-					"options": { "strictCase": false }
+					"options": {
+						"strictCase": false
+					}
 				},
 				"useNumberNamespace": "warn",
 				"useSelfClosingElements": "warn",
@@ -136,8 +118,7 @@
 				"noConsole": "warn",
 				"noEvolvingTypes": "warn",
 				"noVar": "warn",
-				"useGuardForIn": "warn",
-				"useNumberToFixedDigitsArgument": "warn"
+				"useGuardForIn": "warn"
 			}
 		}
 	},
@@ -149,9 +130,7 @@
 					"options": {
 						"groups": [":NODE:", ":BLANK_LINE:", ":PACKAGE:", ":BLANK_LINE:", ":ALIAS:", ":BLANK_LINE:", ":PATH:"]
 					}
-				},
-				"useSortedAttributes": "on",
-				"useSortedKeys": "on"
+				}
 			}
 		}
 	}
