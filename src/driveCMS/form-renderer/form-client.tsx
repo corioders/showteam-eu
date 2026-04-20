@@ -67,15 +67,22 @@ export function FormClient({
 					return;
 				}
 
-				if (innerRef.current.checkValidity() === false) {
-					const element = innerRef.current.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(":invalid");
-					if (element === null) {
-						return;
-					}
-					element.focus();
-					element.scrollIntoView({ behavior: "smooth", block: "center" });
-					return;
-				}
+				// TODO: ?Re-enable this after recruitment?
+				// there is a problem with the validation of the form.
+				// if we have a multi section form and the user skips a section which has required questions, the form SHOULD BE VALID.
+				// the commented out code is breaking that
+				// BUT if we have a single section form we should keep normal validation
+				// idk how to handle this yet
+
+				// if (innerRef.current.checkValidity() === false) {
+				// 	const element = innerRef.current.querySelector<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(":invalid");
+				// 	if (element === null) {
+				// 		return;
+				// 	}
+				// 	element.focus();
+				// 	element.scrollIntoView({ behavior: "smooth", block: "center" });
+				// 	return;
+				// }
 
 				const collectedInputs = collectInputs(innerRef.current, formClientData.perSectionQuestionIDs);
 				const inputBody = convertNotFileUploadInputsToGoogleFormsAPIBody(

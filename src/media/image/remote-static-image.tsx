@@ -469,6 +469,7 @@ function requireWebpackExternalDependencyMakeWebpackNotBundleIt(id: string): any
 	return originalNodejsRequire__NotAffectedByWebpackBuild(id);
 }
 
+
 function convertToValidFilename(x: string): string {
 	return x.replaceAll(/[/|\\:*?"<>]/g, " ").replaceAll("\n", " ");
 }

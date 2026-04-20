@@ -4,9 +4,9 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
 import type { ErrorReturn } from "cstd-ts/error/index.js";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
-interface Props {
+interface Props extends ComponentProps<"pre"> {
 	error: Error | string;
 }
 
@@ -15,15 +15,16 @@ const IS_PREVIEW = process.env.IS_PREVIEW === "true" || process.env.NEXT_PUBLIC_
 /**
  * https://h.corioders.com/cstd-next/cstd-error
  */
-export function CstdError(props: Props): ReactNode {
+export function CstdError({ error, className = "", children, ...props }: Props): ReactNode {
 	if (!IS_PREVIEW) {
 		return null;
 	}
 
 	return (
-		<pre className="w-full max-w-lg whitespace-pre-wrap p-6">
+		<pre className={`w-full max-w-lg whitespace-pre-wrap p-6 ${className}`} {...props}>
 			<h1 className="mb-2 font-black text-3xl">ERROR:</h1>
-			<p className="text-wrap">{String(props.error).replaceAll("\n", "\n\n")}</p>
+			{children}
+			<p className="text-wrap">{String(error).replaceAll("\n", "\n\n")}</p>
 		</pre>
 	);
 }
