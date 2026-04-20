@@ -9,7 +9,6 @@ const SECONDS_MULTIPLAYER = 1000;
 
 const KILL_N_TIMES = 5;
 
-// biome-ignore lint/nursery/noMagicNumbers: Seconds between each kill
 const KILL_WAIT_BETWEEN_TRIES = 5 * SECONDS_MULTIPLAYER;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
