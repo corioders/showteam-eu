@@ -10,7 +10,7 @@ import type { GoogleAuth } from "googleapis-common";
 import { StatusCodes } from "http-status-codes";
 
 import { IS_PREVIEW } from "@/const.js";
-import { type ErrorReturn, type ErrorReturnPromise, errorArrayToAggregateError, safe, safePromise, unreachableErrorMessage } from "@/error/index.js";
+import { CSE, type ErrorReturn, type ErrorReturnPromise, errorArrayToAggregateError, safe, safePromise, unreachableErrorMessage } from "@/error/index.js";
 import type { ImageURL } from "@/media/image/index.js";
 import type { EmailAddress } from "@/media/personal/index.js";
 
@@ -96,7 +96,10 @@ export const getForm = memoizeDriveCMS(async function getForm(googleAuth: Google
 	}
 	const [questionSubmitIDs, errorGetQuestionSubmitIDs] = await getRealQuestionSubmitIDFromUndocumentedAPI(responseURI);
 	if (errorGetQuestionSubmitIDs !== null) {
-		return [null, errorGetQuestionSubmitIDs];
+		return [
+			null,
+			new Error(`Error getting real question submit IDs: ${errorGetQuestionSubmitIDs.message} responseURI: ${responseURI}`, { cause: errorGetQuestionSubmitIDs }),
+		];
 	}
 
 	if (!googleAPIsForm.items) {
@@ -296,6 +299,8 @@ interface GoogleAPIsItemToFormQuestionReturn {
 	fileUploadQuestionIDToFolderID?: FileUploadQuestionIDToFolderID;
 }
 
+const DEFAULT_QUESTION_TITLE = "Question";
+
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO? I think I do not want to break it down to smaller functions.
 async function googleAPIsItemToFormQuestion(
 	item: forms_v1.Schema$Item,
@@ -308,11 +313,7 @@ async function googleAPIsItemToFormQuestion(
 
 	const questionIDs: QuestionNameAttributeID[] = [itemID];
 
-	const title = item.title;
-	if (title === undefined || title === null) {
-		return [null, new Error(unreachableErrorMessage("item.title is undefined or null"))];
-	}
-
+	const title = item.title ?? DEFAULT_QUESTION_TITLE;
 	const questionItem = item.questionItem?.question;
 	if (!questionItem) {
 		return [null, new Error(`Unsupported question type ${JSON.stringify(item, null, 2)}`)];
@@ -569,6 +570,8 @@ function parseOptionsImage(options: forms_v1.Schema$Option[]): ErrorReturn<Parse
 }
 
 const REQUIRED_SIGN_IN_MARKER = `data-sign-in-to-continue="true"`;
+const FORM_RESPONSE_TEXT_START = "FB_PUBLIC_LOAD_DATA_ = ";
+const FORM_RESPONSE_TEXT_END = ";</script>";
 
 async function getRealQuestionSubmitIDFromUndocumentedAPI(responseURI: string): ErrorReturnPromise<(number | undefined)[]> {
 	const [formResponse, formResponseError] = await safePromise(() => fetch(responseURI));
@@ -592,14 +595,15 @@ async function getRealQuestionSubmitIDFromUndocumentedAPI(responseURI: string): 
 		return [null, new Error(`Fetching form from ${responseURI} failed: ${formResponse.statusText}\n${hint}`)];
 	}
 
-	let data = formResponseText.split("FB_PUBLIC_LOAD_DATA_ = ")[1];
+	let data = formResponseText.split(FORM_RESPONSE_TEXT_START)[1];
 	if (!data) {
 		return [null, new Error(unreachableErrorMessage("FB_PUBLIC_LOAD_DATA_ split failed. Google changed something."))];
 	}
-	data = data.substring(0, data.indexOf(";"));
+
+	data = data.substring(0, data.indexOf(FORM_RESPONSE_TEXT_END));
 	const [parsedData, jsonParseError] = safe(() => JSON.parse(data) as unknown[]);
 	if (jsonParseError) {
-		return [null, jsonParseError];
+		return [null, new CSE(jsonParseError)];
 	}
 
 	const [questionIDs, extractError] = extractQuestionIdsFromUndocumentedAPIParsedData(parsedData);

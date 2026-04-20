@@ -42,7 +42,7 @@ export async function internalEdgeSimpleFileUploadGetAuthorizedUploadURL(
 	}
 
 	if (!authorizedUploadURLResponse.ok) {
-		return [null, new Error("Getting upload url failed")];
+		return [null, new Error(`Getting upload url failed ${await authorizedUploadURLResponse.text()}`)];
 	}
 
 	const location = authorizedUploadURLResponse.headers.get("location");
