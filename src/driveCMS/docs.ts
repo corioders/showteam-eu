@@ -108,7 +108,7 @@ export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistentCached
 	docID: DocID,
 	revisionID: RevisionID,
 ) => ErrorReturnPromise<StringMarkdown> = persistentDriveCMSCache(
-	"baseDownloadDocRevisionAndAdjustInDocMarkdownImages_1",
+	"baseDownloadDocRevisionAndAdjustInDocMarkdownImages2",
 	// We don't need to check the last modification time, because this function depends on revisionID.
 	// Every revisionID represents different doc version.
 	{ disableAutomaticInvalidation: true },
@@ -351,7 +351,7 @@ function getGoogleInternalPhotoIDtoImageURLArray(source: GoogleInternalWebInterf
 		}
 
 		// We are replacing the escaped equal sign, with a real one. I don't think pulling a whole lib to do just this is necessary.
-		const decodedURL = decodeURIComponent(encodedURL).replace("\\u003d", "=") as ImageURL;
+		const decodedURL = decodeURIComponent(encodedURL).replace(/\\u003d/g, "=") as ImageURL;
 
 		const photoIDEndIndex = urlStartIndex - URL_START_INDEX_TO_ID_END_INDEX_OFFSET;
 		const photoIDStartIndex = source.lastIndexOf(`"`, photoIDEndIndex);
