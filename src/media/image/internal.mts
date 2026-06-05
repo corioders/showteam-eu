@@ -123,6 +123,7 @@ export function validateUserSpecified(userSpecified: UserSpecified) {
 }
 
 const NEXTJS_URL_PREFIX = "/_next/static/media";
+const MAX_WEBP_DIMENSION = 16_383;
 
 function getImageFilenameMeta(imageFilename: string, imageSpecificHash: string) {
 	return (width: number, format: ImageType) => `${imageFilename}.${imageSpecificHash}.${width.toString()}.${format}`;
@@ -132,6 +133,15 @@ function getImageUrlMeta(imageFilename: string, imageSpecificHash: string, baseU
 }
 function getImageFilepathMeta(imageFilename: string, imageSpecificHash: string, baseFilePath: string) {
 	return (width: number, format: ImageType) => `${baseFilePath}/${getImageFilenameMeta(imageFilename, imageSpecificHash)(width, format)}`;
+}
+
+function isTargetImageSizeSupported(targetFormat: ImageType, imageInfo: ImageInfo, targetWidth: number): boolean {
+	if (targetFormat !== "webp") {
+		return true;
+	}
+
+	const targetSize = inferImageSize(imageInfo, targetWidth);
+	return targetSize.width <= MAX_WEBP_DIMENSION && targetSize.height <= MAX_WEBP_DIMENSION;
 }
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
@@ -208,6 +218,13 @@ export function getPictureSourcesNotSvg(
 				continue;
 			}
 
+			if (!isTargetImageSizeSupported(targetFormat, imageInfo, targetWidth)) {
+				console.log(
+					`!WARNING! Skipping ${targetFormat} image because the target size exceeds the format limit: ${imageFilename} Original size: ${imageInfo.width}x${imageInfo.height} Requested width: ${targetWidth}`,
+				);
+				continue;
+			}
+
 			srcSetPerFormat += `${getImageUrl(targetWidth, targetFormat)} ${targetWidth}w, `;
 			sharpEntries.push({
 				cacheKey: `${imageSpecificHash}.${targetWidth}.${targetFormat}`,
@@ -215,6 +232,10 @@ export function getPictureSourcesNotSvg(
 				targetFormat: targetFormat,
 				targetWidth: targetWidth,
 			});
+		}
+
+		if (sharpEntries.length === 0) {
+			continue;
 		}
 
 		// Remove the last ", "

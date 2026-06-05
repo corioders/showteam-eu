@@ -3,7 +3,7 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
-import type { ErrorReturn } from "cstd-ts/error/index.js";
+import { type ErrorReturn, errorToString } from "cstd-ts/error/index.js";
 import type { ComponentProps, ReactNode } from "react";
 
 interface Props extends ComponentProps<"pre"> {
@@ -24,7 +24,7 @@ export function CstdError({ error, className = "", children, ...props }: Props):
 		<pre className={`w-full max-w-lg whitespace-pre-wrap p-6 ${className}`} {...props}>
 			<h1 className="mb-2 font-black text-3xl">ERROR:</h1>
 			{children}
-			<p className="text-wrap">{String(error).replaceAll("\n", "\n\n")}</p>
+			<p className="text-wrap">{errorToString(error).replaceAll("\n", "\n\n")}</p>
 		</pre>
 	);
 }

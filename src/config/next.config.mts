@@ -4,6 +4,7 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
 import { runOnceOnNextStartup } from "cstd-ts/next/import-next-config.mjs";
+import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
 import { regexLikeCss } from "next/dist/build/webpack/config/blocks/css/index.js";
 import { nextImageLoaderRegex } from "next/dist/build/webpack-config.js";
@@ -52,8 +53,6 @@ export const nextConfig: NextConfig = {
 			throw new Error("config.resolve?.plugins not defined");
 		}
 
-		// ==================================================
-		// TODO this code should be deprecated and removed
 		config.resolve.plugins.push({
 			apply: (resolver) => {
 				resolver.hooks.resolve.tap({ name: "jsToJsxResolver", stage: 100 }, (resolveRequest) => {
@@ -64,9 +63,11 @@ export const nextConfig: NextConfig = {
 
 					if (originalRequest.startsWith("cstd-next") || originalRequest.startsWith("cstd-ts")) {
 						if (originalRequest.endsWith(".js")) {
-							// biome-ignore lint/nursery/noMagicNumbers: DEPRECATED CODE
 							const originalRequestWithoutExtension = originalRequest.slice(0, originalRequest.length - 3);
-							const resolvedWithJsxExtension = import.meta.resolve(`${originalRequestWithoutExtension}.jsx`).replace("file://", "");
+							const resolvedWithJsxExtensionUrl = import.meta.resolve(`${originalRequestWithoutExtension}.jsx`);
+							const resolvedWithJsxExtension = resolvedWithJsxExtensionUrl.startsWith("file://")
+								? fileURLToPath(resolvedWithJsxExtensionUrl)
+								: resolvedWithJsxExtensionUrl;
 							if (resolvedWithJsxExtension) {
 								return { ...resolveRequest, path: resolvedWithJsxExtension };
 							}
@@ -77,7 +78,6 @@ export const nextConfig: NextConfig = {
 				});
 			},
 		});
-		// ==================================================
 
 		return config;
 	},
