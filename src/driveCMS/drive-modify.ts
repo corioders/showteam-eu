@@ -137,6 +137,7 @@ export async function internalCreateFolder(googleAuth: GoogleAuth, parentFolderI
 		drive.files.create({
 			fields: "id",
 			requestBody: fileMetadata,
+			supportsAllDrives: true,
 		}),
 	);
 	if (errorFile) {
@@ -196,6 +197,7 @@ export async function internalGetFolderIDorCreateIfNotExistent(
 		drive.files.create({
 			fields: "id",
 			requestBody: folderMetadata,
+			supportsAllDrives: true,
 		}),
 	);
 	if (errorFolder) {
@@ -220,6 +222,7 @@ export async function internalCopyPermissions(googleAuth: GoogleAuth, sourceReso
 			fields: "permissions(id, type, role, emailAddress, domain)",
 			fileId: sourceResourceID,
 			pageSize: 100,
+			supportsAllDrives: true,
 		}),
 	);
 	if (errorPermissionsResponse) {
@@ -245,6 +248,7 @@ export async function internalCopyPermissions(googleAuth: GoogleAuth, sourceReso
 				fields: "id",
 				fileId: targetResourceID,
 				requestBody: newAnyonePermission,
+				supportsAllDrives: true,
 			}),
 		);
 
@@ -285,6 +289,7 @@ export async function internalCopyPermissions(googleAuth: GoogleAuth, sourceReso
 				fields: "id",
 				fileId: targetResourceID,
 				requestBody: newPermission,
+				supportsAllDrives: true,
 			}),
 		);
 		if (errorCreatePermission) {
@@ -303,6 +308,7 @@ export async function internalClearAllPermissions(googleAuth: GoogleAuth, target
 		drive.permissions.list({
 			fields: "permissions(id, type, role, emailAddress)",
 			fileId: targetResourceID,
+			supportsAllDrives: true,
 		}),
 	);
 	if (errorTargetPermissionsResponse) {
@@ -327,6 +333,7 @@ export async function internalClearAllPermissions(googleAuth: GoogleAuth, target
 			drive.permissions.delete({
 				fileId: targetResourceID,
 				permissionId: permission.id as string,
+				supportsAllDrives: true,
 			}),
 		);
 
@@ -359,6 +366,7 @@ export async function internalAddPermission(
 			fields: "id",
 			fileId: targetResourceID,
 			requestBody: newPermission,
+			supportsAllDrives: true,
 		}),
 	);
 	if (errorCreatePermission) {

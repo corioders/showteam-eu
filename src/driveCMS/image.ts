@@ -25,5 +25,5 @@ export function getPublicImageDownloadURL(imageID: ImageID): ImageURL {
 }
 
 export function getImageDownloadURL(imageID: ImageID): ImageURL {
-	return `https://www.googleapis.com/drive/v3/files/${imageID}?alt=media` as ImageURL;
+	return `https://www.googleapis.com/drive/v3/files/${imageID}?alt=media&supportsAllDrives=true` as ImageURL;
 }

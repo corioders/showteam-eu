@@ -59,6 +59,7 @@ export const internalUNSAFEChangePermissionsToAnyoneWithLinkReader = memoizeDriv
 			role: "reader",
 			type: "anyone",
 		},
+		supportsAllDrives: true,
 	});
 
 	if (response.status !== StatusCodes.OK) {
@@ -107,7 +108,9 @@ export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID
 	const [fileOrFolderListResponse, errorList] = await safePromise(() =>
 		driveAPI.files.list({
 			fields: "files(id, name, mimeType, shortcutDetails(targetId))",
+			includeItemsFromAllDrives: true,
 			q: `'${folderID}' in parents`,
+			supportsAllDrives: true,
 		}),
 	);
 	if (errorList !== null) {
@@ -138,6 +141,7 @@ export async function internalListFolderNoCache(googleAuth: GoogleAuth, folderID
 				driveAPI.files.get({
 					fields: "id, name, mimeType",
 					fileId: shortcutTargetID,
+					supportsAllDrives: true,
 				}),
 			);
 			if (targetFileFetchError || targetFileResponse.status !== StatusCodes.OK || targetFileResponse.data.id === undefined) {

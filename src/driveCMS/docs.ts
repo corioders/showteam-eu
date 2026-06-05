@@ -108,7 +108,7 @@ export const baseDownloadDocRevisionAndAdjustInDocMarkdownImagesPersistentCached
 	docID: DocID,
 	revisionID: RevisionID,
 ) => ErrorReturnPromise<StringMarkdown> = persistentDriveCMSCache(
-	"baseDownloadDocRevisionAndAdjustInDocMarkdownImages2",
+	"baseDownloadDocRevisionAndAdjustInDocMarkdownImages3",
 	// We don't need to check the last modification time, because this function depends on revisionID.
 	// Every revisionID represents different doc version.
 	{ disableAutomaticInvalidation: true },
