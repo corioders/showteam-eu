@@ -88,3 +88,92 @@ export function errorArrayToAggregateError(errors: Error[], additionalMessage?: 
 
 	return new AggregateError(errors, errorMessage);
 }
+
+export function errorToString(error: unknown): string {
+	return errorToStringInternal(error, new WeakSet<object>());
+}
+
+function errorToStringInternal(error: unknown, visited: WeakSet<object>): string {
+	if (!(error instanceof Error)) {
+		return stringifyErrorValue(error);
+	}
+
+	if (visited.has(error)) {
+		return "[Circular error]";
+	}
+	visited.add(error);
+
+	const lines = [`${error.name}: ${error.message}`];
+	const customProperties = getErrorCustomProperties(error, visited);
+
+	if (customProperties.length > 0) {
+		lines.push(...customProperties);
+	}
+
+	if (error instanceof AggregateError) {
+		lines.push(
+			"Aggregate errors:",
+			...Array.from(error.errors, (aggregateError, index) => indentErrorString(`[${index}] ${errorToStringInternal(aggregateError, visited)}`)),
+		);
+	}
+
+	if ("cause" in error && error.cause !== undefined) {
+		lines.push("Cause:", errorToStringInternal(error.cause, visited));
+	}
+
+	return lines.join("\n");
+}
+
+function getErrorCustomProperties(error: Error, visited: WeakSet<object>): string[] {
+	const ignoredKeys = new Set(["cause", "message", "name", "stack", "errors"]);
+	const propertyEntries: string[] = [];
+
+	for (const key of Object.keys(error)) {
+		if (ignoredKeys.has(key)) {
+			continue;
+		}
+
+		const value = (error as unknown as Record<string, unknown>)[key];
+		propertyEntries.push(`${key}: ${stringifyErrorValue(value, visited)}`);
+	}
+
+	return propertyEntries;
+}
+
+function stringifyErrorValue(value: unknown, visited?: WeakSet<object>): string {
+	if (value instanceof Error) {
+		return errorToStringInternal(value, visited ?? new WeakSet<object>());
+	}
+
+	if (typeof value === "string") {
+		return value;
+	}
+
+	if (value === null || value === undefined) {
+		return String(value);
+	}
+
+	if (typeof value !== "object") {
+		return String(value);
+	}
+
+	if (visited?.has(value)) {
+		return "[Circular value]";
+	}
+
+	visited?.add(value);
+
+	try {
+		const stringified = JSON.stringify(value);
+		return stringified ?? String(value);
+	} catch {
+		return String(value);
+	}
+}
+
+function indentErrorString(errorString: string): string {
+	return errorString
+		.split("\n")
+		.map((line) => `  ${line}`)
+		.join("\n");
+}
