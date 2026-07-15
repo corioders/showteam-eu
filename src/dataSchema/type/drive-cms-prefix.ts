@@ -31,9 +31,8 @@ type ExtractMetadata<T extends ResourcePrefixParser<any>> = T extends ResourcePr
 type MergeMetadataInternal<ResourcePrefixParsers extends ResourcePrefixParser<any>[]> = PrettifyHardcore<
 	UnionToIntersection<ExtractMetadata<ResourcePrefixParsers[number]>>
 >;
-type MergeMetadata<ResourcePrefixParsers extends ResourcePrefixParser<any>[]> = MergeMetadataInternal<ResourcePrefixParsers> extends MetadataBase
-	? MergeMetadataInternal<ResourcePrefixParsers>
-	: never;
+type MergeMetadata<ResourcePrefixParsers extends ResourcePrefixParser<any>[]> =
+	MergeMetadataInternal<ResourcePrefixParsers> extends MetadataBase ? MergeMetadataInternal<ResourcePrefixParsers> : never;
 
 // TODO: Merge metadata
 export function MergeResourcePrefixParser<ResourcePrefixParsers extends ResourcePrefixParser<any>[], MergedMetadata extends MergeMetadata<ResourcePrefixParsers>>(

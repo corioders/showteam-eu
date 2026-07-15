@@ -144,15 +144,15 @@ export type DataSchemaDefinitionNode<T, pFPR = unknown> = T extends {
 		};
 
 type ExtractRuntimeArgumentsFromFetchParserFunction<FPF> = FPF extends FetchParserFunctionInternal<any, any, infer RA, any, any, any> ? RA : never;
-type ExtractRuntimeArgumentsFromDSDn<DSDn> = DSDn extends DataSchemaDefinitionNode<any, any>
-	? // biome-ignore lint/complexity/noBannedTypes: Using {} is required for this type to work properly
-		(ExtractRuntimeArgumentsFromFetchParserFunction<DSDn["as"]> extends undefined ? {} : ExtractRuntimeArgumentsFromFetchParserFunction<DSDn["as"]>) &
-			// biome-ignore lint/complexity/noBannedTypes: Using {} is required for this type to work properly
-			(DSDn["pipe"] extends DataSchemaDefinition<any, any> ? ExtractRuntimeArgumentsFromDSD<DSDn["pipe"]> : {})
-	: never;
-type ExtractRuntimeArgumentsFromDSD<DSD> = DSD extends DataSchemaDefinition<any, any>
-	? UnionToIntersection<{ [K in keyof DSD]: ExtractRuntimeArgumentsFromDSDn<DSD[K]> }[keyof DSD]>
-	: never;
+type ExtractRuntimeArgumentsFromDSDn<DSDn> =
+	DSDn extends DataSchemaDefinitionNode<any, any>
+		? // biome-ignore lint/complexity/noBannedTypes: Using {} is required for this type to work properly
+			(ExtractRuntimeArgumentsFromFetchParserFunction<DSDn["as"]> extends undefined ? {} : ExtractRuntimeArgumentsFromFetchParserFunction<DSDn["as"]>) &
+				// biome-ignore lint/complexity/noBannedTypes: Using {} is required for this type to work properly
+				(DSDn["pipe"] extends DataSchemaDefinition<any, any> ? ExtractRuntimeArgumentsFromDSD<DSDn["pipe"]> : {})
+		: never;
+type ExtractRuntimeArgumentsFromDSD<DSD> =
+	DSD extends DataSchemaDefinition<any, any> ? UnionToIntersection<{ [K in keyof DSD]: ExtractRuntimeArgumentsFromDSDn<DSD[K]> }[keyof DSD]> : never;
 
 export function defineDataSchema<const T extends DataSchemaDefinition<T, void>>(dsd: T): Readonly<T> {
 	return dsd;
@@ -355,23 +355,25 @@ async function fetchAndParseInternal(
 	}
 }
 
-type ExtractAllDataSchemaNodes<DSD> = DSD extends DataSchemaDefinition<any, any>
-	? {
-			[K in keyof DSD]: DSD[K] extends { pipe: infer P } ? DSD[K] | (P extends DataSchemaDefinition<any, any> ? ExtractAllDataSchemaNodes<P> : never) : DSD[K];
-		}[keyof DSD]
-	: never;
+type ExtractAllDataSchemaNodes<DSD> =
+	DSD extends DataSchemaDefinition<any, any>
+		? {
+				[K in keyof DSD]: DSD[K] extends { pipe: infer P } ? DSD[K] | (P extends DataSchemaDefinition<any, any> ? ExtractAllDataSchemaNodes<P> : never) : DSD[K];
+			}[keyof DSD]
+		: never;
 
-export type RemovePipeAtCutPoints<DSD, CutPoints> = DSD extends DataSchemaDefinition<any, any>
-	? {
-			[K in keyof DSD]: DSD[K] extends CutPoints
-				? PrettifyHardcore<Omit<DSD[K], "pipe">>
-				: DSD[K] extends { pipe: infer P }
-					? DSD[K] extends { pipe: DataSchemaDefinition<any, any> }
-						? PrettifyHardcore<Omit<DSD[K], "pipe"> & { pipe: PrettifyHardcore<RemovePipeAtCutPoints<P, CutPoints>> }>
-						: DSD[K]
-					: DSD[K];
-		}
-	: never;
+export type RemovePipeAtCutPoints<DSD, CutPoints> =
+	DSD extends DataSchemaDefinition<any, any>
+		? {
+				[K in keyof DSD]: DSD[K] extends CutPoints
+					? PrettifyHardcore<Omit<DSD[K], "pipe">>
+					: DSD[K] extends { pipe: infer P }
+						? DSD[K] extends { pipe: DataSchemaDefinition<any, any> }
+							? PrettifyHardcore<Omit<DSD[K], "pipe"> & { pipe: PrettifyHardcore<RemovePipeAtCutPoints<P, CutPoints>> }>
+							: DSD[K]
+						: DSD[K];
+			}
+		: never;
 
 const CUT_POINT_DONE_KEY = "_DSD_INTERNAL_CUT_POINT_DONE";
 export function cutoffDataSchemaDefinition<
