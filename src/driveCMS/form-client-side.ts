@@ -11,7 +11,6 @@ import type { FolderID } from "./drive.js";
 export type FormQuestionTypeValue = ValueOf<FormQuestionType>;
 export type FormQuestionType = typeof FORM_QUESTION_TYPE;
 
-// biome-ignore assist/source/useSortedKeys: We want to follow ordering from the googleAPIsItemToFormQuestion function
 export const FORM_QUESTION_TYPE = {
 	checkbox: "checkbox",
 	dropdown: "dropdown",

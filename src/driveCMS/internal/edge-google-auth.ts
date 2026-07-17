@@ -1,5 +1,4 @@
 /** biome-ignore-all assist/source/useSortedKeys: This code is adapted from https://github.com/googleapis/node-gtoken/blob/main/esm/src/index.ts */
-/** biome-ignore-all lint/nursery/noMagicNumbers: Same as above */
 /** biome-ignore-all lint/complexity/useDateNow: Same as above */
 /** biome-ignore-all lint/style/useNamingConvention: Same as above */
 

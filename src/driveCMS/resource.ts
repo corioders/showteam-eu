@@ -16,7 +16,6 @@ export type MIMETypeT = typeof MIMEType;
 // MIMETypeTEnum
 export type MIMETypeTE = ValueOf<MIMETypeT>;
 
-// biome-ignore assist/source/useSortedKeys: We like our own ordering more
 export const MIMEType = {
 	csv: "text/csv",
 	markdown: "text/markdown",
