@@ -16,7 +16,7 @@ export const Offers: CollectionConfig = {
     preview: (document) => `/oferta/${document.slug}`,
   },
   access: {
-    read: () => true,
+    read: ({ req }) => req.user ? true : { published: { equals: true } },
     create: isLoggedIn,
     update: isLoggedIn,
     delete: isLoggedIn,

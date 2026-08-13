@@ -28,6 +28,12 @@ const realpath = (value: string) => (fs.existsSync(value) ? fs.realpathSync(valu
 const isCLI = process.argv.some((value) => realpath(value).endsWith(path.join("payload", "bin.js")));
 const isProduction = process.env.NODE_ENV === "production";
 const isNextBuild = process.env.NEXT_PHASE === "phase-production-build";
+const payloadSecret = process.env.PAYLOAD_SECRET
+  ?? (!isProduction || isNextBuild ? "local-showteam-development-secret-change-me" : undefined);
+
+if (!payloadSecret) {
+  throw new Error("Brak PAYLOAD_SECRET. Ustaw sekret przed uruchomieniem aplikacji produkcyjnej.");
+}
 const showteamPolish = {
   ...pl,
   translations: {
@@ -68,13 +74,13 @@ export default buildConfig({
   collections: [Events, Offers, Gallery, Equipment, createBookingsCollection(database), Analytics, Media, Users],
   i18n: { supportedLanguages: { pl: showteamPolish }, fallbackLanguage: "pl" },
   telemetry: false,
+  graphQL: { disable: true },
   editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || "local-showteam-development-secret-change-me",
+  secret: payloadSecret,
   typescript: { outputFile: path.resolve(dirname, "payload-types.ts") },
   db: sqliteD1Adapter({ binding: cloudflare.env.D1, afterSchemaInit: [preserveOperationalTables] }),
   plugins: [r2Storage({ bucket: cloudflare.env.R2, collections: { media: true } })],
-  onInit: async (payload) => {
-    if (isNextBuild) return;
+  onInit: isProduction ? undefined : async (payload) => {
     await seedOffers(payload);
     await seedGallery(payload);
     await seedEvents(payload);
