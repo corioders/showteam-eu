@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 import { getPayload } from "payload";
 import config from "@payload-config";
+import { parseFocalPoints } from "@/lib/gallery-focal";
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif", "video/mp4", "video/webm", "video/quicktime"]);
 const allowedCategories = new Set(["Lato", "Zima", "Szkolenia"]);
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
   const files = data.getAll("files").filter((value): value is File => value instanceof File);
   const category = String(data.get("category") || "Lato");
   const caption = String(data.get("caption") || "").trim().slice(0, 100);
+  const focalPoints = parseFocalPoints(data.get("focalPoints"), files.length);
   const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
 
   if (!files.length || files.length > 8) return Response.json({ error: "Wybierz od 1 do 8 plików." }, { status: 400 });
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
       const itemCaption = caption || fallbackCaption;
       const media = await payload.create({
         collection: "media",
-        data: { alt: itemCaption },
+        data: { alt: itemCaption, focalX: focalPoints[index].x, focalY: focalPoints[index].y },
         file: { data: Buffer.from(await file.arrayBuffer()), mimetype: file.type, name: file.name, size: file.size },
       });
       createdMedia.push(Number(media.id));

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import path from "node:path";
 
 test("main navigation reaches every public section", async ({ page }) => {
   await page.goto("/");
@@ -130,6 +131,16 @@ test("quick uploader API is private and exposes an installable manifest", async 
   expect(manifest.ok()).toBe(true);
   expect(await manifest.json()).toMatchObject({ start_url: "/a/dodaj", scope: "/a/" });
   expect((await page.request.post("/api/quick-upload", { multipart: { category: "Lato" } })).status()).toBe(401);
+});
+
+test("quick uploader previews the exact gallery crop", async ({ page }) => {
+  await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
+  await page.goto("/a/dodaj/galeria");
+  await page.locator('input[type="file"]').setInputFiles(path.join(process.cwd(), "public/media/windsurf.jpg"));
+  await expect(page.getByText("Kadr widoczny w galerii")).toBeVisible();
+  await page.getByLabel(/Kadr poziomy/).fill("20");
+  await page.getByLabel(/Kadr pionowy/).fill("80");
+  await expect(page.getByAltText("Podgląd kadru")).toHaveCSS("object-position", "20% 80%");
 });
 
 test("PWA dashboard links directly to common admin tasks", async ({ page }) => {

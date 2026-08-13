@@ -7,7 +7,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AdminSessionGate } from "@/components/admin-session-gate";
 
 const MAX_TOTAL_BYTES = 80 * 1024 * 1024;
+const MAX_IMAGE_EDGE = 2400;
 const categories = ["Lato", "Zima", "Szkolenia"] as const;
+type UploadItem = { id: string; file: File; focalX: number; focalY: number };
 
 export function QuickUploader() {
   return <AdminSessionGate redirectPath="/a/dodaj/galeria">{(userName) => <QuickUploaderForm userName={userName} />}</AdminSessionGate>;
@@ -15,12 +17,12 @@ export function QuickUploader() {
 
 function QuickUploaderForm({ userName }: { userName: string }) {
   const input = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<File[]>([]);
+  const [items, setItems] = useState<UploadItem[]>([]);
   const [category, setCategory] = useState<(typeof categories)[number]>("Lato");
   const [caption, setCaption] = useState("");
   const [status, setStatus] = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
-  const previews = useMemo(() => files.map((file) => ({ file, url: URL.createObjectURL(file) })), [files]);
+  const previews = useMemo(() => items.map((item) => ({ ...item, url: URL.createObjectURL(item.file) })), [items]);
 
   useEffect(() => () => previews.forEach(({ url }) => URL.revokeObjectURL(url)), [previews]);
 
@@ -33,27 +35,32 @@ function QuickUploaderForm({ userName }: { userName: string }) {
       setMessage("Pliki są za duże. Łączny limit jednego dodawania to 80 MB.");
       return;
     }
-    setFiles(next);
+    setItems(next.map((file) => ({ id: `${file.name}-${file.size}-${file.lastModified}`, file, focalX: 50, focalY: 50 })));
     setStatus("idle");
     setMessage("");
   }
 
   async function publish() {
-    if (!files.length || status === "uploading") return;
+    if (!items.length || status === "uploading") return;
     setStatus("uploading");
-    setMessage(`Wysyłam 0 z ${files.length}…`);
+    setMessage(`Przygotowuję ${items.length === 1 ? "materiał" : "materiały"}…`);
 
     try {
       const body = new FormData();
-      files.forEach((file) => body.append("files", file));
+      for (const [index, item] of items.entries()) {
+        setMessage(`Przygotowuję ${index + 1} z ${items.length}…`);
+        body.append("files", await resizePhoto(item.file));
+      }
       body.set("category", category);
       body.set("caption", caption.trim());
+      body.set("focalPoints", JSON.stringify(items.map(({ focalX: x, focalY: y }) => ({ x, y }))));
+      setMessage(`Wysyłam ${items.length === 1 ? "materiał" : `${items.length} materiałów`}…`);
       const response = await fetch("/api/quick-upload", { method: "POST", body });
       const result = await response.json() as { count?: number; error?: string };
       if (!response.ok) throw new Error(result.error || "Nie udało się wysłać plików.");
       setStatus("done");
       setMessage(`Opublikowano ${result.count} ${result.count === 1 ? "materiał" : "materiały"}.`);
-      setFiles([]);
+      setItems([]);
       setCaption("");
       if (input.current) input.current.value = "";
     } catch (error) {
@@ -72,7 +79,7 @@ function QuickUploaderForm({ userName }: { userName: string }) {
 
         <p className="font-mono text-xs font-bold uppercase tracking-[.18em] text-orange-400">Szybkie dodawanie</p>
         <h1 className="font-display mt-3 text-5xl font-black uppercase leading-[.9]">Wrzuć z telefonu.</h1>
-        <p className="mt-4 text-sm leading-6 text-white/55">Zdjęcia i krótkie filmy trafią od razu do Galerii. Maksymalnie 8 plików i 80 MB łącznie.</p>
+        <p className="mt-4 text-sm leading-6 text-white/55">Zdjęcia i krótkie filmy trafią od razu do Galerii. Zdjęcia zostaną bezpiecznie zmniejszone, żeby galeria działała szybko.</p>
 
         <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif,video/mp4,video/webm,video/quicktime" multiple className="sr-only" onChange={(event) => choose(event.target.files)} />
         <button type="button" onClick={() => input.current?.click()} className="mt-7 flex min-h-44 w-full flex-col items-center justify-center gap-3 border-2 border-dashed border-orange-500/70 bg-orange-500/10 p-6 text-center transition active:scale-[.99]">
@@ -81,21 +88,66 @@ function QuickUploaderForm({ userName }: { userName: string }) {
           <span className="text-xs text-white/45">JPG, PNG, WebP, MP4, MOV, WebM</span>
         </button>
 
-        {previews.length ? <div className="mt-4 grid grid-cols-3 gap-2">{previews.map(({ file, url }, index) => <div key={`${file.name}-${file.lastModified}`} className="relative aspect-square overflow-hidden bg-white/5">
-          {file.type.startsWith("video/") ? <video src={url} muted playsInline className="size-full object-cover" /> : <Image src={url} alt="" fill unoptimized className="object-cover" />}
-          <span className="absolute bottom-1 left-1 rounded bg-black/75 px-1.5 py-1 text-[.6rem]">{file.type.startsWith("video/") ? <Film className="size-3" /> : <Camera className="size-3" />}</span>
-          <button type="button" aria-label={`Usuń ${file.name}`} onClick={() => setFiles((current) => current.filter((_, item) => item !== index))} className="absolute right-1 top-1 grid size-7 place-items-center rounded-full bg-black/80"><X className="size-4" /></button>
-        </div>)}</div> : null}
+        {previews.length ? <div className="mt-5 space-y-4">{previews.map(({ id, file, url, focalX, focalY }) => {
+          const video = file.type.startsWith("video/");
+          return <article key={id} className="border border-white/15 bg-white/[.035] p-3">
+            <div className={`relative overflow-hidden bg-black ${video ? "aspect-video" : "aspect-square"}`}>
+              {video ? <video src={url} muted playsInline controls className="size-full object-cover" /> : <Image src={url} alt="Podgląd kadru" fill unoptimized className="object-cover" style={{ objectPosition: `${focalX}% ${focalY}%` }} />}
+              <span className="absolute bottom-2 left-2 rounded bg-black/75 px-2 py-1 text-[.65rem]">{video ? <Film className="size-3.5" /> : <Camera className="size-3.5" />}</span>
+              <button type="button" aria-label={`Usuń ${file.name}`} onClick={() => setItems((current) => current.filter((item) => item.id !== id))} className="absolute right-2 top-2 grid size-9 place-items-center rounded-full bg-black/85"><X className="size-4" /></button>
+            </div>
+            {!video ? <div className="mt-3">
+              <p className="text-sm font-bold">Kadr widoczny w galerii</p>
+              <p className="mt-1 text-xs leading-5 text-white/45">Przesuń suwaki, aż najważniejsza część zdjęcia będzie dobrze widoczna w kwadracie powyżej.</p>
+              <label className="mt-3 grid grid-cols-[4.5rem_1fr] items-center gap-3 text-xs text-white/65">Lewo–prawo<input aria-label={`Kadr poziomy: ${file.name}`} type="range" min="0" max="100" value={focalX} onChange={(event) => updateFocalPoint(id, "focalX", Number(event.target.value))} className="accent-orange-500" /></label>
+              <label className="mt-2 grid grid-cols-[4.5rem_1fr] items-center gap-3 text-xs text-white/65">Góra–dół<input aria-label={`Kadr pionowy: ${file.name}`} type="range" min="0" max="100" value={focalY} onChange={(event) => updateFocalPoint(id, "focalY", Number(event.target.value))} className="accent-orange-500" /></label>
+            </div> : null}
+          </article>;
+        })}</div> : null}
 
         <fieldset className="mt-7"><legend className="mb-3 text-sm font-bold">Kategoria</legend><div className="grid grid-cols-3 gap-2">{categories.map((item) => <button key={item} type="button" onClick={() => setCategory(item)} aria-pressed={category === item} className="border border-white/20 px-2 py-3 text-sm font-bold aria-pressed:border-orange-500 aria-pressed:bg-orange-500 aria-pressed:text-black">{item}</button>)}</div></fieldset>
         <label className="mt-6 block text-sm font-bold">Podpis <span className="font-normal text-white/40">(opcjonalny)</span><input value={caption} onChange={(event) => setCaption(event.target.value)} maxLength={100} placeholder="np. SHOWCamp 2026" className="mt-2 w-full border border-white/20 bg-white/5 px-4 py-3 font-normal text-white outline-none placeholder:text-white/25 focus:border-orange-500" /></label>
 
         {message ? <p role="status" className={`mt-5 flex items-center gap-2 border-l-2 py-2 pl-3 text-sm ${status === "error" ? "border-red-500 text-red-300" : "border-green-500 text-green-300"}`}>{status === "done" ? <CheckCircle2 className="size-5" /> : null}{message}</p> : null}
-        <button type="button" disabled={!files.length || status === "uploading"} onClick={publish} className="mt-6 flex w-full items-center justify-center gap-2 bg-orange-500 px-5 py-4 text-base font-black uppercase text-black disabled:cursor-not-allowed disabled:opacity-35">
+        <button type="button" disabled={!items.length || status === "uploading"} onClick={publish} className="mt-6 flex w-full items-center justify-center gap-2 bg-orange-500 px-5 py-4 text-base font-black uppercase text-black disabled:cursor-not-allowed disabled:opacity-35">
           {status === "uploading" ? <LoaderCircle className="size-5 animate-spin" /> : <Upload className="size-5" />}{status === "uploading" ? "Wysyłam…" : "Opublikuj w galerii"}
         </button>
         <p className="mt-6 text-center text-xs leading-5 text-white/35">Instalacja: w Safari wybierz Udostępnij → „Do ekranu początkowego”. W Chrome: menu → „Zainstaluj aplikację”.</p>
       </div>
     </main>
   );
+
+  function updateFocalPoint(id: string, axis: "focalX" | "focalY", value: number) {
+    setItems((current) => current.map((item) => item.id === id ? { ...item, [axis]: value } : item));
+  }
+}
+
+async function resizePhoto(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    return file;
+  }
+
+  const scale = Math.min(1, MAX_IMAGE_EDGE / Math.max(bitmap.width, bitmap.height));
+  if (scale === 1 && file.size < 4 * 1024 * 1024) {
+    bitmap.close();
+    return file;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  const context = canvas.getContext("2d", { alpha: false });
+  if (!context) {
+    bitmap.close();
+    return file;
+  }
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.86));
+  if (!blob) return file;
+  return new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp", lastModified: file.lastModified });
 }
