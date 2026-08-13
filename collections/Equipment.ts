@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { slugFromName } from "@/lib/slug";
 
 const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
@@ -9,7 +10,14 @@ export const Equipment: CollectionConfig = {
     useAsTitle: "name",
     group: "Rezerwacje",
     defaultColumns: ["name", "category", "quantity", "durationMinutes", "active"],
-    description: "Sprzęt widoczny w Rezerwacjach. Ustaw liczbę sztuk, długość terminu i godziny dostępności.",
+    description: "Jedyne miejsce zarządzania wynajmem. To, co ustawisz tutaj, automatycznie pojawi się na stronie Rezerwacje, w dostępności i kalendarzu.",
+  },
+  hooks: {
+    beforeValidate: [({ data, originalDoc }) => {
+      if (!data) return data;
+      data.slug = originalDoc?.slug || slugFromName(String(data.name || ""));
+      return data;
+    }],
   },
   access: {
     read: ({ req }) => req.user ? true : { active: { equals: true } },
@@ -20,7 +28,7 @@ export const Equipment: CollectionConfig = {
   defaultSort: "sortOrder",
   fields: [
     { name: "name", label: "Nazwa", type: "text", required: true },
-    { name: "slug", label: "Identyfikator", type: "text", required: true, unique: true, admin: { description: "Krótko, bez spacji, np. sup. Nie zmieniaj po uruchomieniu rezerwacji." } },
+    { name: "slug", label: "Identyfikator", type: "text", required: true, unique: true, admin: { hidden: true } },
     { name: "description", label: "Opis dla klienta", type: "textarea", required: true, maxLength: 300 },
     { name: "image", label: "Zdjęcie", type: "upload", relationTo: "media" },
     { type: "row", fields: [
