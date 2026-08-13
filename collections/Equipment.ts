@@ -43,21 +43,27 @@ export const Equipment: CollectionConfig = {
   },
   defaultSort: "sortOrder",
   fields: [
-    { name: "name", label: "Nazwa", type: "text", required: true },
+    { type: "tabs", tabs: [
+      { label: "1. Sprzęt", description: "To zobaczy klient podczas rezerwacji.", fields: [
+        { name: "name", label: "Nazwa sprzętu", type: "text", required: true, admin: { placeholder: "np. SUP jednoosobowy" } },
+        { name: "description", label: "Krótki opis", type: "textarea", required: true, maxLength: 300, admin: { description: "Napisz krótko, dla kogo jest sprzęt i co warto wiedzieć." } },
+        { name: "image", label: "Zdjęcie", type: "upload", relationTo: "media" },
+        { type: "row", fields: [
+          { name: "category", label: "Kategoria", type: "select", required: true, defaultValue: "Woda", options: ["Woda", "Ląd", "Szkolenie", "Inne"] },
+          { name: "quantity", label: "Ile sztuk jest dostępnych?", type: "number", required: true, defaultValue: 1, min: 1, max: 99 },
+        ] },
+        { name: "notice", label: "Ważna informacja dla klienta", type: "textarea", maxLength: 220, admin: { description: "Opcjonalnie, np. „Wymagane uprawnienia”." } },
+      ] },
+      { label: "2. Godziny rezerwacji", description: "Ustaw długość rezerwacji i godziny pracy.", fields: [
+        { name: "durationMinutes", label: "Ile minut trwa jedna rezerwacja?", type: "number", required: true, defaultValue: 60, min: 15, max: 720, admin: { description: "Np. 60 = jedna godzina." } },
+        { type: "row", fields: [
+          { name: "openTime", label: "Pierwsza możliwa godzina", type: "text", required: true, defaultValue: "09:00", validate: (value: unknown) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value)) || "Wpisz godzinę jako HH:MM." },
+          { name: "closeTime", label: "Koniec rezerwacji", type: "text", required: true, defaultValue: "19:00", validate: (value: unknown) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value)) || "Wpisz godzinę jako HH:MM." },
+        ] },
+        { name: "active", label: "Klienci mogą teraz rezerwować ten sprzęt", type: "checkbox", defaultValue: true },
+      ] },
+    ] },
     { name: "slug", label: "Identyfikator", type: "text", required: true, unique: true, admin: { hidden: true } },
-    { name: "description", label: "Opis dla klienta", type: "textarea", required: true, maxLength: 300 },
-    { name: "image", label: "Zdjęcie", type: "upload", relationTo: "media" },
-    { type: "row", fields: [
-      { name: "category", label: "Kategoria", type: "select", required: true, defaultValue: "Woda", options: ["Woda", "Ląd", "Szkolenie", "Inne"] },
-      { name: "quantity", label: "Liczba sztuk", type: "number", required: true, defaultValue: 1, min: 1, max: 99 },
-      { name: "durationMinutes", label: "Długość jednej rezerwacji (minuty)", type: "number", required: true, defaultValue: 60, min: 15, max: 720, admin: { description: "Np. 60 oznacza, że klient rezerwuje sprzęt na godzinę." } },
-    ] },
-    { type: "row", fields: [
-      { name: "openTime", label: "Od godziny", type: "text", required: true, defaultValue: "09:00", validate: (value: unknown) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value)) || "Wpisz godzinę jako HH:MM." },
-      { name: "closeTime", label: "Do godziny", type: "text", required: true, defaultValue: "19:00", validate: (value: unknown) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value)) || "Wpisz godzinę jako HH:MM." },
-      { name: "sortOrder", label: "Kolejność", type: "number", required: true, defaultValue: 100, admin: { hidden: true } },
-      { name: "active", label: "Można rezerwować", type: "checkbox", defaultValue: true },
-    ] },
-    { name: "notice", label: "Ważna informacja dla klienta", type: "textarea", maxLength: 220, admin: { description: "Opcjonalnie, np. „Wymagane uprawnienia”. Ten tekst będzie widoczny przed rezerwacją." } },
+    { name: "sortOrder", label: "Kolejność", type: "number", required: true, defaultValue: 100, admin: { hidden: true } },
   ],
 };

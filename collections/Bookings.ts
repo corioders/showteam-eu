@@ -34,6 +34,13 @@ export function createBookingsCollection(database: D1Database): CollectionConfig
       afterDelete: [async ({ doc }) => { await releaseSlots(doc.reservationId); }],
     },
     fields: [
+      { name: "status", label: "Co dzieje się z rezerwacją?", type: "select", required: true, defaultValue: "confirmed", options: [
+        { label: "Potwierdzona — termin zajęty", value: "confirmed" },
+        { label: "Zrealizowana — klient skorzystał", value: "completed" },
+        { label: "Anulowana — termin zostanie zwolniony", value: "cancelled" },
+      ], admin: { description: "Uwaga: anulowania nie można cofnąć. W razie pomyłki utwórz nową rezerwację." } },
+      { name: "staffNotes", label: "Notatka dla obsługi", type: "textarea", maxLength: 1000, admin: { placeholder: "Np. klient prosi o telefon przed przyjazdem" } },
+      { type: "collapsible", label: "Dane rezerwacji i klienta", admin: { initCollapsed: false, description: "Te dane pochodzą ze strony i są tylko do odczytu." }, fields: [
       { name: "reference", label: "Numer rezerwacji", type: "text", required: true, unique: true, admin: { readOnly: true } },
       { name: "reservationId", label: "Identyfikator techniczny", type: "text", required: true, unique: true, admin: { hidden: true } },
       { name: "equipment", label: "Sprzęt", type: "relationship", relationTo: "equipment", required: true, admin: { readOnly: true } },
@@ -47,14 +54,9 @@ export function createBookingsCollection(database: D1Database): CollectionConfig
         { name: "phone", label: "Telefon", type: "text", required: true, admin: { readOnly: true } },
         { name: "email", label: "E-mail", type: "email", admin: { readOnly: true } },
       ] },
-      { name: "status", label: "Status", type: "select", required: true, defaultValue: "confirmed", options: [
-        { label: "Potwierdzona", value: "confirmed" },
-        { label: "Zrealizowana", value: "completed" },
-        { label: "Anulowana", value: "cancelled" },
-      ] },
       { name: "customerNotes", label: "Uwagi klienta", type: "textarea", maxLength: 500, admin: { readOnly: true } },
-      { name: "staffNotes", label: "Notatka obsługi", type: "textarea", maxLength: 1000 },
       { name: "source", label: "Źródło", type: "select", required: true, defaultValue: "website", options: [{ label: "Strona", value: "website" }, { label: "Obsługa", value: "staff" }], admin: { readOnly: true } },
+      ] },
     ],
   };
 }

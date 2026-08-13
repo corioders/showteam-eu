@@ -22,39 +22,32 @@ export const Gallery: CollectionConfig = {
   },
   defaultSort: "-createdAt",
   fields: [
-    {
-      name: "image",
-      label: "Zdjęcie lub film",
-      type: "upload",
-      relationTo: "media",
-      admin: { description: "Wgraj własne zdjęcie albo film MP4, WebM lub MOV." },
-    },
+    { name: "image", label: "Zdjęcie lub film", type: "upload", relationTo: "media", admin: { description: "Wgraj materiał z telefonu. Dla wielu plików użyj przycisku „Dodaj zdjęcia lub filmy” na pulpicie." } },
     {
       name: "staticImage",
       label: "Zdjęcie startowe SHOWteam",
       type: "select",
       defaultValue: galleryAssets[0].value,
       options: galleryAssets.map((asset) => ({ label: asset.label, value: asset.value })),
-      admin: { description: "Używane tylko wtedy, gdy nie wgrasz nowego zdjęcia." },
+      admin: { hidden: true },
     },
-    { name: "caption", label: "Podpis", type: "text", required: true },
-    { name: "alt", label: "Opis dla czytników ekranu", type: "text", admin: { description: "Opcjonalnie. Domyślnie użyjemy opisu wgranego zdjęcia." } },
+    { name: "caption", label: "Krótki podpis", type: "text", required: true, admin: { placeholder: "np. SHOWCamp 2026" } },
     { type: "row", fields: [
       { name: "season", label: "Kategoria", type: "select", required: true, defaultValue: "Lato", options: ["Lato", "Zima", "Szkolenia"] },
-      { name: "layout", label: "Układ na komputerze", type: "select", required: true, defaultValue: "square", options: [{ label: "Duży 2×2", value: "large" }, { label: "Szeroki 2×1", value: "wide" }, { label: "Wysoki 1×2", value: "tall" }, { label: "Kwadrat 1×1", value: "square" }] },
-      { name: "mobileLayout", label: "Układ na telefonie", type: "select", required: true, defaultValue: "square", options: [{ label: "Poziomy", value: "landscape" }, { label: "Pionowy", value: "portrait" }, { label: "Kwadrat", value: "square" }] },
+      { name: "published", label: "Pokaż w galerii", type: "checkbox", defaultValue: true },
     ] },
-    { type: "row", fields: [
-      { name: "fit", label: "Dopasowanie", type: "select", required: true, defaultValue: "cover", options: [{ label: "Wypełnij kafel", value: "cover" }, { label: "Pokaż całe zdjęcie", value: "contain" }] },
-      { name: "mobilePosition", label: "Kadr na telefonie", type: "select", required: true, defaultValue: "same", options: [{ label: "Jak punkt ostrości", value: "same" }, { label: "Góra", value: "50% 20%" }, { label: "Środek", value: "50% 50%" }, { label: "Dół", value: "50% 80%" }, { label: "Lewa strona", value: "20% 50%" }, { label: "Prawa strona", value: "80% 50%" }] },
+    { type: "collapsible", label: "Opcjonalne ustawienia wyglądu", admin: { initCollapsed: true, description: "Otwórz tylko wtedy, gdy zdjęcie źle się kadruje." }, fields: [
+      { name: "alt", label: "Dokładny opis zdjęcia", type: "text", admin: { description: "Opcjonalne. Pomaga osobom korzystającym z czytnika ekranu." } },
+      { type: "row", fields: [
+        { name: "layout", label: "Rozmiar na komputerze", type: "select", required: true, defaultValue: "square", options: [{ label: "Duży", value: "large" }, { label: "Szeroki", value: "wide" }, { label: "Wysoki", value: "tall" }, { label: "Kwadrat", value: "square" }] },
+        { name: "mobileLayout", label: "Kształt na telefonie", type: "select", required: true, defaultValue: "square", options: [{ label: "Poziomy", value: "landscape" }, { label: "Pionowy", value: "portrait" }, { label: "Kwadrat", value: "square" }] },
+      ] },
+      { type: "row", fields: [
+        { name: "fit", label: "Dopasowanie zdjęcia", type: "select", required: true, defaultValue: "cover", options: [{ label: "Wypełnij kafel", value: "cover" }, { label: "Pokaż całe zdjęcie", value: "contain" }] },
+        { name: "mobilePosition", label: "Najważniejsza część kadru", type: "select", required: true, defaultValue: "same", options: [{ label: "Automatycznie", value: "same" }, { label: "Góra", value: "50% 20%" }, { label: "Środek", value: "50% 50%" }, { label: "Dół", value: "50% 80%" }, { label: "Lewa strona", value: "20% 50%" }, { label: "Prawa strona", value: "80% 50%" }] },
+      ] },
+      { name: "sourceUrl", label: "Link do posta", type: "text", admin: { description: "Opcjonalny link do Instagrama lub Facebooka." } },
+      { name: "sortOrder", label: "Ręczna kolejność", type: "number", required: true, defaultValue: 100, admin: { description: "Zwykle nie trzeba zmieniać." } },
     ] },
-    {
-      type: "row",
-      fields: [
-        { name: "sortOrder", label: "Kolejność", type: "number", required: true, defaultValue: 100 },
-        { name: "published", label: "Widoczne na stronie", type: "checkbox", defaultValue: true },
-      ],
-    },
-    { name: "sourceUrl", label: "Link do źródła", type: "text", admin: { description: "Opcjonalny link do posta na Instagramie lub Facebooku." } },
   ],
 };
