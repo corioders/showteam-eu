@@ -92,7 +92,7 @@ function getCloudflareContextFromWrangler(): Promise<CloudflareContext> {
   return import(/* webpackIgnore: true */ `${"__wrangler".replaceAll("_", "")}`).then(
     ({ getPlatformProxy }) => getPlatformProxy({
       environment: process.env.CLOUDFLARE_ENV,
-      remoteBindings: isProduction && Boolean(process.env.CLOUDFLARE_API_TOKEN),
+      remoteBindings: process.env.CLOUDFLARE_REMOTE_BINDINGS === "true",
     } satisfies GetPlatformProxyOptions),
   );
 }

@@ -21,5 +21,24 @@
       "binding": "R2",
       "bucket_name": "showteam-media"
     }
-  ]
+  ],
+  "env": {
+    "migrations": {
+      "d1_databases": [
+        {
+          "binding": "D1",
+          "database_id": "fb4ccca4-31e6-4ed0-b3e5-a36b520d89c6",
+          "database_name": "showteam-cms",
+          "remote": true
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "R2",
+          "bucket_name": "showteam-media",
+          "remote": true
+        }
+      ]
+    }
+  }
 }
