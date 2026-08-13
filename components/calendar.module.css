@@ -1,0 +1,20 @@
+.calendar { --fc-border-color: rgba(255,255,255,.14); --fc-page-bg-color: #0a0b0c; --fc-neutral-bg-color: #17191b; --fc-list-event-hover-bg-color: #222; --fc-today-bg-color: rgba(255,105,0,.1); --fc-event-bg-color: #ff6900; --fc-event-border-color: #ff6900; --fc-event-text-color: #080808; color: #f5f4ed; min-width: 0; }
+.calendar :global(.fc) { font-family: var(--font-body), Arial, sans-serif; }
+.calendar :global(.fc-toolbar-title) { font-family: var(--font-display), Impact, sans-serif; font-size: clamp(1.35rem, 3vw, 2.5rem); font-weight: 900; text-transform: uppercase; }
+.calendar :global(.fc-button-primary) { background: #222; border-color: rgba(255,255,255,.18); border-radius: 0; color: #fff; font-weight: 700; }
+.calendar :global(.fc-button-primary:not(:disabled):hover), .calendar :global(.fc-button-active) { background: #ff6900 !important; border-color: #ff6900 !important; color: #070707 !important; }
+.calendar :global(.fc-timegrid-slot) { height: 3rem; }
+.calendar :global(.fc-event) { border-radius: 0; cursor: default; font-weight: 800; padding: 2px 4px; }
+.calendar :global(.fc-col-header-cell-cushion), .calendar :global(.fc-daygrid-day-number) { color: inherit; padding: .5rem; text-decoration: none; }
+.calendar :global(.fc-list-event-title a), .calendar :global(.fc-list-event-time) { color: inherit; }
+@media (max-width: 700px) { .calendar :global(.fc-header-toolbar) { align-items: stretch; flex-direction: column; gap: .75rem; } .calendar :global(.fc-toolbar-chunk) { display: flex; justify-content: space-between; } }
+.overlay { align-items: flex-end; background: rgba(0,0,0,.78); display: flex; inset: 0; justify-content: center; padding: .75rem; position: fixed; z-index: 1000; }
+.dialog { background: #0a0b0c; border: 1px solid rgba(255,255,255,.16); color: white; max-width: 28rem; padding: 1.5rem; width: 100%; }
+.close { background: transparent; border: 0; color: rgba(255,255,255,.55); cursor: pointer; float: right; padding: .5rem; }
+.reference { color: #ff8840; font-size: .72rem; font-weight: 800; letter-spacing: .18em; margin: 0; text-transform: uppercase; }
+.eventTitle { font-family: var(--font-display), Impact, sans-serif; font-size: 2rem; font-weight: 900; line-height: 1; margin: .75rem 2.5rem 0 0; text-transform: uppercase; }
+.detail, .phone { align-items: center; display: flex; gap: .5rem; margin: 1.25rem 0 0; }
+.detail { color: rgba(255,255,255,.65); }
+.phone { color: #ff8840; font-weight: 800; margin-top: .75rem; text-decoration: none; }
+.notes { border-top: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.6); font-size: .875rem; line-height: 1.5; margin: 1.25rem 0 0; padding-top: 1.25rem; }
+@media (min-width: 640px) { .overlay { align-items: center; } }

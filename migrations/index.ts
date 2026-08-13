@@ -2,6 +2,7 @@ import * as migration_20260812_224747_cms_initial from './20260812_224747_cms_in
 import * as migration_20260812_232009_gallery_cms from './20260812_232009_gallery_cms';
 import * as migration_20260813_114933_gallery_mobile_layout from './20260813_114933_gallery_mobile_layout';
 import * as migration_20260813_125108_events_analytics from './20260813_125108_events_analytics';
+import * as migration_20260813_140933_reservations from './20260813_140933_reservations';
 
 export const migrations = [
   {
@@ -22,6 +23,11 @@ export const migrations = [
   {
     up: migration_20260813_125108_events_analytics.up,
     down: migration_20260813_125108_events_analytics.down,
-    name: '20260813_125108_events_analytics'
+    name: '20260813_125108_events_analytics',
+  },
+  {
+    up: migration_20260813_140933_reservations.up,
+    down: migration_20260813_140933_reservations.down,
+    name: '20260813_140933_reservations'
   },
 ];

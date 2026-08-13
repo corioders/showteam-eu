@@ -70,6 +70,8 @@ export interface Config {
     events: Event;
     offers: Offer;
     gallery: Gallery;
+    equipment: Equipment;
+    bookings: Booking;
     analytics: Analytics;
     media: Media;
     users: User;
@@ -83,6 +85,8 @@ export interface Config {
     events: EventsSelect<false> | EventsSelect<true>;
     offers: OffersSelect<false> | OffersSelect<true>;
     gallery: GallerySelect<false> | GallerySelect<true>;
+    equipment: EquipmentSelect<false> | EquipmentSelect<true>;
+    bookings: BookingsSelect<false> | BookingsSelect<true>;
     analytics: AnalyticsSelect<false> | AnalyticsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -264,6 +268,59 @@ export interface Gallery {
   createdAt: string;
 }
 /**
+ * Sprzęt widoczny w Rezerwacjach. Ustaw liczbę sztuk, długość terminu i godziny dostępności.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "equipment".
+ */
+export interface Equipment {
+  id: number;
+  name: string;
+  /**
+   * Krótko, bez spacji, np. sup. Nie zmieniaj po uruchomieniu rezerwacji.
+   */
+  slug: string;
+  description: string;
+  image?: (number | null) | Media;
+  category: 'Woda' | 'Ląd' | 'Szkolenie' | 'Inne';
+  quantity: number;
+  durationMinutes: number;
+  openTime: string;
+  closeTime: string;
+  sortOrder: number;
+  active?: boolean | null;
+  /**
+   * Np. wymagane uprawnienia albo informacja o potwierdzeniu przez obsługę.
+   */
+  notice?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Rezerwacje internetowe. Terminy zmieniaj przez anulowanie i utworzenie nowej rezerwacji, aby nie ominąć kontroli dostępności.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bookings".
+ */
+export interface Booking {
+  id: number;
+  reference: string;
+  reservationId: string;
+  equipment: number | Equipment;
+  bookingDate: string;
+  startTime: string;
+  endTime: string;
+  customerName: string;
+  phone: string;
+  email?: string | null;
+  status: 'confirmed' | 'completed' | 'cancelled';
+  customerNotes?: string | null;
+  staffNotes?: string | null;
+  source: 'website' | 'staff';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Liczba wizyt w ostatnich 30 dniach. Bez cookies, adresów IP i danych osobowych. Starsze sumy są automatycznie usuwane.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -336,6 +393,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'gallery';
         value: number | Gallery;
+      } | null)
+    | ({
+        relationTo: 'equipment';
+        value: number | Equipment;
+      } | null)
+    | ({
+        relationTo: 'bookings';
+        value: number | Booking;
       } | null)
     | ({
         relationTo: 'analytics';
@@ -463,6 +528,47 @@ export interface GallerySelect<T extends boolean = true> {
   sortOrder?: T;
   published?: T;
   sourceUrl?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "equipment_select".
+ */
+export interface EquipmentSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  description?: T;
+  image?: T;
+  category?: T;
+  quantity?: T;
+  durationMinutes?: T;
+  openTime?: T;
+  closeTime?: T;
+  sortOrder?: T;
+  active?: T;
+  notice?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "bookings_select".
+ */
+export interface BookingsSelect<T extends boolean = true> {
+  reference?: T;
+  reservationId?: T;
+  equipment?: T;
+  bookingDate?: T;
+  startTime?: T;
+  endTime?: T;
+  customerName?: T;
+  phone?: T;
+  email?: T;
+  status?: T;
+  customerNotes?: T;
+  staffNotes?: T;
+  source?: T;
   updatedAt?: T;
   createdAt?: T;
 }

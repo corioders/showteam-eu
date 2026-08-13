@@ -22,6 +22,11 @@
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview"
   },
   "dependencies": {
+    "@fullcalendar/core": "^6.1.21",
+    "@fullcalendar/daygrid": "^6.1.21",
+    "@fullcalendar/list": "^6.1.21",
+    "@fullcalendar/react": "^6.1.21",
+    "@fullcalendar/timegrid": "^6.1.21",
     "@opennextjs/cloudflare": "^1.11.0",
     "@payloadcms/db-d1-sqlite": "3.82.1",
     "@payloadcms/next": "3.82.1",
@@ -36,9 +41,11 @@
     "clsx": "^2.1.1",
     "cross-env": "10.1.0",
     "graphql": "^16.8.1",
+    "jose": "^6.2.8",
     "lucide-react": "^0.468.0",
     "next": "16.3.0",
     "payload": "3.82.1",
+    "qrcode.react": "^4.2.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "tailwind-merge": "^3.3.1"

@@ -17,3 +17,11 @@
   .quick-upload-card { align-items: stretch; flex-direction: column; }
   .quick-upload-card a { text-align: center; }
 }
+
+.calendar-admin-view { margin: 0 auto; max-width: 96rem; padding: 2rem; }
+.calendar-admin-heading { align-items: end; display: flex; gap: 1rem; justify-content: space-between; margin-bottom: 2rem; }
+.calendar-admin-heading span { color: #e85200; font-size: .7rem; font-weight: 800; letter-spacing: .18em; }
+.calendar-admin-heading h1 { font-size: clamp(2rem,5vw,4rem); line-height: 1; margin: .4rem 0; text-transform: uppercase; }
+.calendar-admin-heading p { color: var(--theme-elevation-600); margin: 0; }
+.calendar-admin-heading a { background: var(--theme-elevation-900); color: var(--theme-elevation-0); padding: .8rem 1rem; text-decoration: none; white-space: nowrap; }
+@media (max-width: 600px) { .calendar-admin-view { padding: 1rem; } .calendar-admin-heading { align-items: stretch; flex-direction: column; } .calendar-admin-heading a { text-align: center; } }

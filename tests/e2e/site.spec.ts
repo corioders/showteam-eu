@@ -2,9 +2,33 @@ import { expect, test } from "@playwright/test";
 
 test("main navigation reaches every public section", async ({ page }) => {
   await page.goto("/");
-  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/wydarzenia", "/galeria", "/kontakt"]) {
+  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/wydarzenia", "/rezerwacje", "/galeria", "/kontakt"]) {
     await expect(page.locator(`header a[href="${path}"]`)).toHaveCount(1);
   }
+});
+
+test("customer can reserve an available equipment slot", async ({ page }) => {
+  await page.goto("/rezerwacje");
+  await expect(page.getByRole("heading", { name: /Sprzęt czeka/i })).toBeVisible();
+  const bookingDate = new Date();
+  bookingDate.setDate(bookingDate.getDate() + 14);
+  const date = bookingDate.toISOString().slice(0, 10);
+  await page.locator('input[type="date"]').fill(date);
+  const firstSlot = page.locator("fieldset button").first();
+  await expect(firstSlot).toBeVisible();
+  await firstSlot.click();
+  await page.getByLabel("Imię i nazwisko").fill("Test Playwright");
+  await page.getByLabel("Telefon").fill("500 000 099");
+  await page.getByRole("button", { name: "Rezerwuję termin" }).click();
+  await expect(page.getByText("Rezerwacja zapisana")).toBeVisible();
+  await expect(page.getByText(/^SHOW-/)).toBeVisible();
+});
+
+test("TV calendar requires one-time phone pairing", async ({ page }) => {
+  await page.goto("/tv");
+  await expect(page.getByRole("heading", { name: /Połącz telefon/i })).toBeVisible();
+  await expect(page.locator("svg").filter({ has: page.locator("path") }).first()).toBeVisible();
+  expect((await page.request.get("/api/calendar/events")).status()).toBe(401);
 });
 
 test("hero video stops on its last frame and restarts after leaving the viewport", async ({ page }) => {
@@ -63,6 +87,13 @@ test.describe("mobile", () => {
     await page.goto("/");
     await page.getByRole("button", { name: "Otwórz menu" }).click();
     await expect(page.getByRole("link", { name: /Galeria/ })).toBeVisible();
+    const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
+    expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
+  });
+
+  test("reservations are usable without horizontal overflow", async ({ page }) => {
+    await page.goto("/rezerwacje");
+    await expect(page.getByRole("heading", { name: /Co bierzesz/i })).toBeVisible();
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });
