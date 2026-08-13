@@ -8,13 +8,13 @@ export default defineConfig({
   retries: 1,
   reporter: "line",
   use: {
-    baseURL: externalBaseUrl || "http://127.0.0.1:3000",
+    baseURL: externalBaseUrl || "http://localhost:3000",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
   webServer: externalBaseUrl ? undefined : {
     command: "pnpm dev",
-    url: "http://127.0.0.1:3000",
+    url: "http://localhost:3000",
     reuseExistingServer: true,
     timeout: 120_000,
   },
