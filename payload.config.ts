@@ -60,7 +60,7 @@ export default buildConfig({
     importMap: { baseDir: dirname },
     meta: {
       titleSuffix: " — Panel SHOWteam",
-      manifest: "/a/dodaj/manifest.webmanifest",
+      manifest: "/admin.webmanifest",
       appleWebApp: { capable: true, statusBarStyle: "default", title: "SHOWteam" },
       icons: { apple: "/pwa-192.png", icon: "/favicon.ico" },
     },

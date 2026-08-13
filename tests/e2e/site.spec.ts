@@ -127,14 +127,12 @@ test("calendar subscription management stays private", async ({ request }) => {
 });
 
 test("CMS is the single installable staff dashboard", async ({ page }) => {
-  const manifest = await page.request.get("/a/dodaj/manifest.webmanifest");
+  const manifest = await page.request.get("/admin.webmanifest");
   expect(manifest.ok()).toBe(true);
-  expect(await manifest.json()).toMatchObject({ start_url: "/admin", scope: "/" });
-  const shortcut = await page.request.get("/a/dodaj", { maxRedirects: 0 });
-  expect(shortcut.status()).toBe(307);
-  expect(shortcut.headers().location).toBe("/admin");
+  expect(await manifest.json()).toMatchObject({ id: "/admin", start_url: "/admin", scope: "/" });
+  expect((await page.request.get("/a/dodaj")).status()).toBe(404);
   await page.goto("/admin/login");
-  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/a/dodaj/manifest.webmanifest");
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/admin.webmanifest");
   expect((await page.request.post("/api/quick-upload", { multipart: { category: "Lato" } })).status()).toBe(401);
 });
 
@@ -188,7 +186,7 @@ test.describe("mobile", () => {
   });
 
   test("installed PWA opens the mobile CMS", async ({ page }) => {
-    await page.goto("/a/dodaj");
+    await page.goto("/admin");
     await expect(page).toHaveURL(/\/admin/);
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
