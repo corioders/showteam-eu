@@ -6,6 +6,7 @@ export const Offers: CollectionConfig = {
   slug: "offers",
   labels: { singular: "Oferta", plural: "Oferty" },
   admin: {
+    components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
     useAsTitle: "title",
     group: "Treści strony",
     defaultColumns: ["title", "category", "season", "updatedAt"],

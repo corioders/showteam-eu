@@ -15,6 +15,7 @@ export function createBookingsCollection(database: D1Database): CollectionConfig
     slug: "bookings",
     labels: { singular: "Rezerwacja", plural: "Rezerwacje" },
     admin: {
+      components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
       useAsTitle: "reference",
       group: "Rezerwacje",
       defaultColumns: ["reference", "bookingDate", "startTime", "equipment", "customerName", "status"],

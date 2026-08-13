@@ -8,6 +8,7 @@ export const Equipment: CollectionConfig = {
   slug: "equipment",
   labels: { singular: "Sprzęt", plural: "Sprzęt do rezerwacji" },
   admin: {
+    components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
     useAsTitle: "name",
     group: "Rezerwacje",
     defaultColumns: ["name", "category", "quantity", "durationMinutes", "active"],

@@ -7,6 +7,7 @@ export const Gallery: CollectionConfig = {
   slug: "gallery",
   labels: { singular: "Zdjęcie galerii", plural: "Galeria" },
   admin: {
+    components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
     useAsTitle: "caption",
     group: "Treści strony",
     defaultColumns: ["caption", "season", "layout", "sortOrder", "published"],

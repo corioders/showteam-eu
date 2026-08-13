@@ -6,6 +6,7 @@ export const Events: CollectionConfig = {
   slug: "events",
   labels: { singular: "Wydarzenie", plural: "Wydarzenia" },
   admin: {
+    components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
     useAsTitle: "title",
     group: "Treści strony",
     defaultColumns: ["title", "startDate", "location", "published"],
