@@ -1,14 +1,31 @@
 import Link from "next/link";
 
+const tasks = [
+  { href: "/admin/collections/events/create", title: "Dodaj wydarzenie", description: "Termin, miejsce, opis i zdjęcie." },
+  { href: "/dodaj", title: "Dodaj zdjęcia lub filmy", description: "Najprostszy uploader prosto z telefonu." },
+  { href: "/admin/kalendarz", title: "Sprawdź rezerwacje", description: "Kalendarz bazy, telefony i notatki." },
+  { href: "/admin/collections/equipment", title: "Zmień wynajem", description: "Sprzęt, liczba sztuk i godziny." },
+  { href: "/admin/collections/offers", title: "Edytuj ofertę", description: "Lato, zima i szkolenia na stronie." },
+  { href: "/admin/collections/analytics", title: "Zobacz statystyki", description: "Odwiedziny strony z ostatnich 30 dni." },
+];
+
 export function QuickUploadCard() {
   return (
-    <div>
-      <div className="quick-upload-card"><div><span className="quick-upload-card__step">01</span><strong>Kalendarz rezerwacji</strong><p>Dzisiejszy grafik, telefony klientów i ekran bazy.</p></div><Link href="/admin/kalendarz">Otwórz kalendarz</Link></div>
-      <div className="quick-upload-card"><div><span className="quick-upload-card__step">02</span><strong>Co wynajmujemy?</strong><p>Dodaj lub zmień sprzęt tylko tutaj — strona, terminy i kalendarz pobiorą te same dane automatycznie.</p></div><Link href="/admin/collections/equipment">Zarządzaj sprzętem</Link></div>
-      <div className="quick-upload-card">
-        <div><span className="quick-upload-card__step">03</span><strong>Zdjęcia i filmy</strong><p>Wrzuć materiały z telefonu bez wypełniania całego formularza.</p></div>
-        <Link href="/dodaj">Otwórz uploader</Link>
+    <section className="admin-start">
+      <div className="admin-start__heading">
+        <span>Panel SHOWteam</span>
+        <h1>Co chcesz zrobić?</h1>
+        <p>Wybierz zadanie. Resztę panel przeprowadzi krok po kroku.</p>
       </div>
-    </div>
+      <div className="admin-task-grid">
+        {tasks.map((task, index) => <Link href={task.href} className="admin-task" key={task.href}>
+          <span className="admin-task__number">{String(index + 1).padStart(2, "0")}</span>
+          <strong>{task.title}</strong>
+          <p>{task.description}</p>
+          <span className="admin-task__action">Otwórz →</span>
+        </Link>)}
+      </div>
+      <p className="admin-start__hint"><strong>Spokojnie:</strong> wpisywane treści zapisują się na tym urządzeniu. Jeśli przypadkiem odświeżysz stronę, formularz zostanie przywrócony.</p>
+    </section>
   );
 }

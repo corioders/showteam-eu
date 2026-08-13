@@ -2,8 +2,8 @@ import type { CollectionConfig } from "payload";
 
 export const Users: CollectionConfig = {
   slug: "users",
-  labels: { singular: "Użytkownik", plural: "Użytkownicy" },
-  admin: { useAsTitle: "email", group: "Ustawienia" },
+  labels: { singular: "Konto obsługi", plural: "Konta obsługi" },
+  admin: { useAsTitle: "email", group: "Pomoc i ustawienia", description: "Osoby, które mogą logować się do panelu SHOWteam." },
   auth: true,
   fields: [{ name: "name", label: "Imię", type: "text" }],
   versions: false,

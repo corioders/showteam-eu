@@ -9,7 +9,7 @@ export const Gallery: CollectionConfig = {
   admin: {
     components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
     useAsTitle: "caption",
-    group: "Treści strony",
+    group: "Strona internetowa",
     defaultColumns: ["caption", "season", "layout", "sortOrder", "published"],
     description: "Dodaj zdjęcie lub film, ustaw układ i opublikuj w galerii. Najprościej zrobisz to przez Szybkie dodawanie na pulpicie.",
     preview: () => "/galeria",

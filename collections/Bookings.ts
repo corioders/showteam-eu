@@ -13,7 +13,7 @@ export function createBookingsCollection(database: D1Database): CollectionConfig
 
   return {
     slug: "bookings",
-    labels: { singular: "Rezerwacja", plural: "Rezerwacje" },
+    labels: { singular: "Rezerwacja", plural: "Rezerwacje klientów" },
     admin: {
       components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
       useAsTitle: "reference",

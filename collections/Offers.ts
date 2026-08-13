@@ -4,11 +4,11 @@ const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
 export const Offers: CollectionConfig = {
   slug: "offers",
-  labels: { singular: "Oferta", plural: "Oferty" },
+  labels: { singular: "Strona oferty", plural: "Strony oferty" },
   admin: {
     components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
     useAsTitle: "title",
-    group: "Treści strony",
+    group: "Strona internetowa",
     defaultColumns: ["title", "category", "season", "updatedAt"],
     description: "Treści widoczne na stronie głównej i podstronach ofertowych.",
   },

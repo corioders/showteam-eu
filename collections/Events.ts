@@ -4,11 +4,11 @@ const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
 export const Events: CollectionConfig = {
   slug: "events",
-  labels: { singular: "Wydarzenie", plural: "Wydarzenia" },
+  labels: { singular: "Wydarzenie", plural: "Wydarzenia i terminy" },
   admin: {
     components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
     useAsTitle: "title",
-    group: "Treści strony",
+    group: "Strona internetowa",
     defaultColumns: ["title", "startDate", "location", "published"],
     description: "Tu dodajesz terminy widoczne w zakładce Wydarzenia. Wypełnij nazwę, datę, miejsce i krótki opis.",
     preview: () => "/wydarzenia",

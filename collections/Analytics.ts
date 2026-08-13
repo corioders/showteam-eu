@@ -4,10 +4,10 @@ const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
 export const Analytics: CollectionConfig = {
   slug: "analytics",
-  labels: { singular: "Statystyka", plural: "Statystyki" },
+  labels: { singular: "Statystyka odwiedzin", plural: "Statystyki odwiedzin" },
   admin: {
     useAsTitle: "path",
-    group: "Narzędzia",
+    group: "Pomoc i ustawienia",
     defaultColumns: ["day", "path", "views"],
     description: "Liczba wizyt w ostatnich 30 dniach. Bez cookies, adresów IP i danych osobowych. Starsze sumy są automatycznie usuwane.",
   },

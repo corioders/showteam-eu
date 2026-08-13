@@ -6,7 +6,7 @@ const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
 export const Equipment: CollectionConfig = {
   slug: "equipment",
-  labels: { singular: "Sprzęt", plural: "Sprzęt do rezerwacji" },
+  labels: { singular: "Sprzęt do wynajęcia", plural: "Sprzęt i godziny wynajmu" },
   admin: {
     components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
     useAsTitle: "name",
