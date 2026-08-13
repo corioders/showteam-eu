@@ -191,6 +191,7 @@ export interface Media {
 export interface Offer {
   id: number;
   title: string;
+  category: 'Lato' | 'Zima' | 'Szkolenia';
   location: string;
   /**
    * 2–4 zdania zachęcające klienta.
@@ -229,8 +230,7 @@ export interface Offer {
   cover?: (number | null) | Media;
   published?: boolean | null;
   staticImage: 'lake' | 'snow' | 'training';
-  slug: 'lato' | 'zima' | 'szkolenia';
-  category: 'Lato' | 'Zima' | 'Szkolenia';
+  slug: string;
   sortOrder: number;
   updatedAt: string;
   createdAt: string;
@@ -505,6 +505,7 @@ export interface EventsSelect<T extends boolean = true> {
  */
 export interface OffersSelect<T extends boolean = true> {
   title?: T;
+  category?: T;
   location?: T;
   summary?: T;
   season?: T;
@@ -532,7 +533,6 @@ export interface OffersSelect<T extends boolean = true> {
   published?: T;
   staticImage?: T;
   slug?: T;
-  category?: T;
   sortOrder?: T;
   updatedAt?: T;
   createdAt?: T;

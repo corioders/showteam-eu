@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Footprints, MountainSnow, PartyPopper, Snowflake, UtensilsCrossed } from "lucide-react";
 import { ContactCta } from "@/components/contact-cta";
 import { CmsDetails } from "@/components/cms-details";
@@ -13,6 +14,7 @@ export const dynamic = "force-dynamic";
 
 export default async function WinterPage() {
   const offer = await getOffer("zima");
+  if (!offer) notFound();
   return (
     <>
       <PageHero eyebrow={`${offer.category} · ${offer.season}`} title={offer.title} description={offer.summary} location={offer.location} image={offer.image} imageAlt={offer.imageAlt} />

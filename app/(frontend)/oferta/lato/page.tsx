@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { Bike, Sailboat, TentTree, Waves } from "lucide-react";
 import { ContactCta } from "@/components/contact-cta";
 import { CmsDetails } from "@/components/cms-details";
@@ -19,6 +20,7 @@ const activities = [
 
 export default async function SummerPage() {
   const offer = await getOffer("lato");
+  if (!offer) notFound();
   return (
     <>
       <PageHero eyebrow={`${offer.category} · ${offer.season}`} title={offer.title} description={offer.summary} location={offer.location} image={offer.image} imageAlt={offer.imageAlt} />

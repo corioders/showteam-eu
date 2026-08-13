@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { slugFromName } from "@/lib/slug";
 
 const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
@@ -16,15 +17,30 @@ export const Offers: CollectionConfig = {
   },
   access: {
     read: () => true,
-    create: () => false,
+    create: isLoggedIn,
     update: isLoggedIn,
-    delete: () => false,
+    delete: isLoggedIn,
+  },
+  hooks: {
+    beforeValidate: [async ({ data, originalDoc, req }) => {
+      if (!data) return data;
+      if (originalDoc?.slug) data.slug = originalDoc.slug;
+      else {
+        const base = slugFromName(String(data.title || "")) || "oferta";
+        let candidate = base;
+        let suffix = 2;
+        while ((await req.payload.count({ collection: "offers", where: { slug: { equals: candidate } }, overrideAccess: true })).totalDocs) candidate = `${base}-${suffix++}`;
+        data.slug = candidate;
+      }
+      return data;
+    }],
   },
   defaultSort: "sortOrder",
   fields: [
     { type: "tabs", tabs: [
       { label: "1. Najważniejsze", description: "Nagłówek i opis widoczne na górze strony oferty.", fields: [
         { name: "title", label: "Nazwa oferty", type: "text", required: true },
+        { name: "category", label: "Kategoria", type: "select", required: true, defaultValue: "Lato", options: ["Lato", "Zima", "Szkolenia"] },
         { name: "location", label: "Lokalizacja", type: "text", required: true, admin: { placeholder: "np. Jezioro Łąckie · Poręba" } },
         { name: "summary", label: "Krótki opis", type: "textarea", required: true, maxLength: 360, admin: { description: "2–4 zdania zachęcające klienta." } },
         { name: "season", label: "Nazwa sezonu", type: "text", required: true, defaultValue: "Sezon 2026", admin: { description: "Np. „Sezon 2026”." } },
@@ -50,12 +66,7 @@ export const Offers: CollectionConfig = {
         ], admin: { hidden: true } },
       ] },
     ] },
-    { name: "slug", label: "Rodzaj strony", type: "select", required: true, unique: true, options: [
-      { label: "Lato", value: "lato" },
-      { label: "Zima", value: "zima" },
-      { label: "Szkolenia", value: "szkolenia" },
-    ], admin: { hidden: true } },
-    { name: "category", label: "Kategoria", type: "select", required: true, options: ["Lato", "Zima", "Szkolenia"], admin: { hidden: true } },
+    { name: "slug", label: "Adres strony", type: "text", required: true, unique: true, admin: { hidden: true } },
     { name: "sortOrder", label: "Kolejność", type: "number", required: true, defaultValue: 10, admin: { hidden: true } },
   ],
 };
