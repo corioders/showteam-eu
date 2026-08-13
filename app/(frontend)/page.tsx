@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
-  const [offers, gallery] = await Promise.all([getOffers(), getGallery()]);
+  const [offers, gallery] = await Promise.all([getOffers(), getGallery(8)]);
   return (
     <>
       <section className="grain relative min-h-svh overflow-hidden pt-20">

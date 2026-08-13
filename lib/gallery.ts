@@ -19,6 +19,12 @@ export type GalleryPhoto = {
   type: "image" | "video";
 };
 
+export type GalleryPage = {
+  photos: GalleryPhoto[];
+  page: number;
+  totalPages: number;
+};
+
 function staticPhotos(): GalleryPhoto[] {
   return galleryAssets.map((asset) => ({ id: asset.value, src: asset.path, alt: asset.alt, caption: asset.label, layout: asset.layout, fit: asset.fit, objectPosition: asset.position, mobilePosition: asset.position, mobileLayout: defaultMobileLayout(asset.layout), season: asset.season, type: "image", sourceUrl: asset.value.startsWith("instagram-") ? "https://www.instagram.com/showteam.eu/" : undefined }));
 }
@@ -52,16 +58,38 @@ function toPhoto(document: Record<string, unknown>): GalleryPhoto | null {
   };
 }
 
-export async function getGallery(): Promise<GalleryPhoto[]> {
+export async function getGalleryPage({ page = 1, limit = 24, season }: { page?: number; limit?: number; season?: GalleryPhoto["season"] } = {}): Promise<GalleryPage> {
+  const safePage = Math.max(1, Math.floor(page));
+  const safeLimit = Math.min(48, Math.max(1, Math.floor(limit)));
   try {
     const payload = await getPayload({ config });
-    const result = await payload.find({ collection: "gallery", where: { published: { equals: true } }, sort: "-createdAt", depth: 1, limit: 100 });
+    const result = await payload.find({
+      collection: "gallery",
+      where: {
+        and: [
+          { published: { equals: true } },
+          ...(season ? [{ season: { equals: season } }] : []),
+        ],
+      },
+      sort: "-createdAt",
+      depth: 1,
+      page: safePage,
+      limit: safeLimit,
+    });
     const photos = result.docs.flatMap((document) => {
       const photo = toPhoto(document as unknown as Record<string, unknown>);
       return photo ? [photo] : [];
     });
-    return photos.length ? photos : staticPhotos();
+    if (photos.length || result.totalDocs > 0) return { photos, page: result.page ?? safePage, totalPages: result.totalPages };
   } catch {
-    return staticPhotos();
+    // The static archive keeps the site useful when the CMS is temporarily unavailable.
   }
+
+  const matching = staticPhotos().filter((photo) => !season || photo.season === season);
+  const start = (safePage - 1) * safeLimit;
+  return { photos: matching.slice(start, start + safeLimit), page: safePage, totalPages: Math.max(1, Math.ceil(matching.length / safeLimit)) };
+}
+
+export async function getGallery(limit = 24): Promise<GalleryPhoto[]> {
+  return (await getGalleryPage({ limit })).photos;
 }
