@@ -4,6 +4,9 @@
 .showteam-login-intro { border-left: 4px solid #f06414; margin-bottom: 1.5rem; padding-left: 1rem; }
 .showteam-login-intro strong { display: block; font-size: 1.4rem; }
 .showteam-login-intro p { color: var(--theme-elevation-600); line-height: 1.5; margin: .35rem 0 0; }
+.showteam-admin-logout { align-items: center; color: var(--theme-elevation-700); display: flex; font-weight: 700; gap: .65rem; min-height: 2.75rem; padding: .65rem 1rem; text-decoration: none; }
+.showteam-admin-logout:hover, .showteam-admin-logout:focus-visible { background: var(--theme-elevation-100); color: #e85200; outline: none; }
+.showteam-admin-logout svg { height: 1.25rem; width: 1.25rem; }
 
 .login { background: #0b0c0d; color: #f7f6f1; }
 .login .template-minimal__wrap { max-width: 30rem; }

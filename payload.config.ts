@@ -56,6 +56,7 @@ export default buildConfig({
     components: {
       beforeDashboard: ["@/components/payload/quick-upload-card#QuickUploadCard"],
       beforeLogin: ["@/components/payload/brand#LoginIntro"],
+      logout: { Button: "@/components/payload/logout-button#LogoutButton" },
       graphics: { Logo: "@/components/payload/brand#ShowteamLogo", Icon: "@/components/payload/brand#ShowteamIcon" },
       views: { calendar: { Component: "@/components/payload/calendar-admin-view#CalendarAdminView", path: "/kalendarz" } },
     },
