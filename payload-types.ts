@@ -139,16 +139,25 @@ export interface Event {
   id: number;
   title: string;
   startDate: string;
+  /**
+   * Zostaw puste przy wydarzeniu jednodniowym.
+   */
   endDate?: string | null;
   location: string;
+  /**
+   * Najważniejsze informacje w 2–4 zdaniach.
+   */
   summary: string;
   /**
-   * Opcjonalne. Jeśli nie dodasz zdjęcia, użyjemy fotografii SHOWteam.
+   * Opcjonalne. Bez zdjęcia pokażemy fotografię SHOWteam.
    */
   image?: (number | null) | Media;
   category: 'Lato' | 'Zima' | 'Szkolenia' | 'Inne';
-  ctaLabel?: string | null;
   published?: boolean | null;
+  /**
+   * Opcjonalne. Domyślny tekst jest odpowiedni w większości przypadków.
+   */
+  ctaLabel?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -182,17 +191,18 @@ export interface Media {
 export interface Offer {
   id: number;
   title: string;
-  slug: 'lato' | 'zima' | 'szkolenia';
-  category: 'Lato' | 'Zima' | 'Szkolenia';
-  season: string;
-  sortOrder: number;
   location: string;
+  /**
+   * 2–4 zdania zachęcające klienta.
+   */
   summary: string;
   /**
-   * Opcjonalnie. Bez nowego zdjęcia strona użyje obecnej fotografii SHOWteam.
+   * Np. „Sezon 2026”.
    */
-  cover?: (number | null) | Media;
-  staticImage: 'lake' | 'snow' | 'training';
+  season: string;
+  /**
+   * Dodaj każdy turnus lub wyjazd jako osobny termin.
+   */
   dates?:
     | {
         label?: string | null;
@@ -213,7 +223,15 @@ export interface Offer {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Opcjonalne. Bez nowego zdjęcia zostanie obecna fotografia SHOWteam.
+   */
+  cover?: (number | null) | Media;
   published?: boolean | null;
+  staticImage: 'lake' | 'snow' | 'training';
+  slug: 'lato' | 'zima' | 'szkolenia';
+  category: 'Lato' | 'Zima' | 'Szkolenia';
+  sortOrder: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -226,12 +244,9 @@ export interface Offer {
 export interface Gallery {
   id: number;
   /**
-   * Wgraj własne zdjęcie albo film MP4, WebM lub MOV.
+   * Wgraj materiał z telefonu. Dla wielu plików użyj przycisku „Dodaj zdjęcia lub filmy” na pulpicie.
    */
   image?: (number | null) | Media;
-  /**
-   * Używane tylko wtedy, gdy nie wgrasz nowego zdjęcia.
-   */
   staticImage?:
     | (
         | 'summer-wake-aerial'
@@ -249,21 +264,24 @@ export interface Gallery {
       )
     | null;
   caption: string;
+  season: 'Lato' | 'Zima' | 'Szkolenia';
+  published?: boolean | null;
   /**
-   * Opcjonalnie. Domyślnie użyjemy opisu wgranego zdjęcia.
+   * Opcjonalne. Pomaga osobom korzystającym z czytnika ekranu.
    */
   alt?: string | null;
-  season: 'Lato' | 'Zima' | 'Szkolenia';
   layout: 'large' | 'wide' | 'tall' | 'square';
   mobileLayout: 'landscape' | 'portrait' | 'square';
   fit: 'cover' | 'contain';
   mobilePosition: 'same' | '50% 20%' | '50% 50%' | '50% 80%' | '20% 50%' | '80% 50%';
-  sortOrder: number;
-  published?: boolean | null;
   /**
-   * Opcjonalny link do posta na Instagramie lub Facebooku.
+   * Opcjonalny link do Instagrama lub Facebooka.
    */
   sourceUrl?: string | null;
+  /**
+   * Zwykle nie trzeba zmieniać.
+   */
+  sortOrder: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -276,23 +294,26 @@ export interface Gallery {
 export interface Equipment {
   id: number;
   name: string;
-  slug: string;
+  /**
+   * Napisz krótko, dla kogo jest sprzęt i co warto wiedzieć.
+   */
   description: string;
   image?: (number | null) | Media;
   category: 'Woda' | 'Ląd' | 'Szkolenie' | 'Inne';
   quantity: number;
   /**
-   * Np. 60 oznacza, że klient rezerwuje sprzęt na godzinę.
+   * Opcjonalnie, np. „Wymagane uprawnienia”.
+   */
+  notice?: string | null;
+  /**
+   * Np. 60 = jedna godzina.
    */
   durationMinutes: number;
   openTime: string;
   closeTime: string;
-  sortOrder: number;
   active?: boolean | null;
-  /**
-   * Opcjonalnie, np. „Wymagane uprawnienia”. Ten tekst będzie widoczny przed rezerwacją.
-   */
-  notice?: string | null;
+  slug: string;
+  sortOrder: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -304,6 +325,11 @@ export interface Equipment {
  */
 export interface Booking {
   id: number;
+  /**
+   * Uwaga: anulowania nie można cofnąć. W razie pomyłki utwórz nową rezerwację.
+   */
+  status: 'confirmed' | 'completed' | 'cancelled';
+  staffNotes?: string | null;
   reference: string;
   reservationId: string;
   equipment: number | Equipment;
@@ -313,9 +339,7 @@ export interface Booking {
   customerName: string;
   phone: string;
   email?: string | null;
-  status: 'confirmed' | 'completed' | 'cancelled';
   customerNotes?: string | null;
-  staffNotes?: string | null;
   source: 'website' | 'staff';
   updatedAt: string;
   createdAt: string;
@@ -333,6 +357,8 @@ export interface Analytics {
   views: number;
 }
 /**
+ * Osoby, które mogą logować się do panelu SHOWteam.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
@@ -468,8 +494,8 @@ export interface EventsSelect<T extends boolean = true> {
   summary?: T;
   image?: T;
   category?: T;
-  ctaLabel?: T;
   published?: T;
+  ctaLabel?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -479,14 +505,9 @@ export interface EventsSelect<T extends boolean = true> {
  */
 export interface OffersSelect<T extends boolean = true> {
   title?: T;
-  slug?: T;
-  category?: T;
-  season?: T;
-  sortOrder?: T;
   location?: T;
   summary?: T;
-  cover?: T;
-  staticImage?: T;
+  season?: T;
   dates?:
     | T
     | {
@@ -507,7 +528,12 @@ export interface OffersSelect<T extends boolean = true> {
         body?: T;
         id?: T;
       };
+  cover?: T;
   published?: T;
+  staticImage?: T;
+  slug?: T;
+  category?: T;
+  sortOrder?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -519,15 +545,15 @@ export interface GallerySelect<T extends boolean = true> {
   image?: T;
   staticImage?: T;
   caption?: T;
-  alt?: T;
   season?: T;
+  published?: T;
+  alt?: T;
   layout?: T;
   mobileLayout?: T;
   fit?: T;
   mobilePosition?: T;
-  sortOrder?: T;
-  published?: T;
   sourceUrl?: T;
+  sortOrder?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -537,17 +563,17 @@ export interface GallerySelect<T extends boolean = true> {
  */
 export interface EquipmentSelect<T extends boolean = true> {
   name?: T;
-  slug?: T;
   description?: T;
   image?: T;
   category?: T;
   quantity?: T;
+  notice?: T;
   durationMinutes?: T;
   openTime?: T;
   closeTime?: T;
-  sortOrder?: T;
   active?: T;
-  notice?: T;
+  slug?: T;
+  sortOrder?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -556,6 +582,8 @@ export interface EquipmentSelect<T extends boolean = true> {
  * via the `definition` "bookings_select".
  */
 export interface BookingsSelect<T extends boolean = true> {
+  status?: T;
+  staffNotes?: T;
   reference?: T;
   reservationId?: T;
   equipment?: T;
@@ -565,9 +593,7 @@ export interface BookingsSelect<T extends boolean = true> {
   customerName?: T;
   phone?: T;
   email?: T;
-  status?: T;
   customerNotes?: T;
-  staffNotes?: T;
   source?: T;
   updatedAt?: T;
   createdAt?: T;
