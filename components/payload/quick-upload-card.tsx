@@ -26,7 +26,6 @@ export function QuickUploadCard() {
           <span className="admin-task__action">Otwórz →</span>
         </Link>)}
       </div>
-      <p className="admin-start__hint"><strong>Spokojnie:</strong> wpisywane treści zapisują się na tym urządzeniu. Jeśli przypadkiem odświeżysz stronę, formularz zostanie przywrócony.</p>
     </section>
   );
 }
