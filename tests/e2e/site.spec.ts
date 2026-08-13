@@ -32,7 +32,7 @@ test("customer can reserve an available equipment slot", async ({ page }) => {
   bookingDate.setDate(bookingDate.getDate() + 14);
   const date = bookingDate.toISOString().slice(0, 10);
   await page.locator('input[type="date"]').fill(date);
-  const firstSlot = page.locator("fieldset button").first();
+  const firstSlot = page.getByRole("group", { name: "Godzina" }).getByRole("button").first();
   await expect(firstSlot).toBeVisible();
   await firstSlot.click();
   await page.getByLabel("Imię i nazwisko").fill("Test Playwright");
