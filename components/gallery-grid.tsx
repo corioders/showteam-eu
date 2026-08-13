@@ -46,9 +46,9 @@ export function GalleryGrid({ photos, filtersEnabled = false }: { photos: Galler
                 sizes={photo.layout === "large" || photo.layout === "wide" ? "(min-width:768px) 50vw, 100vw" : "(min-width:768px) 25vw, 100vw"}
               />
             )}
-            <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-5 pt-14 md:translate-y-3 md:opacity-0 md:transition md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
+            <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-5 pt-14 md:translate-y-3 md:opacity-0 md:transition md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
               <p className="font-display text-xl font-black uppercase">{photo.caption}</p>
-              {photo.sourceUrl ? <a href={photo.sourceUrl} target="_blank" rel="noreferrer" className="relative z-10 mt-2 inline-flex items-center gap-1 font-mono text-[0.65rem] font-bold uppercase tracking-wider text-orange-400">Źródło <ArrowUpRight className="size-3" /></a> : null}
+              {photo.sourceUrl ? <a href={photo.sourceUrl} target="_blank" rel="noreferrer" className="pointer-events-auto relative z-10 mt-2 inline-flex items-center gap-1 font-mono text-[0.65rem] font-bold uppercase tracking-wider text-orange-400">Źródło <ArrowUpRight className="size-3" /></a> : null}
             </figcaption>
           </figure>
         ))}
