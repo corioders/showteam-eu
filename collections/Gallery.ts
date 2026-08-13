@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { galleryAssets } from "@/lib/gallery-assets";
+import { revalidateGallery } from "@/lib/revalidate-public";
 
 const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
@@ -20,6 +21,10 @@ export const Gallery: CollectionConfig = {
     create: isLoggedIn,
     update: isLoggedIn,
     delete: isLoggedIn,
+  },
+  hooks: {
+    afterChange: [({ doc, req }) => { if (req.user) revalidateGallery(); return doc; }],
+    afterDelete: [({ doc, req }) => { if (req.user) revalidateGallery(); return doc; }],
   },
   defaultSort: "-createdAt",
   fields: [

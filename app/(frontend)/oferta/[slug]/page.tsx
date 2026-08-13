@@ -5,7 +5,7 @@ import { CmsDetails } from "@/components/cms-details";
 import { PageHero } from "@/components/page-hero";
 import { getOffer, getOffers } from "@/lib/cms";
 
-export const revalidate = 60;
+export const revalidate = false;
 
 type Props = { params: Promise<{ slug: string }> };
 

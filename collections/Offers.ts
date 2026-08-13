@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { slugFromName } from "@/lib/slug";
+import { revalidateOffers } from "@/lib/revalidate-public";
 
 const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
@@ -22,6 +23,8 @@ export const Offers: CollectionConfig = {
     delete: isLoggedIn,
   },
   hooks: {
+    afterChange: [({ doc, req }) => { if (req.user) revalidateOffers(); return doc; }],
+    afterDelete: [({ doc, req }) => { if (req.user) revalidateOffers(); return doc; }],
     beforeValidate: [async ({ data, originalDoc, req }) => {
       if (!data) return data;
       if (originalDoc?.slug) data.slug = originalDoc.slug;

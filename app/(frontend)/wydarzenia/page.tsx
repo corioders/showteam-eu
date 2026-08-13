@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { getEvents, type PublicEvent } from "@/lib/events";
 import { groupEvents, type EventStatus } from "@/lib/event-status";
 
-export const revalidate = 60;
+export const revalidate = false;
 export const metadata: Metadata = { title: "Wydarzenia", description: "Aktualne i minione terminy SHOWCamp, wyjazdów i wydarzeń SHOWteam.", alternates: { canonical: "/wydarzenia" } };
 
 const format = (value: string) => new Intl.DateTimeFormat("pl-PL", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Warsaw" }).format(new Date(value));

@@ -9,7 +9,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { getOffer } from "@/lib/cms";
 
 export const metadata: Metadata = { title: "Szkolenia i FizjoSPORT", description: "Kurs sternika motorowodnego, żeglarstwo, obozy i FizjoSPORT.", alternates: { canonical: "/oferta/szkolenia" } };
-export const revalidate = 60;
+export const revalidate = false;
 
 const programs = [
   { icon: Waves, number: "01", title: "Sternik motorowodny", text: "Teoria i praktyka, przygotowanie do egzaminu państwowego oraz możliwość zdobycia międzynarodowych uprawnień." },

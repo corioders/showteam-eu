@@ -1,4 +1,5 @@
 import type { CollectionConfig } from "payload";
+import { revalidateEvents } from "@/lib/revalidate-public";
 
 const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
@@ -19,6 +20,10 @@ export const Events: CollectionConfig = {
     create: isLoggedIn,
     update: isLoggedIn,
     delete: isLoggedIn,
+  },
+  hooks: {
+    afterChange: [({ doc, req }) => { if (req.user) revalidateEvents(); return doc; }],
+    afterDelete: [({ doc, req }) => { if (req.user) revalidateEvents(); return doc; }],
   },
   defaultSort: "startDate",
   fields: [

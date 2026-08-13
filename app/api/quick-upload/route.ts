@@ -2,6 +2,7 @@ import { Buffer } from "node:buffer";
 import { getPayload } from "payload";
 import config from "@payload-config";
 import { parseFocalPoints } from "@/lib/gallery-focal";
+import { revalidateGallery } from "@/lib/revalidate-public";
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif", "video/mp4", "video/webm", "video/quicktime"]);
 const allowedCategories = new Set(["Lato", "Zima", "Szkolenia"]);
@@ -61,6 +62,7 @@ export async function POST(request: Request) {
       });
       createdGallery.push(Number(galleryItem.id));
     }
+    revalidateGallery();
     return Response.json({ count: files.length });
   } catch (error) {
     await Promise.allSettled(createdGallery.map((id) => payload.delete({ collection: "gallery", id })));
