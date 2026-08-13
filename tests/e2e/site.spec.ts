@@ -191,4 +191,14 @@ test.describe("mobile", () => {
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });
+
+  test("footer renders no limits as responsive text", async ({ page }) => {
+    await page.goto("/kontakt");
+    const slogan = page.getByText("no limits...");
+    await slogan.scrollIntoViewIfNeeded();
+    await expect(slogan).toBeVisible();
+    const box = await slogan.boundingBox();
+    expect(box?.x).toBeGreaterThanOrEqual(0);
+    expect((box?.x ?? 0) + (box?.width ?? 0)).toBeLessThanOrEqual(390);
+  });
 });

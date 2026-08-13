@@ -5,7 +5,6 @@ import { contact } from "@/lib/offers";
 export function SiteFooter() {
   return (
     <footer className="relative overflow-hidden border-t border-white/10 bg-black py-12">
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-[url('/media/legacy-light-trails-bottom.jpg')] bg-cover bg-center opacity-30" />
       <div className="site-container relative grid gap-10 md:grid-cols-[1fr_auto] md:items-end">
         <div>
           <p className="font-display text-4xl font-black uppercase tracking-tight md:text-6xl">Love the things<br /><span className="text-orange-500">that make you happy.</span></p>
@@ -21,7 +20,10 @@ export function SiteFooter() {
           <Link href="/kontakt" className="hover:text-orange-400">Kontakt</Link>
         </div>
       </div>
-      <div className="site-container relative mt-12 flex flex-col gap-2 border-t border-white/10 pt-5 text-xs uppercase tracking-[0.16em] text-white/30 sm:flex-row sm:justify-between">
+      <div className="site-container relative mt-12 overflow-hidden border-y border-white/10 py-3">
+        <p className="-rotate-1 text-right font-mono text-2xl font-black lowercase leading-none text-red-500 sm:text-4xl">no limits...</p>
+      </div>
+      <div className="site-container relative mt-5 flex flex-col gap-2 text-xs uppercase tracking-[0.16em] text-white/30 sm:flex-row sm:justify-between">
         <span>© 2026 SHOWteam</span><span>Poręba · Śląsk · Polska</span>
       </div>
     </footer>
