@@ -1,6 +1,6 @@
 import { getPayload } from "payload";
 import config, { database } from "@payload-config";
-import { bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone, todayInPoland } from "@/lib/reservations";
+import { bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone, resolveBookingHours, todayInPoland, type AvailabilityHoursRule } from "@/lib/reservations";
 import { ensureOperationalTables } from "@/lib/operational-tables";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -47,7 +47,14 @@ export async function POST(request: Request) {
   let equipment;
   try { equipment = await payload.findByID({ collection: "equipment", id: equipmentId, overrideAccess: false }); }
   catch { return Response.json({ error: "Nie znaleziono sprzętu." }, { status: 404 }); }
-  if (!equipment.active || !createTimeSlots(equipment.openTime, equipment.closeTime, equipment.durationMinutes).includes(time)) {
+  const hoursRules = await database.prepare(`SELECT equipment_id, rule_type, booking_date, weekdays, start_time, end_time, created_at
+    FROM availability_hours WHERE (equipment_id IS NULL OR equipment_id = ?) AND (rule_type = 'weekly' OR booking_date = ?)`)
+    .bind(equipmentId, date).all<{ equipment_id: number | null; rule_type: "date" | "weekly"; booking_date: string | null; weekdays: string | null; start_time: string; end_time: string; created_at: number }>();
+  const hours = resolveBookingHours(equipment.openTime, equipment.closeTime, equipmentId, date, hoursRules.results.map((rule): AvailabilityHoursRule => ({
+    equipmentId: rule.equipment_id, ruleType: rule.rule_type, bookingDate: rule.booking_date, weekdays: rule.weekdays,
+    startTime: rule.start_time, endTime: rule.end_time, createdAt: rule.created_at,
+  })));
+  if (!equipment.active || !createTimeSlots(hours.openTime, hours.closeTime, equipment.durationMinutes).includes(time)) {
     return Response.json({ error: "Wybrany termin jest niedostępny." }, { status: 409 });
   }
 

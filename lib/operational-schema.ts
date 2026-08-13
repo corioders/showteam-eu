@@ -50,6 +50,18 @@ const availabilityBlocks = sqliteTable("availability_blocks", {
   createdAt: integer("created_at").notNull(),
 }, (table) => [index("availability_blocks_date_equipment_idx").on(table.bookingDate, table.equipmentId)]);
 
+const availabilityHours = sqliteTable("availability_hours", {
+  id: text("id").primaryKey().notNull(),
+  equipmentId: integer("equipment_id"),
+  ruleType: text("rule_type").notNull(),
+  bookingDate: text("booking_date"),
+  weekdays: text("weekdays"),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+  name: text("name"),
+  createdAt: integer("created_at").notNull(),
+}, (table) => [index("availability_hours_equipment_type_idx").on(table.equipmentId, table.ruleType)]);
+
 export const preserveOperationalTables: SQLiteSchemaHook = ({ schema }) => {
   schema.tables.booking_slots = bookingSlots;
   schema.tables.tv_pairings = tvPairings;
@@ -57,5 +69,6 @@ export const preserveOperationalTables: SQLiteSchemaHook = ({ schema }) => {
   schema.tables.rate_limits = rateLimits;
   schema.tables.calendar_feeds = calendarFeeds;
   schema.tables.availability_blocks = availabilityBlocks;
+  schema.tables.availability_hours = availabilityHours;
   return schema;
 };

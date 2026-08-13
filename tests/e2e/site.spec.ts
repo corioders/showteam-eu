@@ -107,6 +107,11 @@ test("availability block management stays private", async ({ request }) => {
   expect((await request.post("/api/admin/availability-blocks", { data: {} })).status()).toBe(401);
 });
 
+test("rental hours management stays private", async ({ request }) => {
+  expect((await request.get("/api/admin/availability-hours")).status()).toBe(401);
+  expect((await request.post("/api/admin/availability-hours", { data: {} })).status()).toBe(401);
+});
+
 test("reservation API requires an email address", async ({ request }) => {
   const bookingDate = new Date();
   bookingDate.setDate(bookingDate.getDate() + 14);

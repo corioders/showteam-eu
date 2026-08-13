@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone, timeRangesOverlap, timeToMinutes, todayInPoland } from "../../lib/reservations";
+import { bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone, resolveBookingHours, timeRangesOverlap, timeToMinutes, todayInPoland, type AvailabilityHoursRule } from "../../lib/reservations";
 
 describe("reservation rules", () => {
   it("creates only complete fixed-duration slots", () => {
@@ -30,6 +30,17 @@ describe("reservation rules", () => {
   it("detects overlapping blocked time ranges", () => {
     expect(timeRangesOverlap("09:00", "10:00", "09:30", "11:00")).toBe(true);
     expect(timeRangesOverlap("09:00", "10:00", "10:00", "11:00")).toBe(false);
+  });
+
+  it("prefers date hours, then equipment templates, then defaults", () => {
+    const rules: AvailabilityHoursRule[] = [
+      { equipmentId: null, ruleType: "weekly", bookingDate: null, weekdays: "0,6", startTime: "10:00", endTime: "16:00", createdAt: 1 },
+      { equipmentId: 7, ruleType: "weekly", bookingDate: null, weekdays: "6", startTime: "11:00", endTime: "15:00", createdAt: 2 },
+      { equipmentId: null, ruleType: "date", bookingDate: "2026-08-29", weekdays: null, startTime: "08:00", endTime: "13:00", createdAt: 3 },
+    ];
+    expect(resolveBookingHours("09:00", "18:00", 7, "2026-08-29", rules)).toEqual({ openTime: "08:00", closeTime: "13:00" });
+    expect(resolveBookingHours("09:00", "18:00", 7, "2026-09-05", rules)).toEqual({ openTime: "11:00", closeTime: "15:00" });
+    expect(resolveBookingHours("09:00", "18:00", 7, "2026-09-07", rules)).toEqual({ openTime: "09:00", closeTime: "18:00" });
   });
 
   it("uses the Polish calendar date at UTC day boundaries", () => {

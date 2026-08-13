@@ -7,6 +7,7 @@ import * as migration_20260813_190000_waterfront_stays from './20260813_190000_w
 import * as migration_20260813_193000_tv_devices from './20260813_193000_tv_devices';
 import * as migration_20260813_210000_calendar_feeds from './20260813_210000_calendar_feeds';
 import * as migration_20260813_214000_availability_blocks from './20260813_214000_availability_blocks';
+import * as migration_20260813_220000_availability_hours from './20260813_220000_availability_hours';
 
 export const migrations = [
   {
@@ -53,5 +54,10 @@ export const migrations = [
     up: migration_20260813_214000_availability_blocks.up,
     down: migration_20260813_214000_availability_blocks.down,
     name: '20260813_214000_availability_blocks'
+  },
+  {
+    up: migration_20260813_220000_availability_hours.up,
+    down: migration_20260813_220000_availability_hours.down,
+    name: '20260813_220000_availability_hours'
   },
 ];

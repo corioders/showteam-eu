@@ -44,10 +44,48 @@
 .calendar-admin-heading span { color: #e85200; font-size: .7rem; font-weight: 800; letter-spacing: .18em; }
 .calendar-admin-heading h1 { font-size: clamp(2rem,5vw,4rem); line-height: 1; margin: .4rem 0; text-transform: uppercase; }
 .calendar-admin-heading p { color: var(--theme-elevation-600); margin: 0; }
-.calendar-admin-frame { border: 0; display: block; height: max(46rem, calc(100vh - 13rem)); width: 100%; }
+.calendar-admin-tabs { border-bottom: 1px solid var(--theme-elevation-200); display: flex; gap: .25rem; margin-bottom: 1rem; overflow-x: auto; }
+.calendar-admin-tabs button { background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--theme-elevation-650); cursor: pointer; font-size: .9rem; font-weight: 700; min-height: 3rem; padding: .7rem 1rem; white-space: nowrap; }
+.calendar-admin-tabs button[aria-current="page"] { border-bottom-color: #e85200; color: var(--theme-text); }
+.calendar-admin-tabs button:focus-visible { outline: 2px solid #e85200; outline-offset: -2px; }
+.calendar-admin-frame { background: #080a0b; border: 0; display: block; height: max(46rem, calc(100vh - 16rem)); width: 100%; }
+.calendar-admin-settings { display: grid; gap: 1rem; }
 @media (max-width: 600px) { .calendar-admin-view { padding: 1rem; } .calendar-admin-heading { align-items: stretch; flex-direction: column; } }
 
-.availability-blocks { background: var(--theme-elevation-50); border: 1px solid var(--theme-elevation-150); margin-bottom: 1rem; padding: 1.25rem; }
+.availability-hours { background: var(--theme-elevation-50); border: 1px solid var(--theme-elevation-150); padding: 1.25rem; }
+.availability-hours__intro > span { color: #e85200; font-size: .7rem; font-weight: 800; letter-spacing: .18em; }
+.availability-hours__intro h2 { font-size: 1.4rem; margin: .35rem 0; }
+.availability-hours__intro p { color: var(--theme-elevation-600); margin: 0; }
+.availability-hours__modes { display: flex; gap: .35rem; margin-top: 1rem; }
+.availability-hours__modes button { background: transparent; border: 1px solid var(--theme-elevation-250); color: var(--theme-text); cursor: pointer; font-weight: 700; min-height: 2.6rem; padding: .55rem .8rem; }
+.availability-hours__modes button[aria-selected="true"] { background: #e85200; border-color: #e85200; color: white; }
+.availability-hours form { align-items: end; display: grid; gap: .75rem; grid-template-columns: minmax(10rem,1.2fr) minmax(12rem,1.5fr) minmax(7rem,.7fr) minmax(7rem,.7fr) minmax(11rem,1.2fr) auto; margin-top: 1rem; }
+.availability-hours form label > span, .availability-hours legend { display: block; font-size: .75rem; font-weight: 700; margin-bottom: .35rem; }
+.availability-hours small { color: var(--theme-elevation-550); font-weight: 400; }
+.availability-hours input, .availability-hours select { background: var(--theme-input-bg); border: 1px solid var(--theme-elevation-250); color: var(--theme-text); min-height: 2.75rem; padding: .55rem .65rem; width: 100%; }
+.availability-hours fieldset { border: 0; margin: 0; min-width: 0; padding: 0; }
+.availability-hours fieldset > div { display: grid; grid-template-columns: repeat(7,minmax(2.3rem,1fr)); }
+.availability-hours fieldset label { position: relative; }
+.availability-hours fieldset input { height: 1px; opacity: 0; position: absolute; width: 1px; }
+.availability-hours fieldset label span { border: 1px solid var(--theme-elevation-250); cursor: pointer; display: grid; font-size: .72rem; min-height: 2.75rem; place-items: center; }
+.availability-hours fieldset input:checked + span { background: #e85200; border-color: #e85200; color: white; font-weight: 800; }
+.availability-hours fieldset input:focus-visible + span { outline: 2px solid #e85200; outline-offset: 1px; }
+.availability-hours form > button, .availability-hours__list button { align-items: center; border: 1px solid var(--theme-elevation-900); cursor: pointer; display: inline-flex; font-weight: 700; gap: .5rem; justify-content: center; min-height: 2.75rem; padding: .65rem .85rem; white-space: nowrap; }
+.availability-hours form > button { background: var(--theme-elevation-900); color: var(--theme-elevation-0); }
+.availability-hours button:disabled { cursor: wait; opacity: .5; }
+.availability-hours svg { height: 1rem; width: 1rem; }
+.availability-hours__status { align-items: center; display: flex; gap: .5rem; }
+.availability-hours__error { color: #b52b22; font-weight: 700; }
+.availability-hours__list { border-top: 1px solid var(--theme-elevation-150); margin-top: 1rem; padding-top: 1rem; }
+.availability-hours__list h3 { font-size: 1rem; margin: 0 0 .75rem; }
+.availability-hours__list article { align-items: center; display: flex; gap: 1rem; justify-content: space-between; padding: .65rem 0; }
+.availability-hours__list article + article { border-top: 1px solid var(--theme-elevation-150); }
+.availability-hours__list p, .availability-hours__empty { color: var(--theme-elevation-600); margin: .2rem 0 0; }
+.availability-hours__list button { background: transparent; border-color: #b52b22; color: #b52b22; }
+@media (max-width: 1100px) { .availability-hours form { grid-template-columns: repeat(4,minmax(0,1fr)); } .availability-hours form fieldset { grid-column: span 3; } }
+@media (max-width: 600px) { .availability-hours__modes button { flex: 1; } .availability-hours form { grid-template-columns: 1fr 1fr; } .availability-hours form label:first-child, .availability-hours form fieldset, .availability-hours form label:nth-last-of-type(1), .availability-hours form > button { grid-column: 1 / -1; } .availability-hours__list article { align-items: stretch; flex-direction: column; } }
+
+.availability-blocks { background: var(--theme-elevation-50); border: 1px solid var(--theme-elevation-150); padding: 1.25rem; }
 .availability-blocks__intro > span { color: #e85200; font-size: .7rem; font-weight: 800; letter-spacing: .18em; }
 .availability-blocks__intro h2 { font-size: 1.4rem; margin: .35rem 0; }
 .availability-blocks__intro p { color: var(--theme-elevation-600); margin: 0; }

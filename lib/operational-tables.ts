@@ -9,6 +9,8 @@ export function ensureOperationalTables(database: D1Database): Promise<unknown> 
     database.prepare("CREATE TABLE IF NOT EXISTS calendar_feeds (id text PRIMARY KEY NOT NULL, token_hash text NOT NULL, name text NOT NULL, created_at integer NOT NULL)"),
     database.prepare("CREATE TABLE IF NOT EXISTS availability_blocks (id text PRIMARY KEY NOT NULL, equipment_id integer, booking_date text NOT NULL, start_time text NOT NULL, end_time text NOT NULL, reason text, created_at integer NOT NULL)"),
     database.prepare("CREATE INDEX IF NOT EXISTS availability_blocks_date_equipment_idx ON availability_blocks (booking_date, equipment_id)"),
+    database.prepare("CREATE TABLE IF NOT EXISTS availability_hours (id text PRIMARY KEY NOT NULL, equipment_id integer, rule_type text NOT NULL, booking_date text, weekdays text, start_time text NOT NULL, end_time text NOT NULL, name text, created_at integer NOT NULL)"),
+    database.prepare("CREATE INDEX IF NOT EXISTS availability_hours_equipment_type_idx ON availability_hours (equipment_id, rule_type)"),
   ]).catch((error) => {
     initialization = undefined;
     throw error;

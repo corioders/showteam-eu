@@ -11,6 +11,16 @@ export type BookableEquipment = {
   image?: { url?: string | null; alt?: string | null } | number | null;
 };
 
+export type AvailabilityHoursRule = {
+  equipmentId: number | null;
+  ruleType: "date" | "weekly";
+  bookingDate: string | null;
+  weekdays: string | null;
+  startTime: string;
+  endTime: string;
+  createdAt: number;
+};
+
 export function todayInPoland(date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Warsaw",
@@ -47,6 +57,20 @@ export function endTime(startTime: string, durationMinutes: number): string {
 
 export function timeRangesOverlap(startA: string, endA: string, startB: string, endB: string): boolean {
   return timeToMinutes(startA) < timeToMinutes(endB) && timeToMinutes(endA) > timeToMinutes(startB);
+}
+
+export function resolveBookingHours(baseOpen: string, baseClose: string, equipmentId: number, date: string, rules: AvailabilityHoursRule[]): { openTime: string; closeTime: string } {
+  const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
+  const matching = rules.filter((rule) => {
+    if (rule.equipmentId !== null && rule.equipmentId !== equipmentId) return false;
+    if (rule.ruleType === "date") return rule.bookingDate === date;
+    return (rule.weekdays || "").split(",").includes(String(weekday));
+  });
+  matching.sort((a, b) => {
+    const score = (rule: AvailabilityHoursRule) => (rule.ruleType === "date" ? 100 : 0) + (rule.equipmentId === equipmentId ? 10 : 0);
+    return score(b) - score(a) || b.createdAt - a.createdAt;
+  });
+  return matching[0] ? { openTime: matching[0].startTime, closeTime: matching[0].endTime } : { openTime: baseOpen, closeTime: baseClose };
 }
 
 export function isBookingDate(value: string): boolean {
