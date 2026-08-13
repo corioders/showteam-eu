@@ -28,12 +28,13 @@ test("customer can reserve an available equipment slot", async ({ page }) => {
   const bookingDate = new Date();
   bookingDate.setDate(bookingDate.getDate() + 14);
   const date = bookingDate.toISOString().slice(0, 10);
+  const uniquePhone = `5${Date.now().toString().slice(-8)}`;
   await page.locator('input[type="date"]').fill(date);
   const firstSlot = page.locator("fieldset button").first();
   await expect(firstSlot).toBeVisible();
   await firstSlot.click();
   await page.getByLabel("Imię i nazwisko").fill("Test Playwright");
-  await page.getByLabel("Telefon").fill("500 000 099");
+  await page.getByLabel("Telefon").fill(uniquePhone);
   await page.getByRole("button", { name: "Rezerwuję termin" }).click();
   await expect(page.getByText("Rezerwacja zapisana")).toBeVisible();
   await expect(page.getByText(/^SHOW-/)).toBeVisible();
