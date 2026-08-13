@@ -1,0 +1,15 @@
+.next/
+.open-next/
+node_modules/
+.env
+.env.local
+*.log
+.DS_Store
+artifacts/
+test-results/
+playwright-report/
+.wrangler/
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfplan

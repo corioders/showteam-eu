@@ -1,0 +1,88 @@
+export type OfferCategory = "Lato" | "Zima" | "Szkolenia";
+
+export type Offer = {
+  category: OfferCategory;
+  title: string;
+  location: string;
+  season: string;
+  dates: string[];
+  summary: string;
+  highlights: string[];
+  image: string;
+  imageAlt: string;
+  href: string;
+  contactHref: string;
+  sections?: { title: string; body: string }[];
+};
+
+export const offers: Offer[] = [
+  {
+    category: "Lato",
+    title: "SHOWlato 2026",
+    location: "Wake & Surf Village · Poręba",
+    season: "Sezon 2026",
+    dates: ["28.06–10.07", "12–24.07", "26.07–7.08", "9–15.08", "15–21.08"],
+    summary: "Kameralna baza nad Jeziorem Łąckim. Woda, wiatr, ruch i wakacje bez trybu oszczędzania energii.",
+    highlights: ["Wakeboard i narty wodne", "Windsurfing, SUP i kajaki", "Padel, glamping i strefa chill"],
+    image: "/media/summer-wake-hero.jpg",
+    imageAlt: "Wakeboarding z lotu ptaka na Jeziorze Łąckim",
+    href: "/oferta/lato",
+    contactHref: "mailto:biuro@showteam.eu?subject=SHOWlato%202026",
+  },
+  {
+    category: "Zima",
+    title: "SHOWzima 2026",
+    location: "Trentino · Dolomity",
+    season: "Sezon 2026",
+    dates: ["21–27.12", "27.12–2.01", "3–10.01", "17–24.01", "24–31.01", "31.01–7.02", "7–14.02", "14–21.02", "21–28.02", "28.02–7.03"],
+    summary: "Rodzinne tygodnie na stoku: szkolenie, sport, włoskie jedzenie i après-ski w wydaniu SHOWteam.",
+    highlights: ["Hotel na stoku", "Szkolenie dla dzieci i dorosłych", "Garda, trekking i après-ski"],
+    image: "/media/showteam-winter-fire.jpg",
+    imageAlt: "Zimowe atrakcje SHOWteam w Trentino",
+    href: "/oferta/zima",
+    contactHref: "mailto:biuro@showteam.eu?subject=SHOWzima%202026",
+  },
+  {
+    category: "Szkolenia",
+    title: "Patent i progres",
+    location: "Poręba · Jezioro Łąckie",
+    season: "Od 14. roku życia",
+    dates: ["Terminy indywidualne", "Egzaminy w sezonie"],
+    summary: "Kurs sternika motorowodnego, żeglarstwo i autorskie programy FizjoSPORT prowadzone przez praktyków.",
+    highlights: ["Sternik motorowodny", "Żeglarz jachtowy", "FizjoSPORT i obozy"],
+    image: "/media/summer-sailing-drone.jpg",
+    imageAlt: "Szkolenie żeglarskie SHOWteam z lotu ptaka",
+    href: "/oferta/szkolenia",
+    contactHref: "mailto:biuro@showteam.eu?subject=Szkolenia%20SHOWteam",
+  },
+];
+
+export const summerDates = [
+  ["Turnus I", "28 czerwca – 10 lipca"],
+  ["Turnus II", "12–24 lipca"],
+  ["Turnus III", "26 lipca – 7 sierpnia"],
+  ["Turnus IV", "9–15 sierpnia"],
+  ["Turnus V", "15–21 sierpnia"],
+] as const;
+
+export const winterDates = [
+  "21–27 grudnia · Boże Narodzenie",
+  "27 grudnia–2 stycznia · San Silvestro",
+  "3–10 stycznia",
+  "17–24 stycznia",
+  "24–31 stycznia",
+  "31 stycznia–7 lutego",
+  "7–14 lutego",
+  "14–21 lutego",
+  "21–28 lutego",
+  "28 lutego–7 marca",
+] as const;
+
+export const contact = {
+  joanna: { name: "Joanna SHOWtysek", phone: "+48 500 128 090", href: "tel:+48500128090" },
+  adam: { name: "Adam SHOWtysek", phone: "+48 512 280 555", href: "tel:+48512280555" },
+  email: "biuro@showteam.eu",
+  instagram: "https://www.instagram.com/showteam.eu/",
+  facebook: "https://www.facebook.com/SHOW.SHOWteam/",
+  map: "https://maps.google.com/?q=Poręba+Nad+Zaporą+21",
+};
