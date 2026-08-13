@@ -1,7 +1,5 @@
-import { PwaDashboard } from "@/components/pwa-dashboard";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-static";
-
-export default function QuickUploadPage() {
-  return <PwaDashboard />;
+export default function AdminShortcutPage() {
+  redirect("/admin");
 }

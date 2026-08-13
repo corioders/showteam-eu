@@ -126,10 +126,15 @@ test("calendar subscription management stays private", async ({ request }) => {
   expect((await request.post("/api/calendar/subscriptions", { data: {} })).status()).toBe(401);
 });
 
-test("quick uploader API is private and exposes an installable manifest", async ({ page }) => {
+test("CMS is the single installable staff dashboard", async ({ page }) => {
   const manifest = await page.request.get("/a/dodaj/manifest.webmanifest");
   expect(manifest.ok()).toBe(true);
-  expect(await manifest.json()).toMatchObject({ start_url: "/a/dodaj", scope: "/a/" });
+  expect(await manifest.json()).toMatchObject({ start_url: "/admin", scope: "/" });
+  const shortcut = await page.request.get("/a/dodaj", { maxRedirects: 0 });
+  expect(shortcut.status()).toBe(307);
+  expect(shortcut.headers().location).toBe("/admin");
+  await page.goto("/admin/login");
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/a/dodaj/manifest.webmanifest");
   expect((await page.request.post("/api/quick-upload", { multipart: { category: "Lato" } })).status()).toBe(401);
 });
 
@@ -141,15 +146,6 @@ test("quick uploader previews the exact gallery crop", async ({ page }) => {
   await page.getByLabel(/Kadr poziomy/).fill("20");
   await page.getByLabel(/Kadr pionowy/).fill("80");
   await expect(page.getByAltText("Podgląd kadru")).toHaveCSS("object-position", "20% 80%");
-});
-
-test("PWA dashboard links directly to common admin tasks", async ({ page }) => {
-  await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
-  await page.goto("/a/dodaj");
-  await expect(page.getByRole("heading", { name: "Co chcesz zrobić?" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Dodaj zdjęcia lub filmy/ })).toHaveAttribute("href", "/a/dodaj/galeria");
-  await expect(page.getByRole("link", { name: /Dodaj wydarzenie/ })).toHaveAttribute("href", "/admin/collections/events/create");
-  await expect(page.getByRole("link", { name: /Sprawdź rezerwacje/ })).toHaveAttribute("href", "/admin/kalendarz");
 });
 
 test.describe("mobile", () => {
@@ -191,10 +187,9 @@ test.describe("mobile", () => {
     }
   });
 
-  test("PWA task dashboard fits a phone screen", async ({ page }) => {
-    await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
+  test("installed PWA opens the mobile CMS", async ({ page }) => {
     await page.goto("/a/dodaj");
-    await expect(page.getByRole("heading", { name: "Co chcesz zrobić?" })).toBeVisible();
+    await expect(page).toHaveURL(/\/admin/);
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });

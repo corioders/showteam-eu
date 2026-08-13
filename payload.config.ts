@@ -58,7 +58,12 @@ export default buildConfig({
   admin: {
     user: Users.slug,
     importMap: { baseDir: dirname },
-    meta: { titleSuffix: " — Panel SHOWteam" },
+    meta: {
+      titleSuffix: " — Panel SHOWteam",
+      manifest: "/a/dodaj/manifest.webmanifest",
+      appleWebApp: { capable: true, statusBarStyle: "default", title: "SHOWteam" },
+      icons: { apple: "/pwa-192.png", icon: "/favicon.ico" },
+    },
     components: {
       beforeDashboard: ["@/components/payload/quick-upload-card#QuickUploadCard"],
       beforeLogin: ["@/components/payload/brand#LoginIntro"],
