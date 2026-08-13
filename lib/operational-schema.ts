@@ -33,10 +33,18 @@ const rateLimits = sqliteTable("rate_limits", {
   expiresAt: integer("expires_at").notNull(),
 });
 
+const calendarFeeds = sqliteTable("calendar_feeds", {
+  id: text("id").primaryKey().notNull(),
+  tokenHash: text("token_hash").notNull(),
+  name: text("name").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+
 export const preserveOperationalTables: SQLiteSchemaHook = ({ schema }) => {
   schema.tables.booking_slots = bookingSlots;
   schema.tables.tv_pairings = tvPairings;
   schema.tables.tv_devices = tvDevices;
   schema.tables.rate_limits = rateLimits;
+  schema.tables.calendar_feeds = calendarFeeds;
   return schema;
 };

@@ -6,6 +6,7 @@ export function ensureOperationalTables(database: D1Database): Promise<unknown> 
     database.prepare("CREATE TABLE IF NOT EXISTS tv_pairings (id text PRIMARY KEY NOT NULL, secret_hash text NOT NULL, user_code text NOT NULL, expires_at integer NOT NULL, approved integer DEFAULT 0 NOT NULL)"),
     database.prepare("CREATE TABLE IF NOT EXISTS tv_devices (id text PRIMARY KEY NOT NULL, token_hash text NOT NULL, name text NOT NULL, created_at integer NOT NULL)"),
     database.prepare("CREATE TABLE IF NOT EXISTS rate_limits (key text PRIMARY KEY NOT NULL, count integer NOT NULL, expires_at integer NOT NULL)"),
+    database.prepare("CREATE TABLE IF NOT EXISTS calendar_feeds (id text PRIMARY KEY NOT NULL, token_hash text NOT NULL, name text NOT NULL, created_at integer NOT NULL)"),
   ]).catch((error) => {
     initialization = undefined;
     throw error;

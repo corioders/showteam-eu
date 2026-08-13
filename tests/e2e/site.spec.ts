@@ -23,19 +23,19 @@ test("waterfront stays are published without invented pricing", async ({ page })
 });
 
 test("customer can reserve an available equipment slot", async ({ page }) => {
-  test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL), "Test zapisuje rezerwację i działa wyłącznie na lokalnej bazie testowej.");
+  await page.route("**/api/reservations/availability?*", (route) => route.fulfill({ json: { slots: [{ time: "09:00", available: 1 }], durationMinutes: 60 } }));
+  await page.route("**/api/reservations", (route) => route.fulfill({ status: 201, json: { reference: "SHOW-TEST1234", equipment: "SUP", date: "2026-08-27", time: "09:00", endTime: "10:00" } }));
   await page.goto("/rezerwacje", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: /Sprzęt czeka/i })).toBeVisible();
   const bookingDate = new Date();
   bookingDate.setDate(bookingDate.getDate() + 14);
   const date = bookingDate.toISOString().slice(0, 10);
-  const uniquePhone = `5${Date.now().toString().slice(-8)}`;
   await page.locator('input[type="date"]').fill(date);
   const firstSlot = page.locator("fieldset button").first();
   await expect(firstSlot).toBeVisible();
   await firstSlot.click();
   await page.getByLabel("Imię i nazwisko").fill("Test Playwright");
-  await page.getByLabel("Telefon").fill(uniquePhone);
+  await page.getByLabel("Telefon").fill("500 128 090");
   await page.getByRole("button", { name: "Rezerwuję termin" }).click();
   await expect(page.getByText("Rezerwacja zapisana")).toBeVisible();
   await expect(page.getByText(/^SHOW-/)).toBeVisible();
@@ -91,6 +91,11 @@ test("SEO and anonymous analytics endpoints are published", async ({ page }) => 
 test("booking statistics stay private", async ({ request }) => {
   const response = await request.get("/api/admin/statistics");
   expect(response.status()).toBe(401);
+});
+
+test("calendar subscription management stays private", async ({ request }) => {
+  expect((await request.get("/api/calendar/subscriptions")).status()).toBe(401);
+  expect((await request.post("/api/calendar/subscriptions", { data: {} })).status()).toBe(401);
 });
 
 test("quick uploader API is private and exposes an installable manifest", async ({ page }) => {

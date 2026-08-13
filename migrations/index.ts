@@ -5,6 +5,7 @@ import * as migration_20260813_125108_events_analytics from './20260813_125108_e
 import * as migration_20260813_140933_reservations from './20260813_140933_reservations';
 import * as migration_20260813_190000_waterfront_stays from './20260813_190000_waterfront_stays';
 import * as migration_20260813_193000_tv_devices from './20260813_193000_tv_devices';
+import * as migration_20260813_210000_calendar_feeds from './20260813_210000_calendar_feeds';
 
 export const migrations = [
   {
@@ -41,5 +42,10 @@ export const migrations = [
     up: migration_20260813_193000_tv_devices.up,
     down: migration_20260813_193000_tv_devices.down,
     name: '20260813_193000_tv_devices'
+  },
+  {
+    up: migration_20260813_210000_calendar_feeds.up,
+    down: migration_20260813_210000_calendar_feeds.down,
+    name: '20260813_210000_calendar_feeds'
   },
 ];
