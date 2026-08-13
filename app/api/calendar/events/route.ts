@@ -1,6 +1,6 @@
 import { getPayload } from "payload";
-import config from "@payload-config";
-import { tvCookieName, verifyTvToken } from "@/lib/tv-auth";
+import config, { database } from "@payload-config";
+import { tvCookie, tvCookieName, verifyTvToken } from "@/lib/tv-auth";
 
 function cookieValue(cookieHeader: string | null, name: string): string | undefined {
   return cookieHeader?.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${name}=`))?.slice(name.length + 1);
@@ -9,7 +9,8 @@ function cookieValue(cookieHeader: string | null, name: string): string | undefi
 export async function GET(request: Request) {
   const payload = await getPayload({ config });
   const { user } = await payload.auth({ headers: request.headers });
-  const tvAuthorized = await verifyTvToken(cookieValue(request.headers.get("cookie"), tvCookieName));
+  const tvToken = cookieValue(request.headers.get("cookie"), tvCookieName);
+  const tvAuthorized = await verifyTvToken(database, tvToken);
   if (!user && !tvAuthorized) return Response.json({ error: "Brak dostępu." }, { status: 401 });
 
   const url = new URL(request.url);
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
     sort: "bookingDate",
     where: { and: [{ bookingDate: { greater_than_equal: start } }, { bookingDate: { less_than: end } }, { status: { not_equals: "cancelled" } }] },
   });
-  return Response.json(result.docs.map((booking) => {
+  const response = Response.json(result.docs.map((booking) => {
     const equipment = typeof booking.equipment === "object" ? booking.equipment : null;
     return {
       id: String(booking.id),
@@ -33,4 +34,6 @@ export async function GET(request: Request) {
       extendedProps: { reference: booking.reference, phone: booking.phone, status: booking.status, notes: booking.staffNotes || booking.customerNotes || "" },
     };
   }), { headers: { "Cache-Control": "no-store" } });
+  if (tvAuthorized && tvToken) response.headers.append("Set-Cookie", tvCookie(tvToken));
+  return response;
 }

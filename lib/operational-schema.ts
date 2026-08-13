@@ -20,8 +20,16 @@ const tvPairings = sqliteTable("tv_pairings", {
   approved: integer("approved").default(0).notNull(),
 });
 
+const tvDevices = sqliteTable("tv_devices", {
+  id: text("id").primaryKey().notNull(),
+  tokenHash: text("token_hash").notNull(),
+  name: text("name").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+
 export const preserveOperationalTables: SQLiteSchemaHook = ({ schema }) => {
   schema.tables.booking_slots = bookingSlots;
   schema.tables.tv_pairings = tvPairings;
+  schema.tables.tv_devices = tvDevices;
   return schema;
 };

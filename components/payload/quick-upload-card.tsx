@@ -7,6 +7,7 @@ const tasks = [
   { href: "/admin/collections/equipment", title: "Zmień wynajem", description: "Sprzęt, liczba sztuk i godziny." },
   { href: "/admin/collections/offers", title: "Edytuj ofertę", description: "Lato, zima i szkolenia na stronie." },
   { href: "/admin/collections/analytics", title: "Zobacz statystyki", description: "Odwiedziny strony z ostatnich 30 dni." },
+  { href: "/admin/telewizory", title: "Połączone telewizory", description: "Stały dostęp ekranu bazy i jego odłączanie." },
 ];
 
 export function QuickUploadCard() {

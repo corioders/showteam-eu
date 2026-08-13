@@ -58,7 +58,10 @@ export default buildConfig({
       beforeLogin: ["@/components/payload/brand#LoginIntro"],
       logout: { Button: "@/components/payload/logout-button#LogoutButton" },
       graphics: { Logo: "@/components/payload/brand#ShowteamLogo", Icon: "@/components/payload/brand#ShowteamIcon" },
-      views: { calendar: { Component: "@/components/payload/calendar-admin-view#CalendarAdminView", path: "/kalendarz" } },
+      views: {
+        calendar: { Component: "@/components/payload/calendar-admin-view#CalendarAdminView", path: "/kalendarz" },
+        televisions: { Component: "@/components/payload/tv-devices-admin-view#TvDevicesAdminView", path: "/telewizory" },
+      },
     },
   },
   collections: [Events, Offers, Gallery, Equipment, createBookingsCollection(database), Analytics, Media, Users],

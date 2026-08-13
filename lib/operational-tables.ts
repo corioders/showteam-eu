@@ -4,6 +4,7 @@ export function ensureOperationalTables(database: D1Database): Promise<unknown> 
   initialization ??= database.batch([
     database.prepare("CREATE TABLE IF NOT EXISTS booking_slots (equipment_id integer NOT NULL, booking_date text NOT NULL, start_time text NOT NULL, unit_number integer NOT NULL, reservation_id text NOT NULL UNIQUE, PRIMARY KEY (equipment_id, booking_date, start_time, unit_number))"),
     database.prepare("CREATE TABLE IF NOT EXISTS tv_pairings (id text PRIMARY KEY NOT NULL, secret_hash text NOT NULL, user_code text NOT NULL, expires_at integer NOT NULL, approved integer DEFAULT 0 NOT NULL)"),
+    database.prepare("CREATE TABLE IF NOT EXISTS tv_devices (id text PRIMARY KEY NOT NULL, token_hash text NOT NULL, name text NOT NULL, created_at integer NOT NULL)"),
   ]).catch((error) => {
     initialization = undefined;
     throw error;

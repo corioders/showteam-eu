@@ -49,6 +49,25 @@
 .calendar-admin-frame { border: 0; display: block; height: max(46rem, calc(100vh - 13rem)); width: 100%; }
 @media (max-width: 600px) { .calendar-admin-view { padding: 1rem; } .calendar-admin-heading { align-items: stretch; flex-direction: column; } .calendar-admin-heading a { text-align: center; } }
 
+.tv-devices-admin { margin: 0 auto; max-width: 72rem; padding: 2rem; }
+.tv-devices-admin header { align-items: end; display: flex; gap: 2rem; justify-content: space-between; margin-bottom: 2rem; }
+.tv-devices-admin header span { color: #e85200; font-size: .7rem; font-weight: 800; letter-spacing: .18em; }
+.tv-devices-admin h1 { font-size: clamp(2rem, 5vw, 4rem); line-height: 1; margin: .4rem 0; }
+.tv-devices-admin header p { color: var(--theme-elevation-600); margin: 0; max-width: 42rem; }
+.tv-devices-admin header a { background: var(--theme-elevation-900); color: var(--theme-elevation-0); padding: .8rem 1rem; text-decoration: none; white-space: nowrap; }
+.tv-devices-list { display: grid; gap: .75rem; }
+.tv-devices-list article { align-items: center; background: var(--theme-elevation-50); border: 1px solid var(--theme-elevation-150); display: grid; gap: 1rem; grid-template-columns: auto 1fr auto; padding: 1rem; }
+.tv-devices-list article > svg { color: #e85200; height: 1.75rem; width: 1.75rem; }
+.tv-devices-list strong { display: block; font-size: 1.05rem; }
+.tv-devices-list p { color: var(--theme-elevation-600); margin: .25rem 0 0; }
+.tv-devices-list button { align-items: center; background: transparent; border: 1px solid #b52b22; color: #b52b22; cursor: pointer; display: flex; font-weight: 700; gap: .5rem; min-height: 2.75rem; padding: .65rem .8rem; }
+.tv-devices-list button:hover, .tv-devices-list button:focus-visible { background: #b52b22; color: white; outline: none; }
+.tv-devices-list button svg, .tv-devices-status svg { height: 1rem; width: 1rem; }
+.tv-devices-status { align-items: center; display: flex; gap: .5rem; }
+.tv-devices-error { color: #b52b22; }
+.tv-devices-empty { background: var(--theme-elevation-50); border-left: 4px solid #e85200; padding: 1rem; }
+@media (max-width: 600px) { .tv-devices-admin { padding: 1rem; } .tv-devices-admin header { align-items: stretch; flex-direction: column; } .tv-devices-admin header a { text-align: center; } .tv-devices-list article { grid-template-columns: auto 1fr; } .tv-devices-list button { grid-column: 1 / -1; justify-content: center; } }
+
 .field-error, .error-message { color: #b42318; font-size: .9rem; font-weight: 700; line-height: 1.4; }
 .banner--type-error { border-left: 5px solid #d92d20; font-size: 1rem; line-height: 1.5; }
 .field-description { line-height: 1.45; }

@@ -1,5 +1,5 @@
 import { database } from "@payload-config";
-import { createTvToken, hashPairingSecret, tvCookieName } from "@/lib/tv-auth";
+import { createTvToken, hashPairingSecret, tvCookie } from "@/lib/tv-auth";
 import { ensureOperationalTables } from "@/lib/operational-tables";
 
 function randomSecret(): string {
@@ -31,14 +31,15 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const id = url.searchParams.get("id") || "";
   const secret = url.searchParams.get("secret") || "";
-  const row = await database.prepare("SELECT secret_hash, expires_at, approved FROM tv_pairings WHERE id = ?")
-    .bind(id).first<{ secret_hash: string; expires_at: number; approved: number }>();
+  const row = await database.prepare("SELECT secret_hash, user_code, expires_at, approved FROM tv_pairings WHERE id = ?")
+    .bind(id).first<{ secret_hash: string; user_code: string; expires_at: number; approved: number }>();
   if (!row || row.expires_at < Date.now() || row.secret_hash !== await hashPairingSecret(secret)) {
     return Response.json({ status: "expired" }, { status: 410 });
   }
   if (!row.approved) return Response.json({ status: "pending" }, { headers: { "Cache-Control": "no-store" } });
   await database.prepare("DELETE FROM tv_pairings WHERE id = ?").bind(id).run();
+  const token = await createTvToken(database, `TV ${row.user_code.slice(0, 3)} ${row.user_code.slice(3)}`);
   const response = Response.json({ status: "approved" });
-  response.headers.append("Set-Cookie", `${tvCookieName}=${await createTvToken()}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`);
+  response.headers.append("Set-Cookie", tvCookie(token));
   return response;
 }
