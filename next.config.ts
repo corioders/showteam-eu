@@ -3,6 +3,7 @@ import { withPayload } from "@payloadcms/next/withPayload";
 
 const nextConfig: NextConfig = {
   experimental: {
+    cpus: 1,
     staticGenerationMaxConcurrency: 1,
   },
   images: {
