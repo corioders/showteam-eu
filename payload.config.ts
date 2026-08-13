@@ -52,10 +52,6 @@ export default buildConfig({
   db: sqliteD1Adapter({ binding: cloudflare.env.D1 }),
   plugins: [r2Storage({ bucket: cloudflare.env.R2, collections: { media: true } })],
   onInit: async (payload) => {
-    await database.batch([
-      database.prepare("CREATE TABLE IF NOT EXISTS booking_slots (equipment_id integer NOT NULL, booking_date text NOT NULL, start_time text NOT NULL, unit_number integer NOT NULL, reservation_id text NOT NULL UNIQUE, PRIMARY KEY (equipment_id, booking_date, start_time, unit_number))"),
-      database.prepare("CREATE TABLE IF NOT EXISTS tv_pairings (id text PRIMARY KEY NOT NULL, secret_hash text NOT NULL, user_code text NOT NULL, expires_at integer NOT NULL, approved integer DEFAULT 0 NOT NULL)"),
-    ]);
     await seedOffers(payload);
     await seedGallery(payload);
     await seedEvents(payload);

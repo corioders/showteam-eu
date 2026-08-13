@@ -13,7 +13,7 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   webServer: externalBaseUrl ? undefined : {
-    command: "pnpm dev",
+    command: "pnpm db:operational:local && pnpm dev",
     url: "http://localhost:3000",
     reuseExistingServer: true,
     timeout: 120_000,
