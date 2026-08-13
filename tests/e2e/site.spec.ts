@@ -48,6 +48,14 @@ test("TV calendar requires one-time phone pairing", async ({ page }) => {
   expect((await page.request.get("/api/calendar/events")).status()).toBe(401);
 });
 
+test("legacy staff pages redirect under /a", async ({ request }) => {
+  for (const [oldPath, newPath] of [["/admin", "/a/admin"], ["/dodaj", "/a/dodaj"], ["/kalendarz", "/a/kalendarz"], ["/tv", "/a/tv"]]) {
+    const response = await request.get(oldPath, { maxRedirects: 0 });
+    expect(response.status()).toBe(307);
+    expect(response.headers().location).toBe(newPath);
+  }
+});
+
 test("hero video stops on its last frame and restarts after leaving the viewport", async ({ page }) => {
   await page.goto("/");
   const video = page.locator("section video").first();
@@ -99,19 +107,19 @@ test("calendar subscription management stays private", async ({ request }) => {
 });
 
 test("quick uploader API is private and exposes an installable manifest", async ({ page }) => {
-  const manifest = await page.request.get("/dodaj/manifest.webmanifest");
+  const manifest = await page.request.get("/a/dodaj/manifest.webmanifest");
   expect(manifest.ok()).toBe(true);
-  expect(await manifest.json()).toMatchObject({ start_url: "/dodaj", scope: "/" });
+  expect(await manifest.json()).toMatchObject({ start_url: "/a/dodaj", scope: "/a/" });
   expect((await page.request.post("/api/quick-upload", { multipart: { category: "Lato" } })).status()).toBe(401);
 });
 
 test("PWA dashboard links directly to common admin tasks", async ({ page }) => {
   await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
-  await page.goto("/dodaj");
+  await page.goto("/a/dodaj");
   await expect(page.getByRole("heading", { name: "Co chcesz zrobić?" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Dodaj zdjęcia lub filmy/ })).toHaveAttribute("href", "/dodaj/galeria");
-  await expect(page.getByRole("link", { name: /Dodaj wydarzenie/ })).toHaveAttribute("href", "/admin/collections/events/create");
-  await expect(page.getByRole("link", { name: /Sprawdź rezerwacje/ })).toHaveAttribute("href", "/admin/kalendarz");
+  await expect(page.getByRole("link", { name: /Dodaj zdjęcia lub filmy/ })).toHaveAttribute("href", "/a/dodaj/galeria");
+  await expect(page.getByRole("link", { name: /Dodaj wydarzenie/ })).toHaveAttribute("href", "/a/admin/collections/events/create");
+  await expect(page.getByRole("link", { name: /Sprawdź rezerwacje/ })).toHaveAttribute("href", "/a/admin/kalendarz");
 });
 
 test.describe("mobile", () => {
@@ -155,7 +163,7 @@ test.describe("mobile", () => {
 
   test("PWA task dashboard fits a phone screen", async ({ page }) => {
     await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
-    await page.goto("/dodaj");
+    await page.goto("/a/dodaj");
     await expect(page.getByRole("heading", { name: "Co chcesz zrobić?" })).toBeVisible();
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);

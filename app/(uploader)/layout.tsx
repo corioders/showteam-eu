@@ -8,7 +8,7 @@ const oswald = Oswald({ subsets: ["latin", "latin-ext"], variable: "--font-displ
 export const metadata: Metadata = {
   title: "Panel SHOWteam",
   description: "Prosty panel wydarzeń, galerii, ofert i rezerwacji SHOWteam.",
-  manifest: "/dodaj/manifest.webmanifest",
+  manifest: "/a/dodaj/manifest.webmanifest",
   appleWebApp: { capable: true, statusBarStyle: "default", title: "SHOWteam" },
   icons: { apple: "/pwa-192.png" },
   robots: { index: false, follow: false },

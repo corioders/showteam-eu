@@ -5,12 +5,12 @@ import { AdminSessionGate } from "@/components/admin-session-gate";
 import { adminTasks } from "@/lib/admin-tasks";
 
 export function PwaDashboard() {
-  return <AdminSessionGate redirectPath="/dodaj">{(userName) =>
+  return <AdminSessionGate redirectPath="/a/dodaj">{(userName) =>
     <main className="min-h-dvh bg-[#f7f7f4] px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] text-[#292929] sm:px-6">
       <div className="mx-auto max-w-6xl">
         <header className="flex items-center justify-between border-b border-black/10 pb-4">
           <div><p className="font-display text-xl font-black uppercase">SHOWteam<span className="text-orange-600">.</span></p><p className="text-xs text-black/45">{userName}</p></div>
-          <Link href="/admin/logout" prefetch={false} className="text-sm font-bold underline decoration-black/20 underline-offset-4">Wyloguj</Link>
+          <Link href="/a/admin/logout" prefetch={false} className="text-sm font-bold underline decoration-black/20 underline-offset-4">Wyloguj</Link>
         </header>
 
         <section className="py-8 sm:py-12">

@@ -1,11 +1,11 @@
 export function GET() {
   return Response.json({
-    id: "/dodaj",
+    id: "/a/dodaj",
     name: "Panel SHOWteam",
     short_name: "SHOWteam",
     description: "Prosty panel wydarzeń, galerii, ofert i rezerwacji SHOWteam.",
-    start_url: "/dodaj",
-    scope: "/",
+    start_url: "/a/dodaj",
+    scope: "/a/",
     display: "standalone",
     background_color: "#080a0b",
     theme_color: "#ff6900",

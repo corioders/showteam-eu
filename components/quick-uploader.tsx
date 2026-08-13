@@ -10,7 +10,7 @@ const MAX_TOTAL_BYTES = 80 * 1024 * 1024;
 const categories = ["Lato", "Zima", "Szkolenia"] as const;
 
 export function QuickUploader() {
-  return <AdminSessionGate redirectPath="/dodaj/galeria">{(userName) => <QuickUploaderForm userName={userName} />}</AdminSessionGate>;
+  return <AdminSessionGate redirectPath="/a/dodaj/galeria">{(userName) => <QuickUploaderForm userName={userName} />}</AdminSessionGate>;
 }
 
 function QuickUploaderForm({ userName }: { userName: string }) {
@@ -67,7 +67,7 @@ function QuickUploaderForm({ userName }: { userName: string }) {
       <div className="mx-auto max-w-xl">
         <header className="mb-8 flex items-center justify-between border-b border-white/15 pb-4">
           <div><p className="font-display text-xl font-black uppercase">SHOWteam<span className="text-orange-500">.</span></p><p className="text-xs text-white/45">Zalogowano: {userName}</p></div>
-          <Link href="/dodaj" className="text-sm font-bold text-white/70 underline decoration-white/20 underline-offset-4">Panel</Link>
+          <Link href="/a/dodaj" className="text-sm font-bold text-white/70 underline decoration-white/20 underline-offset-4">Panel</Link>
         </header>
 
         <p className="font-mono text-xs font-bold uppercase tracking-[.18em] text-orange-400">Szybkie dodawanie</p>

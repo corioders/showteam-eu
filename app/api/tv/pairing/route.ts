@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   const userCode = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, "0");
   await database.prepare("INSERT INTO tv_pairings (id, secret_hash, user_code, expires_at, approved) VALUES (?, ?, ?, ?, 0)")
     .bind(id, await hashPairingSecret(secret), userCode, now + 5 * 60_000).run();
-  const url = new URL("/polacz-tv", request.url);
+  const url = new URL("/a/polacz-tv", request.url);
   url.searchParams.set("pair", id);
   url.searchParams.set("secret", secret);
   return Response.json({ id, secret, userCode, approvalUrl: url.toString(), expiresIn: 300 });
