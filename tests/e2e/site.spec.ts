@@ -42,7 +42,7 @@ test("customer can reserve an available equipment slot", async ({ page }) => {
 });
 
 test("TV calendar requires one-time phone pairing", async ({ page }) => {
-  await page.goto("/tv");
+  await page.goto("/a/tv");
   await expect(page.getByRole("heading", { name: /Połącz telefon/i })).toBeVisible();
   await expect(page.locator("svg").filter({ has: page.locator("path") }).first()).toBeVisible();
   expect((await page.request.get("/api/calendar/events")).status()).toBe(401);
