@@ -1,10 +1,14 @@
 import { APIError, type CollectionConfig } from "payload";
+import { ensureOperationalTables } from "@/lib/operational-tables";
 
 const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
 export function createBookingsCollection(database: D1Database): CollectionConfig {
   const releaseSlots = async (reservationId: unknown) => {
-    if (reservationId) await database.prepare("DELETE FROM booking_slots WHERE reservation_id = ?").bind(String(reservationId)).run();
+    if (reservationId) {
+      await ensureOperationalTables(database);
+      await database.prepare("DELETE FROM booking_slots WHERE reservation_id = ?").bind(String(reservationId)).run();
+    }
   };
 
   return {
@@ -21,7 +25,7 @@ export function createBookingsCollection(database: D1Database): CollectionConfig
     hooks: {
       beforeChange: [async ({ data, originalDoc, operation }) => {
         if (operation === "update" && originalDoc?.status === "cancelled" && data.status !== "cancelled") {
-          throw new APIError("Anulowanej rezerwacji nie można przywrócić. Utwórz nową, aby ponownie sprawdzić dostępność terminu.", 409);
+          throw new APIError("Ta rezerwacja była anulowana, więc jej termin został zwolniony. Utwórz nową rezerwację, aby bezpiecznie sprawdzić, czy termin nadal jest wolny.", 409, null, true);
         }
         return data;
       }],

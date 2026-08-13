@@ -268,7 +268,7 @@ export interface Gallery {
   createdAt: string;
 }
 /**
- * Sprzęt widoczny w Rezerwacjach. Ustaw liczbę sztuk, długość terminu i godziny dostępności.
+ * Jedyne miejsce zarządzania wynajmem. To, co ustawisz tutaj, automatycznie pojawi się na stronie Rezerwacje, w dostępności i kalendarzu.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "equipment".
@@ -276,21 +276,21 @@ export interface Gallery {
 export interface Equipment {
   id: number;
   name: string;
-  /**
-   * Krótko, bez spacji, np. sup. Nie zmieniaj po uruchomieniu rezerwacji.
-   */
   slug: string;
   description: string;
   image?: (number | null) | Media;
   category: 'Woda' | 'Ląd' | 'Szkolenie' | 'Inne';
   quantity: number;
+  /**
+   * Np. 60 oznacza, że klient rezerwuje sprzęt na godzinę.
+   */
   durationMinutes: number;
   openTime: string;
   closeTime: string;
   sortOrder: number;
   active?: boolean | null;
   /**
-   * Np. wymagane uprawnienia albo informacja o potwierdzeniu przez obsługę.
+   * Opcjonalnie, np. „Wymagane uprawnienia”. Ten tekst będzie widoczny przed rezerwacją.
    */
   notice?: string | null;
   updatedAt: string;

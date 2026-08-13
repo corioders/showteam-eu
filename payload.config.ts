@@ -20,6 +20,7 @@ import { seedOffers } from "@/lib/seed-offers";
 import { seedGallery } from "@/lib/seed-gallery";
 import { seedEvents } from "@/lib/events";
 import { seedEquipment } from "@/lib/seed-equipment";
+import { preserveOperationalTables } from "@/lib/operational-schema";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -41,6 +42,8 @@ export default buildConfig({
     meta: { titleSuffix: " — Panel SHOWteam" },
     components: {
       beforeDashboard: ["@/components/payload/quick-upload-card#QuickUploadCard"],
+      beforeLogin: ["@/components/payload/brand#LoginIntro"],
+      graphics: { Logo: "@/components/payload/brand#ShowteamLogo", Icon: "@/components/payload/brand#ShowteamIcon" },
       views: { calendar: { Component: "@/components/payload/calendar-admin-view#CalendarAdminView", path: "/kalendarz" } },
     },
   },
@@ -50,7 +53,7 @@ export default buildConfig({
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "local-showteam-development-secret-change-me",
   typescript: { outputFile: path.resolve(dirname, "payload-types.ts") },
-  db: sqliteD1Adapter({ binding: cloudflare.env.D1 }),
+  db: sqliteD1Adapter({ binding: cloudflare.env.D1, afterSchemaInit: [preserveOperationalTables] }),
   plugins: [r2Storage({ bucket: cloudflare.env.R2, collections: { media: true } })],
   onInit: async (payload) => {
     if (isNextBuild) return;
