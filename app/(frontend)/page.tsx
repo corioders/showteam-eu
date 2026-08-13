@@ -110,7 +110,7 @@ export default async function Home() {
 
       <section className="py-20 md:py-32">
         <div className="gallery-container">
-          <div className="mb-10 flex items-end justify-between gap-6">
+          <div className="mb-10 flex flex-col items-start gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div><span className="eyebrow">Prosto z akcji</span><h2 className="font-display mt-3 text-5xl font-black uppercase tracking-tight sm:text-7xl">#showteam.eu</h2></div>
             <div className="flex gap-2">
               <Button asChild variant="outline" size="icon"><a href={contact.instagram} target="_blank" rel="noreferrer" aria-label="Instagram SHOWteam"><Instagram className="size-5" /></a></Button>
