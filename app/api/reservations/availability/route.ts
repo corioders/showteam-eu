@@ -1,11 +1,7 @@
 import { getPayload } from "payload";
 import config, { database } from "@payload-config";
-import { createTimeSlots, isBookingDate } from "@/lib/reservations";
+import { createTimeSlots, isBookingDate, todayInPoland } from "@/lib/reservations";
 import { ensureOperationalTables } from "@/lib/operational-tables";
-
-function todayInPoland() {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Warsaw", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-}
 
 export async function GET(request: Request) {
   await ensureOperationalTables(database);

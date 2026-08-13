@@ -1,6 +1,6 @@
 import { getPayload } from "payload";
 import config, { database } from "@payload-config";
-import { bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone } from "@/lib/reservations";
+import { bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone, todayInPoland } from "@/lib/reservations";
 import { ensureOperationalTables } from "@/lib/operational-tables";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -14,10 +14,6 @@ type ReservationInput = {
   notes?: unknown;
   website?: unknown;
 };
-
-function todayInPoland() {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Warsaw", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-}
 
 export async function POST(request: Request) {
   await ensureOperationalTables(database);

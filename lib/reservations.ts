@@ -11,6 +11,15 @@ export type BookableEquipment = {
   image?: { url?: string | null; alt?: string | null } | number | null;
 };
 
+export function todayInPoland(date = new Date()): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Warsaw",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
 export function timeToMinutes(value: string): number {
   const match = /^(\d{2}):(\d{2})$/.exec(value);
   if (!match) return Number.NaN;

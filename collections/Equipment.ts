@@ -1,6 +1,6 @@
-import { ValidationError, type CollectionConfig } from "payload";
+import { APIError, ValidationError, type CollectionConfig } from "payload";
 import { slugFromName } from "@/lib/slug";
-import { timeToMinutes } from "@/lib/reservations";
+import { timeToMinutes, todayInPoland } from "@/lib/reservations";
 
 const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
@@ -34,6 +34,25 @@ export const Equipment: CollectionConfig = {
       if (Number.isFinite(open) && Number.isFinite(close) && close <= open) errors.push({ path: "closeTime", label: "Godzina zakończenia", message: "Godzina zakończenia musi być późniejsza niż rozpoczęcia." });
       if (Number.isFinite(open) && Number.isFinite(close) && Number.isFinite(duration) && duration > close - open) errors.push({ path: "durationMinutes", label: "Długość jednej rezerwacji", message: "Rezerwacja nie może być dłuższa niż cały ustawiony dzień dostępności." });
       if (errors.length) throw new ValidationError({ collection: "equipment", errors, req }, req.t);
+      return data;
+    }],
+    beforeChange: [async ({ data, originalDoc, operation, req }) => {
+      if (operation !== "update" || !originalDoc) return data;
+      const scheduleFields = ["quantity", "durationMinutes", "openTime", "closeTime"] as const;
+      const scheduleChanged = scheduleFields.some((field) => String(data[field] ?? originalDoc[field]) !== String(originalDoc[field]));
+      if (!scheduleChanged) return data;
+      const futureBookings = await req.payload.count({
+        collection: "bookings",
+        where: { and: [
+          { equipment: { equals: originalDoc.id } },
+          { bookingDate: { greater_than_equal: todayInPoland() } },
+          { status: { equals: "confirmed" } },
+        ] },
+        overrideAccess: true,
+      });
+      if (futureBookings.totalDocs > 0) {
+        throw new APIError("Nie można zmienić liczby sztuk ani godzin, dopóki istnieją przyszłe potwierdzone rezerwacje tego sprzętu. Najpierw je anuluj.", 409, null, true);
+      }
       return data;
     }],
   },

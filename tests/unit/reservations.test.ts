@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone, timeToMinutes } from "../../lib/reservations";
+import { bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone, timeToMinutes, todayInPoland } from "../../lib/reservations";
 
 describe("reservation rules", () => {
   it("creates only complete fixed-duration slots", () => {
@@ -25,5 +25,9 @@ describe("reservation rules", () => {
 
   it("builds a short non-sensitive confirmation reference", () => {
     expect(bookingReference("12345678-abcd-4000-9000-123456789abc")).toBe("SHOW-12345678");
+  });
+
+  it("uses the Polish calendar date at UTC day boundaries", () => {
+    expect(todayInPoland(new Date("2026-08-13T22:30:00Z"))).toBe("2026-08-14");
   });
 });
