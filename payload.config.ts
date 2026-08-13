@@ -92,6 +92,9 @@ function getCloudflareContextFromWrangler(): Promise<CloudflareContext> {
   return import(/* webpackIgnore: true */ `${"__wrangler".replaceAll("_", "")}`).then(
     ({ getPlatformProxy }) => getPlatformProxy({
       environment: process.env.CLOUDFLARE_ENV,
+      configPath: process.env.CLOUDFLARE_REMOTE_BINDINGS === "true"
+        ? path.resolve(dirname, "wrangler.migrations.jsonc")
+        : undefined,
       remoteBindings: process.env.CLOUDFLARE_REMOTE_BINDINGS === "true",
     } satisfies GetPlatformProxyOptions),
   );
