@@ -74,13 +74,17 @@
   .collection-list__header, .collection-list__sub-header { gap: .75rem; }
   .collection-list__header { align-items: stretch; flex-direction: column; }
   .collection-list__header .btn { justify-content: center; min-height: 3rem; width: 100%; }
-  .collection-list__tables, .table-wrap { margin-inline: -1rem; overflow-x: auto; padding-inline: 1rem; }
-  .table { min-width: 42rem; }
+  .collection-list__tables, .table-wrap { margin-inline: 0; max-width: 100%; padding-inline: 0; }
+  .table-wrap { overflow-x: hidden; }
+  .table { min-width: 100%; table-layout: fixed; width: 100%; }
+  .table th, .table td { overflow-wrap: anywhere; white-space: normal; }
+  .table th:first-child, .table td:first-child { width: 2.75rem; }
   .row__fields { display: block; }
   .row__fields > .field-type { margin-bottom: 1.25rem; width: 100% !important; }
   .field-type input, .field-type textarea, .react-select__control { font-size: 1rem; min-height: 3rem; }
   .field-description { font-size: .85rem; }
-  .doc-controls__content { gap: .5rem; }
+  .doc-controls { background: var(--theme-bg); position: sticky; top: 4rem; z-index: 15; }
+  .doc-controls__content { flex-wrap: wrap; gap: .5rem; }
   .doc-controls .btn { min-height: 2.75rem; }
   .doc-controls__meta { flex-wrap: wrap; max-width: 100%; }
   .cms-draft { align-items: flex-start; flex-direction: column; margin: .25rem 0; width: 100%; }
