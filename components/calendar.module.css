@@ -7,6 +7,8 @@
 .calendar :global(.fc-event) { border-radius: 0; cursor: default; font-weight: 800; padding: 2px 4px; }
 .calendar :global(.fc-col-header-cell-cushion), .calendar :global(.fc-daygrid-day-number) { color: inherit; padding: .5rem; text-decoration: none; }
 .calendar :global(.fc-list-event-title a), .calendar :global(.fc-list-event-time) { color: inherit; }
+.calendarTv :global(.fc-list-table) { font-size: clamp(.85rem, 1.25vw, 1.15rem); }
+.calendarTv :global(.fc-list-event td) { padding-block: clamp(.55rem, 1.2vh, 1rem); }
 @media (max-width: 700px) { .calendar :global(.fc-header-toolbar) { align-items: stretch; flex-direction: column; gap: .75rem; } .calendar :global(.fc-toolbar-chunk) { display: flex; justify-content: space-between; } }
 .overlay { align-items: flex-end; background: rgba(0,0,0,.78); display: flex; inset: 0; justify-content: center; padding: .75rem; position: fixed; z-index: 1000; }
 .dialog { background: #0a0b0c; border: 1px solid rgba(255,255,255,.16); color: white; max-width: 28rem; padding: 1.5rem; width: 100%; }
