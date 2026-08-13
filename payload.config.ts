@@ -26,6 +26,7 @@ const dirname = path.dirname(filename);
 const realpath = (value: string) => (fs.existsSync(value) ? fs.realpathSync(value) : "");
 const isCLI = process.argv.some((value) => realpath(value).endsWith(path.join("payload", "bin.js")));
 const isProduction = process.env.NODE_ENV === "production";
+const isNextBuild = process.env.NEXT_PHASE === "phase-production-build";
 
 const cloudflare = isCLI || !isProduction
   ? await getCloudflareContextFromWrangler()
@@ -52,6 +53,7 @@ export default buildConfig({
   db: sqliteD1Adapter({ binding: cloudflare.env.D1 }),
   plugins: [r2Storage({ bucket: cloudflare.env.R2, collections: { media: true } })],
   onInit: async (payload) => {
+    if (isNextBuild) return;
     await seedOffers(payload);
     await seedGallery(payload);
     await seedEvents(payload);
