@@ -6,7 +6,7 @@ const staticImages = {
   lake: "/media/summer-wake-hero.jpg",
   snow: "/media/showteam-winter-fire.jpg",
   training: "/media/summer-sailing-drone.jpg",
-  stay: "/media/hero-lake.jpg",
+  stay: "/media/base-life.jpg",
 } as const;
 
 function toOffer(document: Record<string, unknown>): Offer {
