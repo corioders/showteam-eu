@@ -7,6 +7,27 @@ test("main navigation reaches every public section", async ({ page }) => {
   }
 });
 
+test("hero video stops on its last frame and restarts after leaving the viewport", async ({ page }) => {
+  await page.goto("/");
+  const video = page.locator("section video").first();
+  await expect(video).toBeVisible();
+  expect(await video.getAttribute("loop")).toBeNull();
+  await video.evaluate(async (element) => {
+    const player = element as HTMLVideoElement;
+    player.playbackRate = 8;
+    await player.play();
+  });
+  await expect.poll(() => video.evaluate((element) => (element as HTMLVideoElement).ended), { timeout: 5_000 }).toBe(true);
+  await expect.poll(() => video.evaluate((element) => {
+    const player = element as HTMLVideoElement;
+    return Math.abs(player.duration - player.currentTime) < 0.15;
+  })).toBe(true);
+  await page.evaluate(() => window.scrollTo(0, window.innerHeight + 200));
+  await expect.poll(() => video.evaluate((element) => (element as HTMLVideoElement).currentTime)).toBe(0);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect.poll(() => video.evaluate((element) => (element as HTMLVideoElement).currentTime > 0)).toBe(true);
+});
+
 test("gallery filters CMS photos", async ({ page }) => {
   await page.goto("/galeria");
   await expect(page.getByRole("heading", { name: /Galeria SHOWteam/i })).toBeVisible();

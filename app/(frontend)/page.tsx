@@ -9,6 +9,7 @@ import { OfferCard } from "@/components/offer-card";
 import { getOffers } from "@/lib/cms";
 import { getGallery } from "@/lib/gallery";
 import { GalleryGrid } from "@/components/gallery-grid";
+import { HeroVideo } from "@/components/hero-video";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { alternates: { canonical: "/" } };
@@ -18,7 +19,7 @@ export default async function Home() {
   return (
     <>
       <section className="grain relative min-h-svh overflow-hidden pt-20">
-        <Image src="/media/summer-wake-hero.jpg" alt="Wakeboarding z SHOWteam na Jeziorze Łąckim" fill priority className="object-cover object-[60%_center]" sizes="100vw" />
+        <HeroVideo />
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/45 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20" />
         <div className="site-container relative flex min-h-[calc(100svh-5rem)] flex-col justify-end pb-10 pt-20 md:pb-16">
