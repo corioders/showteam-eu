@@ -45,7 +45,12 @@ export function isBookingDate(value: string): boolean {
 export function normalizePhone(value: string): string | null {
   const cleaned = value.trim().replace(/[\s()-]/g, "");
   if (!/^\+?\d{9,15}$/.test(cleaned)) return null;
-  return cleaned.startsWith("+") ? cleaned : `+48${cleaned}`;
+  if (cleaned.startsWith("+")) return cleaned;
+  return cleaned.length === 11 && cleaned.startsWith("48") ? `+${cleaned}` : `+48${cleaned}`;
+}
+
+export function isUniqueConstraintError(error: unknown): boolean {
+  return error instanceof Error && /unique constraint|constraint failed/i.test(error.message);
 }
 
 export function bookingReference(id: string): string {

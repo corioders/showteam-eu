@@ -1,6 +1,7 @@
 import { database } from "@payload-config";
 import { createTvToken, hashPairingSecret, tvCookie } from "@/lib/tv-auth";
 import { ensureOperationalTables } from "@/lib/operational-tables";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 function randomSecret(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
@@ -11,6 +12,13 @@ export async function POST(request: Request) {
   await ensureOperationalTables(database);
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: "Nieprawidłowe źródło." }, { status: 403 });
+  const rateLimit = await checkRateLimit(database, request, "tv-pairing", 20, 10 * 60);
+  if (!rateLimit.allowed) {
+    return Response.json(
+      { error: "Za dużo prób. Spróbuj ponownie za kilka minut." },
+      { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } },
+    );
+  }
   const now = Date.now();
   await database.prepare("DELETE FROM tv_pairings WHERE expires_at < ?").bind(now).run();
   const outstanding = await database.prepare("SELECT COUNT(*) AS count FROM tv_pairings").first<{ count: number }>();

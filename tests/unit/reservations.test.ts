@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookingReference, createTimeSlots, endTime, isBookingDate, normalizePhone, timeToMinutes } from "../../lib/reservations";
+import { bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone, timeToMinutes } from "../../lib/reservations";
 
 describe("reservation rules", () => {
   it("creates only complete fixed-duration slots", () => {
@@ -13,8 +13,14 @@ describe("reservation rules", () => {
     expect(isBookingDate("2026-08-31")).toBe(true);
     expect(isBookingDate("2026-02-30")).toBe(false);
     expect(normalizePhone("500 128 090")).toBe("+48500128090");
+    expect(normalizePhone("48 500 128 090")).toBe("+48500128090");
     expect(normalizePhone("+48 (500) 128-090")).toBe("+48500128090");
     expect(normalizePhone("123")).toBeNull();
+  });
+
+  it("distinguishes a booked slot from a database outage", () => {
+    expect(isUniqueConstraintError(new Error("UNIQUE constraint failed: booking_slots.equipment_id"))).toBe(true);
+    expect(isUniqueConstraintError(new Error("D1_ERROR: network unavailable"))).toBe(false);
   });
 
   it("builds a short non-sensitive confirmation reference", () => {

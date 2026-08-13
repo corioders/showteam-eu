@@ -27,9 +27,16 @@ const tvDevices = sqliteTable("tv_devices", {
   createdAt: integer("created_at").notNull(),
 });
 
+const rateLimits = sqliteTable("rate_limits", {
+  key: text("key").primaryKey().notNull(),
+  count: integer("count").notNull(),
+  expiresAt: integer("expires_at").notNull(),
+});
+
 export const preserveOperationalTables: SQLiteSchemaHook = ({ schema }) => {
   schema.tables.booking_slots = bookingSlots;
   schema.tables.tv_pairings = tvPairings;
   schema.tables.tv_devices = tvDevices;
+  schema.tables.rate_limits = rateLimits;
   return schema;
 };

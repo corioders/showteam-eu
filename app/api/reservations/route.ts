@@ -1,7 +1,8 @@
 import { getPayload } from "payload";
 import config, { database } from "@payload-config";
-import { bookingReference, createTimeSlots, endTime, isBookingDate, normalizePhone } from "@/lib/reservations";
+import { bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone } from "@/lib/reservations";
 import { ensureOperationalTables } from "@/lib/operational-tables";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 type ReservationInput = {
   equipmentId?: unknown;
@@ -22,6 +23,13 @@ export async function POST(request: Request) {
   await ensureOperationalTables(database);
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: "Nieprawidłowe źródło żądania." }, { status: 403 });
+  const rateLimit = await checkRateLimit(database, request, "reservation", 10, 60 * 60);
+  if (!rateLimit.allowed) {
+    return Response.json(
+      { error: "Za dużo prób. Spróbuj ponownie później lub zadzwoń do nas." },
+      { status: 429, headers: { "Retry-After": String(rateLimit.retryAfterSeconds) } },
+    );
+  }
 
   let input: ReservationInput;
   try { input = await request.json() as ReservationInput; }
@@ -62,7 +70,11 @@ export async function POST(request: Request) {
         .bind(equipmentId, date, time, unit, reservationId).run();
       allocatedUnit = unit;
       break;
-    } catch { /* unique collision: try the next physical unit */ }
+    } catch (error) {
+      if (isUniqueConstraintError(error)) continue;
+      payload.logger.error({ err: error, msg: "Reservation slot allocation failed" });
+      return Response.json({ error: "Nie udało się sprawdzić terminu. Spróbuj ponownie." }, { status: 500 });
+    }
   }
   if (!allocatedUnit) return Response.json({ error: "Ten termin właśnie został zajęty. Wybierz inny." }, { status: 409 });
 
