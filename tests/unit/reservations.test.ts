@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone, resolveBookingHours, timeRangesOverlap, timeToMinutes, todayInPoland, type AvailabilityHoursRule } from "../../lib/reservations";
+import { addDaysToBookingDate, bookingDateChoices, bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone, resolveBookingHours, timeRangesOverlap, timeToMinutes, todayInPoland, type AvailabilityHoursRule } from "../../lib/reservations";
 
 describe("reservation rules", () => {
+  it("builds date strips across month boundaries", () => {
+    expect(addDaysToBookingDate("2026-08-30", 7)).toBe("2026-09-06");
+    expect(bookingDateChoices("2026-12-29", 4)).toEqual(["2026-12-29", "2026-12-30", "2026-12-31", "2027-01-01"]);
+  });
+
   it("creates only complete fixed-duration slots", () => {
     expect(createTimeSlots("09:00", "12:30", 60)).toEqual(["09:00", "10:00", "11:00"]);
     expect(createTimeSlots("bad", "12:00", 60)).toEqual([]);

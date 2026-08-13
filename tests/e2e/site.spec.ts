@@ -172,6 +172,12 @@ test.describe("mobile", () => {
   test("reservations are usable without horizontal overflow", async ({ page }) => {
     await page.goto("/rezerwacje");
     await expect(page.getByRole("heading", { name: /Co bierzesz/i })).toBeVisible();
+    const dates = page.getByRole("group", { name: "Data" }).getByLabel("Najbliższe daty").getByRole("button");
+    await expect(dates).toHaveCount(7);
+    await dates.first().click();
+    await expect(dates.first()).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "Następny tydzień" }).click();
+    await expect(page.getByRole("button", { name: "Poprzedni tydzień" })).toBeEnabled();
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });

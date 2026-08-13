@@ -30,6 +30,16 @@ export function todayInPoland(date = new Date()): string {
   }).format(date);
 }
 
+export function addDaysToBookingDate(value: string, days: number): string {
+  const date = new Date(`${value}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+export function bookingDateChoices(start: string, count = 7): string[] {
+  return Array.from({ length: count }, (_, index) => addDaysToBookingDate(start, index));
+}
+
 export function timeToMinutes(value: string): number {
   const match = /^(\d{2}):(\d{2})$/.exec(value);
   if (!match) return Number.NaN;

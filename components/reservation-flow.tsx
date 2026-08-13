@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronRight, Clock3, Phone, Sailboat, Waves, Zap } from "lucide-react";
-import type { BookableEquipment } from "@/lib/reservations";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, Phone, Sailboat, Waves, Zap } from "lucide-react";
+import { addDaysToBookingDate, bookingDateChoices, type BookableEquipment } from "@/lib/reservations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -14,17 +14,28 @@ const categoryIcon = { Woda: Waves, Ląd: Zap, Szkolenie: Sailboat, Inne: Sailbo
 
 export function ReservationFlow({ equipment, today }: { equipment: BookableEquipment[]; today: string }) {
   const [selectedId, setSelectedId] = useState<number | null>(equipment[0]?.id ?? null);
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(today);
+  const [visibleStart, setVisibleStart] = useState(today);
   const [time, setTime] = useState("");
   const [slots, setSlots] = useState<Slot[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);
   const selected = useMemo(() => equipment.find((item) => item.id === selectedId), [equipment, selectedId]);
+  const visibleDates = useMemo(() => bookingDateChoices(visibleStart), [visibleStart]);
+
+  function selectDate(nextDate: string) {
+    if (nextDate === date) return;
+    setDate(nextDate);
+    setTime("");
+    setSlots([]);
+    setError("");
+    setLoadingSlots(true);
+  }
 
   useEffect(() => {
-    if (!selectedId || !date) return;
+    if (!selectedId || !date || result) return;
     const controller = new AbortController();
     fetch(`/api/reservations/availability?equipment=${selectedId}&date=${date}`, { signal: controller.signal })
       .then(async (response) => {
@@ -35,7 +46,7 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
       .catch((fetchError) => { if (fetchError.name !== "AbortError") setError(fetchError.message); })
       .finally(() => { if (!controller.signal.aborted) setLoadingSlots(false); });
     return () => controller.abort();
-  }, [date, selectedId]);
+  }, [date, result, selectedId]);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -78,7 +89,7 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
         <div><span className="eyebrow">Termin</span><p className="mt-2 text-xl font-bold">{result.date} · {result.time}–{result.endTime}</p></div>
         <p className="text-sm leading-6 text-white/55 sm:col-span-2">Zapisz numer rezerwacji. W razie wymagań dotyczących sprzętu obsługa skontaktuje się telefonicznie.</p>
         <div className="flex flex-wrap gap-3 sm:col-span-2">
-          <Button onClick={() => { setResult(null); setDate(""); setTime(""); }}><ArrowLeft className="size-4" /> Nowa rezerwacja</Button>
+          <Button onClick={() => { setResult(null); setDate(today); setVisibleStart(today); setTime(""); setLoadingSlots(true); }}><ArrowLeft className="size-4" /> Nowa rezerwacja</Button>
           <Button asChild variant="outline"><a href="tel:+48500128090"><Phone className="size-4" /> Zadzwoń</a></Button>
         </div>
       </div>
@@ -118,7 +129,31 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
           {selected && <Badge className="border border-white/15 bg-transparent text-white">{selected.durationMinutes} min</Badge>}
         </div>
         <form onSubmit={submit} className="mt-6 space-y-6">
-          <label className="block"><span className="mb-2 flex items-center gap-2 text-sm font-bold"><CalendarDays className="size-4 text-orange-500" /> Data</span><input required type="date" min={today} value={date} onChange={(event) => { setDate(event.target.value); setTime(""); setSlots([]); setError(""); setLoadingSlots(Boolean(event.target.value)); }} className="h-12 w-full border border-white/15 bg-white/[0.04] px-4 text-base text-white outline-none focus:border-orange-500 [color-scheme:dark]" /></label>
+          <fieldset aria-labelledby="booking-date-label">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span id="booking-date-label" className="flex items-center gap-2 text-sm font-bold"><CalendarDays className="size-4 text-orange-500" /> Data</span>
+              <div className="flex items-center gap-1">
+                <button type="button" aria-label="Poprzedni tydzień" disabled={visibleStart === today} onClick={() => setVisibleStart(addDaysToBookingDate(visibleStart, -7) < today ? today : addDaysToBookingDate(visibleStart, -7))} className="grid size-10 place-items-center border border-white/15 transition hover:border-orange-500 disabled:cursor-not-allowed disabled:opacity-25"><ChevronLeft className="size-4" /></button>
+                <button type="button" aria-label="Następny tydzień" onClick={() => setVisibleStart(addDaysToBookingDate(visibleStart, 7))} className="grid size-10 place-items-center border border-white/15 transition hover:border-orange-500"><ChevronRight className="size-4" /></button>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-7" aria-label="Najbliższe daty">
+              {visibleDates.map((value, index) => {
+                const parsed = new Date(`${value}T12:00:00Z`);
+                const active = date === value;
+                const dayLabel = index === 0 && value === today ? "Dziś" : new Intl.DateTimeFormat("pl-PL", { weekday: "short", timeZone: "UTC" }).format(parsed).replace(".", "");
+                return <button key={value} type="button" aria-pressed={active} onClick={() => selectDate(value)} className={`min-h-20 border px-1 py-2 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${active ? "border-orange-500 bg-orange-500 text-black" : "border-white/15 bg-white/[0.035] hover:border-orange-500"}`}>
+                  <span className={`block text-[.65rem] font-bold uppercase tracking-wider ${active ? "text-black/60" : "text-white/45"}`}>{dayLabel}</span>
+                  <span className="mt-1 block font-display text-2xl font-black leading-none">{parsed.getUTCDate()}</span>
+                  <span className={`mt-1 block text-[.65rem] uppercase ${active ? "text-black/60" : "text-white/35"}`}>{new Intl.DateTimeFormat("pl-PL", { month: "short", timeZone: "UTC" }).format(parsed).replace(".", "")}</span>
+                </button>;
+              })}
+            </div>
+            <label className="mt-3 grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border border-white/10 bg-white/[0.025] px-3 py-2 text-xs font-bold text-white/55">
+              <span>Inna data</span>
+              <input required type="date" min={today} value={date} onChange={(event) => { if (!event.target.value) return; setVisibleStart(event.target.value); selectDate(event.target.value); }} className="h-10 min-w-0 w-full border-0 bg-transparent text-right text-base text-white outline-none [color-scheme:dark]" />
+            </label>
+          </fieldset>
           <fieldset><legend className="mb-2 flex items-center gap-2 text-sm font-bold"><Clock3 className="size-4 text-orange-500" /> Godzina</legend>
             {!date ? <p className="border border-dashed border-white/15 p-5 text-sm text-white/40">Wybierz datę, aby zobaczyć wolne godziny.</p> : loadingSlots ? <p className="p-5 text-sm text-white/45">Sprawdzam wolne terminy…</p> : slots.length ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{slots.map((slot) => <button key={slot.time} type="button" onClick={() => setTime(slot.time)} className={`h-11 border text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${time === slot.time ? "border-orange-500 bg-orange-500 text-black" : "border-white/15 hover:border-orange-500"}`}>{slot.time}</button>)}</div> : <p className="border border-dashed border-white/15 p-5 text-sm text-white/50">Brak wolnych terminów tego dnia.</p>}
           </fieldset>
