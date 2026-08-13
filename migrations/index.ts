@@ -3,6 +3,7 @@ import * as migration_20260812_232009_gallery_cms from './20260812_232009_galler
 import * as migration_20260813_114933_gallery_mobile_layout from './20260813_114933_gallery_mobile_layout';
 import * as migration_20260813_125108_events_analytics from './20260813_125108_events_analytics';
 import * as migration_20260813_140933_reservations from './20260813_140933_reservations';
+import * as migration_20260813_190000_waterfront_stays from './20260813_190000_waterfront_stays';
 
 export const migrations = [
   {
@@ -29,5 +30,10 @@ export const migrations = [
     up: migration_20260813_140933_reservations.up,
     down: migration_20260813_140933_reservations.down,
     name: '20260813_140933_reservations'
+  },
+  {
+    up: migration_20260813_190000_waterfront_stays.up,
+    down: migration_20260813_190000_waterfront_stays.down,
+    name: '20260813_190000_waterfront_stays'
   },
 ];

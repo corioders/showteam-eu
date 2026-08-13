@@ -60,6 +60,20 @@ const initialOffers = [
     ],
     published: true,
   },
+  {
+    title: "Noclegi nad wodą",
+    slug: "noclegi-nad-woda",
+    category: "Noclegi",
+    season: "Pobyt nad wodą",
+    sortOrder: 40,
+    location: "Wake & Surf Village · Poręba",
+    summary: "Wynajem kontenerów mieszkalnych i domków holenderskich przy bazie SHOWteam nad Jeziorem Łąckim. O dostępność i warunki pobytu zapytaj bezpośrednio.",
+    staticImage: "stay",
+    dates: [],
+    highlights: [{ text: "Kontenery mieszkalne" }, { text: "Domki holenderskie" }, { text: "Lokalizacja nad wodą" }],
+    sections: [{ title: "Zdjęcia obiektów", body: "Zdjęcia kontenerów i domków dodamy po sesji. Aktualne informacje otrzymasz bezpośrednio od SHOWteam." }],
+    published: true,
+  },
 ];
 
 export async function seedOffers(payload: Payload) {

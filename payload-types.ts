@@ -191,7 +191,7 @@ export interface Media {
 export interface Offer {
   id: number;
   title: string;
-  category: 'Lato' | 'Zima' | 'Szkolenia';
+  category: 'Lato' | 'Zima' | 'Szkolenia' | 'Noclegi';
   location: string;
   /**
    * 2–4 zdania zachęcające klienta.
@@ -229,7 +229,7 @@ export interface Offer {
    */
   cover?: (number | null) | Media;
   published?: boolean | null;
-  staticImage: 'lake' | 'snow' | 'training';
+  staticImage: 'lake' | 'snow' | 'training' | 'stay';
   slug: string;
   sortOrder: number;
   updatedAt: string;

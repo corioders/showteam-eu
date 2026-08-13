@@ -1,4 +1,4 @@
-export type OfferCategory = "Lato" | "Zima" | "Szkolenia";
+export type OfferCategory = "Lato" | "Zima" | "Szkolenia" | "Noclegi";
 
 export type Offer = {
   category: OfferCategory;
@@ -54,6 +54,20 @@ export const offers: Offer[] = [
     imageAlt: "Szkolenie żeglarskie SHOWteam z lotu ptaka",
     href: "/oferta/szkolenia",
     contactHref: "mailto:biuro@showteam.eu?subject=Szkolenia%20SHOWteam",
+  },
+  {
+    category: "Noclegi",
+    title: "Noclegi nad wodą",
+    location: "Wake & Surf Village · Poręba",
+    season: "Pobyt nad wodą",
+    dates: [],
+    summary: "Wynajem kontenerów mieszkalnych i domków holenderskich przy bazie SHOWteam nad Jeziorem Łąckim. O dostępność i warunki pobytu zapytaj bezpośrednio.",
+    highlights: ["Kontenery mieszkalne", "Domki holenderskie", "Lokalizacja nad wodą"],
+    image: "/media/hero-lake.jpg",
+    imageAlt: "Jezioro Łąckie przy bazie SHOWteam — zdjęcie tymczasowe",
+    href: "/oferta/noclegi-nad-woda",
+    contactHref: "mailto:biuro@showteam.eu?subject=Noclegi%20nad%20wod%C4%85",
+    sections: [{ title: "Zdjęcia obiektów", body: "Zdjęcia kontenerów i domków dodamy po sesji. Aktualne informacje otrzymasz bezpośrednio od SHOWteam." }],
   },
 ];
 

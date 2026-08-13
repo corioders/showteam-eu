@@ -12,6 +12,16 @@ test("official TikTok is linked from the site", async ({ page }) => {
   await expect(page.locator('a[href="https://www.tiktok.com/@showteam_eu"]')).toHaveCount(3);
 });
 
+test("waterfront stays are published without invented pricing", async ({ page }) => {
+  await page.goto("/oferta/noclegi-nad-woda");
+  await expect(page.getByRole("heading", { name: "Noclegi nad wodą" })).toBeVisible();
+  await expect(page.getByText("Kontenery mieszkalne")).toBeVisible();
+  await expect(page.getByText("Domki holenderskie")).toBeVisible();
+  await page.getByRole("button", { name: "Zdjęcia obiektów" }).click();
+  await expect(page.getByText(/Zdjęcia kontenerów i domków dodamy po sesji/)).toBeVisible();
+  await expect(page.getByText(/zł|PLN|cena/i)).toHaveCount(0);
+});
+
 test("customer can reserve an available equipment slot", async ({ page }) => {
   await page.goto("/rezerwacje", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: /Sprzęt czeka/i })).toBeVisible();

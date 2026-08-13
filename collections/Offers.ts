@@ -40,7 +40,7 @@ export const Offers: CollectionConfig = {
     { type: "tabs", tabs: [
       { label: "1. Najważniejsze", description: "Nagłówek i opis widoczne na górze strony oferty.", fields: [
         { name: "title", label: "Nazwa oferty", type: "text", required: true },
-        { name: "category", label: "Kategoria", type: "select", required: true, defaultValue: "Lato", options: ["Lato", "Zima", "Szkolenia"] },
+        { name: "category", label: "Kategoria", type: "select", required: true, defaultValue: "Lato", options: ["Lato", "Zima", "Szkolenia", "Noclegi"] },
         { name: "location", label: "Lokalizacja", type: "text", required: true, admin: { placeholder: "np. Jezioro Łąckie · Poręba" } },
         { name: "summary", label: "Krótki opis", type: "textarea", required: true, maxLength: 360, admin: { description: "2–4 zdania zachęcające klienta." } },
         { name: "season", label: "Nazwa sezonu", type: "text", required: true, defaultValue: "Sezon 2026", admin: { description: "Np. „Sezon 2026”." } },
@@ -63,6 +63,7 @@ export const Offers: CollectionConfig = {
           { label: "Wakeboard — jezioro", value: "lake" },
           { label: "Narty — Dolomity", value: "snow" },
           { label: "Windsurfing — baza", value: "training" },
+          { label: "Jezioro — zdjęcie tymczasowe", value: "stay" },
         ], admin: { hidden: true } },
       ] },
     ] },

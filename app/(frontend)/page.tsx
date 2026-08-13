@@ -62,7 +62,7 @@ export default async function Home() {
       <section id="oferta" className="py-20 md:py-32">
         <div className="site-container">
           <div className="mb-12 grid gap-6 md:grid-cols-[1fr_28rem] md:items-end">
-            <div><span className="eyebrow">Wybierz swoją stronę sezonu</span><h2 className="font-display mt-4 text-6xl font-black uppercase leading-[0.87] tracking-[-0.045em] sm:text-8xl">Woda czy<br /><span className="text-sky-300">śnieg?</span></h2></div>
+            <div><span className="eyebrow">Wybierz swój kierunek</span><h2 className="font-display mt-4 text-6xl font-black uppercase leading-[0.87] tracking-[-0.045em] sm:text-8xl">Zrób sobie<br /><span className="text-sky-300">SHOW.</span></h2></div>
             <p className="text-base leading-7 text-white/55">Nie wybieramy między sportem i odpoczynkiem. Łączymy je w programach dla rodzin, dzieci, grup i dorosłych, którzy nadal chcą próbować nowych rzeczy.</p>
           </div>
           <div className="grid gap-4 lg:grid-cols-12 lg:gap-5">
@@ -71,7 +71,7 @@ export default async function Home() {
                 key={offer.title}
                 offer={offer}
                 index={index}
-                className={index === 0 ? "lg:col-span-7 lg:min-h-[42rem]" : index === 1 ? "lg:col-span-5 lg:mt-20 lg:min-h-[34rem]" : "lg:col-span-5 lg:min-h-[34rem]"}
+                className={index === 0 ? "lg:col-span-7 lg:min-h-[42rem]" : index === 1 ? "lg:col-span-5 lg:mt-20 lg:min-h-[34rem]" : index === 3 ? "lg:col-span-7 lg:min-h-[34rem]" : "lg:col-span-5 lg:min-h-[34rem]"}
               />
             ))}
             <aside className="poster-cut relative flex min-h-[34rem] flex-col justify-between overflow-hidden bg-sky-300 p-7 text-neutral-950 sm:p-10 lg:col-span-7">
