@@ -14,7 +14,7 @@ export function QuickUploadCard() {
           <span className="admin-task__number">{String(index + 1).padStart(2, "0")}</span>
           <strong>{task.title}</strong>
           <p>{task.description}</p>
-          <span className="admin-task__action">Otwórz →</span>
+          <span className="admin-task__action"><span>Otwórz</span> →</span>
         </Link>)}
       </div>
     </section>

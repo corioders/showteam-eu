@@ -32,11 +32,27 @@
 
 @media (max-width: 900px) { .admin-task-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) {
-  .admin-start { margin-bottom: 1.25rem; }
+  .dashboard .gutter { padding-left: .75rem; padding-right: .75rem; }
+  .dashboard .app-header, .dashboard .app-header__wrapper, .dashboard .app-header__content { max-width: 100%; min-width: 0; overflow: hidden; }
+  .dashboard .app-header__step-header, .dashboard .app-header__step-nav-wrapper { min-width: 0; }
+  .dashboard .app-header__account { flex: 0 0 auto; max-width: 2.75rem; overflow: hidden; }
+  .admin-start { margin-bottom: 1rem; }
+  .admin-start__heading { margin-bottom: .9rem; }
+  .admin-start__heading > span { font-size: .62rem; letter-spacing: .14em; }
+  .admin-start__heading h1 { font-size: 1.75rem; letter-spacing: -.04em; margin: .35rem 0; }
+  .admin-start__heading p { font-size: .82rem; line-height: 1.35; }
+  .admin-task-grid { gap: .5rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-task { min-height: 8.5rem; overflow: hidden; padding: .8rem; position: relative; }
+  .admin-task__number { font-size: .6rem; }
+  .admin-task strong { font-size: .95rem; line-height: 1.15; margin-top: .65rem; }
+  .admin-task p { display: -webkit-box; font-size: .72rem; line-height: 1.3; margin: .3rem 0 0; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .admin-task__action { font-size: .75rem; line-height: 1; margin-top: auto; padding-top: .55rem; }
+  .admin-task__action span { display: none; }
+}
+
+@media (max-width: 340px) {
   .admin-task-grid { grid-template-columns: 1fr; }
-  .admin-task { min-height: 0; padding: 1rem; }
-  .admin-task strong { margin-top: .65rem; }
-  .admin-task p { margin-bottom: .75rem; }
+  .admin-task { min-height: 7rem; }
 }
 
 .calendar-admin-view { margin: 0 auto; max-width: 96rem; padding: 2rem; }
