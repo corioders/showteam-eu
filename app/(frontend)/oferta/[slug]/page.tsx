@@ -3,11 +3,16 @@ import { notFound } from "next/navigation";
 import { ContactCta } from "@/components/contact-cta";
 import { CmsDetails } from "@/components/cms-details";
 import { PageHero } from "@/components/page-hero";
-import { getOffer } from "@/lib/cms";
+import { getOffer, getOffers } from "@/lib/cms";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 type Props = { params: Promise<{ slug: string }> };
+
+export async function generateStaticParams() {
+  const offers = await getOffers();
+  return offers.map((offer) => ({ slug: offer.href.split("/").at(-1)! }));
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

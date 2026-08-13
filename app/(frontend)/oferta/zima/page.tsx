@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { getOffer } from "@/lib/cms";
 
 export const metadata: Metadata = { title: "SHOWzima 2026", description: "Trentino, Andorra, szkolenie narciarskie i aktywny après-ski.", alternates: { canonical: "/oferta/zima" } };
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function WinterPage() {
   const offer = await getOffer("zima");

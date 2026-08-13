@@ -20,6 +20,10 @@
     {
       "binding": "R2",
       "bucket_name": "showteam-media"
+    },
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "showteam-next-cache"
     }
   ]
 }

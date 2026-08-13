@@ -12,7 +12,7 @@ import { contact } from "@/lib/offers";
 import { GalleryGrid } from "@/components/gallery-grid";
 import { HeroVideo } from "@/components/hero-video";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {

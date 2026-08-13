@@ -9,7 +9,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { getOffer } from "@/lib/cms";
 
 export const metadata: Metadata = { title: "SHOWlato 2026", description: "Wake & Surf Village, SHOWCamp i sporty wodne nad Jeziorem Łąckim.", alternates: { canonical: "/oferta/lato" } };
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const activities = [
   [Waves, "Na wodzie", "Wakeboard, narty wodne, SUP, kajaki, windsurfing, wing foil i skutery wodne."],
