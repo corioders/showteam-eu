@@ -160,6 +160,15 @@ test.describe("mobile", () => {
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });
 
+  test("menu uses client-side navigation", async ({ page }) => {
+    await page.goto("/");
+    await page.evaluate(() => Reflect.set(window, "__showteamNavigation", "alive"));
+    await page.getByRole("button", { name: "Otwórz menu" }).click();
+    await page.getByRole("navigation", { name: "Menu mobilne" }).getByRole("link", { name: /Galeria/ }).click();
+    await expect(page).toHaveURL(/\/galeria$/);
+    expect(await page.evaluate(() => Reflect.get(window, "__showteamNavigation"))).toBe("alive");
+  });
+
   test("reservations are usable without horizontal overflow", async ({ page }) => {
     await page.goto("/rezerwacje");
     await expect(page.getByRole("heading", { name: /Co bierzesz/i })).toBeVisible();

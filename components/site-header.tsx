@@ -21,7 +21,7 @@ export function SiteHeader() {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-neutral-950/75 backdrop-blur-xl">
       <div className="site-container flex h-20 items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500" aria-label="SHOWteam — strona główna">
+        <Link href="/" prefetch className="flex items-center gap-3 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500" aria-label="SHOWteam — strona główna">
           <Image src="/media/monkey-logo.jpg" alt="" width={42} height={42} className="size-11 rounded-full border border-orange-400/40 object-cover" priority />
           <span className="font-display text-xl font-black uppercase tracking-tight">SHOW<span className="text-orange-500">team</span></span>
         </Link>
@@ -29,7 +29,7 @@ export function SiteHeader() {
         <nav className="hidden items-center gap-1 md:flex" aria-label="Główna nawigacja">
           {links.map((link) => (
             <Button asChild variant="ghost" size="sm" key={link.href}>
-              <Link href={link.href}>{link.label}</Link>
+              <Link href={link.href} prefetch>{link.label}</Link>
             </Button>
           ))}
         </nav>
@@ -56,7 +56,7 @@ export function SiteHeader() {
               <nav className="grid grid-cols-2 border-l border-t border-white/10" aria-label="Menu mobilne">
                 {links.map((link, index) => (
                   <SheetClose asChild key={link.href}>
-                    <Link href={link.href} className="group flex min-h-24 flex-col justify-between border-b border-r border-white/10 p-3 font-display font-black uppercase transition-colors hover:bg-orange-500 hover:text-black focus-visible:bg-orange-500 focus-visible:text-black focus-visible:outline-none">
+                    <Link href={link.href} prefetch className="group flex min-h-24 flex-col justify-between border-b border-r border-white/10 p-3 font-display font-black uppercase transition-colors hover:bg-orange-500 hover:text-black focus-visible:bg-orange-500 focus-visible:text-black focus-visible:outline-none">
                       <span className="font-mono text-[.6rem] tracking-wider text-white/30 group-hover:text-black/55 group-focus-visible:text-black/55">0{index + 1}</span>
                       <span className="text-[1.65rem] leading-none tracking-[-.03em]">{link.label}</span>
                     </Link>
