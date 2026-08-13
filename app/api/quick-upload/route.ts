@@ -9,6 +9,10 @@ const maxTotalBytes = 80 * 1024 * 1024;
 export async function POST(request: Request) {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: "Nieprawidłowe źródło żądania." }, { status: 403 });
+  const contentLength = Number(request.headers.get("content-length") || 0);
+  if (contentLength > maxTotalBytes + 1024 * 1024) {
+    return Response.json({ error: "Łączny limit jednego dodawania to 80 MB." }, { status: 413 });
+  }
 
   const payload = await getPayload({ config });
   const { user } = await payload.auth({ headers: request.headers });
