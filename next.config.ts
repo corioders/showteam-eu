@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     localPatterns: [{ pathname: "/api/media/file/**" }],
   },
-  serverExternalPackages: ["jose", "pg-cloudflare"],
+  serverExternalPackages: ["pg-cloudflare"],
   webpack: (config) => {
     config.resolve.extensionAlias = {
       ".cjs": [".cts", ".cjs"],

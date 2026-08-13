@@ -10,6 +10,7 @@ import { StatisticsAdminView as StatisticsAdminView_fc0450413d7b4e318d65a16ec993
 import { TvDevicesAdminView as TvDevicesAdminView_18f2b77816a329d86e7eb14e3c4c6910 } from '@/components/payload/tv-devices-admin-view'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
+/** @type import('payload').ImportMap */
 export const importMap = {
   "@/components/payload/form-draft-persistence#FormDraftPersistence": FormDraftPersistence_96dc89a0d7977db3474e3c5ed4ef296e,
   "@/components/payload/logout-button#LogoutButton": LogoutButton_1f50293d18f67150ff884c3ad0e5ded9,
