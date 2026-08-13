@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowUpRight, Facebook, Instagram, Mail, MapPin, Phone } fro
 import { Button } from "@/components/ui/button";
 import { contact } from "@/lib/offers";
 
-export const metadata: Metadata = { title: "Kontakt", description: "Skontaktuj się z SHOWteam — Poręba, Jezioro Łąckie." };
+export const metadata: Metadata = { title: "Kontakt", description: "Skontaktuj się z SHOWteam — Poręba, Jezioro Łąckie.", alternates: { canonical: "/kontakt" } };
 
 export default function ContactPage() {
   return (

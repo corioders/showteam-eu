@@ -67,8 +67,10 @@ export interface Config {
   };
   blocks: {};
   collections: {
+    events: Event;
     offers: Offer;
     gallery: Gallery;
+    analytics: Analytics;
     media: Media;
     users: User;
     'payload-kv': PayloadKv;
@@ -78,8 +80,10 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
+    events: EventsSelect<false> | EventsSelect<true>;
     offers: OffersSelect<false> | OffersSelect<true>;
     gallery: GallerySelect<false> | GallerySelect<true>;
+    analytics: AnalyticsSelect<false> | AnalyticsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -120,6 +124,50 @@ export interface UserAuthOperations {
     email: string;
     password: string;
   };
+}
+/**
+ * Tu dodajesz terminy widoczne w zakładce Wydarzenia. Wypełnij nazwę, datę, miejsce i krótki opis.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  title: string;
+  startDate: string;
+  endDate?: string | null;
+  location: string;
+  summary: string;
+  /**
+   * Opcjonalne. Jeśli nie dodasz zdjęcia, użyjemy fotografii SHOWteam.
+   */
+  image?: (number | null) | Media;
+  category: 'Lato' | 'Zima' | 'Szkolenia' | 'Inne';
+  ctaLabel?: string | null;
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Biblioteka zdjęć. Ustaw punkt ostrości — galeria użyje go do kadrowania na dużych ekranach.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  alt: string;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * Treści widoczne na stronie głównej i podstronach ofertowych.
@@ -164,27 +212,6 @@ export interface Offer {
   published?: boolean | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * Biblioteka zdjęć. Ustaw punkt ostrości — galeria użyje go do kadrowania na dużych ekranach.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: number;
-  alt: string;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * Dodaj zdjęcie, ustaw osobny układ telefonu i opublikuj je w galerii. Kadrowanie wgranego pliku zmienisz przez punkt ostrości.
@@ -237,6 +264,18 @@ export interface Gallery {
   createdAt: string;
 }
 /**
+ * Liczba wizyt w ostatnich 30 dniach. Bez cookies, adresów IP i danych osobowych. Starsze sumy są automatycznie usuwane.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analytics".
+ */
+export interface Analytics {
+  id: number;
+  day: string;
+  path: string;
+  views: number;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
@@ -287,12 +326,20 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
+        relationTo: 'events';
+        value: number | Event;
+      } | null)
+    | ({
         relationTo: 'offers';
         value: number | Offer;
       } | null)
     | ({
         relationTo: 'gallery';
         value: number | Gallery;
+      } | null)
+    | ({
+        relationTo: 'analytics';
+        value: number | Analytics;
       } | null)
     | ({
         relationTo: 'media';
@@ -343,6 +390,23 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  title?: T;
+  startDate?: T;
+  endDate?: T;
+  location?: T;
+  summary?: T;
+  image?: T;
+  category?: T;
+  ctaLabel?: T;
+  published?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -401,6 +465,15 @@ export interface GallerySelect<T extends boolean = true> {
   sourceUrl?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analytics_select".
+ */
+export interface AnalyticsSelect<T extends boolean = true> {
+  day?: T;
+  path?: T;
+  views?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

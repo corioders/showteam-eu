@@ -8,7 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { getOffer } from "@/lib/cms";
 
-export const metadata: Metadata = { title: "SHOWzima 2026", description: "Trentino, Andorra, szkolenie narciarskie i aktywny après-ski." };
+export const metadata: Metadata = { title: "SHOWzima 2026", description: "Trentino, Andorra, szkolenie narciarskie i aktywny après-ski.", alternates: { canonical: "/oferta/zima" } };
 export const dynamic = "force-dynamic";
 
 export default async function WinterPage() {

@@ -7,7 +7,7 @@ export const Offers: CollectionConfig = {
   labels: { singular: "Oferta", plural: "Oferty" },
   admin: {
     useAsTitle: "title",
-    group: "Treści",
+    group: "Treści strony",
     defaultColumns: ["title", "category", "season", "updatedAt"],
     description: "Treści widoczne na stronie głównej i podstronach ofertowych.",
   },

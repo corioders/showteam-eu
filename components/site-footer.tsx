@@ -14,6 +14,7 @@ export function SiteFooter() {
         <div className="grid gap-2 text-sm font-semibold md:text-right">
           <a href={`mailto:${contact.email}`} className="hover:text-orange-400">{contact.email}</a>
           <a href={contact.instagram} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-orange-400 md:justify-end"><Instagram className="size-4" /> Instagram <ArrowUpRight className="size-3" /></a>
+          <Link href="/wydarzenia" className="hover:text-orange-400">Wydarzenia</Link>
           <Link href="/galeria" className="hover:text-orange-400">Galeria</Link>
           <Link href="/kontakt" className="hover:text-orange-400">Kontakt</Link>
         </div>

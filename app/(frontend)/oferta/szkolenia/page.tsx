@@ -7,7 +7,7 @@ import { PhotoMosaic } from "@/components/photo-mosaic";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { getOffer } from "@/lib/cms";
 
-export const metadata: Metadata = { title: "Szkolenia i FizjoSPORT", description: "Kurs sternika motorowodnego, żeglarstwo, obozy i FizjoSPORT." };
+export const metadata: Metadata = { title: "Szkolenia i FizjoSPORT", description: "Kurs sternika motorowodnego, żeglarstwo, obozy i FizjoSPORT.", alternates: { canonical: "/oferta/szkolenia" } };
 export const dynamic = "force-dynamic";
 
 const programs = [

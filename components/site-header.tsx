@@ -11,6 +11,7 @@ const links = [
   { href: "/oferta/lato", label: "Lato" },
   { href: "/oferta/zima", label: "Zima" },
   { href: "/oferta/szkolenia", label: "Szkolenia" },
+  { href: "/wydarzenia", label: "Wydarzenia" },
   { href: "/galeria", label: "Galeria" },
   { href: "/kontakt", label: "Kontakt" },
 ];

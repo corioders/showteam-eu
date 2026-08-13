@@ -8,7 +8,7 @@ export const Gallery: CollectionConfig = {
   labels: { singular: "Zdjęcie galerii", plural: "Galeria" },
   admin: {
     useAsTitle: "caption",
-    group: "Treści",
+    group: "Treści strony",
     defaultColumns: ["caption", "season", "layout", "sortOrder", "published"],
     description: "Dodaj zdjęcie, ustaw osobny układ telefonu i opublikuj je w galerii. Kadrowanie wgranego pliku zmienisz przez punkt ostrości.",
     preview: () => "/galeria",

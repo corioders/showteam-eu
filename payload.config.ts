@@ -6,6 +6,9 @@ import { sqliteD1Adapter } from "@payloadcms/db-d1-sqlite";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { r2Storage } from "@payloadcms/storage-r2";
 import { buildConfig } from "payload";
+import { pl } from "@payloadcms/translations/languages/pl";
+import { Analytics } from "@/collections/Analytics";
+import { Events } from "@/collections/Events";
 import type { GetPlatformProxyOptions } from "wrangler";
 import { Media } from "@/collections/Media";
 import { Gallery } from "@/collections/Gallery";
@@ -13,6 +16,7 @@ import { Offers } from "@/collections/Offers";
 import { Users } from "@/collections/Users";
 import { seedOffers } from "@/lib/seed-offers";
 import { seedGallery } from "@/lib/seed-gallery";
+import { seedEvents } from "@/lib/events";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -28,9 +32,11 @@ export default buildConfig({
   admin: {
     user: Users.slug,
     importMap: { baseDir: dirname },
-    meta: { titleSuffix: " — SHOWteam CMS" },
+    meta: { titleSuffix: " — Panel SHOWteam" },
   },
-  collections: [Offers, Gallery, Media, Users],
+  collections: [Events, Offers, Gallery, Analytics, Media, Users],
+  i18n: { supportedLanguages: { pl }, fallbackLanguage: "pl" },
+  telemetry: false,
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "local-showteam-development-secret-change-me",
   typescript: { outputFile: path.resolve(dirname, "payload-types.ts") },
@@ -39,6 +45,7 @@ export default buildConfig({
   onInit: async (payload) => {
     await seedOffers(payload);
     await seedGallery(payload);
+    await seedEvents(payload);
   },
 });
 

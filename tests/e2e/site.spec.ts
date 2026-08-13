@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 test("main navigation reaches every public section", async ({ page }) => {
   await page.goto("/");
-  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/galeria", "/kontakt"]) {
+  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/wydarzenia", "/galeria", "/kontakt"]) {
     await expect(page.locator(`header a[href="${path}"]`)).toHaveCount(1);
   }
 });
@@ -16,6 +16,14 @@ test("gallery filters CMS photos", async ({ page }) => {
   const winterCount = await page.locator("figure").count();
   expect(winterCount).toBeGreaterThan(0);
   expect(winterCount).toBeLessThan(allCount);
+});
+
+test("SEO and anonymous analytics endpoints are published", async ({ page }) => {
+  await page.goto("/wydarzenia");
+  await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(2);
+  expect((await page.request.get("/sitemap.xml")).ok()).toBe(true);
+  expect((await page.request.get("/robots.txt")).ok()).toBe(true);
+  expect((await page.request.post("/api/track", { data: { path: "/wydarzenia" } })).status()).toBe(204);
 });
 
 test.describe("mobile", () => {

@@ -1,6 +1,7 @@
 import * as migration_20260812_224747_cms_initial from './20260812_224747_cms_initial';
 import * as migration_20260812_232009_gallery_cms from './20260812_232009_gallery_cms';
 import * as migration_20260813_114933_gallery_mobile_layout from './20260813_114933_gallery_mobile_layout';
+import * as migration_20260813_125108_events_analytics from './20260813_125108_events_analytics';
 
 export const migrations = [
   {
@@ -16,6 +17,11 @@ export const migrations = [
   {
     up: migration_20260813_114933_gallery_mobile_layout.up,
     down: migration_20260813_114933_gallery_mobile_layout.down,
-    name: '20260813_114933_gallery_mobile_layout'
+    name: '20260813_114933_gallery_mobile_layout',
+  },
+  {
+    up: migration_20260813_125108_events_analytics.up,
+    down: migration_20260813_125108_events_analytics.down,
+    name: '20260813_125108_events_analytics'
   },
 ];

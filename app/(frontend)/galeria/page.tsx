@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Galeria",
   description: "Zdjęcia z letnich i zimowych wyjazdów, szkoleń oraz wydarzeń SHOWteam.",
+  alternates: { canonical: "/galeria" },
 };
 
 export default async function GalleryPage() {

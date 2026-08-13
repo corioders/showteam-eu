@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowDown, ArrowRight, ArrowUpRight, Instagram, MapPin, Waves, Wind } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { getGallery } from "@/lib/gallery";
 import { GalleryGrid } from "@/components/gallery-grid";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
   const [offers, gallery] = await Promise.all([getOffers(), getGallery()]);
