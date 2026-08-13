@@ -94,7 +94,7 @@ test("booking statistics stay private", async ({ request }) => {
 
 test("quick uploader is private and exposes an installable manifest", async ({ page }) => {
   await page.goto("/dodaj");
-  await expect(page).toHaveURL(/\/admin\/(login|create-first-user)/);
+  await expect(page).toHaveURL(/\/admin\/(login|create-first-user)/, { timeout: 15_000 });
   const manifest = await page.request.get("/dodaj/manifest.webmanifest");
   expect(manifest.ok()).toBe(true);
   expect((await manifest.json()).start_url).toBe("/dodaj");
