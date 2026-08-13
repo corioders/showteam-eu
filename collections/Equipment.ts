@@ -9,10 +9,12 @@ export const Equipment: CollectionConfig = {
   labels: { singular: "Sprzęt do wynajęcia", plural: "Sprzęt i godziny wynajmu" },
   admin: {
     components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
+    hideAPIURL: true,
     useAsTitle: "name",
     group: "Rezerwacje",
-    defaultColumns: ["name", "category", "quantity", "durationMinutes", "active"],
+    defaultColumns: ["name", "quantity", "active"],
     description: "Jedyne miejsce zarządzania wynajmem. To, co ustawisz tutaj, automatycznie pojawi się na stronie Rezerwacje, w dostępności i kalendarzu.",
+    preview: () => "/rezerwacje",
   },
   hooks: {
     beforeValidate: [async ({ data, originalDoc, req }) => {

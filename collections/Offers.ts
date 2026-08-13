@@ -7,16 +7,18 @@ export const Offers: CollectionConfig = {
   labels: { singular: "Strona oferty", plural: "Strony oferty" },
   admin: {
     components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
+    hideAPIURL: true,
     useAsTitle: "title",
     group: "Strona internetowa",
-    defaultColumns: ["title", "category", "season", "updatedAt"],
+    defaultColumns: ["title", "season", "published"],
     description: "Treści widoczne na stronie głównej i podstronach ofertowych.",
+    preview: (document) => `/oferta/${document.slug}`,
   },
   access: {
     read: () => true,
-    create: isLoggedIn,
+    create: () => false,
     update: isLoggedIn,
-    delete: isLoggedIn,
+    delete: () => false,
   },
   defaultSort: "sortOrder",
   fields: [

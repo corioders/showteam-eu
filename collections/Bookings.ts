@@ -16,9 +16,10 @@ export function createBookingsCollection(database: D1Database): CollectionConfig
     labels: { singular: "Rezerwacja", plural: "Rezerwacje klientów" },
     admin: {
       components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
+      hideAPIURL: true,
       useAsTitle: "reference",
       group: "Rezerwacje",
-      defaultColumns: ["reference", "bookingDate", "startTime", "equipment", "customerName", "status"],
+      defaultColumns: ["bookingDate", "startTime", "customerName", "status"],
       description: "Rezerwacje internetowe. Terminy zmieniaj przez anulowanie i utworzenie nowej rezerwacji, aby nie ominąć kontroli dostępności.",
     },
     access: { read: isLoggedIn, create: () => false, update: isLoggedIn, delete: isLoggedIn },

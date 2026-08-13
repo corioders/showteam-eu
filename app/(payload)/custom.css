@@ -26,6 +26,7 @@
 .admin-task__action { font-size: .75rem; font-weight: 800; margin-top: auto; text-transform: uppercase; }
 .admin-start__hint { background: #fff4eb; border-left: 4px solid #f06414; color: #63320f; line-height: 1.45; margin: .9rem 0 0; padding: .8rem 1rem; }
 .dashboard .collections { display: none; }
+.doc-controls__meta { display: none; }
 
 @media (max-width: 900px) { .admin-task-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) {

@@ -7,9 +7,10 @@ export const Events: CollectionConfig = {
   labels: { singular: "Wydarzenie", plural: "Wydarzenia i terminy" },
   admin: {
     components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
+    hideAPIURL: true,
     useAsTitle: "title",
     group: "Strona internetowa",
-    defaultColumns: ["title", "startDate", "location", "published"],
+    defaultColumns: ["title", "startDate", "published"],
     description: "Tu dodajesz terminy widoczne w zakładce Wydarzenia. Wypełnij nazwę, datę, miejsce i krótki opis.",
     preview: () => "/wydarzenia",
   },

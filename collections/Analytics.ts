@@ -6,6 +6,7 @@ export const Analytics: CollectionConfig = {
   slug: "analytics",
   labels: { singular: "Statystyka odwiedzin", plural: "Statystyki odwiedzin" },
   admin: {
+    hideAPIURL: true,
     useAsTitle: "path",
     group: "Pomoc i ustawienia",
     defaultColumns: ["day", "path", "views"],

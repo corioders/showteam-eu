@@ -7,6 +7,7 @@ export const Media: CollectionConfig = {
   labels: { singular: "Plik", plural: "Pliki" },
   admin: {
     components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
+    hideAPIURL: true,
     hidden: true,
     useAsTitle: "alt",
     group: "Treści",

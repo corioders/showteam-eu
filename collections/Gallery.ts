@@ -8,9 +8,10 @@ export const Gallery: CollectionConfig = {
   labels: { singular: "Zdjęcie galerii", plural: "Galeria" },
   admin: {
     components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
+    hideAPIURL: true,
     useAsTitle: "caption",
     group: "Strona internetowa",
-    defaultColumns: ["caption", "season", "layout", "sortOrder", "published"],
+    defaultColumns: ["caption", "season", "published"],
     description: "Dodaj zdjęcie lub film, ustaw układ i opublikuj w galerii. Najprościej zrobisz to przez Szybkie dodawanie na pulpicie.",
     preview: () => "/galeria",
   },
