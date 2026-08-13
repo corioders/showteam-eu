@@ -84,5 +84,6 @@ export const contact = {
   email: "biuro@showteam.eu",
   instagram: "https://www.instagram.com/showteam.eu/",
   facebook: "https://www.facebook.com/SHOW.SHOWteam/",
+  tiktok: "https://www.tiktok.com/@showteam_eu",
   map: "https://maps.google.com/?q=Poręba+Nad+Zaporą+21",
 };

@@ -7,6 +7,11 @@ test("main navigation reaches every public section", async ({ page }) => {
   }
 });
 
+test("official TikTok is linked from the site", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator('a[href="https://www.tiktok.com/@showteam_eu"]')).toHaveCount(3);
+});
+
 test("customer can reserve an available equipment slot", async ({ page }) => {
   await page.goto("/rezerwacje", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: /Sprzęt czeka/i })).toBeVisible();

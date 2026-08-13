@@ -1,13 +1,14 @@
 import Image from "next/image";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowDown, ArrowRight, ArrowUpRight, Instagram, MapPin, Waves, Wind } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUpRight, Instagram, MapPin, Music2, Waves, Wind } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContactCta } from "@/components/contact-cta";
 import { OfferCard } from "@/components/offer-card";
 import { getOffers } from "@/lib/cms";
 import { getGallery } from "@/lib/gallery";
+import { contact } from "@/lib/offers";
 import { GalleryGrid } from "@/components/gallery-grid";
 import { HeroVideo } from "@/components/hero-video";
 
@@ -111,10 +112,13 @@ export default async function Home() {
         <div className="gallery-container">
           <div className="mb-10 flex items-end justify-between gap-6">
             <div><span className="eyebrow">Prosto z akcji</span><h2 className="font-display mt-3 text-5xl font-black uppercase tracking-tight sm:text-7xl">#showteam.eu</h2></div>
-            <Button asChild variant="outline" size="icon"><a href="https://www.instagram.com/showteam.eu/" target="_blank" rel="noreferrer" aria-label="Instagram SHOWteam"><Instagram className="size-5" /></a></Button>
+            <div className="flex gap-2">
+              <Button asChild variant="outline" size="icon"><a href={contact.instagram} target="_blank" rel="noreferrer" aria-label="Instagram SHOWteam"><Instagram className="size-5" /></a></Button>
+              <Button asChild variant="outline" size="icon"><a href={contact.tiktok} target="_blank" rel="noreferrer" aria-label="TikTok SHOWteam"><Music2 className="size-5" /></a></Button>
+            </div>
           </div>
           <GalleryGrid photos={gallery.slice(0, 8)} />
-          <div className="mt-7 flex flex-wrap gap-3"><Button asChild variant="outline"><Link href="/galeria">Otwórz całą galerię</Link></Button><Button asChild variant="ghost"><a href="https://www.instagram.com/showteam.eu/" target="_blank" rel="noreferrer">Instagram</a></Button></div>
+          <div className="mt-7 flex flex-wrap gap-3"><Button asChild variant="outline"><Link href="/galeria">Otwórz całą galerię</Link></Button><Button asChild variant="ghost"><a href={contact.instagram} target="_blank" rel="noreferrer">Instagram</a></Button><Button asChild variant="ghost"><a href={contact.tiktok} target="_blank" rel="noreferrer">TikTok</a></Button></div>
         </div>
       </section>
 

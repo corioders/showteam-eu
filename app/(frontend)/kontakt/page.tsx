@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight, Facebook, Instagram, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Facebook, Instagram, Mail, MapPin, Music2, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { contact } from "@/lib/offers";
 
@@ -28,6 +28,7 @@ export default function ContactPage() {
         </div>
         <div className="mt-12 flex flex-wrap gap-3">
           <Button asChild size="lg" className="bg-neutral-950 text-white hover:bg-neutral-800"><a href={contact.instagram} target="_blank" rel="noreferrer"><Instagram className="size-5" /> Instagram <ArrowUpRight className="size-4" /></a></Button>
+          <Button asChild size="lg" className="bg-neutral-950 text-white hover:bg-neutral-800"><a href={contact.tiktok} target="_blank" rel="noreferrer"><Music2 className="size-5" /> TikTok <ArrowUpRight className="size-4" /></a></Button>
           <Button asChild size="lg" className="border border-black/20 bg-transparent text-black hover:bg-black/10"><a href={contact.facebook} target="_blank" rel="noreferrer"><Facebook className="size-5" /> Facebook <ArrowUpRight className="size-4" /></a></Button>
         </div>
       </div>
