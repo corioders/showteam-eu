@@ -8,6 +8,7 @@ const scriptPolicy = process.env.NODE_ENV === "production"
 const nextConfig: NextConfig = {
   async redirects() {
     return [
+      { source: "/admin", destination: "/a/admin", permanent: false },
       { source: "/admin/:path*", destination: "/a/admin/:path*", permanent: false },
       { source: "/dodaj", destination: "/a/dodaj", permanent: false },
       { source: "/dodaj/:path*", destination: "/a/dodaj/:path*", permanent: false },
