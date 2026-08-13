@@ -1,6 +1,7 @@
 import { getPayload } from "payload";
 import config, { database } from "@payload-config";
 import { bookingReference, createTimeSlots, endTime, isBookingDate, normalizePhone } from "@/lib/reservations";
+import { ensureOperationalTables } from "@/lib/operational-tables";
 
 type ReservationInput = {
   equipmentId?: unknown;
@@ -18,6 +19,7 @@ function todayInPoland() {
 }
 
 export async function POST(request: Request) {
+  await ensureOperationalTables(database);
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: "Nieprawidłowe źródło żądania." }, { status: 403 });
 

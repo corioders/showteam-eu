@@ -1,5 +1,6 @@
 import { database } from "@payload-config";
 import { createTvToken, hashPairingSecret, tvCookieName } from "@/lib/tv-auth";
+import { ensureOperationalTables } from "@/lib/operational-tables";
 
 function randomSecret(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
@@ -7,6 +8,7 @@ function randomSecret(): string {
 }
 
 export async function POST(request: Request) {
+  await ensureOperationalTables(database);
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: "Nieprawidłowe źródło." }, { status: 403 });
   const now = Date.now();
@@ -25,6 +27,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+  await ensureOperationalTables(database);
   const url = new URL(request.url);
   const id = url.searchParams.get("id") || "";
   const secret = url.searchParams.get("secret") || "";

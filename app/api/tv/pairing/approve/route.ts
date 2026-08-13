@@ -1,8 +1,10 @@
 import { getPayload } from "payload";
 import config, { database } from "@payload-config";
 import { hashPairingSecret } from "@/lib/tv-auth";
+import { ensureOperationalTables } from "@/lib/operational-tables";
 
 export async function POST(request: Request) {
+  await ensureOperationalTables(database);
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return Response.json({ error: "Nieprawidłowe źródło." }, { status: 403 });
   const payload = await getPayload({ config });
