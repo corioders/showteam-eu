@@ -13,8 +13,7 @@
     {
       "binding": "D1",
       "database_id": "fb4ccca4-31e6-4ed0-b3e5-a36b520d89c6",
-      "database_name": "showteam-cms",
-      "remote": true
+      "database_name": "showteam-cms"
     }
   ],
   "r2_buckets": [
