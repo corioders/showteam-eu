@@ -4,19 +4,17 @@ import Link from "next/link";
 import Image from "next/image";
 import { Camera, CheckCircle2, Film, ImagePlus, LoaderCircle, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AdminSessionGate } from "@/components/admin-session-gate";
 
 const MAX_TOTAL_BYTES = 80 * 1024 * 1024;
 const categories = ["Lato", "Zima", "Szkolenia"] as const;
 
-async function loadSession(): Promise<{ name?: string; email?: string } | null> {
-  const response = await fetch("/api/users/me", { cache: "no-store", credentials: "same-origin" });
-  const result = await response.json() as { user?: { name?: string; email?: string } | null };
-  return result.user || null;
+export function QuickUploader() {
+  return <AdminSessionGate redirectPath="/dodaj/galeria">{(userName) => <QuickUploaderForm userName={userName} />}</AdminSessionGate>;
 }
 
-export function QuickUploader() {
+function QuickUploaderForm({ userName }: { userName: string }) {
   const input = useRef<HTMLInputElement>(null);
-  const [session, setSession] = useState<{ status: "checking" | "ready" | "error"; userName?: string }>({ status: "checking" });
   const [files, setFiles] = useState<File[]>([]);
   const [category, setCategory] = useState<(typeof categories)[number]>("Lato");
   const [caption, setCaption] = useState("");
@@ -24,47 +22,7 @@ export function QuickUploader() {
   const [message, setMessage] = useState("");
   const previews = useMemo(() => files.map((file) => ({ file, url: URL.createObjectURL(file) })), [files]);
 
-  useEffect(() => {
-    let active = true;
-    loadSession().then((user) => {
-      if (!active) return;
-      if (!user) {
-        window.location.replace("/admin/login?redirect=%2Fdodaj");
-        return;
-      }
-      setSession({ status: "ready", userName: user.name || user.email || "SHOWteam" });
-    }).catch(() => {
-      if (active) setSession({ status: "error" });
-    });
-    return () => { active = false; };
-  }, []);
-
-  async function retrySession() {
-    setSession({ status: "checking" });
-    try {
-      const user = await loadSession();
-      if (!user) {
-        window.location.replace("/admin/login?redirect=%2Fdodaj");
-        return;
-      }
-      setSession({ status: "ready", userName: user.name || user.email || "SHOWteam" });
-    } catch {
-      setSession({ status: "error" });
-    }
-  }
-
   useEffect(() => () => previews.forEach(({ url }) => URL.revokeObjectURL(url)), [previews]);
-
-  if (session.status !== "ready") {
-    return <main className="grid min-h-dvh place-items-center bg-[#080a0b] px-6 text-center text-white">
-      <div>
-        <p className="font-display text-3xl font-black uppercase">SHOWteam<span className="text-orange-500">.</span></p>
-        {session.status === "checking"
-          ? <p className="mt-4 flex items-center justify-center gap-2 text-sm text-white/55"><LoaderCircle className="size-4 animate-spin" /> Sprawdzam logowanie…</p>
-          : <><p className="mt-4 text-sm text-red-300">Nie udało się połączyć. Sprawdź internet i spróbuj ponownie.</p><button type="button" onClick={() => void retrySession()} className="mt-5 bg-orange-500 px-5 py-3 font-bold text-black">Spróbuj ponownie</button></>}
-      </div>
-    </main>;
-  }
 
   function choose(selected: FileList | null) {
     if (!selected) return;
@@ -108,8 +66,8 @@ export function QuickUploader() {
     <main className="min-h-dvh bg-[#080a0b] px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] text-white">
       <div className="mx-auto max-w-xl">
         <header className="mb-8 flex items-center justify-between border-b border-white/15 pb-4">
-          <div><p className="font-display text-xl font-black uppercase">SHOWteam<span className="text-orange-500">.</span></p><p className="text-xs text-white/45">Zalogowano: {session.userName}</p></div>
-          <Link href="/admin" className="text-sm font-bold text-white/70 underline decoration-white/20 underline-offset-4">Pełny CMS</Link>
+          <div><p className="font-display text-xl font-black uppercase">SHOWteam<span className="text-orange-500">.</span></p><p className="text-xs text-white/45">Zalogowano: {userName}</p></div>
+          <Link href="/dodaj" className="text-sm font-bold text-white/70 underline decoration-white/20 underline-offset-4">Panel</Link>
         </header>
 
         <p className="font-mono text-xs font-bold uppercase tracking-[.18em] text-orange-400">Szybkie dodawanie</p>

@@ -1,7 +1,7 @@
-import { QuickUploader } from "@/components/quick-uploader";
+import { PwaDashboard } from "@/components/pwa-dashboard";
 
 export const dynamic = "force-static";
 
 export default function QuickUploadPage() {
-  return <QuickUploader />;
+  return <PwaDashboard />;
 }

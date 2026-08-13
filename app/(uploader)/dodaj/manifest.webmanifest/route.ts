@@ -1,10 +1,11 @@
 export function GET() {
   return Response.json({
-    name: "SHOWteam — dodaj do galerii",
-    short_name: "SHOWteam Media",
-    description: "Szybkie dodawanie zdjęć i filmów do galerii SHOWteam.",
+    id: "/dodaj",
+    name: "Panel SHOWteam",
+    short_name: "SHOWteam",
+    description: "Prosty panel wydarzeń, galerii, ofert i rezerwacji SHOWteam.",
     start_url: "/dodaj",
-    scope: "/dodaj",
+    scope: "/",
     display: "standalone",
     background_color: "#080a0b",
     theme_color: "#ff6900",

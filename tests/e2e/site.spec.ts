@@ -96,8 +96,17 @@ test("booking statistics stay private", async ({ request }) => {
 test("quick uploader API is private and exposes an installable manifest", async ({ page }) => {
   const manifest = await page.request.get("/dodaj/manifest.webmanifest");
   expect(manifest.ok()).toBe(true);
-  expect((await manifest.json()).start_url).toBe("/dodaj");
+  expect(await manifest.json()).toMatchObject({ start_url: "/dodaj", scope: "/" });
   expect((await page.request.post("/api/quick-upload", { multipart: { category: "Lato" } })).status()).toBe(401);
+});
+
+test("PWA dashboard links directly to common admin tasks", async ({ page }) => {
+  await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
+  await page.goto("/dodaj");
+  await expect(page.getByRole("heading", { name: "Co chcesz zrobić?" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Dodaj zdjęcia lub filmy/ })).toHaveAttribute("href", "/dodaj/galeria");
+  await expect(page.getByRole("link", { name: /Dodaj wydarzenie/ })).toHaveAttribute("href", "/admin/collections/events/create");
+  await expect(page.getByRole("link", { name: /Sprawdź rezerwacje/ })).toHaveAttribute("href", "/admin/kalendarz");
 });
 
 test.describe("mobile", () => {
@@ -137,5 +146,13 @@ test.describe("mobile", () => {
         return element.complete && element.naturalWidth > 0;
       })).toBe(true);
     }
+  });
+
+  test("PWA task dashboard fits a phone screen", async ({ page }) => {
+    await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
+    await page.goto("/dodaj");
+    await expect(page.getByRole("heading", { name: "Co chcesz zrobić?" })).toBeVisible();
+    const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
+    expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });
 });
