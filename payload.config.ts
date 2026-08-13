@@ -60,6 +60,7 @@ export default buildConfig({
       graphics: { Logo: "@/components/payload/brand#ShowteamLogo", Icon: "@/components/payload/brand#ShowteamIcon" },
       views: {
         calendar: { Component: "@/components/payload/calendar-admin-view#CalendarAdminView", path: "/kalendarz" },
+        statistics: { Component: "@/components/payload/statistics-admin-view#StatisticsAdminView", path: "/statystyki" },
         televisions: { Component: "@/components/payload/tv-devices-admin-view#TvDevicesAdminView", path: "/telewizory" },
       },
     },

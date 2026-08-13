@@ -86,6 +86,11 @@ test("SEO and anonymous analytics endpoints are published", async ({ page }) => 
   expect((await page.request.post("/api/track", { data: { path: "/wydarzenia" } })).status()).toBe(204);
 });
 
+test("booking statistics stay private", async ({ request }) => {
+  const response = await request.get("/api/admin/statistics");
+  expect(response.status()).toBe(401);
+});
+
 test("quick uploader is private and exposes an installable manifest", async ({ page }) => {
   await page.goto("/dodaj");
   await expect(page).toHaveURL(/\/admin\/(login|create-first-user)/);
