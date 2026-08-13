@@ -49,7 +49,7 @@ test("TV calendar requires one-time phone pairing", async ({ page }) => {
 });
 
 test("legacy staff pages redirect under /a", async ({ request }) => {
-  for (const [oldPath, newPath] of [["/admin", "/a/admin"], ["/dodaj", "/a/dodaj"], ["/kalendarz", "/a/kalendarz"], ["/tv", "/a/tv"]]) {
+  for (const [oldPath, newPath] of [["/dodaj", "/a/dodaj"], ["/kalendarz", "/a/kalendarz"], ["/tv", "/a/tv"]]) {
     const response = await request.get(oldPath, { maxRedirects: 0 });
     expect(response.status()).toBe(307);
     expect(response.headers().location).toBe(newPath);
@@ -118,8 +118,8 @@ test("PWA dashboard links directly to common admin tasks", async ({ page }) => {
   await page.goto("/a/dodaj");
   await expect(page.getByRole("heading", { name: "Co chcesz zrobić?" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Dodaj zdjęcia lub filmy/ })).toHaveAttribute("href", "/a/dodaj/galeria");
-  await expect(page.getByRole("link", { name: /Dodaj wydarzenie/ })).toHaveAttribute("href", "/a/admin/collections/events/create");
-  await expect(page.getByRole("link", { name: /Sprawdź rezerwacje/ })).toHaveAttribute("href", "/a/admin/kalendarz");
+  await expect(page.getByRole("link", { name: /Dodaj wydarzenie/ })).toHaveAttribute("href", "/admin/collections/events/create");
+  await expect(page.getByRole("link", { name: /Sprawdź rezerwacje/ })).toHaveAttribute("href", "/admin/kalendarz");
 });
 
 test.describe("mobile", () => {

@@ -17,7 +17,7 @@ pnpm install
 pnpm dev
 ```
 
-CMS: `http://localhost:3000/a/admin`
+CMS: `http://localhost:3000/admin`
 
 ## Validation
 

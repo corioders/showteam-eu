@@ -20,7 +20,7 @@ export function AdminSessionGate({ children, redirectPath }: {
     loadSession().then((user) => {
       if (!active) return;
       if (!user) {
-        window.location.replace(`/a/admin/login?redirect=${encodeURIComponent(redirectPath)}`);
+        window.location.replace(`/admin/login?redirect=${encodeURIComponent(redirectPath)}`);
         return;
       }
       setSession({ status: "ready", userName: user.name || user.email || "SHOWteam" });
@@ -35,7 +35,7 @@ export function AdminSessionGate({ children, redirectPath }: {
     try {
       const user = await loadSession();
       if (!user) {
-        window.location.replace(`/a/admin/login?redirect=${encodeURIComponent(redirectPath)}`);
+        window.location.replace(`/admin/login?redirect=${encodeURIComponent(redirectPath)}`);
         return;
       }
       setSession({ status: "ready", userName: user.name || user.email || "SHOWteam" });

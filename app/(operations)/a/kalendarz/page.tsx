@@ -8,6 +8,6 @@ export const dynamic = "force-dynamic";
 export default async function StaffCalendarPage() {
   const payload = await getPayload({ config });
   const { user } = await payload.auth({ headers: await headers() });
-  if (!user) redirect("/a/admin/login?redirect=%2Fa%2Fkalendarz");
+  if (!user) redirect("/admin/login?redirect=%2Fa%2Fkalendarz");
   return <main className="min-h-screen bg-neutral-950 p-3 text-white sm:p-6"><OperationsCalendar /></main>;
 }

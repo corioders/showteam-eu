@@ -55,7 +55,6 @@ const cloudflare = isCLI || !isProduction
 export const database = cloudflare.env.D1;
 
 export default buildConfig({
-  routes: { admin: "/a/admin" },
   admin: {
     user: Users.slug,
     importMap: { baseDir: dirname },

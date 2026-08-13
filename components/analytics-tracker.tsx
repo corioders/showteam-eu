@@ -6,7 +6,7 @@ import { useEffect } from "react";
 export function AnalyticsTracker() {
   const path = usePathname();
   useEffect(() => {
-    if (!path || path.startsWith("/a/") || navigator.doNotTrack === "1") return;
+    if (!path || path.startsWith("/a/") || path.startsWith("/admin") || navigator.doNotTrack === "1") return;
     const key = `showteam:view:${path}`;
     if (sessionStorage.getItem(key)) return;
     sessionStorage.setItem(key, "1");
