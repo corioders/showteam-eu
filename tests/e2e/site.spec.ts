@@ -8,7 +8,7 @@ test("main navigation reaches every public section", async ({ page }) => {
 });
 
 test("customer can reserve an available equipment slot", async ({ page }) => {
-  await page.goto("/rezerwacje");
+  await page.goto("/rezerwacje", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: /Sprzęt czeka/i })).toBeVisible();
   const bookingDate = new Date();
   bookingDate.setDate(bookingDate.getDate() + 14);
