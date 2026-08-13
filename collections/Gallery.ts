@@ -10,11 +10,11 @@ export const Gallery: CollectionConfig = {
     useAsTitle: "caption",
     group: "Treści strony",
     defaultColumns: ["caption", "season", "layout", "sortOrder", "published"],
-    description: "Dodaj zdjęcie, ustaw osobny układ telefonu i opublikuj je w galerii. Kadrowanie wgranego pliku zmienisz przez punkt ostrości.",
+    description: "Dodaj zdjęcie lub film, ustaw układ i opublikuj w galerii. Najprościej zrobisz to przez Szybkie dodawanie na pulpicie.",
     preview: () => "/galeria",
   },
   access: {
-    read: () => true,
+    read: ({ req }) => req.user ? true : { published: { equals: true } },
     create: isLoggedIn,
     update: isLoggedIn,
     delete: isLoggedIn,
@@ -23,10 +23,10 @@ export const Gallery: CollectionConfig = {
   fields: [
     {
       name: "image",
-      label: "Nowe zdjęcie",
+      label: "Zdjęcie lub film",
       type: "upload",
       relationTo: "media",
-      admin: { description: "Wgraj własne zdjęcie. Punkt kadrowania ustawisz podczas edycji pliku w Zdjęciach." },
+      admin: { description: "Wgraj własne zdjęcie albo film MP4, WebM lub MOV." },
     },
     {
       name: "staticImage",

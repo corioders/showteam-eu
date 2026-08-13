@@ -149,7 +149,7 @@ export interface Event {
   createdAt: string;
 }
 /**
- * Biblioteka zdjęć. Ustaw punkt ostrości — galeria użyje go do kadrowania na dużych ekranach.
+ * Biblioteka zdjęć i filmów używanych na stronie.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
@@ -214,7 +214,7 @@ export interface Offer {
   createdAt: string;
 }
 /**
- * Dodaj zdjęcie, ustaw osobny układ telefonu i opublikuj je w galerii. Kadrowanie wgranego pliku zmienisz przez punkt ostrości.
+ * Dodaj zdjęcie lub film, ustaw układ i opublikuj w galerii. Najprościej zrobisz to przez Szybkie dodawanie na pulpicie.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "gallery".
@@ -222,7 +222,7 @@ export interface Offer {
 export interface Gallery {
   id: number;
   /**
-   * Wgraj własne zdjęcie. Punkt kadrowania ustawisz podczas edycji pliku w Zdjęciach.
+   * Wgraj własne zdjęcie albo film MP4, WebM lub MOV.
    */
   image?: (number | null) | Media;
   /**

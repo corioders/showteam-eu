@@ -16,14 +16,15 @@ export type GalleryPhoto = {
   mobileLayout: MobileGalleryLayout;
   mobilePosition: string;
   season: "Lato" | "Zima" | "Szkolenia";
+  type: "image" | "video";
 };
 
 function staticPhotos(): GalleryPhoto[] {
-  return galleryAssets.map((asset) => ({ id: asset.value, src: asset.path, alt: asset.alt, caption: asset.label, layout: asset.layout, fit: asset.fit, objectPosition: asset.position, mobilePosition: asset.position, mobileLayout: defaultMobileLayout(asset.layout), season: asset.season, sourceUrl: asset.value.startsWith("instagram-") ? "https://www.instagram.com/showteam.eu/" : undefined }));
+  return galleryAssets.map((asset) => ({ id: asset.value, src: asset.path, alt: asset.alt, caption: asset.label, layout: asset.layout, fit: asset.fit, objectPosition: asset.position, mobilePosition: asset.position, mobileLayout: defaultMobileLayout(asset.layout), season: asset.season, type: "image", sourceUrl: asset.value.startsWith("instagram-") ? "https://www.instagram.com/showteam.eu/" : undefined }));
 }
 
 function toPhoto(document: Record<string, unknown>): GalleryPhoto | null {
-  const media = document.image as { url?: string; alt?: string; focalX?: number; focalY?: number } | number | null | undefined;
+  const media = document.image as { url?: string; alt?: string; focalX?: number; focalY?: number; mimeType?: string } | number | null | undefined;
   const fallback = findGalleryAsset(document.staticImage);
   const src = typeof media === "object" && media?.url ? media.url : fallback?.path;
   if (!src) return null;
@@ -47,6 +48,7 @@ function toPhoto(document: Record<string, unknown>): GalleryPhoto | null {
     mobilePosition,
     mobileLayout: (document.mobileLayout as GalleryPhoto["mobileLayout"]) || defaultMobileLayout(layout),
     season: (document.season as GalleryPhoto["season"]) || fallback?.season || "Lato",
+    type: typeof media === "object" && media?.mimeType?.startsWith("video/") ? "video" : "image",
   };
 }
 

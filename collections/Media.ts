@@ -4,13 +4,13 @@ const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
 export const Media: CollectionConfig = {
   slug: "media",
-  labels: { singular: "Zdjęcie", plural: "Zdjęcia" },
+  labels: { singular: "Plik", plural: "Pliki" },
   admin: {
     hidden: true,
     useAsTitle: "alt",
     group: "Treści",
     defaultColumns: ["filename", "alt", "updatedAt"],
-    description: "Biblioteka zdjęć. Ustaw punkt ostrości — galeria użyje go do kadrowania na dużych ekranach.",
+    description: "Biblioteka zdjęć i filmów używanych na stronie.",
   },
   access: {
     read: () => true,
@@ -18,6 +18,11 @@ export const Media: CollectionConfig = {
     update: isLoggedIn,
     delete: isLoggedIn,
   },
-  fields: [{ name: "alt", label: "Opis zdjęcia", type: "text", required: true }],
-  upload: { crop: false, focalPoint: true, skipSafeFetch: true },
+  fields: [{ name: "alt", label: "Opis pliku", type: "text", required: true }],
+  upload: {
+    crop: false,
+    focalPoint: true,
+    skipSafeFetch: true,
+    mimeTypes: ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif", "video/mp4", "video/webm", "video/quicktime"],
+  },
 };

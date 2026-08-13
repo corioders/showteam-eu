@@ -26,6 +26,15 @@ test("SEO and anonymous analytics endpoints are published", async ({ page }) => 
   expect((await page.request.post("/api/track", { data: { path: "/wydarzenia" } })).status()).toBe(204);
 });
 
+test("quick uploader is private and exposes an installable manifest", async ({ page }) => {
+  await page.goto("/dodaj");
+  await expect(page).toHaveURL(/\/admin\/(login|create-first-user)/);
+  const manifest = await page.request.get("/dodaj/manifest.webmanifest");
+  expect(manifest.ok()).toBe(true);
+  expect((await manifest.json()).start_url).toBe("/dodaj");
+  expect((await page.request.post("/api/quick-upload", { multipart: { category: "Lato" } })).status()).toBe(401);
+});
+
 test.describe("mobile", () => {
   test.use({ viewport: { width: 390, height: 844 } });
 
@@ -49,8 +58,8 @@ test.describe("mobile", () => {
     }));
     expect(state.every((image) => image.height > 180)).toBe(true);
     expect(new Set(state.map((image) => image.ratio)).size).toBeGreaterThan(1);
-    for (let index = 0; index < await figures.count(); index += 1) {
-      await figures.nth(index).scrollIntoViewIfNeeded();
+    for (let index = 0; index < await images.count(); index += 1) {
+      await images.nth(index).scrollIntoViewIfNeeded();
       await expect.poll(() => images.nth(index).evaluate((image) => {
         const element = image as HTMLImageElement;
         return element.complete && element.naturalWidth > 0;

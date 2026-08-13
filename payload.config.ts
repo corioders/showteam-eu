@@ -33,6 +33,7 @@ export default buildConfig({
     user: Users.slug,
     importMap: { baseDir: dirname },
     meta: { titleSuffix: " — Panel SHOWteam" },
+    components: { beforeDashboard: ["@/components/payload/quick-upload-card#QuickUploadCard"] },
   },
   collections: [Events, Offers, Gallery, Analytics, Media, Users],
   i18n: { supportedLanguages: { pl }, fallbackLanguage: "pl" },
