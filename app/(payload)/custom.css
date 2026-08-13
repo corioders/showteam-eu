@@ -25,6 +25,7 @@
 .admin-task p { margin: .35rem 0 1rem; }
 .admin-task__action { font-size: .75rem; font-weight: 800; margin-top: auto; text-transform: uppercase; }
 .admin-start__hint { background: #fff4eb; border-left: 4px solid #f06414; color: #63320f; line-height: 1.45; margin: .9rem 0 0; padding: .8rem 1rem; }
+.dashboard .collections { display: none; }
 
 @media (max-width: 900px) { .admin-task-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) {
@@ -80,7 +81,15 @@
   .field-description { font-size: .85rem; }
   .doc-controls__content { gap: .5rem; }
   .doc-controls .btn { min-height: 2.75rem; }
+  .doc-controls__meta { flex-wrap: wrap; max-width: 100%; }
   .cms-draft { align-items: flex-start; flex-direction: column; margin: .25rem 0; width: 100%; }
+  .field-type.tabs-field { margin-inline: 0; width: auto; }
+  .tabs-field__tabs-wrap { max-width: 100%; }
+  .tabs-field__tabs { flex-wrap: wrap; min-width: 0; }
+  .tabs-field__tab-button { flex: 1 1 10rem; min-height: 3rem; white-space: nowrap; }
+  .nav__header { left: 1rem; right: 1rem; width: auto; }
+  .nav__header-content { width: 100%; }
+  body:has(.template-default--nav-open) { overflow-x: hidden; }
   .render-title { font-size: clamp(1.7rem, 8vw, 2.5rem); line-height: 1.05; }
   .toast-container { inset: auto .75rem .75rem !important; width: auto !important; }
 }

@@ -28,6 +28,19 @@ const realpath = (value: string) => (fs.existsSync(value) ? fs.realpathSync(valu
 const isCLI = process.argv.some((value) => realpath(value).endsWith(path.join("payload", "bin.js")));
 const isProduction = process.env.NODE_ENV === "production";
 const isNextBuild = process.env.NEXT_PHASE === "phase-production-build";
+const showteamPolish = {
+  ...pl,
+  translations: {
+    ...pl.translations,
+    general: {
+      ...pl.translations.general,
+      createNew: "Dodaj",
+      createNewLabel: "Dodaj: {{label}}",
+      creatingNewLabel: "Dodajesz: {{label}}",
+      untitled: "Nowy wpis",
+    },
+  },
+};
 
 const cloudflare = isCLI || !isProduction
   ? await getCloudflareContextFromWrangler()
@@ -48,7 +61,7 @@ export default buildConfig({
     },
   },
   collections: [Events, Offers, Gallery, Equipment, createBookingsCollection(database), Analytics, Media, Users],
-  i18n: { supportedLanguages: { pl }, fallbackLanguage: "pl" },
+  i18n: { supportedLanguages: { pl: showteamPolish }, fallbackLanguage: "pl" },
   telemetry: false,
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "local-showteam-development-secret-change-me",
