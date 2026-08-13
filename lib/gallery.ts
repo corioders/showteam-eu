@@ -55,7 +55,7 @@ function toPhoto(document: Record<string, unknown>): GalleryPhoto | null {
 export async function getGallery(): Promise<GalleryPhoto[]> {
   try {
     const payload = await getPayload({ config });
-    const result = await payload.find({ collection: "gallery", where: { published: { equals: true } }, sort: "sortOrder", depth: 1, limit: 100 });
+    const result = await payload.find({ collection: "gallery", where: { published: { equals: true } }, sort: "-createdAt", depth: 1, limit: 100 });
     const photos = result.docs.flatMap((document) => {
       const photo = toPhoto(document as unknown as Record<string, unknown>);
       return photo ? [photo] : [];

@@ -19,7 +19,7 @@ export const Gallery: CollectionConfig = {
     update: isLoggedIn,
     delete: isLoggedIn,
   },
-  defaultSort: "sortOrder",
+  defaultSort: "-createdAt",
   fields: [
     {
       name: "image",

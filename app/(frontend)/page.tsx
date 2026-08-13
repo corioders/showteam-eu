@@ -26,7 +26,7 @@ export default async function Home() {
             <Badge>Sezon 2026</Badge>
             <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-white/60"><MapPin className="size-4 text-sky-300" /> Poręba · Dolomity · Andorra</span>
           </div>
-          <h1 className="font-display max-w-6xl text-[clamp(4.5rem,14vw,11.5rem)] font-black uppercase leading-[0.82] tracking-[-0.065em]">
+          <h1 className="font-display max-w-6xl text-[clamp(3.25rem,16vw,7rem)] font-black uppercase leading-[0.84] tracking-[-0.055em] md:text-[clamp(7rem,14vw,11.5rem)] md:leading-[0.82] md:tracking-[-0.065em]">
             Zrób<br /><span className="text-orange-500">sobie SHOW.</span>
           </h1>
           <div className="mt-8 grid gap-6 sm:grid-cols-[minmax(0,34rem)_auto] sm:items-end">
@@ -50,7 +50,7 @@ export default async function Home() {
       </div>
 
       <section className="relative isolate overflow-hidden border-b border-red-950 bg-black py-10">
-        <Image src="/media/legacy-light-trails-top.jpg" alt="" fill className="-z-10 object-cover opacity-75" sizes="100vw" />
+        <Image src="/media/legacy-light-trails-top.jpg" alt="" fill className="-z-10 object-contain object-center opacity-75 sm:object-cover" sizes="100vw" />
         <div className="site-container flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <p className="font-display text-5xl font-black uppercase leading-none tracking-tight sm:text-7xl">Just <span className="text-orange-500">4</span> fun</p>
           <p className="-rotate-2 font-mono text-2xl font-black lowercase text-red-500 sm:text-4xl">no limits...</p>
