@@ -45,6 +45,10 @@ export function endTime(startTime: string, durationMinutes: number): string {
   return minutesToTime(timeToMinutes(startTime) + durationMinutes);
 }
 
+export function timeRangesOverlap(startA: string, endA: string, startB: string, endB: string): boolean {
+  return timeToMinutes(startA) < timeToMinutes(endB) && timeToMinutes(endA) > timeToMinutes(startB);
+}
+
 export function isBookingDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T12:00:00Z`);

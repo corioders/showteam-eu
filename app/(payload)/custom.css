@@ -47,6 +47,28 @@
 .calendar-admin-frame { border: 0; display: block; height: max(46rem, calc(100vh - 13rem)); width: 100%; }
 @media (max-width: 600px) { .calendar-admin-view { padding: 1rem; } .calendar-admin-heading { align-items: stretch; flex-direction: column; } }
 
+.availability-blocks { background: var(--theme-elevation-50); border: 1px solid var(--theme-elevation-150); margin-bottom: 1rem; padding: 1.25rem; }
+.availability-blocks__intro > span { color: #e85200; font-size: .7rem; font-weight: 800; letter-spacing: .18em; }
+.availability-blocks__intro h2 { font-size: 1.4rem; margin: .35rem 0; }
+.availability-blocks__intro p { color: var(--theme-elevation-600); margin: 0; }
+.availability-blocks form { align-items: end; display: grid; gap: .75rem; grid-template-columns: minmax(10rem,1.3fr) minmax(9rem,1fr) minmax(7rem,.7fr) minmax(7rem,.7fr) minmax(12rem,1.5fr) auto; margin-top: 1rem; }
+.availability-blocks label > span { display: block; font-size: .75rem; font-weight: 700; margin-bottom: .35rem; }
+.availability-blocks label small { color: var(--theme-elevation-550); font-weight: 400; }
+.availability-blocks input, .availability-blocks select { background: var(--theme-input-bg); border: 1px solid var(--theme-elevation-250); color: var(--theme-text); min-height: 2.75rem; padding: .55rem .65rem; width: 100%; }
+.availability-blocks button { align-items: center; background: var(--theme-elevation-900); border: 1px solid var(--theme-elevation-900); color: var(--theme-elevation-0); cursor: pointer; display: inline-flex; font-weight: 700; gap: .5rem; justify-content: center; min-height: 2.75rem; padding: .65rem .85rem; white-space: nowrap; }
+.availability-blocks button:disabled { cursor: wait; opacity: .5; }
+.availability-blocks svg { height: 1rem; width: 1rem; }
+.availability-blocks__status { align-items: center; display: flex; gap: .5rem; }
+.availability-blocks__error { color: #b52b22; font-weight: 700; }
+.availability-blocks__list { border-top: 1px solid var(--theme-elevation-150); margin-top: 1rem; padding-top: 1rem; }
+.availability-blocks__list h3 { font-size: 1rem; margin: 0 0 .75rem; }
+.availability-blocks__list article { align-items: center; display: flex; gap: 1rem; justify-content: space-between; padding: .65rem 0; }
+.availability-blocks__list article + article { border-top: 1px solid var(--theme-elevation-150); }
+.availability-blocks__list p, .availability-blocks__empty { color: var(--theme-elevation-600); margin: .2rem 0 0; }
+.availability-blocks__list button { background: transparent; border-color: #b52b22; color: #b52b22; }
+@media (max-width: 1100px) { .availability-blocks form { grid-template-columns: repeat(4,minmax(0,1fr)); } .availability-blocks__reason { grid-column: span 3; } }
+@media (max-width: 600px) { .availability-blocks form { grid-template-columns: 1fr 1fr; } .availability-blocks form label:first-child, .availability-blocks__reason, .availability-blocks form > button { grid-column: 1 / -1; } .availability-blocks__list article { align-items: stretch; flex-direction: column; } }
+
 .calendar-subscription { background: var(--theme-elevation-50); border: 1px solid var(--theme-elevation-150); margin-bottom: 1rem; padding: 1.25rem; }
 .calendar-subscription__intro { align-items: center; display: flex; gap: 2rem; justify-content: space-between; }
 .calendar-subscription__intro span { color: #e85200; font-size: .7rem; font-weight: 800; letter-spacing: .18em; }

@@ -1,5 +1,5 @@
 import type { SQLiteSchemaHook } from "@payloadcms/db-d1-sqlite";
-import { integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 const bookingSlots = sqliteTable("booking_slots", {
   equipmentId: integer("equipment_id").notNull(),
@@ -40,11 +40,22 @@ const calendarFeeds = sqliteTable("calendar_feeds", {
   createdAt: integer("created_at").notNull(),
 });
 
+const availabilityBlocks = sqliteTable("availability_blocks", {
+  id: text("id").primaryKey().notNull(),
+  equipmentId: integer("equipment_id"),
+  bookingDate: text("booking_date").notNull(),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+  reason: text("reason"),
+  createdAt: integer("created_at").notNull(),
+}, (table) => [index("availability_blocks_date_equipment_idx").on(table.bookingDate, table.equipmentId)]);
+
 export const preserveOperationalTables: SQLiteSchemaHook = ({ schema }) => {
   schema.tables.booking_slots = bookingSlots;
   schema.tables.tv_pairings = tvPairings;
   schema.tables.tv_devices = tvDevices;
   schema.tables.rate_limits = rateLimits;
   schema.tables.calendar_feeds = calendarFeeds;
+  schema.tables.availability_blocks = availabilityBlocks;
   return schema;
 };

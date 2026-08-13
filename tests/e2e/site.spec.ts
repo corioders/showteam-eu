@@ -36,6 +36,7 @@ test("customer can reserve an available equipment slot", async ({ page }) => {
   await firstSlot.click();
   await page.getByLabel("Imię i nazwisko").fill("Test Playwright");
   await page.getByLabel("Telefon").fill("500 128 090");
+  await page.getByLabel("E-mail").fill("test@example.com");
   await page.getByRole("button", { name: "Rezerwuję termin" }).click();
   await expect(page.getByText("Rezerwacja zapisana")).toBeVisible();
   await expect(page.getByText(/^SHOW-/)).toBeVisible();
@@ -99,6 +100,19 @@ test("SEO and anonymous analytics endpoints are published", async ({ page }) => 
 test("booking statistics stay private", async ({ request }) => {
   const response = await request.get("/api/admin/statistics");
   expect(response.status()).toBe(401);
+});
+
+test("availability block management stays private", async ({ request }) => {
+  expect((await request.get("/api/admin/availability-blocks")).status()).toBe(401);
+  expect((await request.post("/api/admin/availability-blocks", { data: {} })).status()).toBe(401);
+});
+
+test("reservation API requires an email address", async ({ request }) => {
+  const bookingDate = new Date();
+  bookingDate.setDate(bookingDate.getDate() + 14);
+  const response = await request.post("/api/reservations", { data: { equipmentId: 1, date: bookingDate.toISOString().slice(0, 10), time: "09:00", name: "Test", phone: "500 128 090" } });
+  expect(response.status()).toBe(400);
+  expect((await response.json()).error).toContain("e-mail");
 });
 
 test("calendar subscription management stays private", async ({ request }) => {

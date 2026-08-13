@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCalendarFeed, type CalendarBooking } from "../../lib/calendar-feed";
+import { buildCalendarFeed, type CalendarBlock, type CalendarBooking } from "../../lib/calendar-feed";
 
 const booking: CalendarBooking = {
   reservation_id: "6421c5bd-2f91-462c-aed6-5b891df45aa2",
@@ -14,6 +14,16 @@ const booking: CalendarBooking = {
   customer_notes: "Proszę zadzwonić\nprzed przyjazdem",
   staff_notes: null,
   updated_at: "2026-08-13T18:14:21.000Z",
+};
+
+const block: CalendarBlock = {
+  id: "3621c5bd-2f91-462c-aed6-5b891df45aa2",
+  equipment_name: null,
+  booking_date: "2026-08-28",
+  start_time: "12:00",
+  end_time: "14:00",
+  reason: "Serwis; bazy",
+  created_at: 1_776_296_400_000,
 };
 
 describe("calendar feed", () => {
@@ -31,5 +41,12 @@ describe("calendar feed", () => {
   it("folds long lines to at most 75 UTF-8 bytes", () => {
     const feed = buildCalendarFeed([{ ...booking, customer_notes: "ą".repeat(100) }]);
     for (const line of feed.split("\r\n")) expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75);
+  });
+
+  it("includes availability blocks in subscribed calendars", () => {
+    const feed = buildCalendarFeed([], new Date("2026-08-13T20:00:00Z"), [block]);
+    expect(feed).toContain("DTSTART;TZID=Europe/Warsaw:20260828T120000");
+    expect(feed).toContain("SUMMARY:BLOKADA - Wszystkie sprzęty");
+    expect(feed).toContain("DESCRIPTION:Serwis\\; bazy");
   });
 });

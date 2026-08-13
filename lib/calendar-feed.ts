@@ -13,6 +13,16 @@ export type CalendarBooking = {
   updated_at: string;
 };
 
+export type CalendarBlock = {
+  id: string;
+  equipment_name: string | null;
+  booking_date: string;
+  start_time: string;
+  end_time: string;
+  reason: string | null;
+  created_at: number;
+};
+
 const encoder = new TextEncoder();
 
 function escapeIcs(value: string): string {
@@ -48,7 +58,7 @@ function localDateTime(date: string, time: string): string {
   return `${date.replaceAll("-", "")}T${time.replaceAll(":", "")}00`;
 }
 
-export function buildCalendarFeed(bookings: CalendarBooking[], generatedAt = new Date()): string {
+export function buildCalendarFeed(bookings: CalendarBooking[], generatedAt = new Date(), blocks: CalendarBlock[] = []): string {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -76,6 +86,20 @@ export function buildCalendarFeed(bookings: CalendarBooking[], generatedAt = new
       `DTEND;TZID=Europe/Warsaw:${localDateTime(booking.booking_date, booking.end_time)}`,
       `SUMMARY:${escapeIcs(`${booking.equipment_name} - ${booking.customer_name}`)}`,
       `DESCRIPTION:${escapeIcs(description)}`,
+      "END:VEVENT",
+    );
+  }
+
+  for (const block of blocks) {
+    lines.push(
+      "BEGIN:VEVENT",
+      `UID:block-${escapeIcs(block.id)}@showteam.eu`,
+      `DTSTAMP:${utcTimestamp(generatedAt)}`,
+      `LAST-MODIFIED:${utcTimestamp(new Date(block.created_at))}`,
+      `DTSTART;TZID=Europe/Warsaw:${localDateTime(block.booking_date, block.start_time)}`,
+      `DTEND;TZID=Europe/Warsaw:${localDateTime(block.booking_date, block.end_time)}`,
+      `SUMMARY:${escapeIcs(`BLOKADA - ${block.equipment_name || "Wszystkie sprzęty"}`)}`,
+      `DESCRIPTION:${escapeIcs(block.reason || "Termin niedostępny")}`,
       "END:VEVENT",
     );
   }

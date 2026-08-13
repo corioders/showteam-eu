@@ -1,5 +1,5 @@
 import { database } from "@payload-config";
-import { buildCalendarFeed, type CalendarBooking } from "@/lib/calendar-feed";
+import { buildCalendarFeed, type CalendarBlock, type CalendarBooking } from "@/lib/calendar-feed";
 import { ensureOperationalTables } from "@/lib/operational-tables";
 
 async function hashSecret(value: string): Promise<string> {
@@ -28,8 +28,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tok
     WHERE bookings.status != 'cancelled'
     ORDER BY bookings.booking_date, bookings.start_time
     LIMIT 5000`).all<CalendarBooking>();
+  const blocks = await database.prepare(`SELECT availability_blocks.id, equipment.name AS equipment_name,
+    availability_blocks.booking_date, availability_blocks.start_time, availability_blocks.end_time,
+    availability_blocks.reason, availability_blocks.created_at
+    FROM availability_blocks LEFT JOIN equipment ON equipment.id = availability_blocks.equipment_id
+    ORDER BY availability_blocks.booking_date, availability_blocks.start_time
+    LIMIT 5000`).all<CalendarBlock>();
 
-  return new Response(buildCalendarFeed(bookings.results), {
+  return new Response(buildCalendarFeed(bookings.results, new Date(), blocks.results), {
     headers: {
       "Cache-Control": "private, no-store",
       "Content-Disposition": "inline; filename=showteam-rezerwacje.ics",

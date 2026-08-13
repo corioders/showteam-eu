@@ -13,7 +13,7 @@
 .overlay { align-items: flex-end; background: rgba(0,0,0,.78); display: flex; inset: 0; justify-content: center; padding: .75rem; position: fixed; z-index: 1000; }
 .dialog { background: #0a0b0c; border: 1px solid rgba(255,255,255,.16); color: white; max-width: 28rem; padding: 1.5rem; width: 100%; }
 .close { background: transparent; border: 0; color: rgba(255,255,255,.55); cursor: pointer; float: right; padding: .5rem; }
-.reference { color: #ff8840; font-size: .72rem; font-weight: 800; letter-spacing: .18em; margin: 0; text-transform: uppercase; }
+.reference { align-items: center; color: #ff8840; display: flex; font-size: .72rem; font-weight: 800; gap: .4rem; letter-spacing: .18em; margin: 0; text-transform: uppercase; }
 .eventTitle { font-family: var(--font-display), Impact, sans-serif; font-size: 2rem; font-weight: 900; line-height: 1; margin: .75rem 2.5rem 0 0; text-transform: uppercase; }
 .detail, .phone { align-items: center; display: flex; gap: .5rem; margin: 1.25rem 0 0; }
 .detail { color: rgba(255,255,255,.65); }

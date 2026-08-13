@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   const phone = normalizePhone(String(input.phone || ""));
   const email = String(input.email || "").trim().toLowerCase().slice(0, 200);
   const notes = String(input.notes || "").trim().slice(0, 500);
-  if (!Number.isInteger(equipmentId) || !isBookingDate(date) || date < todayInPoland() || name.length < 2 || !phone || (email && !/^\S+@\S+\.\S+$/.test(email))) {
+  if (!Number.isInteger(equipmentId) || !isBookingDate(date) || date < todayInPoland() || name.length < 2 || !phone || !/^\S+@\S+\.\S+$/.test(email)) {
     return Response.json({ error: "Sprawdź datę, imię, telefon i e-mail." }, { status: 400 });
   }
 
@@ -59,11 +59,15 @@ export async function POST(request: Request) {
   if (duplicate.totalDocs >= 5) return Response.json({ error: "Dla tego numeru jest już kilka rezerwacji tego dnia. Zadzwoń do nas." }, { status: 429 });
 
   const reservationId = crypto.randomUUID();
+  const reservationEnd = endTime(time, equipment.durationMinutes);
   let allocatedUnit: number | null = null;
   for (let unit = 1; unit <= equipment.quantity; unit += 1) {
     try {
-      await database.prepare("INSERT INTO booking_slots (equipment_id, booking_date, start_time, unit_number, reservation_id) VALUES (?, ?, ?, ?, ?)")
-        .bind(equipmentId, date, time, unit, reservationId).run();
+      const allocation = await database.prepare(`INSERT INTO booking_slots (equipment_id, booking_date, start_time, unit_number, reservation_id)
+        SELECT ?, ?, ?, ?, ? WHERE NOT EXISTS (
+          SELECT 1 FROM availability_blocks WHERE booking_date = ? AND (equipment_id IS NULL OR equipment_id = ?) AND start_time < ? AND end_time > ?
+        )`).bind(equipmentId, date, time, unit, reservationId, date, equipmentId, reservationEnd, time).run();
+      if (!allocation.meta.changes) break;
       allocatedUnit = unit;
       break;
     } catch (error) {
@@ -81,8 +85,8 @@ export async function POST(request: Request) {
       overrideAccess: true,
       data: {
         reference, reservationId, equipment: equipmentId, bookingDate: date, startTime: time,
-        endTime: endTime(time, equipment.durationMinutes), customerName: name, phone,
-        email: email || undefined, customerNotes: notes || undefined, status: "confirmed", source: "website",
+        endTime: reservationEnd, customerName: name, phone,
+        email, customerNotes: notes || undefined, status: "confirmed", source: "website",
       },
     });
   } catch (error) {
@@ -90,5 +94,5 @@ export async function POST(request: Request) {
     payload.logger.error({ err: error, msg: "Reservation creation failed" });
     return Response.json({ error: "Nie udało się zapisać rezerwacji. Spróbuj ponownie." }, { status: 500 });
   }
-  return Response.json({ reference, equipment: equipment.name, date, time, endTime: endTime(time, equipment.durationMinutes) }, { status: 201 });
+  return Response.json({ reference, equipment: equipment.name, date, time, endTime: reservationEnd }, { status: 201 });
 }

@@ -1,6 +1,6 @@
 import { getPayload } from "payload";
 import config, { database } from "@payload-config";
-import { createTimeSlots, isBookingDate, todayInPoland } from "@/lib/reservations";
+import { createTimeSlots, endTime, isBookingDate, timeRangesOverlap, todayInPoland } from "@/lib/reservations";
 import { ensureOperationalTables } from "@/lib/operational-tables";
 
 export async function GET(request: Request) {
@@ -24,10 +24,14 @@ export async function GET(request: Request) {
   const reserved = await database.prepare(
     "SELECT start_time, COUNT(*) AS reserved FROM booking_slots WHERE equipment_id = ? AND booking_date = ? GROUP BY start_time",
   ).bind(equipmentId, date).all<{ start_time: string; reserved: number }>();
+  const blocked = await database.prepare(
+    "SELECT start_time, end_time FROM availability_blocks WHERE booking_date = ? AND (equipment_id IS NULL OR equipment_id = ?)",
+  ).bind(date, equipmentId).all<{ start_time: string; end_time: string }>();
   const counts = new Map(reserved.results.map((row) => [row.start_time, Number(row.reserved)]));
   const currentTime = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
   const slots = createTimeSlots(equipment.openTime, equipment.closeTime, equipment.durationMinutes)
     .filter((time) => date !== todayInPoland() || time > currentTime)
+    .filter((time) => !blocked.results.some((block) => timeRangesOverlap(time, endTime(time, equipment.durationMinutes), block.start_time, block.end_time)))
     .map((time) => ({ time, available: Math.max(0, equipment.quantity - (counts.get(time) || 0)) }))
     .filter((slot) => slot.available > 0);
   return Response.json({ slots, durationMinutes: equipment.durationMinutes }, { headers: { "Cache-Control": "no-store" } });
