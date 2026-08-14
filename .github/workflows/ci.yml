@@ -29,14 +29,19 @@ jobs:
       - run: pnpm lint
       - run: pnpm test:unit
       - name: Prepare local D1 schema
-        run: pnpm payload migrate
+        run: |
+          rm -rf .wrangler/state
+          pnpm payload migrate
       - name: Seed CMS fixtures
         run: pnpm payload run scripts/seed-ci.ts
         env:
           NODE_ENV: production
           PAYLOAD_SECRET: showteam-ci-only-secret-not-used-in-production
           SEED_CMS: "true"
-      - run: pnpm build
+      - name: Build from a clean Next.js cache
+        run: |
+          rm -rf .next
+          pnpm build
       - run: pnpm exec playwright install chromium
       - run: pnpm test:e2e
         env:

@@ -40,8 +40,8 @@ test("waterfront stays are published without invented pricing", async ({ page })
   await expect(page.getByRole("heading", { name: "Noclegi nad wodą" })).toBeVisible();
   await expect(page.getByText("Kontenery mieszkalne")).toBeVisible();
   await expect(page.getByText("Domki holenderskie")).toBeVisible();
-  await page.getByRole("button", { name: "Zdjęcia obiektów" }).click();
-  await expect(page.getByText(/Zdjęcia kontenerów i domków dodamy po sesji/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Zdjęcia obiektów" })).toHaveCount(0);
+  await expect(page.getByText(/Zdjęcia kontenerów i domków dodamy po sesji/)).toHaveCount(0);
   await expect(page.getByText(/zł|PLN|cena/i)).toHaveCount(0);
 });
 
