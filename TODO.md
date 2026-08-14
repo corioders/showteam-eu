@@ -57,6 +57,9 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## Ukończone
 
+- [x] Rezerwacje: spójny stan navbara, Padel oraz profile sprzętu: skuter/Padel — każdy warun; Wingfoil/windsurfing/Hobie Cat/łódź żaglowa — wiatr; SUP/kajak — spokojna woda.
+- [x] Każda wolna godzina ma jawny poziom: najlepszy, średni, słaby albo profesjonalny; bardzo mocny wiatr jest oznaczony jako warun tylko dla doświadczonych.
+- [x] Oferty Lato, Zima i Szkolenia mają klikalne pinezki Google Maps; Szkolenia używają lokalizacji bazy z oferty Lato.
 - [x] Publiczne copy nie pokazuje technicznych, roboczych ani CMS-owych dopowiedzeń.
 - [x] Prognoza wiatru wpływa na rekomendacje maksymalnie 7 dni naprzód; kafle sprzętu pokazują najlepszy warun.
 - [x] CTA ofert lata, zimy i szkoleń prowadzą bezpośrednio do formularza zgłoszeniowego.

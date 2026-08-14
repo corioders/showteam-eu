@@ -16,6 +16,15 @@ test("offer pages lead directly to a preselected application", async ({ page }) 
   }
 });
 
+test("offer pages open their locations in Google Maps", async ({ page }) => {
+  for (const [path, count] of [["/oferta/lato", 1], ["/oferta/szkolenia", 1], ["/oferta/zima", 2]] as const) {
+    await page.goto(path);
+    const mapLinks = page.locator('section[aria-label="Dojazd"] a[target="_blank"]');
+    await expect(mapLinks).toHaveCount(count);
+    await expect(mapLinks.first()).toHaveAttribute("href", /maps/);
+  }
+});
+
 test("public copy does not expose implementation notes", async ({ page }) => {
   for (const path of ["/galeria", "/wydarzenia", "/zgloszenie", "/oferta/lato", "/oferta/zima", "/oferta/noclegi-nad-woda"]) {
     await page.goto(path);
@@ -46,11 +55,20 @@ test("waterfront stays are published without invented pricing", async ({ page })
 });
 
 test("customer can reserve an available equipment slot", async ({ page }) => {
-  await page.route("**/api/reservations/availability?*", (route) => route.fulfill({ json: { slots: [{ time: "09:00", available: 1, recommendation: { recommended: true, level: "best", basis: "forecast", label: "Najlepszy warun", detail: "Prognoza: spokojna woda, wiatr 6 km/h." } }], durationMinutes: 60, windStatus: "forecast" } }));
+  await page.route("**/api/reservations/availability?*", (route) => route.fulfill({ json: { slots: [
+    { time: "09:00", available: 1, recommendation: { recommended: true, level: "best", basis: "forecast", label: "Najlepszy warun", detail: "Prognoza: spokojna woda, wiatr 6 km/h." } },
+    { time: "10:00", available: 1, recommendation: { recommended: true, level: "medium", basis: "forecast", label: "Średni warun" } },
+    { time: "11:00", available: 1, recommendation: { recommended: false, level: "poor", basis: "forecast", label: "Słaby warun" } },
+    { time: "12:00", available: 1, recommendation: { recommended: false, level: "professional", basis: "forecast", label: "Warun profesjonalny" } },
+  ], durationMinutes: 60, windStatus: "forecast" } }));
   await page.route("**/api/reservations", (route) => route.fulfill({ status: 201, json: { reference: "SHOW-TEST1234", equipment: "SUP", date: "2026-08-27", time: "09:00", endTime: "10:00" } }));
   await page.goto("/rezerwacje", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: /Sprzęt czeka/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Padel/ })).toBeVisible();
   await expect(page.getByText(/Najlepszy warun|Dobry w każdy warun/).first()).toBeVisible();
+  await expect(page.getByText("Średni warun").last()).toBeVisible();
+  await expect(page.getByText("Słaby warun").last()).toBeVisible();
+  await expect(page.getByText("Warun profesjonalny").last()).toBeVisible();
   await expect(page.getByText("Warun może się zmienić — to nie problem.")).toBeVisible();
   const bookingDate = new Date();
   bookingDate.setDate(bookingDate.getDate() + 14);
@@ -228,6 +246,15 @@ test.describe("mobile", () => {
     await page.getByRole("navigation", { name: "Menu mobilne" }).getByRole("link", { name: /Galeria/ }).click();
     await expect(page).toHaveURL(/\/galeria$/);
     expect(await page.evaluate(() => Reflect.get(window, "__showteamNavigation"))).toBe("alive");
+  });
+
+  test("reservation navigation keeps the public navbar", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "Otwórz menu" }).click();
+    await page.getByRole("navigation", { name: "Menu mobilne" }).getByRole("link", { name: /Rezerwacje/ }).click();
+    await expect(page).toHaveURL(/\/rezerwacje$/);
+    await expect(page.locator("header")).toBeVisible();
+    await expect(page.locator('header a[href="/rezerwacje"][aria-current="page"]')).toHaveCount(1);
   });
 
   test("reservations are usable without horizontal overflow", async ({ page }) => {
