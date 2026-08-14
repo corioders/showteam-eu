@@ -5,8 +5,10 @@ import { ContactCta } from "@/components/contact-cta";
 import { CmsDetails } from "@/components/cms-details";
 import { PageHero } from "@/components/page-hero";
 import { PhotoMosaic } from "@/components/photo-mosaic";
+import { LocationLinks } from "@/components/location-links";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { getOffer } from "@/lib/cms";
+import { contact } from "@/lib/offers";
 
 export const metadata: Metadata = { title: "SHOWlato 2026", description: "Wake & Surf Village, SHOWCamp i sporty wodne nad Jeziorem Łąckim.", alternates: { canonical: "/oferta/lato" } };
 export const revalidate = false;
@@ -24,6 +26,7 @@ export default async function SummerPage() {
   return (
     <>
       <PageHero eyebrow={`${offer.category} · ${offer.season}`} title={offer.title} description={offer.summary} location={offer.location} image={offer.image} imageAlt={offer.imageAlt} />
+      <LocationLinks locations={[{ label: "Wake & Surf Village · Nad Zaporą 21, Poręba", href: contact.map }]} />
 
       <section className="py-20 md:py-28">
         <div className="site-container">
