@@ -2,22 +2,27 @@
 
 import { CheckCircle2, LoaderCircle, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { applicationCategories, type ApplicationCategory, type ApplicationOfferGroup } from "@/lib/application-options";
 import { applicationDisciplines, applicationLevels, applicationTransport } from "@/lib/applications";
 
 type Values = {
-  offer: string; firstName: string; lastName: string; birthDate: string; address: string;
+  category: ApplicationCategory | ""; offer: string; firstName: string; lastName: string; birthDate: string; address: string;
   email: string; participantEmail: string; phone: string; discipline: string; level: string;
   transport: string; notes: string; privacyConsent: boolean; accuracyConfirmed: boolean;
 };
 type Field = keyof Values;
 type Errors = Partial<Record<Field, string>>;
 const draftKey = "showteam:application-draft:v1";
-const empty: Values = { offer: "", firstName: "", lastName: "", birthDate: "", address: "", email: "", participantEmail: "", phone: "", discipline: "", level: "", transport: "", notes: "", privacyConsent: false, accuracyConfirmed: false };
+const empty: Values = { category: "", offer: "", firstName: "", lastName: "", birthDate: "", address: "", email: "", participantEmail: "", phone: "", discipline: "", level: "", transport: "", notes: "", privacyConsent: false, accuracyConfirmed: false };
 
-export function ApplicationForm({ options, initialOffer }: { options: string[]; initialOffer?: string }) {
-  const initialSelection = initialOffer ? options.find((option) => option === initialOffer || option.startsWith(`${initialOffer} —`)) : undefined;
+export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationOfferGroup[]; initialOffer?: string }) {
+  const initialGroup = initialOffer ? groups.find((group) => group.offers.some((offer) => offer.title === initialOffer)) : undefined;
+  const initialSelection = initialGroup?.offers.find((offer) => offer.title === initialOffer);
+  const initialOfferValue = initialSelection
+    ? initialSelection.dates.length ? `${initialSelection.title} — ${initialSelection.dates[0]}` : `${initialSelection.title} — termin do ustalenia`
+    : "";
   const formRef = useRef<HTMLFormElement>(null);
-  const [values, setValues] = useState<Values>({ ...empty, offer: initialSelection || "" });
+  const [values, setValues] = useState<Values>({ ...empty, category: initialGroup?.category || "", offer: initialOfferValue });
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"idle" | "saving" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -27,11 +32,14 @@ export function ApplicationForm({ options, initialOffer }: { options: string[]; 
     window.queueMicrotask(() => {
       try {
         const draft = JSON.parse(window.localStorage.getItem(draftKey) || "null") as Partial<Values> | null;
-        if (draft) setValues({ ...empty, ...draft, offer: initialSelection || draft.offer || "" });
+        if (draft) {
+          const draftCategory = draft.category || groups.find((group) => group.offers.some((offer) => draft.offer?.startsWith(`${offer.title} —`)))?.category || "";
+          setValues({ ...empty, ...draft, category: initialGroup?.category || draftCategory, offer: initialOfferValue || draft.offer || "" });
+        }
       } catch { window.localStorage.removeItem(draftKey); }
       setReady(true);
     });
-  }, [initialSelection]);
+  }, [groups, initialGroup?.category, initialOfferValue]);
 
   useEffect(() => {
     if (!ready || status === "done") return;
@@ -46,6 +54,7 @@ export function ApplicationForm({ options, initialOffer }: { options: string[]; 
 
   function validate(): Errors {
     const next: Errors = {};
+    if (!values.category) next.category = "Wybierz rodzaj wyjazdu.";
     if (!values.offer) next.offer = "Wybierz termin lub ofertę.";
     if (values.firstName.trim().length < 2) next.firstName = "Wpisz imię uczestnika.";
     if (values.lastName.trim().length < 2) next.lastName = "Wpisz nazwisko uczestnika.";
@@ -100,13 +109,24 @@ export function ApplicationForm({ options, initialOffer }: { options: string[]; 
     setMessage("");
   }
 
+  function selectCategory(category: ApplicationCategory) {
+    setValues((current) => ({ ...current, category, offer: "", transport: category === "Zima" ? current.transport : "" }));
+    setErrors((current) => ({ ...current, category: undefined, offer: undefined, transport: undefined }));
+  }
+
+  const selectedGroup = groups.find((group) => group.category === values.category);
+  const options = selectedGroup?.offers.flatMap((offer) => offer.dates.length
+    ? offer.dates.map((date) => `${offer.title} — ${date}`)
+    : [`${offer.title} — termin do ustalenia`]) ?? [];
+
   const inputClass = (field: Field) => `mt-2 w-full border bg-white/[.04] px-4 py-3 text-base text-white outline-none ${errors[field] ? "border-red-500" : "border-white/20 focus:border-orange-500"}`;
   const error = (field: Field) => errors[field] ? <span className="mt-2 block text-sm font-semibold text-red-300">{errors[field]}</span> : null;
   const text = (field: keyof Pick<Values, "offer" | "firstName" | "lastName" | "birthDate" | "address" | "email" | "participantEmail" | "phone" | "discipline" | "level" | "transport" | "notes">) => ({ value: values[field], onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => set(field, event.target.value) });
 
   return <form ref={formRef} onSubmit={(event) => void submit(event)} noValidate className="space-y-8">
     <section className="border border-white/15 bg-white/[.025] p-5 sm:p-8"><span className="eyebrow">01 · Wyjazd</span>
-      <label data-error={Boolean(errors.offer)} className="mt-5 block font-bold">Termin lub oferta<select {...text("offer")} className={inputClass("offer")}><option value="" className="text-black">Wybierz z listy…</option>{options.map((option) => <option key={option} value={option} className="text-black">{option}</option>)}<option value="Inny termin — proszę o kontakt" className="text-black">Inny termin — proszę o kontakt</option></select>{error("offer")}</label>
+      <fieldset data-error={Boolean(errors.category)} className="mt-5"><legend className="font-bold">Najpierw wybierz rodzaj</legend><div className="mt-3 grid grid-cols-3 gap-2">{applicationCategories.map((category) => <button key={category} type="button" onClick={() => selectCategory(category)} aria-pressed={values.category === category} className="min-h-14 border border-white/20 px-2 py-3 font-bold aria-pressed:border-orange-500 aria-pressed:bg-orange-500 aria-pressed:text-black">{category}</button>)}</div>{error("category")}</fieldset>
+      {values.category ? <label data-error={Boolean(errors.offer)} className="mt-5 block font-bold">Następnie wybierz termin<select {...text("offer")} className={inputClass("offer")}><option value="" className="text-black">Wybierz z listy…</option>{options.map((option) => <option key={option} value={option} className="text-black">{option}</option>)}<option value={`${values.category} — inny termin, proszę o kontakt`} className="text-black">Inny termin — proszę o kontakt</option></select>{error("offer")}</label> : null}
     </section>
     <section className="border border-white/15 bg-white/[.025] p-5 sm:p-8"><span className="eyebrow">02 · Uczestnik</span><div className="mt-5 grid gap-5 sm:grid-cols-2">
       <label data-error={Boolean(errors.firstName)} className="block font-bold">Imię<input {...text("firstName")} autoComplete="given-name" className={inputClass("firstName")} />{error("firstName")}</label>
@@ -120,7 +140,7 @@ export function ApplicationForm({ options, initialOffer }: { options: string[]; 
     <section className="border border-white/15 bg-white/[.025] p-5 sm:p-8"><span className="eyebrow">03 · Szczegóły</span><div className="mt-5 grid gap-5 sm:grid-cols-3">
       <label className="block font-bold">Dyscyplina<select {...text("discipline")} className={inputClass("discipline")}><option value="" className="text-black">Nie dotyczy</option>{applicationDisciplines.map((value) => <option key={value} className="text-black">{value}</option>)}</select></label>
       <label className="block font-bold">Poziom<select {...text("level")} className={inputClass("level")}><option value="" className="text-black">Nie dotyczy</option>{applicationLevels.map((value) => <option key={value} className="text-black">{value}</option>)}</select></label>
-      <label className="block font-bold">Transport<select {...text("transport")} className={inputClass("transport")}><option value="" className="text-black">Wybierz…</option>{applicationTransport.map((value) => <option key={value} className="text-black">{value}</option>)}</select></label>
+      {values.category === "Zima" ? <label className="block font-bold">Transport autokarem<select {...text("transport")} className={inputClass("transport")}><option value="" className="text-black">Wybierz…</option>{applicationTransport.map((value) => <option key={value} className="text-black">{value}</option>)}</select></label> : null}
       <label className="block font-bold sm:col-span-3">Uwagi <span className="font-normal text-white/35">(opcjonalnie)</span><textarea {...text("notes")} rows={5} maxLength={2000} className={inputClass("notes")} /></label>
     </div></section>
     <section className="space-y-5 border border-white/15 bg-white/[.025] p-5 text-sm leading-6 sm:p-8"><span className="eyebrow">04 · Zgody</span>

@@ -4,6 +4,17 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## W toku
 
+- [ ] Ułatwić publiczne zgłoszenia uczestników:
+  - [x] Pracować w osobnym worktree na branchu `feat/application-form-visibility`.
+  - [x] Pokazać wyraźny link „Zgłoszenie” w nagłówku i menu mobilnym.
+  - [x] Najpierw wybierać Lato, Zima albo Szkolenia, a dopiero później termin.
+  - [x] Nie pokazywać terminów, które już się zakończyły; trwający termin pozostaje dostępny do ostatniego dnia.
+  - [x] Pokazywać transport autokarem tylko dla Zimy; po zmianie kategorii czyścić odpowiedź.
+  - [x] Nadal zapisywać pełną datę urodzenia, a na ekranie zgłoszeń pokazywać też aktualny wiek.
+  - [x] Sprawdzić wygląd formularza na telefonie i desktopie.
+  - [x] Uruchomić końcowy build i testy.
+  - [x] Zrobić commit i push brancha.
+  - [ ] Przed jakimkolwiek merge’em pokazać użytkownikowi efekt i poczekać na zgodę; nie robić preview deployu.
 - [x] Naprawić mobilny nagłówek Payload na wszystkich ekranach edycji: tylko menu i logo, bez uciętych breadcrumbs/konta.
 - [x] Wydarzenia: zdjęcie obowiązkowe, brak zdjęcia domyślnego i brak publikacji rekordów bez zdjęcia.
 - [x] Własny prosty formularz „Dodaj wydarzenie”: jeden ekran, polskie etykiety, błędy przy polach, scroll do pierwszego błędu, zdjęcie obowiązkowe.

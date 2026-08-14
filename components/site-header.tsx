@@ -17,6 +17,7 @@ const links = [
   { href: "/galeria", label: "Galeria" },
   { href: "/kontakt", label: "Kontakt" },
 ];
+const applicationLink = { href: "/zgloszenie", label: "Zgłoszenie" };
 
 export function SiteHeader() {
   return (
@@ -27,7 +28,7 @@ export function SiteHeader() {
           <span className="font-display text-xl font-black uppercase tracking-tight">SHOW<span className="text-orange-500">team</span></span>
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Główna nawigacja">
+        <nav className="hidden items-center gap-1 xl:flex" aria-label="Główna nawigacja">
           {links.map((link) => (
             <Button asChild variant="ghost" size="sm" key={link.href}>
               <Link href={link.href} prefetch>{link.label}</Link>
@@ -35,15 +36,14 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden md:block">
-          <Button asChild size="sm">
-            <a href="tel:+48500128090"><Phone className="size-4" /> Zadzwoń</a>
-          </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <Button asChild size="sm"><Link href={applicationLink.href} prefetch>{applicationLink.label}</Link></Button>
+          <Button asChild size="sm" className="hidden 2xl:inline-flex"><a href="tel:+48500128090"><Phone className="size-4" /> Zadzwoń</a></Button>
         </div>
 
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden" aria-label="Otwórz menu">
+            <Button variant="ghost" size="icon" className="xl:hidden" aria-label="Otwórz menu">
               <Menu className="size-6" />
             </Button>
           </SheetTrigger>
@@ -55,7 +55,7 @@ export function SiteHeader() {
               </div>
               <span className="eyebrow mb-4 mt-8">Idź do</span>
               <nav className="grid grid-cols-2 border-l border-t border-white/10" aria-label="Menu mobilne">
-                {links.map((link, index) => (
+                {[...links, applicationLink].map((link, index) => (
                   <SheetClose asChild key={link.href}>
                     <Link href={link.href} prefetch className="group flex min-h-24 flex-col justify-between border-b border-r border-white/10 p-3 font-display font-black uppercase transition-colors hover:bg-orange-500 hover:text-black focus-visible:bg-orange-500 focus-visible:text-black focus-visible:outline-none">
                       <span className="font-mono text-[.6rem] tracking-wider text-white/30 group-hover:text-black/55 group-focus-visible:text-black/55">0{index + 1}</span>

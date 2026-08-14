@@ -3,7 +3,7 @@ import path from "node:path";
 
 test("main navigation reaches every public section", async ({ page }) => {
   await page.goto("/");
-  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/wydarzenia", "/aktualnosci", "/rezerwacje", "/galeria", "/kontakt"]) {
+  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/wydarzenia", "/aktualnosci", "/rezerwacje", "/galeria", "/kontakt", "/zgloszenie"]) {
     await expect(page.locator(`header a[href="${path}"]`)).toHaveCount(1);
   }
 });
@@ -158,7 +158,8 @@ test.describe("mobile", () => {
     await page.goto("/");
     await page.getByRole("button", { name: "Otwórz menu" }).click();
     const menu = page.getByRole("navigation", { name: "Menu mobilne" });
-    await expect(menu.getByRole("link")).toHaveCount(9);
+    await expect(menu.getByRole("link")).toHaveCount(10);
+    await expect(menu.getByRole("link", { name: /Zgłoszenie/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /Galeria/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /Aktualności/ })).toBeVisible();
     await expect(page.getByRole("link", { name: "+48 500 128 090" })).toBeVisible();
@@ -251,8 +252,12 @@ test.describe("mobile", () => {
     await page.route("**/api/applications", (route) => route.fulfill({ status: 201, json: { reference: "ZGL-TEST1234" } }));
     await page.goto("/zgloszenie");
     await page.getByRole("button", { name: "Wyślij zgłoszenie" }).click();
-    await expect(page.getByText("Wybierz termin lub ofertę.")).toBeVisible();
-    await page.getByLabel("Termin lub oferta").selectOption({ index: 1 });
+    await expect(page.getByText("Wybierz rodzaj wyjazdu.")).toBeVisible();
+    await page.getByRole("button", { name: "Zima", exact: true }).click();
+    await expect(page.getByLabel("Transport autokarem")).toBeVisible();
+    await page.getByRole("button", { name: "Lato", exact: true }).click();
+    await expect(page.getByLabel("Transport autokarem")).toHaveCount(0);
+    await page.getByLabel("Następnie wybierz termin").selectOption({ index: 1 });
     await page.getByLabel("Imię").fill("Anna");
     await page.getByLabel("Nazwisko").fill("Testowa");
     await page.getByLabel("Data urodzenia").fill("2000-01-01");
