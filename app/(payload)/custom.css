@@ -197,6 +197,39 @@
 .statistics-error { color: #b52b22; }
 @media (max-width: 700px) { .statistics-admin { padding: 1rem; } .statistics-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } .statistics-rankings { grid-template-columns: 1fr; } }
 
+.applications-admin { margin: 0 auto; max-width: 72rem; padding: 2rem; }
+.applications-admin > header > span { color: #e85200; font-size: .72rem; font-weight: 800; letter-spacing: .18em; }
+.applications-admin > header h1 { font-size: clamp(2.2rem, 6vw, 4.5rem); line-height: .95; margin: .75rem 0; }
+.applications-admin > header p { color: var(--theme-elevation-600); line-height: 1.5; margin: 0; max-width: 42rem; }
+.applications-admin > header > div { align-items: center; display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem; }
+.applications-admin > header > div > a:last-child { color: var(--theme-elevation-600); font-size: .85rem; }
+.applications-export { align-items: center; background: #e85200; color: #fff; display: inline-flex; font-weight: 750; gap: .55rem; min-height: 3rem; padding: .7rem 1rem; text-decoration: none; }
+.applications-export svg { height: 1rem; width: 1rem; }
+.applications-total { border-bottom: 1px solid var(--theme-elevation-150); margin: 2rem 0 0; padding-bottom: .75rem; }
+.applications-list { display: grid; gap: .75rem; margin-top: 1rem; }
+.application-card { border: 1px solid var(--theme-elevation-150); color: inherit; display: block; padding: 1.15rem; text-decoration: none; }
+.application-card:hover { border-color: #e85200; }
+.application-card > div { align-items: center; display: flex; gap: .75rem; justify-content: space-between; }
+.application-card > div > strong { font-size: 1.1rem; }
+.application-card > p { color: var(--theme-elevation-650); margin: .55rem 0 1rem; }
+.application-card dl { display: grid; gap: .7rem 1rem; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; }
+.application-card dl div { min-width: 0; }
+.application-card dt { color: var(--theme-elevation-500); font-size: .68rem; font-weight: 700; text-transform: uppercase; }
+.application-card dd { font-size: .85rem; margin: .2rem 0 0; overflow-wrap: anywhere; }
+.application-status { border: 1px solid currentColor; font-size: .68rem; font-weight: 800; padding: .3rem .5rem; text-transform: uppercase; }
+.application-status--new { color: #d94f00; }
+.application-status--contacted { color: #1f6fa3; }
+.application-status--accepted { color: #26763a; }
+.application-status--cancelled { color: var(--theme-elevation-500); }
+.application-open { color: #e85200; display: block; font-size: .78rem; font-weight: 800; margin-top: 1rem; text-transform: uppercase; }
+.applications-empty { border: 1px solid var(--theme-elevation-150); margin-top: 1rem; padding: 2rem; }
+@media (max-width: 700px) {
+  .applications-admin { padding: 1rem; }
+  .applications-admin > header > div { align-items: stretch; flex-direction: column; }
+  .applications-export { justify-content: center; width: 100%; }
+  .application-card dl { grid-template-columns: 1fr 1fr; }
+}
+
 .field-error, .error-message { color: #b42318; font-size: .9rem; font-weight: 700; line-height: 1.4; }
 .banner--type-error { border-left: 5px solid #d92d20; font-size: 1rem; line-height: 1.5; }
 .field-description { line-height: 1.45; }

@@ -230,6 +230,26 @@ test.describe("mobile", () => {
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });
 
+  test("participant application is clear and keeps its mobile layout", async ({ page }) => {
+    await page.route("**/api/applications", (route) => route.fulfill({ status: 201, json: { reference: "ZGL-TEST1234" } }));
+    await page.goto("/zgloszenie");
+    await page.getByRole("button", { name: "Wyślij zgłoszenie" }).click();
+    await expect(page.getByText("Wybierz termin lub ofertę.")).toBeVisible();
+    await page.getByLabel("Termin lub oferta").selectOption({ index: 1 });
+    await page.getByLabel("Imię").fill("Anna");
+    await page.getByLabel("Nazwisko").fill("Testowa");
+    await page.getByLabel("Data urodzenia").fill("2000-01-01");
+    await page.getByLabel("Telefon opiekuna lub uczestnika").fill("500 128 090");
+    await page.getByLabel("Adres zamieszkania i kod pocztowy").fill("Poręba, 43-200");
+    await page.getByLabel("E-mail kontaktowy").fill("anna@example.com");
+    await page.getByText("Wyrażam zgodę na przetwarzanie").click();
+    await page.getByText("Potwierdzam poprawność danych").click();
+    await page.getByRole("button", { name: "Wyślij zgłoszenie" }).click();
+    await expect(page.getByText(/ZGL-TEST1234/)).toBeVisible();
+    const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
+    expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
+  });
+
   test("footer renders no limits as responsive text", async ({ page }) => {
     await page.goto("/kontakt");
     const slogan = page.getByText("no limits...");
