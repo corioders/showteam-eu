@@ -21,7 +21,11 @@ export function ApplicationsAdminView() {
   useEffect(() => {
     const controller = new AbortController();
     fetch("/api/admin/applications", { cache: "no-store", signal: controller.signal })
-      .then(async (response) => { if (!response.ok) throw new Error(); setData(await response.json() as Data); })
+      .then(async (response) => {
+        if (response.status === 401) { window.location.assign("/admin/login?redirect=/admin/zgloszenia"); return; }
+        if (!response.ok) throw new Error();
+        setData(await response.json() as Data);
+      })
       .catch((requestError) => { if (requestError.name !== "AbortError") setError("Nie udało się pobrać zgłoszeń. Odśwież stronę."); });
     return () => controller.abort();
   }, []);
