@@ -15,7 +15,17 @@ type CalendarEvent = { id: string; title: string; start: string; end: string; ex
 export function OperationsCalendar({ tv = false }: { tv?: boolean }) {
   const calendarRef = useRef<FullCalendar>(null);
   const [selected, setSelected] = useState<CalendarEvent | null>(null);
-  const initialView = tv || (typeof window !== "undefined" && window.innerWidth < 700) ? "listUpcoming" : "timeGridWeek";
+  const [compact, setCompact] = useState<boolean | null>(tv ? true : null);
+
+  useEffect(() => {
+    if (!tv) {
+      const media = window.matchMedia("(max-width: 700px)");
+      const update = () => setCompact(media.matches);
+      update();
+      media.addEventListener("change", update);
+      return () => media.removeEventListener("change", update);
+    }
+  }, [tv]);
 
   useEffect(() => {
     const timer = window.setInterval(() => calendarRef.current?.getApi().refetchEvents(), 30_000);
@@ -31,13 +41,15 @@ export function OperationsCalendar({ tv = false }: { tv?: boolean }) {
     } catch (error) { failure(error as Error); }
   }
 
+  if (compact === null) return <p className={styles.loading}>Ładuję kalendarz…</p>;
+
   return (
     <div className={`${styles.calendar} ${tv ? styles.calendarTv : ""}`}>
-      <FullCalendar ref={calendarRef} plugins={[dayGridPlugin, timeGridPlugin, listPlugin]} locale={plLocale} initialView={initialView} events={events}
+      <FullCalendar key={compact ? "compact" : "desktop"} ref={calendarRef} plugins={[dayGridPlugin, timeGridPlugin, listPlugin]} locale={plLocale} initialView={compact ? "listUpcoming" : "timeGridWeek"} events={events}
         firstDay={1} allDaySlot={false} nowIndicator height={tv ? "calc(100vh - 8rem)" : "auto"} slotMinTime="07:00:00" slotMaxTime="22:00:00"
-        views={{ listUpcoming: { type: "list", duration: { days: 365 }, buttonText: "Lista" } }}
+        views={{ listUpcoming: { type: "list", duration: { days: tv ? 365 : 31 }, buttonText: "Lista" } }}
         eventOrder="start"
-        headerToolbar={{ left: "prev,next today", center: "title", right: "timeGridDay,timeGridWeek,dayGridMonth,listUpcoming" }}
+        headerToolbar={{ left: "prev,next today", center: "title", right: compact ? "listUpcoming" : "timeGridDay,timeGridWeek,dayGridMonth,listUpcoming" }}
         buttonText={{ today: "Dziś", day: "Dzień", week: "Tydzień", month: "Miesiąc", list: "Lista" }}
         eventClick={(info) => setSelected(info.event.toPlainObject() as CalendarEvent)} eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }} />
       {selected && <div className={styles.overlay} onClick={() => setSelected(null)}>
