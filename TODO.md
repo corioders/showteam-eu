@@ -4,6 +4,15 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## W toku
 
+- [ ] Google Calendar zamiast iCal:
+  - [x] Usunąć prywatne feedy ICS i ich ekran.
+  - [x] Połączyć jedno konto Google przez OAuth z zaszyfrowanym tokenem.
+  - [x] Wysyłać rezerwacje do Google Calendar bez duplikatów.
+  - [x] Pobierać ręczne wpisy Google do kalendarza bazy i TV.
+  - [x] Pokazać blokady wynajmu, wyjątki godzin i plany Google różnymi kolorami.
+  - [ ] Dodać produkcyjne dane OAuth Google i wykonać pierwsze połączenie konta.
+  - [ ] Zweryfikować synchronizację na telefonie i ekranie TV po podłączeniu konta.
+
 - [x] Ułatwić publiczne zgłoszenia uczestników:
   - [x] Pracować w osobnym worktree na branchu `feat/application-form-visibility`.
   - [x] Pokazać wyraźny link „Zgłoszenie” w nagłówku i menu mobilnym.
