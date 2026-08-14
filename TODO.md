@@ -4,6 +4,8 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## W toku
 
+- [x] Uporządkować formularz „Jedziesz z nami”: pokazywać tylko pytania mające sens dla wybranej kategorii; przy Szkoleniach nie pytać o dyscyplinę ani poziom.
+
 - [ ] Google Calendar zamiast iCal:
   - [x] Usunąć prywatne feedy ICS i ich ekran.
   - [x] Połączyć jedno konto Google przez OAuth z zaszyfrowanym tokenem.

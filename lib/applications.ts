@@ -2,6 +2,16 @@ export const applicationDisciplines = ["Narty", "Snowboard", "Sporty wodne", "In
 export const applicationLevels = ["Od podstaw", "Doskonalenie", "Jazda sportowa"] as const;
 export const applicationTransport = ["Tak", "Nie", "Nie dotyczy"] as const;
 
+export function applicationDisciplinesForCategory(category: string): readonly (typeof applicationDisciplines)[number][] {
+  if (category === "Lato") return ["Sporty wodne", "Inne"];
+  if (category === "Zima") return ["Narty", "Snowboard", "Inne"];
+  return [];
+}
+
+export function applicationHasSportDetails(category: string): boolean {
+  return category === "Lato" || category === "Zima";
+}
+
 export function applicationReference(id: string) {
   return `ZGL-${id.replaceAll("-", "").slice(0, 8).toUpperCase()}`;
 }

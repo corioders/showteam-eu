@@ -3,7 +3,7 @@
 import { CheckCircle2, LoaderCircle, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { applicationCategories, type ApplicationCategory, type ApplicationOfferGroup } from "@/lib/application-options";
-import { applicationDisciplines, applicationLevels, applicationTransport } from "@/lib/applications";
+import { applicationDisciplinesForCategory, applicationHasSportDetails, applicationLevels, applicationTransport } from "@/lib/applications";
 
 type Values = {
   category: ApplicationCategory | ""; offer: string; firstName: string; lastName: string; birthDate: string; address: string;
@@ -14,6 +14,12 @@ type Field = keyof Values;
 type Errors = Partial<Record<Field, string>>;
 const draftKey = "showteam:application-draft:v1";
 const empty: Values = { category: "", offer: "", firstName: "", lastName: "", birthDate: "", address: "", email: "", participantEmail: "", phone: "", discipline: "", level: "", transport: "", notes: "", privacyConsent: false, accuracyConfirmed: false, newsletterConsent: false };
+
+function onlyApplicableDetails(values: Values): Values {
+  if (values.category === "Szkolenia") return { ...values, discipline: "", level: "", transport: "" };
+  if (values.category === "Lato") return { ...values, transport: "" };
+  return values;
+}
 
 export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationOfferGroup[]; initialOffer?: string }) {
   const initialGroup = initialOffer ? groups.find((group) => group.offers.some((offer) => offer.title === initialOffer)) : undefined;
@@ -34,7 +40,7 @@ export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationO
         const draft = JSON.parse(window.localStorage.getItem(draftKey) || "null") as Partial<Values> | null;
         if (draft) {
           const draftCategory = draft.category || groups.find((group) => group.offers.some((offer) => draft.offer?.startsWith(`${offer.title} —`)))?.category || "";
-          setValues({ ...empty, ...draft, category: initialGroup?.category || draftCategory, offer: initialOfferValue || draft.offer || "" });
+          setValues(onlyApplicableDetails({ ...empty, ...draft, category: initialGroup?.category || draftCategory, offer: initialOfferValue || draft.offer || "" }));
         }
       } catch { window.localStorage.removeItem(draftKey); }
       setReady(true);
@@ -82,7 +88,7 @@ export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationO
     setStatus("saving");
     setMessage("Zapisuję zgłoszenie…");
     try {
-      const response = await fetch("/api/applications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...values, website: "" }) });
+      const response = await fetch("/api/applications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...onlyApplicableDetails(values), website: "" }) });
       const body = await response.json() as { reference?: string; field?: Field; error?: string };
       if (!response.ok) {
         if (body.field) setErrors({ [body.field]: body.error || "Popraw to pole." });
@@ -110,11 +116,13 @@ export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationO
   }
 
   function selectCategory(category: ApplicationCategory) {
-    setValues((current) => ({ ...current, category, offer: "", transport: category === "Zima" ? current.transport : "" }));
-    setErrors((current) => ({ ...current, category: undefined, offer: undefined, transport: undefined }));
+    setValues((current) => ({ ...current, category, offer: "", discipline: "", level: "", transport: "" }));
+    setErrors((current) => ({ ...current, category: undefined, offer: undefined, discipline: undefined, level: undefined, transport: undefined }));
   }
 
   const selectedGroup = groups.find((group) => group.category === values.category);
+  const showSportDetails = applicationHasSportDetails(values.category);
+  const disciplineOptions = applicationDisciplinesForCategory(values.category);
   const options = selectedGroup?.offers.flatMap((offer) => offer.dates.length
     ? offer.dates.map((date) => `${offer.title} — ${date}`)
     : [`${offer.title} — termin do ustalenia`]) ?? [];
@@ -137,9 +145,9 @@ export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationO
       <label data-error={Boolean(errors.email)} className="block font-bold">E-mail kontaktowy<input {...text("email")} type="email" inputMode="email" autoComplete="email" className={inputClass("email")} />{error("email")}</label>
       <label data-error={Boolean(errors.participantEmail)} className="block font-bold">E-mail uczestnika <span className="font-normal text-white/35">(opcjonalnie)</span><input {...text("participantEmail")} type="email" inputMode="email" className={inputClass("participantEmail")} />{error("participantEmail")}</label>
     </div></section>
-    <section className="border border-white/15 bg-white/[.025] p-5 sm:p-8"><span className="eyebrow">03 · Szczegóły</span><div className="mt-5 grid gap-5 sm:grid-cols-3">
-      <label className="block font-bold">Dyscyplina<select {...text("discipline")} className={inputClass("discipline")}><option value="" className="text-black">Nie dotyczy</option>{applicationDisciplines.map((value) => <option key={value} className="text-black">{value}</option>)}</select></label>
-      <label className="block font-bold">Poziom<select {...text("level")} className={inputClass("level")}><option value="" className="text-black">Nie dotyczy</option>{applicationLevels.map((value) => <option key={value} className="text-black">{value}</option>)}</select></label>
+    <section className="border border-white/15 bg-white/[.025] p-5 sm:p-8"><span className="eyebrow">03 · Dodatkowe informacje</span><div className="mt-5 grid gap-5 sm:grid-cols-3">
+      {showSportDetails ? <label className="block font-bold">Dyscyplina <span className="font-normal text-white/35">(opcjonalnie)</span><select {...text("discipline")} className={inputClass("discipline")}><option value="" className="text-black">Nie wybieram</option>{disciplineOptions.map((value) => <option key={value} className="text-black">{value}</option>)}</select></label> : null}
+      {showSportDetails ? <label className="block font-bold">Poziom <span className="font-normal text-white/35">(opcjonalnie)</span><select {...text("level")} className={inputClass("level")}><option value="" className="text-black">Nie wybieram</option>{applicationLevels.map((value) => <option key={value} className="text-black">{value}</option>)}</select></label> : null}
       {values.category === "Zima" ? <label className="block font-bold">Transport autokarem<select {...text("transport")} className={inputClass("transport")}><option value="" className="text-black">Wybierz…</option>{applicationTransport.map((value) => <option key={value} className="text-black">{value}</option>)}</select></label> : null}
       <label className="block font-bold sm:col-span-3">Uwagi <span className="font-normal text-white/35">(opcjonalnie)</span><textarea {...text("notes")} rows={5} maxLength={2000} className={inputClass("notes")} /></label>
     </div></section>

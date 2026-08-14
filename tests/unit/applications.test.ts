@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applicationAge, applicationReference, csvCell, normalizeEmail, participantIdentity, safeSpreadsheetCell } from "../../lib/applications";
+import { applicationAge, applicationDisciplinesForCategory, applicationHasSportDetails, applicationReference, csvCell, normalizeEmail, participantIdentity, safeSpreadsheetCell } from "../../lib/applications";
 
 describe("application exports", () => {
   it("creates short readable references", () => {
@@ -28,5 +28,12 @@ describe("application exports", () => {
     const first = participantIdentity({ email: "rodzic@example.com", participantName: "Jan Kowalski", birthDate: "2010-01-02" });
     const second = participantIdentity({ email: "rodzic@example.com", participantName: "Anna Kowalska", birthDate: "2012-03-04" });
     expect(first).not.toBe(second);
+  });
+
+  it("only asks for sport details when they apply", () => {
+    expect(applicationDisciplinesForCategory("Lato")).toEqual(["Sporty wodne", "Inne"]);
+    expect(applicationDisciplinesForCategory("Zima")).toEqual(["Narty", "Snowboard", "Inne"]);
+    expect(applicationDisciplinesForCategory("Szkolenia")).toEqual([]);
+    expect(applicationHasSportDetails("Szkolenia")).toBe(false);
   });
 });

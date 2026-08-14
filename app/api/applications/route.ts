@@ -1,6 +1,7 @@
 import { getPayload } from "payload";
 import config, { database } from "@payload-config";
-import { applicationDisciplines, applicationLevels, applicationReference, applicationTransport, normalizeEmail, participantIdentity } from "@/lib/applications";
+import { applicationDisciplinesForCategory, applicationHasSportDetails, applicationLevels, applicationReference, applicationTransport, normalizeEmail, participantIdentity } from "@/lib/applications";
+import { applicationCategories, type ApplicationCategory } from "@/lib/application-options";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 type ApplicationInput = Record<string, unknown>;
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
   catch { return Response.json({ error: "Nie udało się odczytać formularza. Odśwież stronę i spróbuj ponownie." }, { status: 400 }); }
   if (input.website) return Response.json({ error: "Nie udało się wysłać zgłoszenia." }, { status: 400 });
 
+  const category = string(input, "category", 20);
   const offer = string(input, "offer", 200);
   const firstName = string(input, "firstName", 80);
   const lastName = string(input, "lastName", 100);
@@ -30,6 +32,8 @@ export async function POST(request: Request) {
   const transport = string(input, "transport", 40);
   const notes = string(input, "notes", 2000);
 
+  if (!applicationCategories.some((value) => value === category)) return Response.json({ field: "category", error: "Wybierz rodzaj wyjazdu." }, { status: 400 });
+  const applicationCategory = category as ApplicationCategory;
   const required = { offer, firstName, lastName, birthDate, address, email, phone };
   const missing = Object.entries(required).find(([, value]) => value.length < 2)?.[0];
   if (missing) return Response.json({ field: missing, error: "Uzupełnij to pole." }, { status: 400 });
@@ -37,15 +41,17 @@ export async function POST(request: Request) {
   if (!/^\S+@\S+\.\S+$/.test(email)) return Response.json({ field: "email", error: "Wpisz poprawny adres e-mail." }, { status: 400 });
   if (participantEmail && !/^\S+@\S+\.\S+$/.test(participantEmail)) return Response.json({ field: "participantEmail", error: "Wpisz poprawny adres e-mail uczestnika." }, { status: 400 });
   if (phone.replace(/\D/g, "").length < 9) return Response.json({ field: "phone", error: "Wpisz poprawny numer telefonu." }, { status: 400 });
-  if (discipline && !applicationDisciplines.includes(discipline as typeof applicationDisciplines[number])) return Response.json({ field: "discipline", error: "Wybierz poprawną dyscyplinę." }, { status: 400 });
-  if (level && !applicationLevels.includes(level as typeof applicationLevels[number])) return Response.json({ field: "level", error: "Wybierz poprawny poziom." }, { status: 400 });
-  if (transport && !applicationTransport.includes(transport as typeof applicationTransport[number])) return Response.json({ field: "transport", error: "Wybierz poprawną odpowiedź." }, { status: 400 });
+  const sportDetails = applicationHasSportDetails(applicationCategory);
+  const allowedDisciplines = applicationDisciplinesForCategory(applicationCategory);
+  if (discipline && (!sportDetails || !allowedDisciplines.some((value) => value === discipline))) return Response.json({ field: "discipline", error: "Wybierz dyscyplinę pasującą do wyjazdu." }, { status: 400 });
+  if (level && (!sportDetails || !applicationLevels.includes(level as typeof applicationLevels[number]))) return Response.json({ field: "level", error: "Wybierz poprawny poziom." }, { status: 400 });
+  if (transport && (applicationCategory !== "Zima" || !applicationTransport.includes(transport as typeof applicationTransport[number]))) return Response.json({ field: "transport", error: "Wybierz poprawną odpowiedź." }, { status: 400 });
   if (input.privacyConsent !== true) return Response.json({ field: "privacyConsent", error: "Zgoda jest potrzebna, aby przyjąć zgłoszenie." }, { status: 400 });
   if (input.accuracyConfirmed !== true) return Response.json({ field: "accuracyConfirmed", error: "Potwierdź poprawność danych." }, { status: 400 });
 
-  const disciplineValue = discipline ? discipline as typeof applicationDisciplines[number] : undefined;
-  const levelValue = level ? level as typeof applicationLevels[number] : undefined;
-  const transportValue = transport ? transport as typeof applicationTransport[number] : undefined;
+  const disciplineValue = sportDetails && discipline ? discipline as typeof allowedDisciplines[number] : undefined;
+  const levelValue = sportDetails && level ? level as typeof applicationLevels[number] : undefined;
+  const transportValue = applicationCategory === "Zima" && transport ? transport as typeof applicationTransport[number] : undefined;
   const participantName = `${firstName} ${lastName}`;
   const newsletterConsent = input.newsletterConsent === true;
 

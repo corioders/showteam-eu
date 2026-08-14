@@ -286,8 +286,15 @@ test.describe("mobile", () => {
     await expect(page.getByText("Wybierz rodzaj wyjazdu.")).toBeVisible();
     await page.getByRole("button", { name: "Zima", exact: true }).click();
     await expect(page.getByLabel("Transport autokarem")).toBeVisible();
+    expect(await page.getByLabel(/Dyscyplina/).locator("option").allTextContents()).not.toContain("Sporty wodne");
     await page.getByRole("button", { name: "Lato", exact: true }).click();
     await expect(page.getByLabel("Transport autokarem")).toHaveCount(0);
+    expect(await page.getByLabel(/Dyscyplina/).locator("option").allTextContents()).not.toContain("Narty");
+    expect(await page.getByLabel(/Dyscyplina/).locator("option").allTextContents()).not.toContain("Snowboard");
+    await page.getByRole("button", { name: "Szkolenia", exact: true }).click();
+    await expect(page.getByLabel(/Dyscyplina/)).toHaveCount(0);
+    await expect(page.getByLabel(/Poziom/)).toHaveCount(0);
+    await page.getByRole("button", { name: "Lato", exact: true }).click();
     await page.getByLabel("Następnie wybierz termin").selectOption({ index: 1 });
     await page.getByLabel("Imię").fill("Anna");
     await page.getByLabel("Nazwisko").fill("Testowa");
