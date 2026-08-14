@@ -8,6 +8,7 @@ import { r2Storage } from "@payloadcms/storage-r2";
 import { buildConfig } from "payload";
 import { pl } from "@payloadcms/translations/languages/pl";
 import { Analytics } from "@/collections/Analytics";
+import { Applications } from "@/collections/Applications";
 import { createBookingsCollection } from "@/collections/Bookings";
 import { Equipment } from "@/collections/Equipment";
 import { Events } from "@/collections/Events";
@@ -75,7 +76,7 @@ export default buildConfig({
       },
     },
   },
-  collections: [Events, Offers, Gallery, Equipment, createBookingsCollection(database), Analytics, Media, Users],
+  collections: [Events, Offers, Gallery, Equipment, createBookingsCollection(database), Applications, Analytics, Media, Users],
   i18n: { supportedLanguages: { pl: showteamPolish }, fallbackLanguage: "pl" },
   telemetry: false,
   graphQL: { disable: true },

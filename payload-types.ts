@@ -72,6 +72,7 @@ export interface Config {
     gallery: Gallery;
     equipment: Equipment;
     bookings: Booking;
+    applications: Application;
     analytics: Analytics;
     media: Media;
     users: User;
@@ -87,6 +88,7 @@ export interface Config {
     gallery: GallerySelect<false> | GallerySelect<true>;
     equipment: EquipmentSelect<false> | EquipmentSelect<true>;
     bookings: BookingsSelect<false> | BookingsSelect<true>;
+    applications: ApplicationsSelect<false> | ApplicationsSelect<true>;
     analytics: AnalyticsSelect<false> | AnalyticsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -345,6 +347,33 @@ export interface Booking {
   createdAt: string;
 }
 /**
+ * Zgłoszenia wysłane przez formularz na stronie. E-maile potwierdzające zostaną podłączone później.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "applications".
+ */
+export interface Application {
+  id: number;
+  status: 'new' | 'contacted' | 'accepted' | 'cancelled';
+  staffNotes?: string | null;
+  reference: string;
+  offer: string;
+  participantName: string;
+  birthDate: string;
+  address: string;
+  email: string;
+  participantEmail?: string | null;
+  phone: string;
+  discipline?: ('Narty' | 'Snowboard' | 'Sporty wodne' | 'Inne') | null;
+  level?: ('Od podstaw' | 'Doskonalenie' | 'Jazda sportowa') | null;
+  transport?: ('Tak' | 'Nie' | 'Nie dotyczy') | null;
+  notes?: string | null;
+  privacyConsent: boolean;
+  accuracyConfirmed: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Liczba wizyt w ostatnich 30 dniach. Bez cookies, adresów IP i danych osobowych. Starsze sumy są automatycznie usuwane.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -427,6 +456,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'bookings';
         value: number | Booking;
+      } | null)
+    | ({
+        relationTo: 'applications';
+        value: number | Application;
       } | null)
     | ({
         relationTo: 'analytics';
@@ -595,6 +628,30 @@ export interface BookingsSelect<T extends boolean = true> {
   email?: T;
   customerNotes?: T;
   source?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "applications_select".
+ */
+export interface ApplicationsSelect<T extends boolean = true> {
+  status?: T;
+  staffNotes?: T;
+  reference?: T;
+  offer?: T;
+  participantName?: T;
+  birthDate?: T;
+  address?: T;
+  email?: T;
+  participantEmail?: T;
+  phone?: T;
+  discipline?: T;
+  level?: T;
+  transport?: T;
+  notes?: T;
+  privacyConsent?: T;
+  accuracyConfirmed?: T;
   updatedAt?: T;
   createdAt?: T;
 }

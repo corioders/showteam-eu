@@ -8,6 +8,7 @@ import * as migration_20260813_193000_tv_devices from './20260813_193000_tv_devi
 import * as migration_20260813_210000_calendar_feeds from './20260813_210000_calendar_feeds';
 import * as migration_20260813_214000_availability_blocks from './20260813_214000_availability_blocks';
 import * as migration_20260813_220000_availability_hours from './20260813_220000_availability_hours';
+import * as migration_20260814_010333_applications from './20260814_010333_applications';
 
 export const migrations = [
   {
@@ -33,31 +34,36 @@ export const migrations = [
   {
     up: migration_20260813_140933_reservations.up,
     down: migration_20260813_140933_reservations.down,
-    name: '20260813_140933_reservations'
+    name: '20260813_140933_reservations',
   },
   {
     up: migration_20260813_190000_waterfront_stays.up,
     down: migration_20260813_190000_waterfront_stays.down,
-    name: '20260813_190000_waterfront_stays'
+    name: '20260813_190000_waterfront_stays',
   },
   {
     up: migration_20260813_193000_tv_devices.up,
     down: migration_20260813_193000_tv_devices.down,
-    name: '20260813_193000_tv_devices'
+    name: '20260813_193000_tv_devices',
   },
   {
     up: migration_20260813_210000_calendar_feeds.up,
     down: migration_20260813_210000_calendar_feeds.down,
-    name: '20260813_210000_calendar_feeds'
+    name: '20260813_210000_calendar_feeds',
   },
   {
     up: migration_20260813_214000_availability_blocks.up,
     down: migration_20260813_214000_availability_blocks.down,
-    name: '20260813_214000_availability_blocks'
+    name: '20260813_214000_availability_blocks',
   },
   {
     up: migration_20260813_220000_availability_hours.up,
     down: migration_20260813_220000_availability_hours.down,
-    name: '20260813_220000_availability_hours'
+    name: '20260813_220000_availability_hours',
+  },
+  {
+    up: migration_20260814_010333_applications.up,
+    down: migration_20260814_010333_applications.down,
+    name: '20260814_010333_applications'
   },
 ];

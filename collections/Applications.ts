@@ -1,0 +1,46 @@
+import type { CollectionConfig } from "payload";
+
+const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
+
+export const Applications: CollectionConfig = {
+  slug: "applications",
+  labels: { singular: "Zgłoszenie", plural: "Zgłoszenia uczestników" },
+  admin: {
+    hideAPIURL: true,
+    useAsTitle: "reference",
+    group: "Zgłoszenia",
+    defaultColumns: ["createdAt", "participantName", "offer", "status"],
+    description: "Zgłoszenia wysłane przez formularz na stronie. E-maile potwierdzające zostaną podłączone później.",
+  },
+  access: { read: isLoggedIn, create: () => false, update: isLoggedIn, delete: isLoggedIn },
+  defaultSort: "-createdAt",
+  fields: [
+    { name: "status", label: "Status", type: "select", required: true, defaultValue: "new", options: [
+      { label: "Nowe — wymaga kontaktu", value: "new" },
+      { label: "Skontaktowano się", value: "contacted" },
+      { label: "Przyjęte", value: "accepted" },
+      { label: "Anulowane", value: "cancelled" },
+    ] },
+    { name: "staffNotes", label: "Notatka dla obsługi", type: "textarea", maxLength: 1000 },
+    { type: "collapsible", label: "Dane przesłane przez uczestnika", admin: { initCollapsed: false }, fields: [
+      { name: "reference", label: "Numer zgłoszenia", type: "text", required: true, unique: true, admin: { readOnly: true } },
+      { name: "offer", label: "Wybrany termin lub oferta", type: "text", required: true, admin: { readOnly: true } },
+      { name: "participantName", label: "Imię i nazwisko uczestnika", type: "text", required: true, admin: { readOnly: true } },
+      { name: "birthDate", label: "Data urodzenia", type: "date", required: true, admin: { readOnly: true, date: { pickerAppearance: "dayOnly", displayFormat: "dd.MM.yyyy" } } },
+      { name: "address", label: "Adres zamieszkania i kod pocztowy", type: "textarea", required: true, admin: { readOnly: true } },
+      { type: "row", fields: [
+        { name: "email", label: "E-mail kontaktowy", type: "email", required: true, admin: { readOnly: true } },
+        { name: "participantEmail", label: "E-mail uczestnika", type: "email", admin: { readOnly: true } },
+      ] },
+      { name: "phone", label: "Telefon opiekuna lub uczestnika", type: "text", required: true, admin: { readOnly: true } },
+      { type: "row", fields: [
+        { name: "discipline", label: "Dyscyplina", type: "select", options: ["Narty", "Snowboard", "Sporty wodne", "Inne"], admin: { readOnly: true } },
+        { name: "level", label: "Poziom", type: "select", options: ["Od podstaw", "Doskonalenie", "Jazda sportowa"], admin: { readOnly: true } },
+        { name: "transport", label: "Transport", type: "select", options: ["Tak", "Nie", "Nie dotyczy"], admin: { readOnly: true } },
+      ] },
+      { name: "notes", label: "Uwagi", type: "textarea", maxLength: 2000, admin: { readOnly: true } },
+      { name: "privacyConsent", label: "Zgoda na przetwarzanie danych", type: "checkbox", required: true, admin: { readOnly: true } },
+      { name: "accuracyConfirmed", label: "Potwierdzenie poprawności danych i pełnoletności/opiekuna", type: "checkbox", required: true, admin: { readOnly: true } },
+    ] },
+  ],
+};

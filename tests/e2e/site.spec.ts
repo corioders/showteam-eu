@@ -103,6 +103,11 @@ test("booking statistics stay private", async ({ request }) => {
   expect(response.status()).toBe(401);
 });
 
+test("application administration and export stay private", async ({ request }) => {
+  expect((await request.get("/api/admin/applications")).status()).toBe(401);
+  expect((await request.get("/api/admin/applications/export")).status()).toBe(401);
+});
+
 test("availability block management stays private", async ({ request }) => {
   expect((await request.get("/api/admin/availability-blocks")).status()).toBe(401);
   expect((await request.post("/api/admin/availability-blocks", { data: {} })).status()).toBe(401);
