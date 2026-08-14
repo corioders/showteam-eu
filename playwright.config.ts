@@ -18,7 +18,7 @@ export default defineConfig({
   webServer: externalBaseUrl ? undefined : {
     command: "pnpm dev",
     url: "http://localhost:3000",
-    reuseExistingServer: true,
+    reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
