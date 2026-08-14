@@ -51,22 +51,6 @@ export default async function Home() {
         </div>
       </div>
 
-      <section className="border-b border-white/10 bg-black py-10 md:py-16">
-        <div className="site-container">
-          <video
-            controls
-            playsInline
-            preload="metadata"
-            poster="/media/showteam-showreel-poster.jpg"
-            className="poster-cut aspect-video w-full bg-black object-cover"
-            aria-label="Film promocyjny SHOWteam"
-          >
-            <source src="/media/showteam-showreel.mp4" type="video/mp4" />
-            Twoja przeglądarka nie obsługuje odtwarzania wideo.
-          </video>
-        </div>
-      </section>
-
       <section className="relative isolate overflow-hidden border-b border-red-950 bg-black py-10">
         <Image src="/media/legacy-light-trails-top.jpg" alt="" fill className="-z-10 object-contain object-center opacity-75 sm:object-cover" sizes="100vw" />
         <div className="site-container flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
