@@ -53,6 +53,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## Ukończone
 
+- [x] Dodać pełny film promocyjny SHOWteam z muzyką na stronie głównej.
 - [x] Każdy ekran CMS ma wyraźny przycisk „Wróć do panelu”; wspólny dla Payload i ujednolicony na `/a/*`.
 - [x] Client-side navigation i prefetch w navbarze.
 - [x] OpenNext ISR: R2 cache bez timera, unieważnianie po zmianach CMS przez D1 tag cache.
