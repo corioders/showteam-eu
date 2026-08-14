@@ -136,7 +136,7 @@ function EventForm({ userName }: { userName: string }) {
             <p className="mt-5 whitespace-pre-line text-sm leading-6 text-white/55">{previewData.summary}</p>
           </div>
         </div>
-        <p className="mt-3 text-xs leading-5 text-white/35">To przybliżony wygląd karty wydarzenia. Na szerokim ekranie podgląd zostaje obok formularza, na telefonie jest pod nim.</p>
+        <p className="mt-3 text-xs leading-5 text-white/35">To przybliżony wygląd karty wydarzenia.</p>
       </aside>
       </div>
     </div>
