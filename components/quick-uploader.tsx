@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AdminSessionGate } from "@/components/admin-session-gate";
 
 const MAX_TOTAL_BYTES = 80 * 1024 * 1024;
-const MAX_IMAGE_EDGE = 2400;
+const IMAGE_VARIANTS = [{ key: "small", edge: 640, quality: 0.78 }, { key: "medium", edge: 1280, quality: 0.84 }, { key: "large", edge: 2560, quality: 0.9 }] as const;
 const categories = ["Lato", "Zima", "Szkolenia"] as const;
 type UploadItem = { id: string; file: File; focalX: number; focalY: number };
 
@@ -49,7 +49,14 @@ function QuickUploaderForm({ userName }: { userName: string }) {
       const body = new FormData();
       for (const [index, item] of items.entries()) {
         setMessage(`Przygotowuję ${index + 1} z ${items.length}…`);
-        body.append("files", await resizePhoto(item.file));
+        if (item.file.type.startsWith("image/")) {
+          const variants = await createPhotoVariants(item.file);
+          body.append("files", variants.large);
+          body.append(`small-${index}`, variants.small);
+          body.append(`medium-${index}`, variants.medium);
+        } else {
+          body.append("files", item.file);
+        }
       }
       body.set("category", category);
       body.set("caption", caption.trim());
@@ -79,13 +86,13 @@ function QuickUploaderForm({ userName }: { userName: string }) {
 
         <p className="font-mono text-xs font-bold uppercase tracking-[.18em] text-orange-400">Szybkie dodawanie</p>
         <h1 className="font-display mt-3 text-5xl font-black uppercase leading-[.9]">Wrzuć z telefonu.</h1>
-        <p className="mt-4 text-sm leading-6 text-white/55">Zdjęcia i krótkie filmy trafią od razu do Galerii. Zdjęcia zostaną bezpiecznie zmniejszone, żeby galeria działała szybko.</p>
+        <p className="mt-4 text-sm leading-6 text-white/55">Zdjęcia i krótkie filmy trafią od razu do Galerii. Uploader przygotuje lekkie WebP na telefon, tablet i duży ekran.</p>
 
-        <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif,video/mp4,video/webm,video/quicktime" multiple className="sr-only" onChange={(event) => choose(event.target.files)} />
+        <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime" multiple className="sr-only" onChange={(event) => choose(event.target.files)} />
         <button type="button" onClick={() => input.current?.click()} className="mt-7 flex min-h-44 w-full flex-col items-center justify-center gap-3 border-2 border-dashed border-orange-500/70 bg-orange-500/10 p-6 text-center transition active:scale-[.99]">
           <span className="grid size-14 place-items-center rounded-full bg-orange-500 text-black"><ImagePlus className="size-7" /></span>
           <strong className="text-lg">Wybierz zdjęcia lub filmy</strong>
-          <span className="text-xs text-white/45">JPG, PNG, WebP, MP4, MOV, WebM</span>
+          <span className="text-xs text-white/45">JPG, PNG, WebP, AVIF, MP4, MOV, WebM</span>
         </button>
 
         {previews.length ? <div className="mt-5 space-y-4">{previews.map(({ id, file, url, focalX, focalY }) => {
@@ -122,32 +129,25 @@ function QuickUploaderForm({ userName }: { userName: string }) {
   }
 }
 
-async function resizePhoto(file: File): Promise<File> {
-  if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
-  let bitmap: ImageBitmap;
+async function createPhotoVariants(file: File) {
+  const bitmap = await createImageBitmap(file);
   try {
-    bitmap = await createImageBitmap(file);
-  } catch {
-    return file;
-  }
-
-  const scale = Math.min(1, MAX_IMAGE_EDGE / Math.max(bitmap.width, bitmap.height));
-  if (scale === 1 && file.size < 4 * 1024 * 1024) {
+    const entries = await Promise.all(IMAGE_VARIANTS.map(async ({ key, edge, quality }) => [key, await renderWebP(bitmap, file, edge, quality)] as const));
+    return Object.fromEntries(entries) as Record<(typeof IMAGE_VARIANTS)[number]["key"], File>;
+  } finally {
     bitmap.close();
-    return file;
   }
+}
 
+async function renderWebP(bitmap: ImageBitmap, source: File, maxEdge: number, quality: number) {
+  const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(bitmap.width * scale);
   canvas.height = Math.round(bitmap.height * scale);
   const context = canvas.getContext("2d", { alpha: false });
-  if (!context) {
-    bitmap.close();
-    return file;
-  }
+  if (!context) throw new Error("Nie udało się przygotować zdjęcia. Wybierz je ponownie.");
   context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.86));
-  if (!blob) return file;
-  return new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp", lastModified: file.lastModified });
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+  if (!blob) throw new Error("Ta przeglądarka nie potrafi przygotować WebP. Zaktualizuj ją i spróbuj ponownie.");
+  return new File([blob], source.name.replace(/\.[^.]+$/, `-${maxEdge}.webp`), { type: "image/webp", lastModified: source.lastModified });
 }

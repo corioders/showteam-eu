@@ -268,10 +268,9 @@ export interface Offer {
  */
 export interface Gallery {
   id: number;
-  /**
-   * Wgraj materiał z telefonu. Dla wielu plików użyj przycisku „Dodaj zdjęcia lub filmy” na pulpicie.
-   */
   image?: (number | null) | Media;
+  responsiveSmall?: (number | null) | Media;
+  responsiveMedium?: (number | null) | Media;
   staticImage?:
     | (
         | 'summer-wake-aerial'
@@ -628,6 +627,8 @@ export interface OffersSelect<T extends boolean = true> {
  */
 export interface GallerySelect<T extends boolean = true> {
   image?: T;
+  responsiveSmall?: T;
+  responsiveMedium?: T;
   staticImage?: T;
   caption?: T;
   season?: T;

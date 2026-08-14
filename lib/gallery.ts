@@ -7,6 +7,8 @@ export { defaultMobileLayout, galleryLayoutClass, galleryMobileClass } from "@/l
 export type GalleryPhoto = {
   id: string;
   src: string;
+  smallSrc?: string;
+  mediumSrc?: string;
   alt: string;
   caption: string;
   sourceUrl?: string;
@@ -31,6 +33,8 @@ function staticPhotos(): GalleryPhoto[] {
 
 function toPhoto(document: Record<string, unknown>): GalleryPhoto | null {
   const media = document.image as { url?: string; alt?: string; focalX?: number; focalY?: number; mimeType?: string } | number | null | undefined;
+  const responsiveSmall = document.responsiveSmall as { url?: string } | number | null | undefined;
+  const responsiveMedium = document.responsiveMedium as { url?: string } | number | null | undefined;
   const fallback = findGalleryAsset(document.staticImage);
   const src = typeof media === "object" && media?.url ? media.url : fallback?.path;
   if (!src) return null;
@@ -45,6 +49,8 @@ function toPhoto(document: Record<string, unknown>): GalleryPhoto | null {
   return {
     id: String(document.id),
     src,
+    smallSrc: typeof responsiveSmall === "object" ? responsiveSmall?.url : undefined,
+    mediumSrc: typeof responsiveMedium === "object" ? responsiveMedium?.url : undefined,
     alt: String(document.alt || (typeof media === "object" && media?.alt) || fallback?.alt || document.caption || "SHOWteam"),
     caption: String(document.caption || "SHOWteam"),
     sourceUrl: typeof document.sourceUrl === "string" ? document.sourceUrl : undefined,

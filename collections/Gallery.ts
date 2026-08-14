@@ -18,7 +18,7 @@ export const Gallery: CollectionConfig = {
   },
   access: {
     read: ({ req }) => req.user ? true : { published: { equals: true } },
-    create: isLoggedIn,
+    create: () => false,
     update: isLoggedIn,
     delete: isLoggedIn,
   },
@@ -28,7 +28,9 @@ export const Gallery: CollectionConfig = {
   },
   defaultSort: "-createdAt",
   fields: [
-    { name: "image", label: "Zdjęcie lub film", type: "upload", relationTo: "media", admin: { description: "Wgraj materiał z telefonu. Dla wielu plików użyj przycisku „Dodaj zdjęcia lub filmy” na pulpicie." } },
+    { name: "image", label: "Zdjęcie lub film", type: "upload", relationTo: "media", access: { create: () => false, update: () => false }, admin: { hidden: true } },
+    { name: "responsiveSmall", label: "Wariant 640 px", type: "upload", relationTo: "media", access: { create: () => false, update: () => false }, admin: { hidden: true } },
+    { name: "responsiveMedium", label: "Wariant 1280 px", type: "upload", relationTo: "media", access: { create: () => false, update: () => false }, admin: { hidden: true } },
     {
       name: "staticImage",
       label: "Zdjęcie startowe SHOWteam",
