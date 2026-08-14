@@ -4,6 +4,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## W toku
 
+- [x] Rezerwacje zależne od warunków: edytowalne polecane godziny per sprzęt, prognoza wiatru Jeziora Łąckiego i jasna możliwość zamiany sprzętu.
 - [x] Naprawić mobilny nagłówek Payload na wszystkich ekranach edycji: tylko menu i logo, bez uciętych breadcrumbs/konta.
 - [x] Wydarzenia: zdjęcie obowiązkowe, brak zdjęcia domyślnego i brak publikacji rekordów bez zdjęcia.
 - [x] Własny prosty formularz „Dodaj wydarzenie”: jeden ekran, polskie etykiety, błędy przy polach, scroll do pierwszego błędu, zdjęcie obowiązkowe.
@@ -15,6 +16,9 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 - [x] Dodać widoczny przycisk „Wyczyść formularz” do własnych formularzy i formularzy Payload; musi usuwać także lokalnie zapisany draft.
 - [x] Formularz zgłoszeniowy wzorowany na obecnym SHOWteam: zapis do bazy, prosty ekran administracyjny i eksport do Excela. E-mail pozostaje wyłączony do późniejszej konfiguracji.
 - [ ] Po otrzymaniu docelowego formatu eksportu zmienić układ kolumn zgłoszeń; zapisane dane i formularz pozostają bez zmian.
+- [ ] Historia uczestnika: łączyć zgłoszenia po znormalizowanym e-mailu, pokazać wcześniejsze turnusy i oznaczenie „nowy” / „powracający”.
+- [ ] Kontakty newslettera: deduplikowana lista e-maili ze zgodą marketingową, filtrowanie i eksport; bez wysyłki do czasu podpięcia dostawcy poczty.
+- [ ] Statystyki zgłoszeń: nowi i powracający uczestnicy, liczba zgłoszeń/turnusów oraz najpopularniejsze oferty w czasie.
 
 ## Do weryfikacji po deployu
 
