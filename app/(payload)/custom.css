@@ -64,9 +64,9 @@
 .calendar-admin-tabs button { background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--theme-elevation-650); cursor: pointer; font-size: .9rem; font-weight: 700; min-height: 3rem; padding: .7rem 1rem; white-space: nowrap; }
 .calendar-admin-tabs button[aria-current="page"] { border-bottom-color: #e85200; color: var(--theme-text); }
 .calendar-admin-tabs button:focus-visible { outline: 2px solid #e85200; outline-offset: -2px; }
-.calendar-admin-frame { background: #080a0b; border: 0; display: block; height: max(46rem, calc(100vh - 16rem)); width: 100%; }
+.calendar-admin-calendar { background: #080a0b; color: white; min-width: 0; padding: 1rem; }
 .calendar-admin-settings { display: grid; gap: 1rem; }
-@media (max-width: 600px) { .calendar-admin-view { padding: 1rem; } .calendar-admin-heading { align-items: stretch; flex-direction: column; } }
+@media (max-width: 600px) { .calendar-admin-view { padding: 1rem; } .calendar-admin-heading { align-items: stretch; flex-direction: column; } .calendar-admin-calendar { margin-inline: -1rem; padding: 1rem; } }
 
 .availability-hours { background: var(--theme-elevation-50); border: 1px solid var(--theme-elevation-150); padding: 1.25rem; }
 .availability-hours__intro > span { color: #e85200; font-size: .7rem; font-weight: 800; letter-spacing: .18em; }
