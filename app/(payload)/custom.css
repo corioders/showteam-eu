@@ -35,7 +35,7 @@
   .dashboard .gutter { padding-left: .75rem; padding-right: .75rem; }
   .dashboard .app-header, .dashboard .app-header__wrapper, .dashboard .app-header__content { max-width: 100%; min-width: 0; overflow: hidden; }
   .dashboard .app-header__step-header, .dashboard .app-header__step-nav-wrapper { min-width: 0; }
-  .dashboard .app-header__account { flex: 0 0 auto; max-width: 2.75rem; overflow: hidden; }
+  .dashboard .app-header__account { display: none; }
   .admin-start { margin-bottom: 1rem; }
   .admin-start__heading { margin-bottom: .9rem; }
   .admin-start__heading > span { font-size: .62rem; letter-spacing: .14em; }
