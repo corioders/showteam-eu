@@ -21,6 +21,9 @@ export function AvailabilityBlocks({ onChange }: { onChange: () => void }) {
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
+  const [allDay, setAllDay] = useState(true);
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("18:00");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -70,9 +73,13 @@ export function AvailabilityBlocks({ onChange }: { onChange: () => void }) {
     <form onSubmit={(event) => void createBlock(event)}>
       <label><span>Co blokujesz?</span><select name="equipmentId" defaultValue="all"> <option value="all">Wszystkie sprzęty</option>{equipment.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
       <label><span>Data</span><input required name="bookingDate" type="date" min={today} defaultValue={today} /></label>
-      <label><span>Od</span><input required name="startTime" type="time" defaultValue="09:00" /></label>
-      <label><span>Do</span><input required name="endTime" type="time" defaultValue="10:00" /></label>
-      <label className="availability-blocks__reason"><span>Powód <small>(opcjonalnie)</small></span><input name="reason" maxLength={160} placeholder="Np. serwis sprzętu" /></label>
+      <label className="availability-blocks__all-day"><input type="checkbox" checked={allDay} onChange={(event) => setAllDay(event.target.checked)} /><span>Cały dzień</span></label>
+      <fieldset className="availability-blocks__times" disabled={allDay} aria-hidden={allDay}>
+        <label><span>Od</span><input required name="startTime" type="time" value={startTime} onChange={(event) => setStartTime(event.target.value)} /></label>
+        <label><span>Do</span><input required name="endTime" type="time" value={endTime} onChange={(event) => setEndTime(event.target.value)} /></label>
+      </fieldset>
+      {allDay ? <><input type="hidden" name="startTime" value="00:00" /><input type="hidden" name="endTime" value="23:59" /></> : null}
+      <label className="availability-blocks__reason"><span>Powód <small>(opcjonalnie)</small></span><input name="reason" maxLength={160} placeholder="Np. ekipy nie ma na bazie" /></label>
       <button type="submit" disabled={loading || working}><Ban aria-hidden="true" />{working ? "Blokuję…" : "Zablokuj termin"}</button>
     </form>
     {loading ? <p className="availability-blocks__status"><RefreshCw aria-hidden="true" /> Ładuję blokady…</p> : null}
