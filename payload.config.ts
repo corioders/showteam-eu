@@ -86,7 +86,7 @@ export default buildConfig({
   typescript: { outputFile: path.resolve(dirname, "payload-types.ts") },
   db: sqliteD1Adapter({ binding: cloudflare.env.D1, afterSchemaInit: [preserveOperationalTables] }),
   plugins: [r2Storage({ bucket: cloudflare.env.R2, collections: { media: true } })],
-  onInit: isProduction ? undefined : async (payload) => {
+  onInit: isProduction && process.env.SEED_CMS !== "true" ? undefined : async (payload) => {
     await seedOffers(payload);
     await seedGallery(payload);
     await seedEquipment(payload);
