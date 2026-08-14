@@ -7,15 +7,23 @@ describe("weather-aware booking recommendations", () => {
   });
 
   it("does not recommend windy weather for calm-water equipment", () => {
-    expect(recommendSlot({ time: "08:00", durationMinutes: 60, profile: "calm", windows: [{ start: "07:00", end: "09:00" }], forecast: { time: "2026-08-15T08:00", speedKmh: 22, gustKmh: 30 } })).toMatchObject({ recommended: false, level: "regular", basis: "forecast" });
+    expect(recommendSlot({ time: "08:00", durationMinutes: 60, profile: "calm", windows: [{ start: "07:00", end: "09:00" }], forecast: { time: "2026-08-15T08:00", speedKmh: 22, gustKmh: 30 } })).toMatchObject({ recommended: false, level: "poor", basis: "forecast", label: "Słaby warun" });
   });
 
   it("recommends wind for a catamaran even outside its typical window", () => {
-    expect(recommendSlot({ time: "19:00", durationMinutes: 60, profile: "wind", windows: [{ start: "09:00", end: "19:00" }], forecast: { time: "2026-08-15T19:00", speedKmh: 18, gustKmh: 24 } })).toMatchObject({ recommended: true, level: "good", basis: "forecast" });
+    expect(recommendSlot({ time: "19:00", durationMinutes: 60, profile: "wind", windows: [{ start: "09:00", end: "19:00" }], forecast: { time: "2026-08-15T19:00", speedKmh: 18, gustKmh: 24 } })).toMatchObject({ recommended: true, level: "medium", basis: "forecast" });
   });
 
   it("uses the crew's typical window when a long-range forecast does not exist", () => {
-    expect(recommendSlot({ time: "19:00", durationMinutes: 60, profile: "calm", windows: [{ start: "19:00", end: "21:00" }] })).toMatchObject({ recommended: true, basis: "typical" });
+    expect(recommendSlot({ time: "19:00", durationMinutes: 60, profile: "calm", windows: [{ start: "19:00", end: "21:00" }] })).toMatchObject({ recommended: true, level: "medium", basis: "typical", label: "Średni warun" });
+  });
+
+  it("marks very strong wind as professional for wind equipment", () => {
+    expect(recommendSlot({ time: "13:00", durationMinutes: 60, profile: "wind", windows: [{ start: "09:00", end: "19:00" }], forecast: { time: "2026-08-15T13:00", speedKmh: 28, gustKmh: 41 } })).toMatchObject({ recommended: false, level: "professional", label: "Warun profesjonalny" });
+  });
+
+  it("labels every slot for equipment that works in any weather", () => {
+    expect(recommendSlot({ time: "13:00", durationMinutes: 60, profile: "any", windows: [] })).toMatchObject({ recommended: true, level: "best", label: "Dobry w każdy warun" });
   });
 
   it("uses weather only up to seven days ahead", () => {

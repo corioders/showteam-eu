@@ -8,6 +8,7 @@ const equipment = [
   ["Windsurfing", "windsurfing", "Zestaw windsurfingowy dopasowany do warunków i poziomu.", "Woda"],
   ["Wing foil", "wing-foil", "Sprzęt wing foil dla osób z odpowiednim doświadczeniem.", "Woda"],
   ["Skuter wodny", "skuter-wodny", "Skuter wodny — szczegóły i wymagane uprawnienia potwierdza obsługa.", "Woda"],
+  ["Padel", "padel", "Kort i sprzęt do padla w bazie SHOWteam.", "Ląd"],
   ["Rower elektryczny", "rower-elektryczny", "E-bike na wycieczki po okolicy Poręby.", "Ląd"],
 ] as const;
 

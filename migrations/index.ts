@@ -15,6 +15,7 @@ import * as migration_20260814_142029_participant_history from './20260814_14202
 import * as migration_20260814_144815_gallery_responsive_images from './20260814_144815_gallery_responsive_images';
 import * as migration_20260814_190000_google_calendar from './20260814_190000_google_calendar';
 import * as migration_20260814_210000_copy_cleanup from './20260814_210000_copy_cleanup';
+import * as migration_20260814_220000_equipment_conditions from './20260814_220000_equipment_conditions';
 
 export const migrations = [
   {
@@ -101,5 +102,10 @@ export const migrations = [
     up: migration_20260814_210000_copy_cleanup.up,
     down: migration_20260814_210000_copy_cleanup.down,
     name: '20260814_210000_copy_cleanup'
+  },
+  {
+    up: migration_20260814_220000_equipment_conditions.up,
+    down: migration_20260814_220000_equipment_conditions.down,
+    name: '20260814_220000_equipment_conditions'
   },
 ];

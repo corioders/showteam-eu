@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
-type Slot = { time: string; available: number; recommendation?: { recommended: boolean; level: "best" | "good" | "regular"; basis: "forecast" | "typical" | "none"; label?: string; detail?: string; windKmh?: number; gustKmh?: number } };
+type Slot = { time: string; available: number; recommendation?: { recommended: boolean; level: "best" | "medium" | "poor" | "professional"; basis: "forecast" | "typical" | "none"; label?: string; detail?: string; windKmh?: number; gustKmh?: number } };
 type WindStatus = "forecast" | "outside-range" | "unavailable";
 type Result = { reference: string; equipment: string; date: string; time: string; endTime: string };
 
@@ -187,14 +187,21 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
 }
 
 function SlotPicker({ slots, selectedTime, onSelect }: { slots: Slot[]; selectedTime: string; onSelect: (time: string) => void }) {
-  const recommended = slots.filter((slot) => slot.recommendation?.recommended);
-  const regular = slots.filter((slot) => !slot.recommendation?.recommended);
-  return <div className="space-y-4">
-    {recommended.length ? <div><p className="mb-2 text-xs font-bold uppercase tracking-[.14em] text-sky-300">Polecane na ten warun</p><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{recommended.map((slot) => <SlotButton key={slot.time} slot={slot} selected={selectedTime === slot.time} onSelect={onSelect} />)}</div></div> : null}
-    {regular.length ? <div><p className="mb-2 text-xs font-bold uppercase tracking-[.14em] text-white/35">Pozostałe wolne</p><div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{regular.map((slot) => <SlotButton key={slot.time} slot={slot} selected={selectedTime === slot.time} onSelect={onSelect} />)}</div></div> : null}
+  return <div className="space-y-3">
+    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[.62rem] font-bold uppercase tracking-wider text-white/50" aria-label="Legenda warunków">
+      <span className="text-sky-300">● Najlepszy</span><span className="text-amber-300">● Średni</span><span className="text-red-300">● Słaby</span><span className="text-violet-300">● Profesjonalny</span>
+    </div>
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{slots.map((slot) => <SlotButton key={slot.time} slot={slot} selected={selectedTime === slot.time} onSelect={onSelect} />)}</div>
   </div>;
 }
 
 function SlotButton({ slot, selected, onSelect }: { slot: Slot; selected: boolean; onSelect: (time: string) => void }) {
-  return <button type="button" onClick={() => onSelect(slot.time)} data-recommended={slot.recommendation?.recommended || undefined} className={`min-h-12 border px-2 py-2 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${selected ? "border-orange-500 bg-orange-500 text-black" : slot.recommendation?.recommended ? "border-sky-400/60 bg-sky-400/10 hover:border-sky-300" : "border-white/15 hover:border-orange-500"}`}><span className="block">{slot.time}</span>{slot.recommendation?.recommended ? <span className={`mt-0.5 block text-[.58rem] uppercase tracking-wide ${selected ? "text-black/60" : "text-sky-300"}`}>{slot.recommendation.label}</span> : null}</button>;
+  const level = slot.recommendation?.level || "poor";
+  const colors = {
+    best: "border-sky-400/70 bg-sky-400/10 text-sky-300 hover:border-sky-300",
+    medium: "border-amber-400/60 bg-amber-400/10 text-amber-300 hover:border-amber-300",
+    poor: "border-red-400/45 bg-red-400/[.07] text-red-300 hover:border-red-300",
+    professional: "border-violet-400/60 bg-violet-400/10 text-violet-300 hover:border-violet-300",
+  } as const;
+  return <button type="button" onClick={() => onSelect(slot.time)} data-level={level} className={`min-h-14 border px-2 py-2 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${selected ? "border-orange-500 bg-orange-500 text-black" : colors[level]}`}><span className={`block ${selected ? "text-black" : "text-white"}`}>{slot.time}</span><span className={`mt-0.5 block text-[.58rem] uppercase tracking-wide ${selected ? "text-black/65" : ""}`}>{slot.recommendation?.label || "Słaby warun"}</span></button>;
 }

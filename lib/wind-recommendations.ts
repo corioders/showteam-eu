@@ -4,13 +4,16 @@ const lakeLatitude = 49.97635;
 const lakeLongitude = 18.87813;
 const calmMaximumKmh = 10;
 const windMinimumKmh = 12;
+const professionalWindKmh = 26;
+const professionalGustKmh = 38;
 const forecastRangeDays = 7;
 
 export type WindHour = { time: string; speedKmh: number; gustKmh: number };
 export type WindForecast = { status: "forecast" | "outside-range" | "unavailable"; hours: WindHour[] };
+export type RecommendationLevel = "best" | "medium" | "poor" | "professional";
 export type SlotRecommendation = {
   recommended: boolean;
-  level: "best" | "good" | "regular";
+  level: RecommendationLevel;
   basis: "forecast" | "typical" | "none";
   label?: string;
   detail?: string;
@@ -27,20 +30,32 @@ type RecommendInput = {
 };
 
 export function recommendSlot({ time, durationMinutes, profile, windows, forecast }: RecommendInput): SlotRecommendation {
-  if (profile === "any" && !windows.length) return { recommended: false, level: "regular", basis: "none" };
+  if (profile === "any") return {
+    recommended: true,
+    level: "best",
+    basis: forecast ? "forecast" : "none",
+    label: "Dobry w każdy warun",
+    detail: "Ten sprzęt nie wymaga konkretnego wiatru.",
+    windKmh: forecast?.speedKmh,
+    gustKmh: forecast?.gustKmh,
+  };
   const inPreferredWindow = !windows.length || windows.some((window) => timeRangesOverlap(time, endTime(time, durationMinutes), window.start, window.end));
 
   if (!forecast) {
     return inPreferredWindow
-      ? { recommended: true, level: "good", basis: "typical", label: "Zwykle dobry moment", detail: "Polecana godzina ustawiona przez ekipę SHOWteam." }
-      : { recommended: false, level: "regular", basis: "typical" };
+      ? { recommended: true, level: "medium", basis: "typical", label: "Średni warun", detail: "Zwykle dobra godzina ustawiona przez ekipę SHOWteam. Prognoza pojawi się bliżej terminu." }
+      : { recommended: false, level: "poor", basis: "typical", label: "Słaby warun", detail: "Poza godzinami zwykle polecanymi dla tego sprzętu." };
   }
 
-  const weatherMatches = profile === "any" || (profile === "calm" ? forecast.speedKmh <= calmMaximumKmh : forecast.speedKmh >= windMinimumKmh);
+  if (profile === "wind" && (forecast.speedKmh >= professionalWindKmh || forecast.gustKmh >= professionalGustKmh)) {
+    return { recommended: false, level: "professional", basis: "forecast", label: "Warun profesjonalny", detail: `Bardzo mocny wiatr: ${Math.round(forecast.speedKmh)} km/h, porywy ${Math.round(forecast.gustKmh)} km/h. Tylko dla doświadczonych.`, windKmh: forecast.speedKmh, gustKmh: forecast.gustKmh };
+  }
+
+  const weatherMatches = profile === "calm" ? forecast.speedKmh <= calmMaximumKmh : forecast.speedKmh >= windMinimumKmh;
   const condition = profile === "calm" ? "spokojna woda" : profile === "wind" ? "wiatr do żeglowania" : "warunki bez szczególnych wymagań";
   if (weatherMatches && inPreferredWindow) return { recommended: true, level: "best", basis: "forecast", label: "Najlepszy warun", detail: `Prognoza: ${condition}, wiatr ${Math.round(forecast.speedKmh)} km/h.`, windKmh: forecast.speedKmh, gustKmh: forecast.gustKmh };
-  if (weatherMatches) return { recommended: true, level: "good", basis: "forecast", label: "Dobry warun", detail: `Prognoza: ${condition}, wiatr ${Math.round(forecast.speedKmh)} km/h.`, windKmh: forecast.speedKmh, gustKmh: forecast.gustKmh };
-  return { recommended: false, level: "regular", basis: "forecast", detail: `Prognozowany wiatr: ${Math.round(forecast.speedKmh)} km/h.`, windKmh: forecast.speedKmh, gustKmh: forecast.gustKmh };
+  if (weatherMatches) return { recommended: true, level: "medium", basis: "forecast", label: "Średni warun", detail: `Prognoza: ${condition}, ale godzina jest poza zwykle polecanym zakresem.`, windKmh: forecast.speedKmh, gustKmh: forecast.gustKmh };
+  return { recommended: false, level: "poor", basis: "forecast", label: "Słaby warun", detail: `Warunki są słabsze dla tego sprzętu. Prognozowany wiatr: ${Math.round(forecast.speedKmh)} km/h.`, windKmh: forecast.speedKmh, gustKmh: forecast.gustKmh };
 }
 
 export function recommendationWindows(equipment: { recommendedStart1?: string | null; recommendedEnd1?: string | null; recommendedStart2?: string | null; recommendedEnd2?: string | null }) {
