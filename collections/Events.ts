@@ -38,7 +38,7 @@ export const Events: CollectionConfig = {
         { name: "summary", label: "Opis dla klienta", type: "textarea", required: true, maxLength: 400, admin: { description: "Najważniejsze informacje w 2–4 zdaniach." } },
       ] },
       { label: "2. Zdjęcie i publikacja", description: "Dodaj zdjęcie i zdecyduj, czy wydarzenie ma być widoczne.", fields: [
-        { name: "image", label: "Zdjęcie wydarzenia", type: "upload", relationTo: "media", admin: { description: "Opcjonalne. Bez zdjęcia pokażemy fotografię SHOWteam." } },
+        { name: "image", label: "Zdjęcie wydarzenia", type: "upload", relationTo: "media", required: true, admin: { description: "Obowiązkowe. Wybierz zdjęcie pasujące do tego konkretnego wydarzenia." } },
         { name: "category", label: "Kategoria", type: "select", required: true, defaultValue: "Lato", options: ["Lato", "Zima", "Szkolenia", "Inne"] },
         { name: "published", label: "Pokaż wydarzenie na stronie", type: "checkbox", defaultValue: true },
         { name: "ctaLabel", label: "Tekst przycisku", type: "text", defaultValue: "Zapytaj o miejsce", admin: { description: "Opcjonalne. Domyślny tekst jest odpowiedni w większości przypadków." } },

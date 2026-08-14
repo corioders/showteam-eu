@@ -149,9 +149,9 @@ export interface Event {
    */
   summary: string;
   /**
-   * Opcjonalne. Bez zdjęcia pokażemy fotografię SHOWteam.
+   * Obowiązkowe. Wybierz zdjęcie pasujące do tego konkretnego wydarzenia.
    */
-  image?: (number | null) | Media;
+  image: number | Media;
   category: 'Lato' | 'Zima' | 'Szkolenia' | 'Inne';
   published?: boolean | null;
   /**

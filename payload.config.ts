@@ -18,7 +18,6 @@ import { Offers } from "@/collections/Offers";
 import { Users } from "@/collections/Users";
 import { seedOffers } from "@/lib/seed-offers";
 import { seedGallery } from "@/lib/seed-gallery";
-import { seedEvents } from "@/lib/events";
 import { seedEquipment } from "@/lib/seed-equipment";
 import { preserveOperationalTables } from "@/lib/operational-schema";
 
@@ -88,7 +87,6 @@ export default buildConfig({
   onInit: isProduction ? undefined : async (payload) => {
     await seedOffers(payload);
     await seedGallery(payload);
-    await seedEvents(payload);
     await seedEquipment(payload);
   },
 });
