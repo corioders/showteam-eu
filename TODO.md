@@ -19,6 +19,9 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 - [ ] Historia uczestnika: łączyć zgłoszenia po znormalizowanym e-mailu, pokazać wcześniejsze turnusy i oznaczenie „nowy” / „powracający”.
 - [ ] Kontakty newslettera: deduplikowana lista e-maili ze zgodą marketingową, filtrowanie i eksport; bez wysyłki do czasu podpięcia dostawcy poczty.
 - [ ] Statystyki zgłoszeń: nowi i powracający uczestnicy, liczba zgłoszeń/turnusów oraz najpopularniejsze oferty w czasie.
+- [ ] Galeria: responsywny układ kafelków oraz pełnoekranowy lightbox ze swipe i nawigacją poprzednie/następne.
+- [ ] Uploader galerii: przed wysłaniem tworzyć warianty WebP dla różnych ekranów, zachować wariant wysokiej jakości do lightboxa i zablokować surowy upload poza prostym uploaderem.
+- [ ] Przetworzyć istniejącą galerię tym samym pipeline'em wariantów WebP i podłączyć poprawne `srcset`/`sizes`.
 
 ## Do weryfikacji po deployu
 
