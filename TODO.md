@@ -4,6 +4,13 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## W toku
 
+- [x] Przejrzeć folder `media od asi`, skatalogować oficjalne logotypy i materiały oraz wykorzystać właściwe źródła w serwisie.
+- [x] Rezerwacje: dodać przy każdym sprzęcie edytowalne progi wiatru dla warunu słabego, średniego i najlepszego; przy sprzęcie wymagającym wiatru opcjonalny próg „profesjonalny” od wskazanej prędkości.
+- [x] Przebudować pełnoekranowe menu: zwarty układ desktopowy bez ogromnych pustych kafli; zachować czytelny układ mobilny.
+- [x] Hero: zrobić klikalne lokalizacje Poręba, Dolomity i Andorra, prowadzące do właściwych map Google.
+- [x] Zmienić etykietę „Kontakt” na „Kontakt i o nas” oraz dodać na stronie kontaktowej krótką sekcję o SHOWteam.
+- [x] Galeria: usunąć natywne kontrolki wideo z kafli; kafel ma otwierać czytelny player w lightboxie z jednym przyciskiem odtwarzania.
+
 - [x] Uporządkować formularz „Jedziesz z nami”: pokazywać tylko pytania mające sens dla wybranej kategorii; przy Szkoleniach nie pytać o dyscyplinę ani poziom.
 
 - [ ] Google Calendar zamiast iCal:
