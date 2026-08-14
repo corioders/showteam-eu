@@ -68,6 +68,7 @@ export interface Config {
   blocks: {};
   collections: {
     events: Event;
+    news: News;
     offers: Offer;
     gallery: Gallery;
     equipment: Equipment;
@@ -84,6 +85,7 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     events: EventsSelect<false> | EventsSelect<true>;
+    news: NewsSelect<false> | NewsSelect<true>;
     offers: OffersSelect<false> | OffersSelect<true>;
     gallery: GallerySelect<false> | GallerySelect<true>;
     equipment: EquipmentSelect<false> | EquipmentSelect<true>;
@@ -183,6 +185,27 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * Wiadomości widoczne w zakładce Aktualności. Zdjęcie jest obowiązkowe.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news".
+ */
+export interface News {
+  id: number;
+  title: string;
+  publicationDate: string;
+  /**
+   * Jedno–dwa zdania widoczne większym tekstem.
+   */
+  summary: string;
+  content: string;
+  image: number | Media;
+  category: 'Baza' | 'Wyjazdy' | 'Sport' | 'Inne';
+  published?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * Treści widoczne na stronie głównej i podstronach ofertowych.
@@ -442,6 +465,10 @@ export interface PayloadLockedDocument {
         value: number | Event;
       } | null)
     | ({
+        relationTo: 'news';
+        value: number | News;
+      } | null)
+    | ({
         relationTo: 'offers';
         value: number | Offer;
       } | null)
@@ -529,6 +556,21 @@ export interface EventsSelect<T extends boolean = true> {
   category?: T;
   published?: T;
   ctaLabel?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "news_select".
+ */
+export interface NewsSelect<T extends boolean = true> {
+  title?: T;
+  publicationDate?: T;
+  summary?: T;
+  content?: T;
+  image?: T;
+  category?: T;
+  published?: T;
   updatedAt?: T;
   createdAt?: T;
 }

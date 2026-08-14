@@ -9,6 +9,10 @@ export function revalidateEvents() {
   revalidatePath("/wydarzenia");
 }
 
+export function revalidateNews() {
+  revalidatePath("/aktualnosci");
+}
+
 export function revalidateGallery() {
   revalidatePath("/");
   revalidatePath("/galeria");

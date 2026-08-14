@@ -15,6 +15,7 @@ export function SiteFooter() {
           <a href={contact.instagram} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-orange-400 md:justify-end"><Instagram className="size-4" /> Instagram <ArrowUpRight className="size-3" /></a>
           <a href={contact.tiktok} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-orange-400 md:justify-end"><Music2 className="size-4" /> TikTok <ArrowUpRight className="size-3" /></a>
           <Link href="/wydarzenia" className="hover:text-orange-400">Wydarzenia</Link>
+          <Link href="/aktualnosci" className="hover:text-orange-400">Aktualności</Link>
           <Link href="/zgloszenie" className="hover:text-orange-400">Zgłoszenie</Link>
           <Link href="/rezerwacje" className="hover:text-orange-400">Rezerwacje</Link>
           <Link href="/galeria" className="hover:text-orange-400">Galeria</Link>
