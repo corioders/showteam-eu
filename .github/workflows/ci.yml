@@ -40,4 +40,4 @@ jobs:
       - run: pnpm exec playwright install chromium
       - run: pnpm test:e2e
         env:
-          SEED_CMS: "true"
+          PAYLOAD_SECRET: showteam-ci-only-secret-not-used-in-production
