@@ -218,8 +218,9 @@
 .cms-draft--error { background: #fff1f0; border-color: #f3a29b; color: #8f1d14; }
 
 @media (max-width: 768px) {
-  .app-header { min-height: 4rem; position: sticky; top: 0; z-index: 20; }
-  .app-header__content, .app-header__wrapper { min-height: 4rem; }
+  .app-header { max-width: 100%; min-height: 4rem; overflow: hidden; position: sticky; top: 0; z-index: 20; }
+  .app-header__content, .app-header__wrapper { max-width: 100%; min-height: 4rem; min-width: 0; overflow: hidden; }
+  .app-header__account, .app-header__step-nav-wrapper { display: none !important; }
   .gutter { padding-left: 1rem; padding-right: 1rem; }
   .dashboard, .collection-list__wrap, .collection-edit__main { padding-bottom: 5rem; }
   .collection-list__header, .collection-list__sub-header { gap: .75rem; }
