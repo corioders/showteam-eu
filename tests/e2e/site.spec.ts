@@ -10,7 +10,7 @@ test("main navigation reaches every public section", async ({ page }) => {
 
 test("official TikTok is linked from the site", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator('a[href="https://www.tiktok.com/@showteam_eu"]')).toHaveCount(3);
+  await expect(page.locator('a[href="https://www.tiktok.com/@showteam1969"]')).toHaveCount(3);
 });
 
 test("waterfront stays are published without invented pricing", async ({ page }) => {
