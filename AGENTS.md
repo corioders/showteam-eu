@@ -13,3 +13,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Keep commits small and focused: one working, reversible change per commit.
 - After verifying each change, commit it with a descriptive message and push it to the remote repository so rollback stays simple.
 - Do not combine unrelated features or fixes in one commit.
+
+# Admin UX
+
+- The people operating SHOWteam are non-technical. Primary admin workflows must use plain Polish, task-based screens, clear validation, large mobile controls, and actionable error messages.
+- Never require operators to understand collections, slugs, APIs, database concepts, or Payload terminology for routine work.
+- Keep the full Payload CMS available only as a secondary advanced route; quick actions and custom task screens are the primary interface.
