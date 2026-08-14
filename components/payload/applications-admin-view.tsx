@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Download, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { applicationAge } from "@/lib/applications";
@@ -14,6 +15,7 @@ const statusLabel: Record<Status, string> = { new: "Nowe", contacted: "Skontakto
 const date = (value: string) => new Intl.DateTimeFormat("pl-PL", { dateStyle: "medium" }).format(new Date(value));
 
 export function ApplicationsAdminView() {
+  const router = useRouter();
   const [data, setData] = useState<Data | null>(null);
   const [tab, setTab] = useState<"applications" | "newsletter">("applications");
   const [error, setError] = useState("");
@@ -22,13 +24,13 @@ export function ApplicationsAdminView() {
     const controller = new AbortController();
     fetch("/api/admin/applications", { cache: "no-store", signal: controller.signal })
       .then(async (response) => {
-        if (response.status === 401) { window.location.assign("/admin/login?redirect=/admin/zgloszenia"); return; }
+        if (response.status === 401) { router.replace("/admin/login?redirect=/admin/zgloszenia"); return; }
         if (!response.ok) throw new Error();
         setData(await response.json() as Data);
       })
       .catch((requestError) => { if (requestError.name !== "AbortError") setError("Nie udało się pobrać zgłoszeń. Odśwież stronę."); });
     return () => controller.abort();
-  }, []);
+  }, [router]);
 
   if (error) return <main className="applications-admin"><p role="alert" className="statistics-error">{error}</p></main>;
   if (!data) return <main className="applications-admin"><p className="statistics-loading"><RefreshCw aria-hidden="true" /> Ładuję zgłoszenia…</p></main>;
