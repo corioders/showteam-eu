@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarCheck, CalendarClock, CalendarX, CheckCircle2, Eye, RefreshCw } from "lucide-react";
+import { CalendarCheck, CalendarClock, CalendarX, CheckCircle2, Eye, Mail, RefreshCw, UserRoundCheck, UsersRound } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type Statistics = {
@@ -8,6 +8,8 @@ type Statistics = {
   bookings: { created_30d: number; upcoming: number; completed_30d: number; cancelled_30d: number };
   equipment: { name: string; value: number }[];
   pages: { name: string; value: number }[];
+  applications: { created_30d: number; returning_30d: number; participants_total: number; newsletter_total: number };
+  offers: { name: string; value: number }[];
   generatedAt: number;
 };
 
@@ -41,12 +43,16 @@ export function StatisticsAdminView() {
     [CalendarClock, "Nadchodzące rezerwacje", statistics.bookings.upcoming],
     [CheckCircle2, "Zrealizowane · 30 dni", statistics.bookings.completed_30d],
     [CalendarX, "Anulowane · 30 dni", statistics.bookings.cancelled_30d],
+    [UserRoundCheck, "Zgłoszenia uczestników · 30 dni", statistics.applications.created_30d],
+    [UsersRound, "Powracający · 30 dni", statistics.applications.returning_30d],
+    [UsersRound, "Uczestnicy w historii", statistics.applications.participants_total],
+    [Mail, "Kontakty newslettera", statistics.applications.newsletter_total],
   ] as const;
 
   return <main className="statistics-admin">
-    <header><span>OSTATNIE 30 DNI</span><h1>Statystyki</h1><p>Odwiedziny strony i rezerwacje w jednym miejscu. Bez danych osobowych i zbędnej historii.</p></header>
+    <header><span>OSTATNIE 30 DNI</span><h1>Statystyki</h1><p>Odwiedziny strony, rezerwacje i zgłoszenia uczestników w jednym miejscu.</p></header>
     <div className="statistics-cards">{cards.map(([Icon, label, value]) => <article key={label}><Icon aria-hidden="true" /><p>{label}</p><strong>{value}</strong></article>)}</div>
-    <div className="statistics-rankings"><Ranking title="Najczęściej rezerwowany sprzęt" empty="Brak rezerwacji w ostatnich 30 dniach." rows={statistics.equipment} /><Ranking title="Najczęściej odwiedzane strony" empty="Brak wizyt w ostatnich 30 dniach." rows={statistics.pages} /></div>
+    <div className="statistics-rankings"><Ranking title="Najczęściej wybierane wyjazdy" empty="Brak zgłoszeń w ostatnich 30 dniach." rows={statistics.offers} /><Ranking title="Najczęściej rezerwowany sprzęt" empty="Brak rezerwacji w ostatnich 30 dniach." rows={statistics.equipment} /><Ranking title="Najczęściej odwiedzane strony" empty="Brak wizyt w ostatnich 30 dniach." rows={statistics.pages} /></div>
     <p className="statistics-updated">Stan na {new Intl.DateTimeFormat("pl-PL", { dateStyle: "long", timeStyle: "short" }).format(statistics.generatedAt)}</p>
   </main>;
 }

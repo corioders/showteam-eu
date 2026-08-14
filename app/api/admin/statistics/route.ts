@@ -3,6 +3,7 @@ import config, { database } from "@payload-config";
 
 type TrafficTotals = { views_30d: number; views_today: number };
 type BookingTotals = { created_30d: number; upcoming: number; completed_30d: number; cancelled_30d: number };
+type ApplicationTotals = { created_30d: number; returning_30d: number; participants_total: number; newsletter_total: number };
 type RankingRow = { name: string; value: number };
 
 export async function GET(request: Request) {
@@ -25,12 +26,25 @@ export async function GET(request: Request) {
     GROUP BY equipment.id, equipment.name ORDER BY value DESC, equipment.name LIMIT 8`).all<RankingRow>();
   const pages = await database.prepare(`SELECT path AS name, SUM(views) AS value FROM analytics
     WHERE day >= date('now', '-29 days') GROUP BY path ORDER BY value DESC, path LIMIT 8`).all<RankingRow>();
+  const applications = await database.prepare(`SELECT
+    COALESCE(SUM(CASE WHEN substr(current.created_at, 1, 10) >= date('now', '-29 days') THEN 1 ELSE 0 END), 0) AS created_30d,
+    COALESCE(SUM(CASE WHEN substr(current.created_at, 1, 10) >= date('now', '-29 days') AND EXISTS (
+      SELECT 1 FROM applications previous WHERE previous.participant_key = current.participant_key AND previous.created_at < current.created_at
+    ) THEN 1 ELSE 0 END), 0) AS returning_30d,
+    COUNT(DISTINCT current.participant_key) AS participants_total,
+    COUNT(DISTINCT CASE WHEN current.newsletter_consent = 1 THEN current.normalized_email END) AS newsletter_total
+    FROM applications current`).first<ApplicationTotals>();
+  const offers = await database.prepare(`SELECT offer AS name, COUNT(*) AS value FROM applications
+    WHERE substr(created_at, 1, 10) >= date('now', '-29 days')
+    GROUP BY offer ORDER BY value DESC, offer LIMIT 8`).all<RankingRow>();
 
   return Response.json({
     traffic: traffic || { views_30d: 0, views_today: 0 },
     bookings: bookings || { created_30d: 0, upcoming: 0, completed_30d: 0, cancelled_30d: 0 },
     equipment: equipment.results,
     pages: pages.results,
+    applications: applications || { created_30d: 0, returning_30d: 0, participants_total: 0, newsletter_total: 0 },
+    offers: offers.results,
     generatedAt: Date.now(),
   }, { headers: { "Cache-Control": "no-store" } });
 }
