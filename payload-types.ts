@@ -337,6 +337,12 @@ export interface Equipment {
   openTime: string;
   closeTime: string;
   active?: boolean | null;
+  weatherProfile: 'any' | 'calm' | 'wind';
+  recommendedStart1?: string | null;
+  recommendedEnd1?: string | null;
+  recommendedStart2?: string | null;
+  recommendedEnd2?: string | null;
+  recommendationNote?: string | null;
   slug: string;
   sortOrder: number;
   updatedAt: string;
@@ -647,6 +653,12 @@ export interface EquipmentSelect<T extends boolean = true> {
   openTime?: T;
   closeTime?: T;
   active?: T;
+  weatherProfile?: T;
+  recommendedStart1?: T;
+  recommendedEnd1?: T;
+  recommendedStart2?: T;
+  recommendedEnd2?: T;
+  recommendationNote?: T;
   slug?: T;
   sortOrder?: T;
   updatedAt?: T;

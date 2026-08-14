@@ -8,8 +8,16 @@ export type BookableEquipment = {
   openTime: string;
   closeTime: string;
   notice?: string;
+  weatherProfile: WeatherProfile;
+  recommendedStart1?: string;
+  recommendedEnd1?: string;
+  recommendedStart2?: string;
+  recommendedEnd2?: string;
+  recommendationNote?: string;
   image?: { url?: string | null; alt?: string | null } | number | null;
 };
+
+export type WeatherProfile = "any" | "calm" | "wind";
 
 export type AvailabilityHoursRule = {
   equipmentId: number | null;
