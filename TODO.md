@@ -10,7 +10,8 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 - [ ] Zamienić pozostałe szybkie akcje na własne proste ekrany: wydarzenia, wynajem/sprzęt, oferta. Galeria, kalendarz, statystyki i TV już mają własne ekrany.
 - [ ] Zostawić pełny Payload CMS jako drugorzędne „Zaawansowane”, dostępne z panelu awaryjnie.
 - [ ] Tryb redakcyjny strony: po zalogowaniu do `/admin` pokazać niewielkie przyciski „Edytuj” prowadzące do właściwego ekranu dla oferty, wydarzeń, galerii i wynajmu.
-- [ ] Dodać widoczny przycisk „Wyczyść formularz” do własnych formularzy i formularzy Payload; musi usuwać także lokalnie zapisany draft.
+- [ ] Ekrany otwierane przez „Edytuj”: dodać live preview wpisywanych treści — obok formularza na szerokim ekranie, pod formularzem na telefonie.
+- [x] Dodać widoczny przycisk „Wyczyść formularz” do własnych formularzy i formularzy Payload; musi usuwać także lokalnie zapisany draft.
 - [ ] Formularz zgłoszeniowy wzorowany na obecnym SHOWteam: zapis do bazy, prosty ekran administracyjny i eksport `.xlsx`. E-mail pozostawić wyłączony do późniejszej konfiguracji; docelowy format eksportu użytkownik poda później.
 
 ## Do weryfikacji po deployu

@@ -71,22 +71,24 @@ export function FormDraftPersistence() {
   }, [key, modified, submitted]);
 
   const discardDraft = async () => {
+    const question = id
+      ? "Odrzucić niezapisane zmiany i przywrócić ostatnio zapisaną wersję?"
+      : "Wyczyścić cały formularz?";
+    if (!window.confirm(question)) return;
     window.localStorage.removeItem(key);
     await reset(savedData ?? {});
     setModified(false);
     setStatus(null);
   };
 
-  if (!status) return null;
-
   return (
-    <div className={`cms-draft cms-draft--${status}`} role="status">
-      <span>
+    <div className={`cms-draft${status ? ` cms-draft--${status}` : " cms-draft--idle"}`} role="status">
+      {status && <span>
         {status === "restored" && "Przywrócono szkic z tego telefonu."}
         {status === "saved" && "Szkic zapisany na tym telefonie."}
         {status === "error" && "Nie udało się zapisać szkicu. Sprawdź wolne miejsce w telefonie."}
-      </span>
-      {status !== "error" && <button type="button" onClick={discardDraft}>Porzuć szkic</button>}
+      </span>}
+      <button type="button" onClick={discardDraft}>Wyczyść formularz</button>
     </div>
   );
 }

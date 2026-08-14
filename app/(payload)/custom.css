@@ -215,6 +215,7 @@
   padding: .55rem .7rem;
 }
 .cms-draft button { background: none; border: 0; color: inherit; cursor: pointer; font: inherit; text-decoration: underline; white-space: nowrap; }
+.cms-draft--idle { background: transparent; border-color: var(--theme-elevation-200); color: var(--theme-elevation-600); justify-content: flex-end; }
 .cms-draft--error { background: #fff1f0; border-color: #f3a29b; color: #8f1d14; }
 
 @media (max-width: 768px) {
