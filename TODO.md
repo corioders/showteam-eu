@@ -19,8 +19,8 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
   - [x] Wysyłać rezerwacje do Google Calendar bez duplikatów.
   - [x] Pobierać ręczne wpisy Google do kalendarza bazy i TV.
   - [x] Pokazać blokady wynajmu, wyjątki godzin i plany Google różnymi kolorami.
-  - [ ] W Google Cloud włączyć Calendar API i utworzyć klienta OAuth z callbackiem `https://showteam-eu.corioders.workers.dev/api/admin/google-calendar/callback`.
-  - [ ] Dodać sekrety Workera `GOOGLE_CALENDAR_CLIENT_ID` i `GOOGLE_CALENDAR_CLIENT_SECRET`; `GOOGLE_CALENDAR_TOKEN_KEY` jest już ustawiony.
+  - [x] W Google Cloud włączyć Calendar API i utworzyć klienta OAuth z callbackiem `https://showteam-eu.corioders.workers.dev/api/admin/google-calendar/callback`.
+  - [x] Dodać sekrety Workera `GOOGLE_CALENDAR_CLIENT_ID` i `GOOGLE_CALENDAR_CLIENT_SECRET`; `GOOGLE_CALENDAR_TOKEN_KEY` jest już ustawiony.
   - [ ] W panelu podłączyć wspólne konto SHOWteam i udostępnić jego kalendarz obsłudze na telefonach.
   - [ ] Test końcowy: rezerwacja strona → Google oraz ręczny wpis Google → panel i TV.
 
