@@ -78,8 +78,13 @@ const initialOffers = [
 
 export async function seedOffers(payload: Payload) {
   const existing = await payload.count({ collection: "offers" });
-  if (existing.totalDocs > 0) return;
+  const refreshExisting = process.env.SEED_CMS === "true";
+  if (existing.totalDocs > 0 && !refreshExisting) return;
   for (const offer of initialOffers) {
-    await payload.create({ collection: "offers", data: offer as never });
+    const current = refreshExisting
+      ? await payload.find({ collection: "offers", where: { slug: { equals: offer.slug } }, limit: 1 })
+      : null;
+    if (current?.docs[0]) await payload.update({ collection: "offers", id: current.docs[0].id, data: offer as never });
+    else await payload.create({ collection: "offers", data: offer as never });
   }
 }

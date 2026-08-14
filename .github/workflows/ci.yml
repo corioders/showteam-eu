@@ -33,3 +33,5 @@ jobs:
       - run: pnpm build
       - run: pnpm exec playwright install chromium
       - run: pnpm test:e2e
+        env:
+          SEED_CMS: "true"
