@@ -1,4 +1,5 @@
 import { FormDraftPersistence as FormDraftPersistence_96dc89a0d7977db3474e3c5ed4ef296e } from '@/components/payload/form-draft-persistence'
+import { BackToPanel as BackToPanel_a454473be4ce7abecbf4cef2a56621b6 } from '@/components/payload/back-to-panel'
 import { LogoutButton as LogoutButton_1f50293d18f67150ff884c3ad0e5ded9 } from '@/components/payload/logout-button'
 import { ShowteamIcon as ShowteamIcon_3db7ad225bd85fd7c2b1c1cf21568361 } from '@/components/payload/brand'
 import { ShowteamLogo as ShowteamLogo_3db7ad225bd85fd7c2b1c1cf21568361 } from '@/components/payload/brand'
@@ -14,6 +15,7 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 /** @type import('payload').ImportMap */
 export const importMap = {
   "@/components/payload/form-draft-persistence#FormDraftPersistence": FormDraftPersistence_96dc89a0d7977db3474e3c5ed4ef296e,
+  "@/components/payload/back-to-panel#BackToPanel": BackToPanel_a454473be4ce7abecbf4cef2a56621b6,
   "@/components/payload/logout-button#LogoutButton": LogoutButton_1f50293d18f67150ff884c3ad0e5ded9,
   "@/components/payload/brand#ShowteamIcon": ShowteamIcon_3db7ad225bd85fd7c2b1c1cf21568361,
   "@/components/payload/brand#ShowteamLogo": ShowteamLogo_3db7ad225bd85fd7c2b1c1cf21568361,

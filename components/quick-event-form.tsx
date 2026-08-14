@@ -100,7 +100,7 @@ function EventForm({ userName }: { userName: string }) {
 
   return <main className="min-h-dvh bg-[#080a0b] px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] text-white">
     <div className="mx-auto max-w-6xl">
-      <header className="mb-8 flex items-center justify-between border-b border-white/15 pb-4"><div><p className="font-display text-xl font-black uppercase">SHOWteam<span className="text-orange-500">.</span></p><p className="text-xs text-white/45">Zalogowano: {userName}</p></div><div className="flex gap-4"><Link href="/admin/collections/events" className="text-xs text-white/40 underline">Zaawansowane</Link><Link href="/admin" className="text-sm font-bold underline">Panel</Link></div></header>
+      <header className="mb-8 flex items-center justify-between gap-4 border-b border-white/15 pb-4"><div><p className="font-display text-xl font-black uppercase">SHOWteam<span className="text-orange-500">.</span></p><p className="text-xs text-white/45">Zalogowano: {userName}</p></div><div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center"><Link href="/admin/collections/events" className="text-xs text-white/40 underline">Zaawansowane</Link><Link href="/admin" className="bg-orange-500 px-3 py-2 text-xs font-black uppercase text-black">← Wróć do panelu</Link></div></header>
       <p className="font-mono text-xs font-bold uppercase tracking-[.18em] text-orange-400">Szybka akcja</p>
       <h1 className="font-display mt-3 text-5xl font-black uppercase leading-[.9]">Dodaj wydarzenie.</h1>
       <p className="mt-4 text-sm leading-6 text-white/55">Wszystko na jednym ekranie. Po zapisaniu wydarzenie od razu pojawi się na stronie.</p>

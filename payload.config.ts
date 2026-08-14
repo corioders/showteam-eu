@@ -65,6 +65,7 @@ export default buildConfig({
       icons: { apple: "/pwa-192.png", icon: "/favicon.ico" },
     },
     components: {
+      header: ["@/components/payload/back-to-panel#BackToPanel"],
       beforeDashboard: ["@/components/payload/quick-upload-card#QuickUploadCard"],
       beforeLogin: ["@/components/payload/brand#LoginIntro"],
       logout: { Button: "@/components/payload/logout-button#LogoutButton" },

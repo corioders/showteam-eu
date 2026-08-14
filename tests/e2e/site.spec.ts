@@ -218,6 +218,7 @@ test.describe("mobile", () => {
   test("quick event form explains errors and can be cleared", async ({ page }) => {
     await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
     await page.goto("/a/dodaj/wydarzenie");
+    await expect(page.getByRole("link", { name: "Wróć do panelu" })).toHaveAttribute("href", "/admin");
     await page.getByRole("button", { name: "Opublikuj wydarzenie" }).click();
     await expect(page.getByText("Wpisz nazwę wydarzenia.")).toBeVisible();
     await expect(page.getByText("Dodaj zdjęcie tego wydarzenia.")).toBeVisible();
