@@ -23,9 +23,8 @@ export function SiteHeader() {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-neutral-950/75 backdrop-blur-xl">
       <div className="site-container flex h-20 items-center justify-between">
-        <Link href="/" prefetch className="flex items-center gap-3 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500" aria-label="SHOWteam — strona główna">
-          <Image src="/media/monkey-logo.jpg" alt="" width={42} height={42} className="size-11 rounded-full border border-orange-400/40 object-cover" priority />
-          <span className="font-display text-xl font-black uppercase tracking-tight">SHOW<span className="text-orange-500">team</span></span>
+        <Link href="/" prefetch className="bg-orange-500 px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950" aria-label="SHOWteam — strona główna">
+          <Image src="/media/showteam-logo.svg" alt="" width={1022} height={241} className="h-auto w-36 sm:w-40" priority />
         </Link>
 
         <nav className="hidden items-center gap-1 xl:flex" aria-label="Główna nawigacja">
@@ -37,7 +36,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <Button asChild size="sm"><Link href={applicationLink.href} prefetch>{applicationLink.label}</Link></Button>
+          <Button asChild size="sm" className="hidden min-[360px]:inline-flex"><Link href={applicationLink.href} prefetch>{applicationLink.label}</Link></Button>
           <Button asChild size="sm" className="hidden 2xl:inline-flex"><a href="tel:+48500128090"><Phone className="size-4" /> Zadzwoń</a></Button>
         </div>
 
@@ -49,9 +48,10 @@ export function SiteHeader() {
           </SheetTrigger>
           <SheetContent>
             <div className="flex min-h-svh flex-col px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))]">
-              <div className="flex h-11 items-center gap-3 border-b border-white/10 pb-4 pr-14">
-                <Image src="/media/monkey-logo.jpg" alt="" width={34} height={34} className="size-9 rounded-full border border-orange-400/40 object-cover" />
-                <span className="font-display text-lg font-black uppercase">SHOW<span className="text-orange-500">team</span></span>
+              <div className="flex h-11 items-center border-b border-white/10 pb-4 pr-14">
+                <span className="bg-orange-500 px-2 py-1">
+                  <Image src="/media/showteam-logo.svg" alt="SHOWteam" width={1022} height={241} className="h-auto w-36" />
+                </span>
               </div>
               <span className="eyebrow mb-4 mt-8">Idź do</span>
               <nav className="grid grid-cols-2 border-l border-t border-white/10" aria-label="Menu mobilne">

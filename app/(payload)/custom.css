@@ -1,6 +1,6 @@
-.showteam-admin-logo { color: var(--theme-text); font-size: 2rem; font-weight: 900; letter-spacing: -.06em; text-transform: uppercase; }
-.showteam-admin-logo span { color: #f06414; }
-.showteam-admin-icon { align-items: center; background: #f06414; color: #111; display: flex; font-size: 1rem; font-weight: 900; height: 2rem; justify-content: center; width: 2rem; }
+.showteam-admin-logo { background: #f06414; box-sizing: content-box; display: block; height: auto; max-width: 10rem; padding: .3rem .45rem; width: min(10rem, 100%); }
+.showteam-admin-icon { align-items: center; background: #f06414; display: flex; height: 2rem; justify-content: center; padding: .25rem; width: 2rem; }
+.showteam-admin-icon img { display: block; height: 100%; width: 100%; }
 .showteam-login-intro { border-left: 4px solid #f06414; margin-bottom: 1.5rem; padding-left: 1rem; }
 .showteam-login-intro strong { display: block; font-size: 1.4rem; }
 .showteam-login-intro p { color: var(--theme-elevation-600); line-height: 1.5; margin: .35rem 0 0; }

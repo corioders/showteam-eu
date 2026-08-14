@@ -3,8 +3,16 @@ import path from "node:path";
 
 test("main navigation reaches every public section", async ({ page }) => {
   await page.goto("/");
+  await expect(page.locator('header img[src="/media/showteam-logo.svg"]')).toBeVisible();
   for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/wydarzenia", "/aktualnosci", "/rezerwacje", "/galeria", "/kontakt", "/zgloszenie"]) {
     await expect(page.locator(`header a[href="${path}"]`)).toHaveCount(1);
+  }
+});
+
+test("official brand assets are published locally", async ({ request }) => {
+  for (const asset of ["/media/showteam-logo.svg", "/media/showteam-monkey.svg", "/favicon.ico", "/apple-touch-icon.png", "/pwa-192.png", "/pwa-512.png"]) {
+    const response = await request.get(asset);
+    expect(response.ok(), asset).toBe(true);
   }
 });
 

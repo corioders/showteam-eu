@@ -57,6 +57,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## Ukończone
 
+- [x] Oficjalne logotypy z `Flagi ShowTeam.pdf` są używane w nagłówku, CMS, faviconie i ikonach PWA.
 - [x] Dodać pełny film promocyjny SHOWteam z muzyką do galerii.
 - [x] Każdy ekran CMS ma wyraźny przycisk „Wróć do panelu”; wspólny dla Payload i ujednolicony na `/a/*`.
 - [x] Client-side navigation i prefetch w navbarze.

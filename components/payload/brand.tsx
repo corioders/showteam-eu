@@ -1,9 +1,11 @@
+import Image from "next/image";
+
 export function ShowteamLogo() {
-  return <div className="showteam-admin-logo" aria-label="SHOWteam"><span>SHOW</span>team</div>;
+  return <Image className="showteam-admin-logo" src="/media/showteam-logo.svg" alt="SHOWteam" width={1022} height={241} priority />;
 }
 
 export function ShowteamIcon() {
-  return <div className="showteam-admin-icon" aria-hidden="true">S</div>;
+  return <span className="showteam-admin-icon"><Image src="/media/showteam-monkey.svg" alt="" width={40} height={39} /></span>;
 }
 
 export function LoginIntro() {
