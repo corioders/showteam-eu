@@ -30,9 +30,9 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 - [x] Historia uczestnika: łączyć zgłoszenia bez mylenia rodzeństwa, pokazać wcześniejsze turnusy i oznaczenie „nowy” / „powracający”.
 - [x] Kontakty newslettera: deduplikowana lista e-maili ze zgodą marketingową i eksport; bez wysyłki do czasu podpięcia dostawcy poczty.
 - [x] Statystyki zgłoszeń: nowi i powracający uczestnicy, liczba zgłoszeń oraz najpopularniejsze oferty w czasie.
-- [ ] Galeria: responsywny układ kafelków oraz pełnoekranowy lightbox ze swipe i nawigacją poprzednie/następne.
-- [ ] Uploader galerii: przed wysłaniem tworzyć warianty WebP dla różnych ekranów, zachować wariant wysokiej jakości do lightboxa i zablokować surowy upload poza prostym uploaderem.
-- [ ] Przetworzyć istniejącą galerię tym samym pipeline'em wariantów WebP i podłączyć poprawne `srcset`/`sizes`.
+- [x] Galeria: responsywny układ kafelków oraz pełnoekranowy lightbox ze swipe i nawigacją poprzednie/następne.
+- [x] Uploader galerii: przed wysłaniem tworzyć warianty WebP dla różnych ekranów, zachować wariant wysokiej jakości do lightboxa i zablokować surowy upload poza prostym uploaderem.
+- [x] Przetworzyć istniejącą galerię tym samym pipeline'em wariantów WebP i podłączyć poprawne `srcset`/`sizes`.
 
 ## Do weryfikacji po deployu
 

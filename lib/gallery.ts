@@ -28,7 +28,12 @@ export type GalleryPage = {
 };
 
 function staticPhotos(): GalleryPhoto[] {
-  return galleryAssets.map((asset) => ({ id: asset.value, src: asset.path, alt: asset.alt, caption: asset.label, layout: asset.layout, fit: asset.fit, objectPosition: asset.position, mobilePosition: asset.position, mobileLayout: defaultMobileLayout(asset.layout), season: asset.season, type: "image", sourceUrl: asset.value.startsWith("instagram-") ? "https://www.instagram.com/showteam.eu/" : undefined }));
+  return galleryAssets.map((asset) => ({ id: asset.value, src: staticVariant(asset.path, 2560), smallSrc: staticVariant(asset.path, 640), mediumSrc: staticVariant(asset.path, 1280), alt: asset.alt, caption: asset.label, layout: asset.layout, fit: asset.fit, objectPosition: asset.position, mobilePosition: asset.position, mobileLayout: defaultMobileLayout(asset.layout), season: asset.season, type: "image", sourceUrl: asset.value.startsWith("instagram-") ? "https://www.instagram.com/showteam.eu/" : undefined }));
+}
+
+function staticVariant(source: string, width: 640 | 1280 | 2560) {
+  const filename = source.split("/").at(-1)?.replace(/\.[^.]+$/, "");
+  return `/media/responsive/${filename}-${width}.webp`;
 }
 
 function toPhoto(document: Record<string, unknown>): GalleryPhoto | null {

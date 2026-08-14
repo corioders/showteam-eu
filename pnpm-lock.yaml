@@ -119,6 +119,9 @@ importers:
       eslint-config-next:
         specifier: 16.3.0
         version: 16.3.0(@typescript-eslint/parser@8.67.0(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3))(eslint@9.39.5(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
+      sharp:
+        specifier: 0.35.3
+        version: 0.35.3(@types/node@24.12.3)
       tailwindcss:
         specifier: ^4.1.13
         version: 4.3.3
@@ -11817,7 +11820,6 @@ snapshots:
       '@img/sharp-win32-ia32': 0.35.3
       '@img/sharp-win32-x64': 0.35.3
       '@types/node': 24.12.3
-    optional: true
 
   shebang-command@2.0.0:
     dependencies:
@@ -12086,7 +12088,7 @@ snapshots:
 
   tsx@4.22.4:
     dependencies:
-      esbuild: 0.28.1
+      esbuild: 0.28.2
     optionalDependencies:
       fsevents: 2.3.3
 
