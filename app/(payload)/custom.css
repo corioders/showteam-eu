@@ -74,6 +74,32 @@
 .calendar-admin-settings { display: grid; gap: 1rem; }
 @media (max-width: 600px) { .calendar-admin-view { padding: 1rem; } .calendar-admin-heading { align-items: stretch; flex-direction: column; } .calendar-admin-calendar { margin-inline: -1rem; padding: 1rem; } }
 
+.equipment-recommendations { margin: 0 auto; max-width: 72rem; }
+.equipment-recommendations > header { border-left: 4px solid #e85200; padding-left: 1rem; }
+.equipment-recommendations > header > span { color: #e85200; font-size: .7rem; font-weight: 800; letter-spacing: .18em; }
+.equipment-recommendations > header h2 { font-size: clamp(1.6rem,4vw,2.5rem); margin: .35rem 0; }
+.equipment-recommendations > header p, .equipment-recommendations__source { color: var(--theme-elevation-600); line-height: 1.5; margin: 0; max-width: 52rem; }
+.equipment-recommendations__list { display: grid; gap: 1rem; margin-top: 1.5rem; }
+.equipment-recommendations__list article { align-items: end; background: var(--theme-elevation-50); border: 1px solid var(--theme-elevation-150); display: grid; gap: 1rem; grid-template-columns: minmax(12rem,1.2fr) minmax(12rem,1fr) minmax(20rem,1.8fr); padding: 1.25rem; }
+.equipment-recommendations__title { align-items: flex-start; display: flex; gap: .75rem; }
+.equipment-recommendations__title > svg { color: #e85200; flex: 0 0 auto; height: 1.4rem; width: 1.4rem; }
+.equipment-recommendations__title h3 { font-size: 1.15rem; margin: 0; }
+.equipment-recommendations__title p { color: var(--theme-elevation-600); font-size: .78rem; line-height: 1.4; margin: .25rem 0 0; }
+.equipment-recommendations label > span, .equipment-recommendations legend { display: block; font-size: .75rem; font-weight: 700; margin-bottom: .35rem; }
+.equipment-recommendations small { color: var(--theme-elevation-550); font-weight: 400; }
+.equipment-recommendations input, .equipment-recommendations select, .equipment-recommendations textarea { background: var(--theme-input-bg); border: 1px solid var(--theme-elevation-250); color: var(--theme-text); min-height: 2.75rem; padding: .55rem .65rem; width: 100%; }
+.equipment-recommendations fieldset { border: 0; margin: 0; padding: 0; }
+.equipment-recommendations fieldset > div { display: grid; gap: .5rem; grid-template-columns: repeat(4,minmax(0,1fr)); }
+.equipment-recommendations__list article > label:last-of-type { grid-column: 2 / 4; }
+.equipment-recommendations__list article > button { align-items: center; background: var(--theme-elevation-900); border: 0; color: var(--theme-elevation-0); cursor: pointer; display: inline-flex; font-weight: 750; gap: .5rem; justify-content: center; min-height: 2.75rem; padding: .65rem 1rem; }
+.equipment-recommendations__list article > button svg, .equipment-recommendations__loading svg { height: 1rem; width: 1rem; }
+.equipment-recommendations__list article > button:disabled { cursor: wait; opacity: .55; }
+.equipment-recommendations__error { color: #b52b22; font-weight: 700; }
+.equipment-recommendations__loading { align-items: center; display: flex; gap: .5rem; }
+.equipment-recommendations__source { font-size: .75rem; margin-top: 1rem; }
+@media (max-width: 900px) { .equipment-recommendations__list article { grid-template-columns: 1fr 1fr; } .equipment-recommendations__title, .equipment-recommendations fieldset { grid-column: 1 / -1; } .equipment-recommendations__list article > label:last-of-type { grid-column: 1 / -1; } }
+@media (max-width: 600px) { .equipment-recommendations__list article { grid-template-columns: 1fr; padding: 1rem; } .equipment-recommendations__title, .equipment-recommendations fieldset, .equipment-recommendations__list article > label:last-of-type { grid-column: 1; } .equipment-recommendations fieldset > div { grid-template-columns: 1fr 1fr; } .equipment-recommendations__list article > button { width: 100%; } }
+
 .availability-hours { background: var(--theme-elevation-50); border: 1px solid var(--theme-elevation-150); padding: 1.25rem; }
 .availability-hours__intro > span { color: #e85200; font-size: .7rem; font-weight: 800; letter-spacing: .18em; }
 .availability-hours__intro h2 { font-size: 1.4rem; margin: .35rem 0; }
