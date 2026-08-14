@@ -13,6 +13,7 @@ import * as migration_20260814_082801 from './20260814_082801';
 import * as migration_20260814_140904 from './20260814_140904';
 import * as migration_20260814_142029_participant_history from './20260814_142029_participant_history';
 import * as migration_20260814_144815_gallery_responsive_images from './20260814_144815_gallery_responsive_images';
+import * as migration_20260814_190000_google_calendar from './20260814_190000_google_calendar';
 
 export const migrations = [
   {
@@ -89,5 +90,10 @@ export const migrations = [
     up: migration_20260814_144815_gallery_responsive_images.up,
     down: migration_20260814_144815_gallery_responsive_images.down,
     name: '20260814_144815_gallery_responsive_images'
+  },
+  {
+    up: migration_20260814_190000_google_calendar.up,
+    down: migration_20260814_190000_google_calendar.down,
+    name: '20260814_190000_google_calendar'
   },
 ];

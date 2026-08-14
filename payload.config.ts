@@ -22,6 +22,7 @@ import { seedOffers } from "@/lib/seed-offers";
 import { seedGallery } from "@/lib/seed-gallery";
 import { seedEquipment } from "@/lib/seed-equipment";
 import { preserveOperationalTables } from "@/lib/operational-schema";
+import type { GoogleCalendarEnv } from "@/lib/google-calendar";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -54,6 +55,7 @@ const cloudflare = isCLI || !isProduction
   : await getCloudflareContext({ async: true });
 
 export const database = cloudflare.env.D1;
+export const googleCalendarEnv = cloudflare.env as typeof cloudflare.env & GoogleCalendarEnv;
 
 export default buildConfig({
   admin: {

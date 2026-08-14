@@ -33,11 +33,40 @@ const rateLimits = sqliteTable("rate_limits", {
   expiresAt: integer("expires_at").notNull(),
 });
 
-const calendarFeeds = sqliteTable("calendar_feeds", {
+const googleCalendarConnections = sqliteTable("google_calendar_connections", {
   id: text("id").primaryKey().notNull(),
-  tokenHash: text("token_hash").notNull(),
-  name: text("name").notNull(),
+  calendarId: text("calendar_id").notNull(),
+  calendarName: text("calendar_name").notNull(),
+  accountEmail: text("account_email").notNull(),
+  encryptedRefreshToken: text("encrypted_refresh_token").notNull(),
+  syncToken: text("sync_token"),
+  lastSyncedAt: integer("last_synced_at"),
+  syncStartedAt: integer("sync_started_at"),
   createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+const googleCalendarEvents = sqliteTable("google_calendar_events", {
+  id: text("id").primaryKey().notNull(),
+  summary: text("summary").notNull(),
+  description: text("description"),
+  location: text("location"),
+  startValue: text("start_value").notNull(),
+  endValue: text("end_value").notNull(),
+  allDay: integer("all_day").default(0).notNull(),
+  htmlLink: text("html_link"),
+  updatedAt: text("updated_at").notNull(),
+});
+
+const googleCalendarBookings = sqliteTable("google_calendar_bookings", {
+  reservationId: text("reservation_id").primaryKey().notNull(),
+  googleEventId: text("google_event_id").notNull(),
+  bookingUpdatedAt: text("booking_updated_at").notNull(),
+}, (table) => [uniqueIndex("google_calendar_bookings_event_idx").on(table.googleEventId)]);
+
+const googleCalendarOauthStates = sqliteTable("google_calendar_oauth_states", {
+  stateHash: text("state_hash").primaryKey().notNull(),
+  expiresAt: integer("expires_at").notNull(),
 });
 
 const availabilityBlocks = sqliteTable("availability_blocks", {
@@ -67,7 +96,10 @@ export const preserveOperationalTables: SQLiteSchemaHook = ({ schema }) => {
   schema.tables.tv_pairings = tvPairings;
   schema.tables.tv_devices = tvDevices;
   schema.tables.rate_limits = rateLimits;
-  schema.tables.calendar_feeds = calendarFeeds;
+  schema.tables.google_calendar_connections = googleCalendarConnections;
+  schema.tables.google_calendar_events = googleCalendarEvents;
+  schema.tables.google_calendar_bookings = googleCalendarBookings;
+  schema.tables.google_calendar_oauth_states = googleCalendarOauthStates;
   schema.tables.availability_blocks = availabilityBlocks;
   schema.tables.availability_hours = availabilityHours;
   return schema;
