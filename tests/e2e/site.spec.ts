@@ -3,7 +3,7 @@ import path from "node:path";
 
 test("main navigation reaches every public section", async ({ page }) => {
   await page.goto("/");
-  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/wydarzenia", "/rezerwacje", "/galeria", "/kontakt"]) {
+  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/wydarzenia", "/aktualnosci", "/rezerwacje", "/galeria", "/kontakt"]) {
     await expect(page.locator(`header a[href="${path}"]`)).toHaveCount(1);
   }
 });
@@ -231,6 +231,17 @@ test.describe("mobile", () => {
     page.once("dialog", (dialog) => dialog.accept());
     await page.getByRole("button", { name: "Wyczyść formularz" }).click();
     await expect(page.getByLabel("Nazwa wydarzenia")).toHaveValue("");
+    const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
+    expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
+  });
+
+  test("quick news form is clear and mobile-safe", async ({ page }) => {
+    await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
+    await page.goto("/a/dodaj/aktualnosc");
+    await expect(page.getByRole("link", { name: "Wróć do panelu" })).toHaveAttribute("href", "/admin");
+    await page.getByRole("button", { name: "Opublikuj aktualność" }).click();
+    await expect(page.getByText("Wpisz tytuł aktualności.")).toBeVisible();
+    await expect(page.getByText("Dodaj zdjęcie tej aktualności.")).toBeVisible();
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });

@@ -1,5 +1,6 @@
 export const adminTasks = [
   { href: "/a/dodaj/wydarzenie", title: "Dodaj wydarzenie", description: "Termin, miejsce, opis i zdjęcie." },
+  { href: "/a/dodaj/aktualnosc", title: "Dodaj aktualność", description: "Wiadomość, data i obowiązkowe zdjęcie." },
   { href: "/a/dodaj/galeria", title: "Dodaj zdjęcia lub filmy", description: "Najprostszy uploader prosto z telefonu." },
   { href: "/admin/kalendarz", title: "Rezerwacje i blokady", description: "Kalendarz oraz zamykanie godzin wynajmu." },
   { href: "/admin/zgloszenia", title: "Sprawdź zgłoszenia", description: "Uczestnicy wyjazdów i eksport do Excela." },
