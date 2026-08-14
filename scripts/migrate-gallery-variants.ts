@@ -10,7 +10,7 @@ let migrated = 0;
 
 for (const entry of gallery.docs) {
   const source = typeof entry.image === "object" ? entry.image : null;
-  if (!source?.url || !source.mimeType?.startsWith("image/") || (entry.responsiveSmall && entry.responsiveMedium)) continue;
+  if (!source?.url || !source.mimeType?.startsWith("image/") || (source.mimeType === "image/webp" && entry.responsiveSmall && entry.responsiveMedium)) continue;
   const response = await fetch(new URL(source.url, "https://showteam-eu.corioders.workers.dev"));
   if (!response.ok) throw new Error(`Nie udało się pobrać ${source.filename}: ${response.status}`);
   const original = Buffer.from(await response.arrayBuffer());
@@ -25,7 +25,8 @@ for (const entry of gallery.docs) {
     };
     const responsiveSmall = entry.responsiveSmall || await makeVariant(640, 78);
     const responsiveMedium = entry.responsiveMedium || await makeVariant(1280, 84);
-    await payload.update({ collection: "gallery", id: entry.id, overrideAccess: true, data: { responsiveSmall, responsiveMedium } });
+    const image = source.mimeType === "image/webp" ? source.id : await makeVariant(2560, 90);
+    await payload.update({ collection: "gallery", id: entry.id, overrideAccess: true, data: { image, responsiveSmall, responsiveMedium } });
     migrated += 1;
   } catch (error) {
     await Promise.allSettled(created.map((id) => payload.delete({ collection: "media", id, overrideAccess: true })));
