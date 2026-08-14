@@ -35,8 +35,8 @@ export function StatisticsAdminView() {
   if (!statistics) return <main className="statistics-admin"><p className="statistics-loading"><RefreshCw aria-hidden="true" /> Ładuję statystyki…</p></main>;
 
   const cards = [
-    [Eye, "Odwiedziny dzisiaj", statistics.traffic.views_today],
-    [Eye, "Odwiedziny · 30 dni", statistics.traffic.views_30d],
+    [Eye, "Odwiedziny strony · dzisiaj", statistics.traffic.views_today],
+    [Eye, "Odwiedziny strony · 30 dni", statistics.traffic.views_30d],
     [CalendarCheck, "Nowe rezerwacje · 30 dni", statistics.bookings.created_30d],
     [CalendarClock, "Nadchodzące rezerwacje", statistics.bookings.upcoming],
     [CheckCircle2, "Zrealizowane · 30 dni", statistics.bookings.completed_30d],
