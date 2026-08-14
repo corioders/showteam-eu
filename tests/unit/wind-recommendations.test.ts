@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { recommendSlot } from "../../lib/wind-recommendations";
+import { isWindForecastDate, recommendSlot, weatherProfileLabel } from "../../lib/wind-recommendations";
 
 describe("weather-aware booking recommendations", () => {
   it("recommends a calm forecast for SUP inside the configured window", () => {
@@ -16,5 +16,16 @@ describe("weather-aware booking recommendations", () => {
 
   it("uses the crew's typical window when a long-range forecast does not exist", () => {
     expect(recommendSlot({ time: "19:00", durationMinutes: 60, profile: "calm", windows: [{ start: "19:00", end: "21:00" }] })).toMatchObject({ recommended: true, basis: "typical" });
+  });
+
+  it("uses weather only up to seven days ahead", () => {
+    expect(isWindForecastDate("2026-08-21", "2026-08-14")).toBe(true);
+    expect(isWindForecastDate("2026-08-22", "2026-08-14")).toBe(false);
+  });
+
+  it("labels the best conditions before a customer chooses equipment", () => {
+    expect(weatherProfileLabel("calm")).toBe("Najlepszy warun · spokojna woda");
+    expect(weatherProfileLabel("wind")).toBe("Najlepszy warun · wiatr");
+    expect(weatherProfileLabel("any")).toBe("Dobry w każdy warun");
   });
 });

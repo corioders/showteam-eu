@@ -58,7 +58,7 @@ export function EquipmentRecommendations() {
   }
 
   return <section className="equipment-recommendations">
-    <header><span>POLECANE GODZINY</span><h2>Co działa przy jakim warunie?</h2><p>Ustaw typowe godziny. Dla najbliższych 16 dni system dodatkowo sprawdzi godzinową prognozę wiatru dla Jeziora Łąckiego. To tylko podpowiedzi — niczego nie blokują.</p></header>
+    <header><span>POLECANE GODZINY</span><h2>Co działa przy jakim warunie?</h2><p>Ustaw typowe godziny. Dla najbliższych 7 dni system dodatkowo sprawdzi godzinową prognozę wiatru dla Jeziora Łąckiego. To tylko podpowiedzi — niczego nie blokują.</p></header>
     {loading ? <p className="equipment-recommendations__loading"><RefreshCw aria-hidden="true" /> Ładuję sprzęt…</p> : null}
     {error ? <p className="equipment-recommendations__error" role="alert">{error}</p> : null}
     <div className="equipment-recommendations__list">{equipment.map((item) => <article key={item.id}>

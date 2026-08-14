@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, CloudSun, Phone, Sailboat, Waves, Wind, Zap } from "lucide-react";
 import { addDaysToBookingDate, bookingDateChoices, type BookableEquipment } from "@/lib/reservations";
+import { weatherProfileLabel } from "@/lib/wind-recommendations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -77,8 +78,8 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
 
   if (!equipment.length) return (
     <Card className="border-white/10 bg-white/[0.04] p-8 text-center">
-      <h2 className="font-display text-3xl font-black uppercase">Rezerwacje ruszą wkrótce</h2>
-      <p className="mt-3 text-white/60">Aktualną dostępność sprawdzisz telefonicznie.</p>
+      <h2 className="font-display text-3xl font-black uppercase">Rezerwacja online jest teraz niedostępna</h2>
+      <p className="mt-3 text-white/60">Zadzwoń do nas — sprawdzimy dostępność sprzętu.</p>
       <Button asChild className="mt-6"><a href="tel:+48500128090"><Phone className="size-4" /> +48 500 128 090</a></Button>
     </Card>
   );
@@ -122,6 +123,7 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
                 <h3 className="mt-12 font-display text-3xl font-black uppercase leading-none">{item.name}</h3>
                 <p className={`mt-3 text-sm leading-5 ${active ? "text-black/65" : "text-white/50"}`}>{item.description}</p>
                 <div className="mt-4 flex items-center gap-2 text-xs font-bold uppercase tracking-wider"><Clock3 className="size-3.5" /> {item.durationMinutes} min</div>
+                <div className={`mt-2 flex items-center gap-2 text-[.68rem] font-bold uppercase tracking-wider ${active ? "text-black/70" : "text-sky-300"}`}><Wind className="size-3.5" /> {weatherProfileLabel(item.weatherProfile)}</div>
               </button>
             );
           })}

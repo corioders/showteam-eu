@@ -4,6 +4,7 @@ const lakeLatitude = 49.97635;
 const lakeLongitude = 18.87813;
 const calmMaximumKmh = 10;
 const windMinimumKmh = 12;
+const forecastRangeDays = 7;
 
 export type WindHour = { time: string; speedKmh: number; gustKmh: number };
 export type WindForecast = { status: "forecast" | "outside-range" | "unavailable"; hours: WindHour[] };
@@ -49,9 +50,19 @@ export function recommendationWindows(equipment: { recommendedStart1?: string | 
   ].flatMap(({ start, end }) => start && end ? [{ start, end }] : []);
 }
 
+export function isWindForecastDate(date: string, today = todayInPoland()) {
+  return date >= today && date <= addDaysToBookingDate(today, forecastRangeDays);
+}
+
+export function weatherProfileLabel(profile: WeatherProfile) {
+  if (profile === "calm") return "Najlepszy warun · spokojna woda";
+  if (profile === "wind") return "Najlepszy warun · wiatr";
+  return "Dobry w każdy warun";
+}
+
 export async function getWindForecast(date: string): Promise<WindForecast> {
   const today = todayInPoland();
-  if (date < today || date > addDaysToBookingDate(today, 15)) return { status: "outside-range", hours: [] };
+  if (!isWindForecastDate(date, today)) return { status: "outside-range", hours: [] };
   const params = new URLSearchParams({
     latitude: String(lakeLatitude), longitude: String(lakeLongitude),
     hourly: "wind_speed_10m,wind_gusts_10m", wind_speed_unit: "kmh",
