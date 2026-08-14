@@ -47,7 +47,20 @@ export async function GET(request: Request) {
     .map((time) => ({
       time,
       available: Math.max(0, equipment.quantity - (counts.get(time) || 0)),
-      recommendation: recommendSlot({ time, durationMinutes: equipment.durationMinutes, profile: equipment.weatherProfile, windows, forecast: forecastByHour.get(time.slice(0, 2)) }),
+      recommendation: recommendSlot({
+        time,
+        durationMinutes: equipment.durationMinutes,
+        profile: equipment.weatherProfile,
+        windows,
+        thresholds: {
+          mediumMinKmh: equipment.windMediumMinKmh,
+          mediumMaxKmh: equipment.windMediumMaxKmh,
+          bestMinKmh: equipment.windBestMinKmh,
+          bestMaxKmh: equipment.windBestMaxKmh,
+          professionalMinKmh: equipment.professionalWindMinKmh,
+        },
+        forecast: forecastByHour.get(time.slice(0, 2)),
+      }),
     }))
     .filter((slot) => slot.available > 0);
   return Response.json({ slots, durationMinutes: equipment.durationMinutes, openTime: hours.openTime, closeTime: hours.closeTime, windStatus: wind.status, recommendationNote: equipment.recommendationNote || null }, { headers: { "Cache-Control": "no-store" } });

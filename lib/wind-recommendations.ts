@@ -2,15 +2,18 @@ import { addDaysToBookingDate, endTime, timeRangesOverlap, todayInPoland, type W
 
 const lakeLatitude = 49.97635;
 const lakeLongitude = 18.87813;
-const calmMaximumKmh = 10;
-const windMinimumKmh = 12;
-const professionalWindKmh = 26;
-const professionalGustKmh = 38;
 const forecastRangeDays = 7;
 
 export type WindHour = { time: string; speedKmh: number; gustKmh: number };
 export type WindForecast = { status: "forecast" | "outside-range" | "unavailable"; hours: WindHour[] };
 export type RecommendationLevel = "best" | "medium" | "poor" | "professional";
+export type WindThresholds = {
+  mediumMinKmh: number;
+  mediumMaxKmh: number;
+  bestMinKmh: number;
+  bestMaxKmh: number;
+  professionalMinKmh?: number | null;
+};
 export type SlotRecommendation = {
   recommended: boolean;
   level: RecommendationLevel;
@@ -26,10 +29,11 @@ type RecommendInput = {
   durationMinutes: number;
   profile: WeatherProfile;
   windows: { start: string; end: string }[];
+  thresholds: WindThresholds;
   forecast?: WindHour;
 };
 
-export function recommendSlot({ time, durationMinutes, profile, windows, forecast }: RecommendInput): SlotRecommendation {
+export function recommendSlot({ time, durationMinutes, profile, windows, thresholds, forecast }: RecommendInput): SlotRecommendation {
   if (profile === "any") return {
     recommended: true,
     level: "best",
@@ -47,14 +51,14 @@ export function recommendSlot({ time, durationMinutes, profile, windows, forecas
       : { recommended: false, level: "poor", basis: "typical", label: "Słaby warun", detail: "Poza godzinami zwykle polecanymi dla tego sprzętu." };
   }
 
-  if (profile === "wind" && (forecast.speedKmh >= professionalWindKmh || forecast.gustKmh >= professionalGustKmh)) {
+  const bestConditions = forecast.speedKmh >= thresholds.bestMinKmh && forecast.speedKmh <= thresholds.bestMaxKmh;
+  const mediumConditions = forecast.speedKmh >= thresholds.mediumMinKmh && forecast.speedKmh <= thresholds.mediumMaxKmh;
+  if (profile === "wind" && thresholds.professionalMinKmh != null && forecast.speedKmh >= thresholds.professionalMinKmh) {
     return { recommended: false, level: "professional", basis: "forecast", label: "Warun profesjonalny", detail: `Bardzo mocny wiatr: ${Math.round(forecast.speedKmh)} km/h, porywy ${Math.round(forecast.gustKmh)} km/h. Tylko dla doświadczonych.`, windKmh: forecast.speedKmh, gustKmh: forecast.gustKmh };
   }
-
-  const weatherMatches = profile === "calm" ? forecast.speedKmh <= calmMaximumKmh : forecast.speedKmh >= windMinimumKmh;
   const condition = profile === "calm" ? "spokojna woda" : profile === "wind" ? "wiatr do żeglowania" : "warunki bez szczególnych wymagań";
-  if (weatherMatches && inPreferredWindow) return { recommended: true, level: "best", basis: "forecast", label: "Najlepszy warun", detail: `Prognoza: ${condition}, wiatr ${Math.round(forecast.speedKmh)} km/h.`, windKmh: forecast.speedKmh, gustKmh: forecast.gustKmh };
-  if (weatherMatches) return { recommended: true, level: "medium", basis: "forecast", label: "Średni warun", detail: `Prognoza: ${condition}, ale godzina jest poza zwykle polecanym zakresem.`, windKmh: forecast.speedKmh, gustKmh: forecast.gustKmh };
+  if (bestConditions && inPreferredWindow) return { recommended: true, level: "best", basis: "forecast", label: "Najlepszy warun", detail: `Prognoza: ${condition}, wiatr ${Math.round(forecast.speedKmh)} km/h.`, windKmh: forecast.speedKmh, gustKmh: forecast.gustKmh };
+  if (mediumConditions) return { recommended: true, level: "medium", basis: "forecast", label: "Średni warun", detail: `Prognozowany wiatr: ${Math.round(forecast.speedKmh)} km/h.`, windKmh: forecast.speedKmh, gustKmh: forecast.gustKmh };
   return { recommended: false, level: "poor", basis: "forecast", label: "Słaby warun", detail: `Warunki są słabsze dla tego sprzętu. Prognozowany wiatr: ${Math.round(forecast.speedKmh)} km/h.`, windKmh: forecast.speedKmh, gustKmh: forecast.gustKmh };
 }
 

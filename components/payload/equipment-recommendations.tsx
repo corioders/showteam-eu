@@ -12,7 +12,18 @@ type EquipmentRecommendation = {
   recommendedEnd1: string;
   recommendedStart2: string;
   recommendedEnd2: string;
+  windMediumMinKmh: number;
+  windMediumMaxKmh: number;
+  windBestMinKmh: number;
+  windBestMaxKmh: number;
+  professionalWindMinKmh: number | "";
   recommendationNote: string;
+};
+
+const defaultThresholds: Record<Profile, Pick<EquipmentRecommendation, "windMediumMinKmh" | "windMediumMaxKmh" | "windBestMinKmh" | "windBestMaxKmh" | "professionalWindMinKmh">> = {
+  calm: { windMediumMinKmh: 0, windMediumMaxKmh: 16, windBestMinKmh: 0, windBestMaxKmh: 10, professionalWindMinKmh: "" },
+  wind: { windMediumMinKmh: 8, windMediumMaxKmh: 32, windBestMinKmh: 12, windBestMaxKmh: 25, professionalWindMinKmh: 26 },
+  any: { windMediumMinKmh: 0, windMediumMaxKmh: 100, windBestMinKmh: 0, windBestMaxKmh: 100, professionalWindMinKmh: "" },
 };
 
 const profileHelp: Record<Profile, string> = {
@@ -41,9 +52,14 @@ export function EquipmentRecommendations() {
     return () => controller.abort();
   }, []);
 
-  function change(id: number, field: keyof EquipmentRecommendation, value: string) {
+  function change(id: number, field: keyof EquipmentRecommendation, value: string | number) {
     setSavedId(null);
     setEquipment((current) => current.map((item) => item.id === id ? { ...item, [field]: value } : item));
+  }
+
+  function changeProfile(id: number, profile: Profile) {
+    setSavedId(null);
+    setEquipment((current) => current.map((item) => item.id === id ? { ...item, weatherProfile: profile, ...defaultThresholds[profile] } : item));
   }
 
   async function save(item: EquipmentRecommendation) {
@@ -63,8 +79,9 @@ export function EquipmentRecommendations() {
     {error ? <p className="equipment-recommendations__error" role="alert">{error}</p> : null}
     <div className="equipment-recommendations__list">{equipment.map((item) => <article key={item.id}>
       <div className="equipment-recommendations__title"><Wind aria-hidden="true" /><div><h3>{item.name}</h3><p>{profileHelp[item.weatherProfile]}</p></div></div>
-      <label><span>Najlepsze warunki</span><select value={item.weatherProfile} onChange={(event) => change(item.id, "weatherProfile", event.target.value)}><option value="calm">Najlepiej bez wiatru</option><option value="wind">Najlepiej z wiatrem</option><option value="any">Pogoda bez znaczenia</option></select></label>
+      <label><span>Najlepsze warunki</span><select value={item.weatherProfile} onChange={(event) => changeProfile(item.id, event.target.value as Profile)}><option value="calm">Najlepiej bez wiatru</option><option value="wind">Najlepiej z wiatrem</option><option value="any">Pogoda bez znaczenia</option></select></label>
       <fieldset><legend>Typowe polecane godziny</legend><div><label><span>Od</span><input type="time" value={item.recommendedStart1} onChange={(event) => change(item.id, "recommendedStart1", event.target.value)} /></label><label><span>Do</span><input type="time" value={item.recommendedEnd1} onChange={(event) => change(item.id, "recommendedEnd1", event.target.value)} /></label><label><span>Od <small>(drugie okno)</small></span><input type="time" value={item.recommendedStart2} onChange={(event) => change(item.id, "recommendedStart2", event.target.value)} /></label><label><span>Do <small>(drugie okno)</small></span><input type="time" value={item.recommendedEnd2} onChange={(event) => change(item.id, "recommendedEnd2", event.target.value)} /></label></div></fieldset>
+      {item.weatherProfile !== "any" ? <fieldset className="equipment-recommendations__thresholds"><legend>Widełki wiatru <small>(km/h)</small></legend><p>Najlepszy zakres musi mieścić się w średnim. Poza średnim system pokaże słaby warun.</p><div><label><span>Średni od</span><input type="number" inputMode="decimal" min="0" max="100" step="1" value={item.windMediumMinKmh} onChange={(event) => change(item.id, "windMediumMinKmh", Number(event.target.value))} /></label><label><span>Średni do</span><input type="number" inputMode="decimal" min="0" max="100" step="1" value={item.windMediumMaxKmh} onChange={(event) => change(item.id, "windMediumMaxKmh", Number(event.target.value))} /></label><label><span>Najlepszy od</span><input type="number" inputMode="decimal" min="0" max="100" step="1" value={item.windBestMinKmh} onChange={(event) => change(item.id, "windBestMinKmh", Number(event.target.value))} /></label><label><span>Najlepszy do</span><input type="number" inputMode="decimal" min="0" max="100" step="1" value={item.windBestMaxKmh} onChange={(event) => change(item.id, "windBestMaxKmh", Number(event.target.value))} /></label>{item.weatherProfile === "wind" ? <label><span>Profesjonalny od <small>(opcjonalnie)</small></span><input type="number" inputMode="decimal" min="0" max="100" step="1" value={item.professionalWindMinKmh} placeholder="Wyłączone" onChange={(event) => change(item.id, "professionalWindMinKmh", event.target.value === "" ? "" : Number(event.target.value))} /></label> : null}</div></fieldset> : null}
       <label><span>Krótka podpowiedź dla klienta <small>(opcjonalnie)</small></span><textarea rows={2} maxLength={220} value={item.recommendationNote} onChange={(event) => change(item.id, "recommendationNote", event.target.value)} placeholder="Np. Rano jezioro jest zwykle najspokojniejsze." /></label>
       <button type="button" disabled={savingId === item.id} onClick={() => void save(item)}>{savedId === item.id ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}{savingId === item.id ? "Zapisuję…" : savedId === item.id ? "Zapisane" : "Zapisz podpowiedzi"}</button>
     </article>)}</div>

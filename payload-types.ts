@@ -341,6 +341,14 @@ export interface Equipment {
   recommendedEnd1?: string | null;
   recommendedStart2?: string | null;
   recommendedEnd2?: string | null;
+  windMediumMinKmh: number;
+  windMediumMaxKmh: number;
+  windBestMinKmh: number;
+  windBestMaxKmh: number;
+  /**
+   * Opcjonalne. Działa tylko dla sprzętu, który wymaga wiatru. Zostaw puste, aby wyłączyć.
+   */
+  professionalWindMinKmh?: number | null;
   recommendationNote?: string | null;
   slug: string;
   sortOrder: number;
@@ -663,6 +671,11 @@ export interface EquipmentSelect<T extends boolean = true> {
   recommendedEnd1?: T;
   recommendedStart2?: T;
   recommendedEnd2?: T;
+  windMediumMinKmh?: T;
+  windMediumMaxKmh?: T;
+  windBestMinKmh?: T;
+  windBestMaxKmh?: T;
+  professionalWindMinKmh?: T;
   recommendationNote?: T;
   slug?: T;
   sortOrder?: T;

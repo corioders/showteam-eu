@@ -22,6 +22,9 @@ export async function GET(request: Request) {
     id: Number(item.id), name: item.name, weatherProfile: item.weatherProfile,
     recommendedStart1: item.recommendedStart1 || "", recommendedEnd1: item.recommendedEnd1 || "",
     recommendedStart2: item.recommendedStart2 || "", recommendedEnd2: item.recommendedEnd2 || "",
+    windMediumMinKmh: item.windMediumMinKmh, windMediumMaxKmh: item.windMediumMaxKmh,
+    windBestMinKmh: item.windBestMinKmh, windBestMaxKmh: item.windBestMaxKmh,
+    professionalWindMinKmh: item.professionalWindMinKmh ?? "",
     recommendationNote: item.recommendationNote || "",
   })) }, { headers: { "Cache-Control": "no-store" } });
 }
@@ -37,11 +40,25 @@ export async function PUT(request: Request) {
   const recommendedEnd1 = String(input.recommendedEnd1 || "");
   const recommendedStart2 = String(input.recommendedStart2 || "");
   const recommendedEnd2 = String(input.recommendedEnd2 || "");
+  const windMediumMinKmh = Number(input.windMediumMinKmh);
+  const windMediumMaxKmh = Number(input.windMediumMaxKmh);
+  const windBestMinKmh = Number(input.windBestMinKmh);
+  const windBestMaxKmh = Number(input.windBestMaxKmh);
+  const professionalWindMinKmh = input.professionalWindMinKmh === "" || input.professionalWindMinKmh == null ? null : Number(input.professionalWindMinKmh);
   const recommendationNote = String(input.recommendationNote || "").trim();
   const windows = [[recommendedStart1, recommendedEnd1], [recommendedStart2, recommendedEnd2]];
   if (!Number.isInteger(id)) return Response.json({ error: "Nie znaleziono sprzętu." }, { status: 400 });
   if (!profiles.has(weatherProfile)) return Response.json({ error: "Wybierz rodzaj warunków." }, { status: 400 });
   if (recommendationNote.length > 220) return Response.json({ error: "Podpowiedź może mieć maksymalnie 220 znaków." }, { status: 400 });
+  if (![windMediumMinKmh, windMediumMaxKmh, windBestMinKmh, windBestMaxKmh].every((value) => Number.isFinite(value) && value >= 0 && value <= 100)) {
+    return Response.json({ error: "Wpisz prędkości wiatru od 0 do 100 km/h." }, { status: 400 });
+  }
+  if (!(windMediumMinKmh <= windBestMinKmh && windBestMinKmh <= windBestMaxKmh && windBestMaxKmh <= windMediumMaxKmh)) {
+    return Response.json({ error: "Zakres „najlepszy” musi mieścić się wewnątrz zakresu „średni”." }, { status: 400 });
+  }
+  if (weatherProfile === "wind" && professionalWindMinKmh != null && (!Number.isFinite(professionalWindMinKmh) || professionalWindMinKmh < 0 || professionalWindMinKmh > 100 || professionalWindMinKmh <= windBestMaxKmh)) {
+    return Response.json({ error: "Próg profesjonalny musi być wyższy niż najlepszy warun i nie większy niż 100 km/h." }, { status: 400 });
+  }
   for (const [start, end] of windows) {
     if (!validTime(start) || !validTime(end) || Boolean(start) !== Boolean(end) || (start && start >= end)) return Response.json({ error: "W każdym oknie wpisz poprawny początek i koniec albo zostaw oba pola puste." }, { status: 400 });
   }
@@ -50,6 +67,8 @@ export async function PUT(request: Request) {
       weatherProfile: weatherProfile as "any" | "calm" | "wind",
       recommendedStart1: recommendedStart1 || null, recommendedEnd1: recommendedEnd1 || null,
       recommendedStart2: recommendedStart2 || null, recommendedEnd2: recommendedEnd2 || null,
+      windMediumMinKmh, windMediumMaxKmh, windBestMinKmh, windBestMaxKmh,
+      professionalWindMinKmh: weatherProfile === "wind" ? professionalWindMinKmh : null,
       recommendationNote: recommendationNote || null,
     } });
     return Response.json({ ok: true });

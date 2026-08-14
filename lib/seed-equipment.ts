@@ -13,9 +13,9 @@ const equipment = [
 ] as const;
 
 function recommendations(slug: string) {
-  if (["sup", "kajak"].includes(slug)) return { weatherProfile: "calm" as const, recommendedStart1: "07:00", recommendedEnd1: "09:00", recommendedStart2: "19:00", recommendedEnd2: "21:00", recommendationNote: "Rano i wieczorem jezioro jest zwykle spokojniejsze." };
-  if (["hobie-cat", "lodz-zaglowa", "windsurfing", "wing-foil"].includes(slug)) return { weatherProfile: "wind" as const, recommendedStart1: "09:00", recommendedEnd1: "19:00", recommendationNote: "W ciągu dnia zwykle pojawia się najlepszy wiatr." };
-  return { weatherProfile: "any" as const };
+  if (["sup", "kajak"].includes(slug)) return { weatherProfile: "calm" as const, windMediumMinKmh: 0, windMediumMaxKmh: 16, windBestMinKmh: 0, windBestMaxKmh: 10, recommendedStart1: "07:00", recommendedEnd1: "09:00", recommendedStart2: "19:00", recommendedEnd2: "21:00", recommendationNote: "Rano i wieczorem jezioro jest zwykle spokojniejsze." };
+  if (["hobie-cat", "lodz-zaglowa", "windsurfing", "wing-foil"].includes(slug)) return { weatherProfile: "wind" as const, windMediumMinKmh: 8, windMediumMaxKmh: 32, windBestMinKmh: 12, windBestMaxKmh: 25, professionalWindMinKmh: 26, recommendedStart1: "09:00", recommendedEnd1: "19:00", recommendationNote: "W ciągu dnia zwykle pojawia się najlepszy wiatr." };
+  return { weatherProfile: "any" as const, windMediumMinKmh: 0, windMediumMaxKmh: 100, windBestMinKmh: 0, windBestMaxKmh: 100 };
 }
 
 export async function seedEquipment(payload: Awaited<ReturnType<typeof getPayload>>) {

@@ -27,6 +27,11 @@ export async function getBookableEquipment(): Promise<BookableEquipment[]> {
     recommendedEnd1: document.recommendedEnd1 || undefined,
     recommendedStart2: document.recommendedStart2 || undefined,
     recommendedEnd2: document.recommendedEnd2 || undefined,
+    windMediumMinKmh: document.windMediumMinKmh,
+    windMediumMaxKmh: document.windMediumMaxKmh,
+    windBestMinKmh: document.windBestMinKmh,
+    windBestMaxKmh: document.windBestMaxKmh,
+    professionalWindMinKmh: document.professionalWindMinKmh ?? undefined,
     recommendationNote: document.recommendationNote || undefined,
     image: document.image || null,
   }));

@@ -13,6 +13,11 @@ export type BookableEquipment = {
   recommendedEnd1?: string;
   recommendedStart2?: string;
   recommendedEnd2?: string;
+  windMediumMinKmh: number;
+  windMediumMaxKmh: number;
+  windBestMinKmh: number;
+  windBestMaxKmh: number;
+  professionalWindMinKmh?: number;
   recommendationNote?: string;
   image?: { url?: string | null; alt?: string | null } | number | null;
 };

@@ -41,6 +41,25 @@ export const Equipment: CollectionConfig = {
         if (Boolean(start) !== Boolean(end)) errors.push({ path: start ? endField : startField, label: `Polecane okno ${number}`, message: "Wpisz obie godziny albo zostaw obie puste." });
         if (start && end && timeToMinutes(start) >= timeToMinutes(end)) errors.push({ path: endField, label: `Polecane okno ${number}`, message: "Koniec polecanego okna musi być później niż początek." });
       }
+      const mediumMin = Number(data.windMediumMinKmh ?? originalDoc?.windMediumMinKmh);
+      const mediumMax = Number(data.windMediumMaxKmh ?? originalDoc?.windMediumMaxKmh);
+      const bestMin = Number(data.windBestMinKmh ?? originalDoc?.windBestMinKmh);
+      const bestMax = Number(data.windBestMaxKmh ?? originalDoc?.windBestMaxKmh);
+      if (![mediumMin, mediumMax, bestMin, bestMax].every((value) => Number.isFinite(value) && value >= 0 && value <= 100)) {
+        errors.push({ path: "windMediumMinKmh", label: "Progi wiatru", message: "Każda prędkość musi być liczbą od 0 do 100 km/h." });
+      } else if (!(mediumMin <= bestMin && bestMin <= bestMax && bestMax <= mediumMax)) {
+        errors.push({ path: "windBestMinKmh", label: "Progi wiatru", message: "Zakres „najlepszy” musi mieścić się wewnątrz zakresu „średni”." });
+      }
+      const weatherProfile = String(data.weatherProfile ?? originalDoc?.weatherProfile ?? "any");
+      const professionalRaw = data.professionalWindMinKmh ?? originalDoc?.professionalWindMinKmh;
+      if (weatherProfile === "wind" && professionalRaw != null) {
+        const professionalMin = Number(professionalRaw);
+        if (!Number.isFinite(professionalMin) || professionalMin < 0 || professionalMin > 100) {
+          errors.push({ path: "professionalWindMinKmh", label: "Warun profesjonalny", message: "Wpisz prędkość od 0 do 100 km/h albo zostaw pole puste." });
+        } else if (professionalMin <= bestMax) {
+          errors.push({ path: "professionalWindMinKmh", label: "Warun profesjonalny", message: "Próg profesjonalny musi być wyższy niż górna granica najlepszego warunu." });
+        }
+      }
       if (errors.length) throw new ValidationError({ collection: "equipment", errors, req }, req.t);
       return data;
     }],
@@ -105,6 +124,15 @@ export const Equipment: CollectionConfig = {
           { name: "recommendedStart2", label: "Drugie okno — od", type: "text", validate: optionalTime },
           { name: "recommendedEnd2", label: "Drugie okno — do", type: "text", validate: optionalTime },
         ] },
+        { type: "row", fields: [
+          { name: "windMediumMinKmh", label: "Średni warun — od km/h", type: "number", required: true, defaultValue: 0, min: 0, max: 100 },
+          { name: "windMediumMaxKmh", label: "Średni warun — do km/h", type: "number", required: true, defaultValue: 16, min: 0, max: 100 },
+        ] },
+        { type: "row", fields: [
+          { name: "windBestMinKmh", label: "Najlepszy warun — od km/h", type: "number", required: true, defaultValue: 0, min: 0, max: 100 },
+          { name: "windBestMaxKmh", label: "Najlepszy warun — do km/h", type: "number", required: true, defaultValue: 10, min: 0, max: 100 },
+        ] },
+        { name: "professionalWindMinKmh", label: "Warun profesjonalny — od km/h", type: "number", min: 0, max: 100, admin: { description: "Opcjonalne. Działa tylko dla sprzętu, który wymaga wiatru. Zostaw puste, aby wyłączyć.", condition: (_, siblingData) => siblingData.weatherProfile === "wind" } },
         { name: "recommendationNote", label: "Dodatkowa podpowiedź dla klienta", type: "textarea", maxLength: 220 },
       ] },
     ] },
