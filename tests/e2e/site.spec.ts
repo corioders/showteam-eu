@@ -158,8 +158,9 @@ test.describe("mobile", () => {
     await page.goto("/");
     await page.getByRole("button", { name: "Otwórz menu" }).click();
     const menu = page.getByRole("navigation", { name: "Menu mobilne" });
-    await expect(menu.getByRole("link")).toHaveCount(8);
+    await expect(menu.getByRole("link")).toHaveCount(9);
     await expect(menu.getByRole("link", { name: /Galeria/ })).toBeVisible();
+    await expect(menu.getByRole("link", { name: /Aktualności/ })).toBeVisible();
     await expect(page.getByRole("link", { name: "+48 500 128 090" })).toBeVisible();
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
