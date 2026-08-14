@@ -223,6 +223,10 @@ test.describe("mobile", () => {
     await expect(page.getByText("Dodaj zdjęcie tego wydarzenia.")).toBeVisible();
 
     await page.getByLabel("Nazwa wydarzenia").fill("Testowe wydarzenie");
+    await page.getByLabel("Miejsce").fill("Poręba");
+    const preview = page.getByLabel("Podgląd wydarzenia");
+    await expect(preview.getByRole("heading", { name: "Testowe wydarzenie" })).toBeVisible();
+    await expect(preview.getByText("Poręba", { exact: true })).toBeVisible();
     page.once("dialog", (dialog) => dialog.accept());
     await page.getByRole("button", { name: "Wyczyść formularz" }).click();
     await expect(page.getByLabel("Nazwa wydarzenia")).toHaveValue("");
