@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { AvailabilityBlocks } from "@/components/payload/availability-blocks";
 import { AvailabilityHours } from "@/components/payload/availability-hours";
 import { CalendarSubscription } from "@/components/payload/calendar-subscription";
-import { OperationsCalendar } from "@/components/operations-calendar";
+
+const OperationsCalendar = dynamic(() => import("@/components/operations-calendar").then((module) => module.OperationsCalendar), { ssr: false });
 
 export function CalendarAdminView() {
   const [section, setSection] = useState<"calendar" | "availability" | "sync">("calendar");
