@@ -1,25 +1,39 @@
 "use client";
 
+import * as Dialog from "@radix-ui/react-dialog";
 import Image from "next/image";
-import { ArrowUpRight, LoaderCircle } from "lucide-react";
-import { useState, type CSSProperties } from "react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Expand, LoaderCircle, X } from "lucide-react";
+import { useEffect, useState, type CSSProperties, type PointerEvent } from "react";
 import type { GalleryPage, GalleryPhoto } from "@/lib/gallery";
 import { galleryLayoutClass, galleryMobileClass } from "@/lib/gallery-layout";
 
 const filters = ["Wszystkie", "Lato", "Zima", "Szkolenia"] as const;
-
 type GalleryState = { photos: GalleryPhoto[]; page: number; totalPages: number };
 
 export function GalleryGrid({ photos, filtersEnabled = false, initialPage = 1, initialTotalPages = 1 }: { photos: GalleryPhoto[]; filtersEnabled?: boolean; initialPage?: number; initialTotalPages?: number }) {
   const [filter, setFilter] = useState<(typeof filters)[number]>("Wszystkie");
   const [pages, setPages] = useState<Partial<Record<(typeof filters)[number], GalleryState>>>({ Wszystkie: { photos, page: initialPage, totalPages: initialTotalPages } });
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const current = pages[filter];
   const visible = current?.photos ?? photos.filter((photo) => photo.season === filter);
+  const selectedIndex = visible.findIndex((photo) => photo.id === selectedId);
+  const selected = selectedIndex >= 0 ? visible[selectedIndex] : null;
+
+  useEffect(() => {
+    if (!selected) return;
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") setSelectedId(visible[(selectedIndex - 1 + visible.length) % visible.length]?.id ?? null);
+      if (event.key === "ArrowRight") setSelectedId(visible[(selectedIndex + 1) % visible.length]?.id ?? null);
+    };
+    window.addEventListener("keydown", keydown);
+    return () => window.removeEventListener("keydown", keydown);
+  }, [selected, selectedIndex, visible]);
 
   async function selectFilter(nextFilter: (typeof filters)[number]) {
     setFilter(nextFilter);
+    setSelectedId(null);
     if (pages[nextFilter]) return;
     await loadPage(nextFilter, 1, false);
   }
@@ -33,65 +47,49 @@ export function GalleryGrid({ photos, filtersEnabled = false, initialPage = 1, i
       const response = await fetch(`/api/gallery?${params}`);
       if (!response.ok) throw new Error("gallery request failed");
       const result = await response.json() as GalleryPage;
-      setPages((stored) => ({
-        ...stored,
-        [targetFilter]: {
-          photos: append ? [...(stored[targetFilter]?.photos ?? []), ...result.photos] : result.photos,
-          page: result.page,
-          totalPages: result.totalPages,
-        },
-      }));
-    } catch {
-      setLoadError(true);
-    } finally {
-      setLoading(false);
-    }
+      setPages((stored) => ({ ...stored, [targetFilter]: { photos: append ? [...(stored[targetFilter]?.photos ?? []), ...result.photos] : result.photos, page: result.page, totalPages: result.totalPages } }));
+    } catch { setLoadError(true); }
+    finally { setLoading(false); }
   }
 
-  return (
-    <>
-      {filtersEnabled ? (
-        <div className="mb-8 flex flex-wrap border-l border-t border-white/15" aria-label="Filtry galerii">
-          {filters.map((item) => (
-            <button key={item} type="button" onClick={() => void selectFilter(item)} aria-pressed={filter === item} className="border-b border-r border-white/15 px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:bg-white hover:text-black aria-pressed:bg-orange-500 aria-pressed:text-black">
-              {item}
-            </button>
-          ))}
-        </div>
-      ) : null}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:auto-rows-[22rem] md:grid-cols-4 md:gap-4">
-        {visible.map((photo) => (
-          <figure key={photo.id} className={`gallery-tile group relative m-0 overflow-hidden ${galleryMobileClass(photo.mobileLayout)} md:aspect-auto ${photo.fit === "contain" ? "bg-[#ecebe4]" : "bg-neutral-900"} ${galleryLayoutClass(photo.layout)}`}>
-            {photo.type === "video" ? (
-              <video
-                src={photo.src}
-                aria-label={photo.alt}
-                controls
-                playsInline
-                preload="metadata"
-                className={`gallery-image size-full ${photo.fit === "contain" ? "object-contain" : "object-cover"}`}
-                style={{ "--mobile-position": photo.mobilePosition, "--desktop-position": photo.objectPosition } as CSSProperties}
-              />
-            ) : (
-              <Image
-                src={photo.src}
-                alt={photo.alt}
-                fill
-                className={`gallery-image pointer-events-none ${photo.fit === "contain" ? "object-contain" : "object-cover"} transition duration-700 group-hover:scale-[1.025]`}
-                style={{ "--mobile-position": photo.mobilePosition, "--desktop-position": photo.objectPosition } as CSSProperties}
-                sizes={photo.layout === "large" || photo.layout === "wide" ? "(min-width:768px) 50vw, 100vw" : "(min-width:768px) 25vw, 100vw"}
-              />
-            )}
-            <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-5 pt-14 md:translate-y-3 md:opacity-0 md:transition md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100">
-              <p className="font-display text-xl font-black uppercase">{photo.caption}</p>
-              {photo.sourceUrl ? <a href={photo.sourceUrl} target="_blank" rel="noreferrer" className="pointer-events-auto relative z-10 mt-2 inline-flex items-center gap-1 font-mono text-[0.65rem] font-bold uppercase tracking-wider text-orange-400">Źródło <ArrowUpRight className="size-3" /></a> : null}
-            </figcaption>
-          </figure>
-        ))}
-      </div>
-      {filtersEnabled && current && current.page < current.totalPages ? <div className="mt-8 flex justify-center"><button type="button" disabled={loading} onClick={() => void loadPage(filter, current.page + 1, true)} className="inline-flex min-w-48 items-center justify-center gap-2 border border-white/25 px-6 py-4 font-mono text-xs font-bold uppercase tracking-wider transition hover:border-orange-500 hover:text-orange-400 disabled:opacity-50">{loading ? <LoaderCircle className="size-4 animate-spin" /> : null}{loading ? "Ładuję…" : "Pokaż więcej"}</button></div> : null}
-      {loadError ? <p role="status" className="mt-5 border-l-2 border-orange-500 py-2 pl-4 text-sm text-white/65">Nie udało się pobrać kolejnych zdjęć. Spróbuj ponownie.</p> : null}
-      {!visible.length ? <p className="border-l-2 border-orange-500 py-2 pl-4 text-white/55">Brak opublikowanych materiałów w tej kategorii.</p> : null}
-    </>
-  );
+  const move = (direction: -1 | 1) => setSelectedId(visible[(selectedIndex + direction + visible.length) % visible.length]?.id ?? null);
+  let pointerStart = 0;
+  const pointerDown = (event: PointerEvent) => { pointerStart = event.clientX; };
+  const pointerUp = (event: PointerEvent) => {
+    const distance = event.clientX - pointerStart;
+    if (Math.abs(distance) > 55) move(distance > 0 ? -1 : 1);
+  };
+
+  return <>
+    {filtersEnabled ? <div className="mb-8 flex flex-wrap border-l border-t border-white/15" aria-label="Filtry galerii">{filters.map((item) => <button key={item} type="button" onClick={() => void selectFilter(item)} aria-pressed={filter === item} className="border-b border-r border-white/15 px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:bg-white hover:text-black aria-pressed:bg-orange-500 aria-pressed:text-black">{item}</button>)}</div> : null}
+    <div className={filtersEnabled ? "columns-1 gap-3 sm:columns-2 lg:columns-3 xl:columns-4" : "grid grid-cols-1 gap-3 sm:grid-cols-2 md:auto-rows-[22rem] md:grid-cols-4 md:gap-4"}>
+      {visible.map((photo) => <GalleryTile key={photo.id} photo={photo} masonry={filtersEnabled} open={() => setSelectedId(photo.id)} />)}
+    </div>
+    {filtersEnabled && current && current.page < current.totalPages ? <div className="mt-8 flex justify-center"><button type="button" disabled={loading} onClick={() => void loadPage(filter, current.page + 1, true)} className="inline-flex min-w-48 items-center justify-center gap-2 border border-white/25 px-6 py-4 font-mono text-xs font-bold uppercase tracking-wider transition hover:border-orange-500 hover:text-orange-400 disabled:opacity-50">{loading ? <LoaderCircle className="size-4 animate-spin" /> : null}{loading ? "Ładuję…" : "Pokaż więcej"}</button></div> : null}
+    {loadError ? <p role="status" className="mt-5 border-l-2 border-orange-500 py-2 pl-4 text-sm text-white/65">Nie udało się pobrać kolejnych zdjęć. Spróbuj ponownie.</p> : null}
+    {!visible.length ? <p className="border-l-2 border-orange-500 py-2 pl-4 text-white/55">Brak opublikowanych materiałów w tej kategorii.</p> : null}
+
+    <Dialog.Root open={Boolean(selected)} onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
+      <Dialog.Portal><Dialog.Overlay className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm" /><Dialog.Content onPointerDown={pointerDown} onPointerUp={pointerUp} className="fixed inset-0 z-[101] grid touch-pan-y grid-rows-[1fr_auto] bg-black p-3 pb-[calc(.75rem+env(safe-area-inset-bottom))] pt-[calc(.75rem+env(safe-area-inset-top))] text-white outline-none sm:p-6">
+        <Dialog.Title className="sr-only">{selected?.caption || "Zdjęcie SHOWteam"}</Dialog.Title><Dialog.Description className="sr-only">Pełnoekranowy podgląd. Przesuń palcem albo użyj strzałek, aby zmienić zdjęcie.</Dialog.Description>
+        {selected ? <div className="relative min-h-0">{selected.type === "video" ? <video src={selected.src} controls autoPlay playsInline className="size-full object-contain" /> : <ResponsiveImage photo={selected} sizes="100vw" className="object-contain" />}</div> : null}
+        <footer className="flex min-h-16 items-center justify-between gap-4 px-2"><div className="min-w-0"><p className="truncate font-display text-xl font-black uppercase">{selected?.caption}</p><p className="font-mono text-[.65rem] text-white/45">{selectedIndex + 1} / {visible.length}</p></div>{selected?.sourceUrl ? <a href={selected.sourceUrl} target="_blank" rel="noreferrer" className="shrink-0 font-mono text-xs font-bold uppercase text-orange-400">Źródło ↗</a> : null}</footer>
+        {visible.length > 1 ? <><button type="button" onClick={() => move(-1)} aria-label="Poprzednie zdjęcie" className="absolute left-3 top-1/2 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-black/70 ring-1 ring-white/25 sm:left-6"><ChevronLeft /></button><button type="button" onClick={() => move(1)} aria-label="Następne zdjęcie" className="absolute right-3 top-1/2 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-black/70 ring-1 ring-white/25 sm:right-6"><ChevronRight /></button></> : null}
+        <Dialog.Close className="absolute right-3 top-[calc(.75rem+env(safe-area-inset-top))] grid size-12 place-items-center rounded-full bg-black/70 ring-1 ring-white/25 sm:right-6 sm:top-6"><X /><span className="sr-only">Zamknij podgląd</span></Dialog.Close>
+      </Dialog.Content></Dialog.Portal>
+    </Dialog.Root>
+  </>;
+}
+
+function GalleryTile({ photo, masonry, open }: { photo: GalleryPhoto; masonry: boolean; open: () => void }) {
+  const desktopShape = photo.layout === "wide" ? "md:aspect-[16/10]" : photo.layout === "tall" ? "md:aspect-[4/5]" : "md:aspect-square";
+  return <figure className={`gallery-tile group relative m-0 overflow-hidden ${masonry ? `mb-3 break-inside-avoid ${galleryMobileClass(photo.mobileLayout)} ${desktopShape}` : `${galleryMobileClass(photo.mobileLayout)} md:aspect-auto ${galleryLayoutClass(photo.layout)}`} ${photo.fit === "contain" ? "bg-[#ecebe4]" : "bg-neutral-900"}`}>
+    {photo.type === "video" ? <><video src={photo.src} aria-label={photo.alt} controls playsInline preload="metadata" className={`gallery-image size-full ${photo.fit === "contain" ? "object-contain" : "object-cover"}`} style={{ "--mobile-position": photo.mobilePosition, "--desktop-position": photo.objectPosition } as CSSProperties} /><button type="button" onClick={open} aria-label={`Powiększ: ${photo.caption}`} className="absolute left-3 top-3 z-10 grid size-10 place-items-center rounded-full bg-black/75 ring-1 ring-white/25"><Expand className="size-4" /></button></> : <button type="button" onClick={open} aria-label={`Powiększ: ${photo.caption}`} className="absolute inset-0 size-full cursor-zoom-in text-left"><ResponsiveImage photo={photo} sizes={masonry ? "(min-width:1280px) 25vw, (min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw" : photo.layout === "large" || photo.layout === "wide" ? "(min-width:768px) 50vw, 100vw" : "(min-width:768px) 25vw, 100vw"} className={`${photo.fit === "contain" ? "object-contain" : "object-cover"} transition duration-700 group-hover:scale-[1.025]`} /></button>}
+    <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-5 pt-14 md:translate-y-3 md:opacity-0 md:transition md:group-hover:translate-y-0 md:group-hover:opacity-100 md:group-focus-within:translate-y-0 md:group-focus-within:opacity-100"><p className="font-display text-xl font-black uppercase">{photo.caption}</p>{photo.sourceUrl ? <a href={photo.sourceUrl} target="_blank" rel="noreferrer" className="pointer-events-auto relative z-10 mt-2 inline-flex items-center gap-1 font-mono text-[0.65rem] font-bold uppercase tracking-wider text-orange-400">Źródło <ArrowUpRight className="size-3" /></a> : null}</figcaption>
+  </figure>;
+}
+
+function ResponsiveImage({ photo, sizes, className }: { photo: GalleryPhoto; sizes: string; className: string }) {
+  const srcSet = photo.smallSrc && photo.mediumSrc ? `${photo.smallSrc} 640w, ${photo.mediumSrc} 1280w, ${photo.src} 2560w` : undefined;
+  return <picture className="absolute inset-0 block"><source type="image/webp" srcSet={srcSet} sizes={sizes} /><Image src={photo.src} alt={photo.alt} fill unoptimized className={`gallery-image ${className}`} style={{ "--mobile-position": photo.mobilePosition, "--desktop-position": photo.objectPosition } as CSSProperties} sizes={sizes} /></picture>;
 }

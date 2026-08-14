@@ -150,12 +150,31 @@ test("CMS is the single installable staff dashboard", async ({ page }) => {
 
 test("quick uploader previews the exact gallery crop", async ({ page }) => {
   await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
+  await page.route("**/api/quick-upload", (route) => {
+    const multipart = route.request().postDataBuffer()?.toString("latin1") || "";
+    expect(multipart).toContain('name="small-0"');
+    expect(multipart).toContain('name="medium-0"');
+    expect(multipart.match(/Content-Type: image\/webp/g)).toHaveLength(3);
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ count: 1 }) });
+  });
   await page.goto("/a/dodaj/galeria");
   await page.locator('input[type="file"]').setInputFiles(path.join(process.cwd(), "public/media/windsurf.jpg"));
   await expect(page.getByText("Kadr widoczny w galerii")).toBeVisible();
   await page.getByLabel(/Kadr poziomy/).fill("20");
   await page.getByLabel(/Kadr pionowy/).fill("80");
   await expect(page.getByAltText("Podgląd kadru")).toHaveCSS("object-position", "20% 80%");
+  await page.getByRole("button", { name: "Opublikuj w galerii" }).click();
+  await expect(page.getByText("Opublikowano 1 materiał.")).toBeVisible();
+});
+
+test("gallery opens a keyboard-accessible lightbox", async ({ page }) => {
+  await page.goto("/galeria");
+  await page.getByRole("button", { name: /Powiększ:/ }).first().click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Następne zdjęcie" })).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toBeHidden();
 });
 
 test.describe("mobile", () => {
