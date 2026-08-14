@@ -30,6 +30,10 @@ jobs:
       - run: pnpm test:unit
       - name: Prepare local D1 schema
         run: pnpm payload migrate
+      - name: Seed CMS fixtures
+        run: pnpm payload run scripts/seed-ci.ts
+        env:
+          SEED_CMS: "true"
       - run: pnpm exec playwright install chromium
       - run: pnpm test:e2e
         env:
