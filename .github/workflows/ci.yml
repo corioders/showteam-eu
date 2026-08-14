@@ -33,6 +33,8 @@ jobs:
       - name: Seed CMS fixtures
         run: pnpm payload run scripts/seed-ci.ts
         env:
+          NODE_ENV: production
+          PAYLOAD_SECRET: showteam-ci-only-secret-not-used-in-production
           SEED_CMS: "true"
       - run: pnpm exec playwright install chromium
       - run: pnpm test:e2e
