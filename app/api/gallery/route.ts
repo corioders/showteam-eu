@@ -10,6 +10,6 @@ export async function GET(request: Request) {
     : undefined;
   const page = Math.max(1, Number.parseInt(searchParams.get("page") || "1", 10) || 1);
   return Response.json(await getGalleryPage({ page, limit: 24, season }), {
-    headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" },
+    headers: { "Cache-Control": "no-store" },
   });
 }

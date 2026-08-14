@@ -22,6 +22,19 @@ export function GalleryGrid({ photos, filtersEnabled = false, initialPage = 1, i
   const selected = selectedIndex >= 0 ? visible[selectedIndex] : null;
 
   useEffect(() => {
+    if (!filtersEnabled) return;
+    const controller = new AbortController();
+    fetch("/api/gallery?page=1", { cache: "no-store", signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error();
+        const result = await response.json() as GalleryPage;
+        setPages((stored) => ({ ...stored, Wszystkie: { photos: result.photos, page: result.page, totalPages: result.totalPages } }));
+      })
+      .catch((error) => { if (error.name !== "AbortError") setLoadError(true); });
+    return () => controller.abort();
+  }, [filtersEnabled]);
+
+  useEffect(() => {
     if (!selected) return;
     const keydown = (event: KeyboardEvent) => {
       if (event.key === "ArrowLeft") setSelectedId(visible[(selectedIndex - 1 + visible.length) % visible.length]?.id ?? null);
@@ -44,7 +57,7 @@ export function GalleryGrid({ photos, filtersEnabled = false, initialPage = 1, i
     try {
       const params = new URLSearchParams({ page: String(page) });
       if (targetFilter !== "Wszystkie") params.set("season", targetFilter);
-      const response = await fetch(`/api/gallery?${params}`);
+      const response = await fetch(`/api/gallery?${params}`, { cache: "no-store" });
       if (!response.ok) throw new Error("gallery request failed");
       const result = await response.json() as GalleryPage;
       setPages((stored) => ({ ...stored, [targetFilter]: { photos: append ? [...(stored[targetFilter]?.photos ?? []), ...result.photos] : result.photos, page: result.page, totalPages: result.totalPages } }));

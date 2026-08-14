@@ -86,7 +86,7 @@ test("gallery filters CMS photos", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /Galeria SHOWteam/i })).toBeVisible();
   const allCount = await page.locator("figure").count();
   expect(allCount).toBeGreaterThan(6);
-  await page.getByRole("button", { name: "Zima" }).click();
+  await page.getByRole("button", { name: "Zima", exact: true }).click();
   const winterCount = await page.locator("figure").count();
   expect(winterCount).toBeGreaterThan(0);
   expect(winterCount).toBeLessThan(allCount);
