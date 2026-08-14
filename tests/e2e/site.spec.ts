@@ -210,6 +210,21 @@ test.describe("mobile", () => {
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });
 
+  test("quick event form explains errors and can be cleared", async ({ page }) => {
+    await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
+    await page.goto("/a/dodaj/wydarzenie");
+    await page.getByRole("button", { name: "Opublikuj wydarzenie" }).click();
+    await expect(page.getByText("Wpisz nazwę wydarzenia.")).toBeVisible();
+    await expect(page.getByText("Dodaj zdjęcie tego wydarzenia.")).toBeVisible();
+
+    await page.getByLabel("Nazwa wydarzenia").fill("Testowe wydarzenie");
+    page.once("dialog", (dialog) => dialog.accept());
+    await page.getByRole("button", { name: "Wyczyść formularz" }).click();
+    await expect(page.getByLabel("Nazwa wydarzenia")).toHaveValue("");
+    const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
+    expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
+  });
+
   test("footer renders no limits as responsive text", async ({ page }) => {
     await page.goto("/kontakt");
     const slogan = page.getByText("no limits...");
