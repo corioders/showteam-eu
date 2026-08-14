@@ -22,6 +22,12 @@ export async function getBookableEquipment(): Promise<BookableEquipment[]> {
     openTime: document.openTime,
     closeTime: document.closeTime,
     notice: document.notice || undefined,
+    weatherProfile: document.weatherProfile,
+    recommendedStart1: document.recommendedStart1 || undefined,
+    recommendedEnd1: document.recommendedEnd1 || undefined,
+    recommendedStart2: document.recommendedStart2 || undefined,
+    recommendedEnd2: document.recommendedEnd2 || undefined,
+    recommendationNote: document.recommendationNote || undefined,
     image: document.image || null,
   }));
 }

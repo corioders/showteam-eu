@@ -15,6 +15,17 @@ export function applicationAge(birthDate: string, onDate: string) {
   return currentYear - birthYear - (currentMonth < birthMonth || (currentMonth === birthMonth && currentDay < birthDay) ? 1 : 0);
 }
 
+export function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
+}
+
+export function participantIdentity(input: { email: string; participantEmail?: string; participantName: string; birthDate: string }) {
+  const participantEmail = normalizeEmail(input.participantEmail || "");
+  if (participantEmail) return `email:${participantEmail}`;
+  const name = input.participantName.trim().toLowerCase().replace(/\s+/g, " ");
+  return `contact:${normalizeEmail(input.email)}|${name}|${input.birthDate.slice(0, 10)}`;
+}
+
 export function safeSpreadsheetCell(value: unknown) {
   const text = String(value ?? "").replaceAll("\r\n", "\n").replaceAll("\r", "\n");
   return /^[=+\-@]/.test(text) ? `'${text}` : text;

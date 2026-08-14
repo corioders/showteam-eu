@@ -8,12 +8,12 @@ import { applicationDisciplines, applicationLevels, applicationTransport } from 
 type Values = {
   category: ApplicationCategory | ""; offer: string; firstName: string; lastName: string; birthDate: string; address: string;
   email: string; participantEmail: string; phone: string; discipline: string; level: string;
-  transport: string; notes: string; privacyConsent: boolean; accuracyConfirmed: boolean;
+  transport: string; notes: string; privacyConsent: boolean; accuracyConfirmed: boolean; newsletterConsent: boolean;
 };
 type Field = keyof Values;
 type Errors = Partial<Record<Field, string>>;
 const draftKey = "showteam:application-draft:v1";
-const empty: Values = { category: "", offer: "", firstName: "", lastName: "", birthDate: "", address: "", email: "", participantEmail: "", phone: "", discipline: "", level: "", transport: "", notes: "", privacyConsent: false, accuracyConfirmed: false };
+const empty: Values = { category: "", offer: "", firstName: "", lastName: "", birthDate: "", address: "", email: "", participantEmail: "", phone: "", discipline: "", level: "", transport: "", notes: "", privacyConsent: false, accuracyConfirmed: false, newsletterConsent: false };
 
 export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationOfferGroup[]; initialOffer?: string }) {
   const initialGroup = initialOffer ? groups.find((group) => group.offers.some((offer) => offer.title === initialOffer)) : undefined;
@@ -146,6 +146,7 @@ export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationO
     <section className="space-y-5 border border-white/15 bg-white/[.025] p-5 text-sm leading-6 sm:p-8"><span className="eyebrow">04 · Zgody</span>
       <label data-error={Boolean(errors.privacyConsent)} className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={values.privacyConsent} onChange={(event) => set("privacyConsent", event.target.checked)} className="mt-1 size-5 shrink-0 accent-orange-500" /><span>Wyrażam zgodę na przetwarzanie podanych danych przez SHOWTEAM Adam Szołtysek w celu obsługi zgłoszenia. Zgodę można wycofać, pisząc na biuro@showteam.eu.</span></label>{error("privacyConsent")}
       <label data-error={Boolean(errors.accuracyConfirmed)} className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={values.accuracyConfirmed} onChange={(event) => set("accuracyConfirmed", event.target.checked)} className="mt-1 size-5 shrink-0 accent-orange-500" /><span>Potwierdzam poprawność danych oraz pełnoletność osoby zgłaszającej albo działanie jako prawny opiekun uczestnika.</span></label>{error("accuracyConfirmed")}
+      <label className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={values.newsletterConsent} onChange={(event) => set("newsletterConsent", event.target.checked)} className="mt-1 size-5 shrink-0 accent-orange-500" /><span>Chcę otrzymywać od SHOWteam informacje o nowych turnusach i wydarzeniach na podany e-mail. Zgoda jest dobrowolna i można ją wycofać, pisząc na biuro@showteam.eu.</span></label>
     </section>
     {message ? <p role={status === "error" ? "alert" : "status"} className={`border-l-2 py-2 pl-3 ${status === "error" ? "border-red-500 text-red-300" : "border-green-500 text-green-300"}`}>{status === "done" ? <CheckCircle2 className="mr-2 inline size-5" /> : null}{message}</p> : null}
     <div className="grid gap-3 sm:grid-cols-[1fr_auto]"><button type="submit" disabled={status === "saving" || status === "done"} className="flex min-h-14 items-center justify-center gap-2 bg-orange-500 px-6 font-black uppercase text-black disabled:opacity-50">{status === "saving" ? <LoaderCircle className="size-5 animate-spin" /> : <Send className="size-5" />}{status === "saving" ? "Wysyłam…" : "Wyślij zgłoszenie"}</button><button type="button" onClick={clearForm} disabled={status === "saving"} className="min-h-14 border border-white/25 px-6 font-bold text-white/65">Wyczyść formularz</button></div>

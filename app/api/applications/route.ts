@@ -1,6 +1,6 @@
 import { getPayload } from "payload";
 import config, { database } from "@payload-config";
-import { applicationDisciplines, applicationLevels, applicationReference, applicationTransport } from "@/lib/applications";
+import { applicationDisciplines, applicationLevels, applicationReference, applicationTransport, normalizeEmail, participantIdentity } from "@/lib/applications";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 type ApplicationInput = Record<string, unknown>;
@@ -22,8 +22,8 @@ export async function POST(request: Request) {
   const lastName = string(input, "lastName", 100);
   const birthDate = string(input, "birthDate", 10);
   const address = string(input, "address", 300);
-  const email = string(input, "email", 200).toLowerCase();
-  const participantEmail = string(input, "participantEmail", 200).toLowerCase();
+  const email = normalizeEmail(string(input, "email", 200));
+  const participantEmail = normalizeEmail(string(input, "participantEmail", 200));
   const phone = string(input, "phone", 40);
   const discipline = string(input, "discipline", 40);
   const level = string(input, "level", 40);
@@ -46,16 +46,19 @@ export async function POST(request: Request) {
   const disciplineValue = discipline ? discipline as typeof applicationDisciplines[number] : undefined;
   const levelValue = level ? level as typeof applicationLevels[number] : undefined;
   const transportValue = transport ? transport as typeof applicationTransport[number] : undefined;
+  const participantName = `${firstName} ${lastName}`;
+  const newsletterConsent = input.newsletterConsent === true;
 
   const payload = await getPayload({ config });
   const id = crypto.randomUUID();
   const reference = applicationReference(id);
   try {
     await payload.create({ collection: "applications", overrideAccess: true, data: {
-      reference, status: "new", offer, participantName: `${firstName} ${lastName}`, birthDate: `${birthDate}T12:00:00.000Z`, address,
-      email, participantEmail: participantEmail || undefined, phone, discipline: disciplineValue,
+      reference, status: "new", offer, participantName, participantKey: participantIdentity({ email, participantEmail, participantName, birthDate }), birthDate: `${birthDate}T12:00:00.000Z`, address,
+      email, normalizedEmail: email, participantEmail: participantEmail || undefined, phone, discipline: disciplineValue,
       level: levelValue, transport: transportValue, notes: notes || undefined,
-      privacyConsent: true, accuracyConfirmed: true,
+      privacyConsent: true, accuracyConfirmed: true, newsletterConsent,
+      newsletterConsentedAt: newsletterConsent ? new Date().toISOString() : undefined,
     } });
     // E-mail confirmation is intentionally deferred until the mail provider is configured.
     return Response.json({ reference }, { status: 201 });

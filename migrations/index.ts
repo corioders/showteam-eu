@@ -10,6 +10,8 @@ import * as migration_20260813_214000_availability_blocks from './20260813_21400
 import * as migration_20260813_220000_availability_hours from './20260813_220000_availability_hours';
 import * as migration_20260814_010333_applications from './20260814_010333_applications';
 import * as migration_20260814_082801 from './20260814_082801';
+import * as migration_20260814_140904 from './20260814_140904';
+import * as migration_20260814_142029_participant_history from './20260814_142029_participant_history';
 
 export const migrations = [
   {
@@ -70,6 +72,16 @@ export const migrations = [
   {
     up: migration_20260814_082801.up,
     down: migration_20260814_082801.down,
-    name: '20260814_082801'
+    name: '20260814_082801',
+  },
+  {
+    up: migration_20260814_140904.up,
+    down: migration_20260814_140904.down,
+    name: '20260814_140904',
+  },
+  {
+    up: migration_20260814_142029_participant_history.up,
+    down: migration_20260814_142029_participant_history.down,
+    name: '20260814_142029_participant_history'
   },
 ];

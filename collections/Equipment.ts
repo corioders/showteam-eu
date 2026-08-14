@@ -33,6 +33,14 @@ export const Equipment: CollectionConfig = {
       const errors = [];
       if (Number.isFinite(open) && Number.isFinite(close) && close <= open) errors.push({ path: "closeTime", label: "Godzina zakończenia", message: "Godzina zakończenia musi być późniejsza niż rozpoczęcia." });
       if (Number.isFinite(open) && Number.isFinite(close) && Number.isFinite(duration) && duration > close - open) errors.push({ path: "durationMinutes", label: "Długość jednej rezerwacji", message: "Rezerwacja nie może być dłuższa niż cały ustawiony dzień dostępności." });
+      for (const number of [1, 2] as const) {
+        const startField = `recommendedStart${number}` as const;
+        const endField = `recommendedEnd${number}` as const;
+        const start = String(data[startField] ?? originalDoc?.[startField] ?? "");
+        const end = String(data[endField] ?? originalDoc?.[endField] ?? "");
+        if (Boolean(start) !== Boolean(end)) errors.push({ path: start ? endField : startField, label: `Polecane okno ${number}`, message: "Wpisz obie godziny albo zostaw obie puste." });
+        if (start && end && timeToMinutes(start) >= timeToMinutes(end)) errors.push({ path: endField, label: `Polecane okno ${number}`, message: "Koniec polecanego okna musi być później niż początek." });
+      }
       if (errors.length) throw new ValidationError({ collection: "equipment", errors, req }, req.t);
       return data;
     }],
@@ -83,8 +91,28 @@ export const Equipment: CollectionConfig = {
         ] },
         { name: "active", label: "Klienci mogą teraz rezerwować ten sprzęt", type: "checkbox", defaultValue: true },
       ] },
+      { label: "3. Polecane warunki", description: "Podpowiedzi pogodowe widoczne podczas rezerwacji.", fields: [
+        { name: "weatherProfile", label: "Jakie warunki są najlepsze?", type: "select", required: true, defaultValue: "any", options: [
+          { label: "Pogoda bez znaczenia", value: "any" },
+          { label: "Najlepiej bez wiatru", value: "calm" },
+          { label: "Najlepiej z wiatrem", value: "wind" },
+        ] },
+        { type: "row", fields: [
+          { name: "recommendedStart1", label: "Pierwsze okno — od", type: "text", validate: optionalTime },
+          { name: "recommendedEnd1", label: "Pierwsze okno — do", type: "text", validate: optionalTime },
+        ] },
+        { type: "row", fields: [
+          { name: "recommendedStart2", label: "Drugie okno — od", type: "text", validate: optionalTime },
+          { name: "recommendedEnd2", label: "Drugie okno — do", type: "text", validate: optionalTime },
+        ] },
+        { name: "recommendationNote", label: "Dodatkowa podpowiedź dla klienta", type: "textarea", maxLength: 220 },
+      ] },
     ] },
     { name: "slug", label: "Identyfikator", type: "text", required: true, unique: true, admin: { hidden: true } },
     { name: "sortOrder", label: "Kolejność", type: "number", required: true, defaultValue: 100, admin: { hidden: true } },
   ],
 };
+
+function optionalTime(value: unknown) {
+  return !value || /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value)) || "Wpisz godzinę jako HH:MM albo zostaw puste.";
+}

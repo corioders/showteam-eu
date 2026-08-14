@@ -337,6 +337,12 @@ export interface Equipment {
   openTime: string;
   closeTime: string;
   active?: boolean | null;
+  weatherProfile: 'any' | 'calm' | 'wind';
+  recommendedStart1?: string | null;
+  recommendedEnd1?: string | null;
+  recommendedStart2?: string | null;
+  recommendedEnd2?: string | null;
+  recommendationNote?: string | null;
   slug: string;
   sortOrder: number;
   updatedAt: string;
@@ -377,14 +383,16 @@ export interface Booking {
  */
 export interface Application {
   id: number;
-  status: 'new' | 'contacted' | 'accepted' | 'cancelled';
+  status: 'new' | 'contacted' | 'accepted' | 'completed' | 'no_show' | 'cancelled';
   staffNotes?: string | null;
   reference: string;
   offer: string;
   participantName: string;
+  participantKey: string;
   birthDate: string;
   address: string;
   email: string;
+  normalizedEmail: string;
   participantEmail?: string | null;
   phone: string;
   discipline?: ('Narty' | 'Snowboard' | 'Sporty wodne' | 'Inne') | null;
@@ -393,6 +401,8 @@ export interface Application {
   notes?: string | null;
   privacyConsent: boolean;
   accuracyConfirmed: boolean;
+  newsletterConsent?: boolean | null;
+  newsletterConsentedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -647,6 +657,12 @@ export interface EquipmentSelect<T extends boolean = true> {
   openTime?: T;
   closeTime?: T;
   active?: T;
+  weatherProfile?: T;
+  recommendedStart1?: T;
+  recommendedEnd1?: T;
+  recommendedStart2?: T;
+  recommendedEnd2?: T;
+  recommendationNote?: T;
   slug?: T;
   sortOrder?: T;
   updatedAt?: T;
@@ -683,9 +699,11 @@ export interface ApplicationsSelect<T extends boolean = true> {
   reference?: T;
   offer?: T;
   participantName?: T;
+  participantKey?: T;
   birthDate?: T;
   address?: T;
   email?: T;
+  normalizedEmail?: T;
   participantEmail?: T;
   phone?: T;
   discipline?: T;
@@ -694,6 +712,8 @@ export interface ApplicationsSelect<T extends boolean = true> {
   notes?: T;
   privacyConsent?: T;
   accuracyConfirmed?: T;
+  newsletterConsent?: T;
+  newsletterConsentedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

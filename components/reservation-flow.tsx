@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, Phone, Sailboat, Waves, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, CloudSun, Phone, Sailboat, Waves, Wind, Zap } from "lucide-react";
 import { addDaysToBookingDate, bookingDateChoices, type BookableEquipment } from "@/lib/reservations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
-type Slot = { time: string; available: number };
+type Slot = { time: string; available: number; recommendation?: { recommended: boolean; level: "best" | "good" | "regular"; basis: "forecast" | "typical" | "none"; label?: string; detail?: string; windKmh?: number; gustKmh?: number } };
+type WindStatus = "forecast" | "outside-range" | "unavailable";
 type Result = { reference: string; equipment: string; date: string; time: string; endTime: string };
 
 const categoryIcon = { Woda: Waves, Ląd: Zap, Szkolenie: Sailboat, Inne: Sailboat } as const;
@@ -19,6 +20,8 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
   const [time, setTime] = useState("");
   const [slots, setSlots] = useState<Slot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(true);
+  const [windStatus, setWindStatus] = useState<WindStatus | null>(null);
+  const [recommendationNote, setRecommendationNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);
@@ -30,6 +33,7 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
     setDate(nextDate);
     setTime("");
     setSlots([]);
+    setWindStatus(null);
     setError("");
     setLoadingSlots(true);
   }
@@ -39,9 +43,11 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
     const controller = new AbortController();
     fetch(`/api/reservations/availability?equipment=${selectedId}&date=${date}`, { signal: controller.signal })
       .then(async (response) => {
-        const body = await response.json() as { slots?: Slot[]; error?: string };
+        const body = await response.json() as { slots?: Slot[]; windStatus?: WindStatus; recommendationNote?: string | null; error?: string };
         if (!response.ok) throw new Error(body.error || "Nie udało się pobrać terminów.");
         setSlots(body.slots || []);
+        setWindStatus(body.windStatus || null);
+        setRecommendationNote(body.recommendationNote || "");
       })
       .catch((fetchError) => { if (fetchError.name !== "AbortError") setError(fetchError.message); })
       .finally(() => { if (!controller.signal.aborted) setLoadingSlots(false); });
@@ -87,7 +93,7 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
       <div className="grid gap-6 p-8 sm:grid-cols-2 sm:p-12">
         <div><span className="eyebrow">Sprzęt</span><p className="mt-2 text-xl font-bold">{result.equipment}</p></div>
         <div><span className="eyebrow">Termin</span><p className="mt-2 text-xl font-bold">{result.date} · {result.time}–{result.endTime}</p></div>
-        <p className="text-sm leading-6 text-white/55 sm:col-span-2">Zapisz numer rezerwacji. W razie wymagań dotyczących sprzętu obsługa skontaktuje się telefonicznie.</p>
+        <p className="text-sm leading-6 text-white/55 sm:col-span-2">Zapisz numer rezerwacji. Jeśli warunki nie będą pasować do wybranego sprzętu, ekipa zaproponuje najlepszą dostępną alternatywę.</p>
         <div className="flex flex-wrap gap-3 sm:col-span-2">
           <Button onClick={() => { setResult(null); setDate(today); setVisibleStart(today); setTime(""); setLoadingSlots(true); }}><ArrowLeft className="size-4" /> Nowa rezerwacja</Button>
           <Button asChild variant="outline"><a href="tel:+48500128090"><Phone className="size-4" /> Zadzwoń</a></Button>
@@ -108,7 +114,7 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
             const Icon = categoryIcon[item.category as keyof typeof categoryIcon] || Sailboat;
             const active = item.id === selectedId;
             return (
-              <button key={item.id} type="button" onClick={() => { setSelectedId(item.id); setTime(""); setSlots([]); setError(""); if (date) setLoadingSlots(true); }} aria-pressed={active} className={`group min-h-52 w-[86%] shrink-0 snap-start border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 sm:w-auto ${active ? "border-orange-500 bg-orange-500 text-black" : "border-white/10 bg-white/[0.035] hover:border-white/30"}`}>
+              <button key={item.id} type="button" onClick={() => { setSelectedId(item.id); setTime(""); setSlots([]); setWindStatus(null); setRecommendationNote(""); setError(""); if (date) setLoadingSlots(true); }} aria-pressed={active} className={`group min-h-52 w-[86%] shrink-0 snap-start border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 sm:w-auto ${active ? "border-orange-500 bg-orange-500 text-black" : "border-white/10 bg-white/[0.035] hover:border-white/30"}`}>
                 <div className="flex items-start justify-between">
                   <Icon className={`size-7 ${active ? "text-black" : "text-orange-500"}`} />
                   <ChevronRight className={`size-5 transition ${active ? "translate-x-0" : "-translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"}`} />
@@ -155,9 +161,13 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
             </label>
           </fieldset>
           <fieldset><legend className="mb-2 flex items-center gap-2 text-sm font-bold"><Clock3 className="size-4 text-orange-500" /> Godzina</legend>
-            {!date ? <p className="border border-dashed border-white/15 p-5 text-sm text-white/40">Wybierz datę, aby zobaczyć wolne godziny.</p> : loadingSlots ? <p className="p-5 text-sm text-white/45">Sprawdzam wolne terminy…</p> : slots.length ? <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{slots.map((slot) => <button key={slot.time} type="button" onClick={() => setTime(slot.time)} className={`h-11 border text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${time === slot.time ? "border-orange-500 bg-orange-500 text-black" : "border-white/15 hover:border-orange-500"}`}>{slot.time}</button>)}</div> : <p className="border border-dashed border-white/15 p-5 text-sm text-white/50">Brak wolnych terminów tego dnia.</p>}
+            {!date ? <p className="border border-dashed border-white/15 p-5 text-sm text-white/40">Wybierz datę, aby zobaczyć wolne godziny.</p> : loadingSlots ? <p className="p-5 text-sm text-white/45">Sprawdzam wolne terminy i wiatr…</p> : slots.length ? <SlotPicker slots={slots} selectedTime={time} onSelect={setTime} /> : <p className="border border-dashed border-white/15 p-5 text-sm text-white/50">Brak wolnych terminów tego dnia.</p>}
+            {!loadingSlots && windStatus ? <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-white/40">{windStatus === "forecast" ? <Wind className="mt-0.5 size-3.5 shrink-0 text-sky-300" /> : <CloudSun className="mt-0.5 size-3.5 shrink-0 text-white/35" />}{windStatus === "forecast" ? "Polecane godziny uwzględniają krótkoterminową prognozę wiatru dla Jeziora Łąckiego." : windStatus === "outside-range" ? "Dla dalszych terminów pokazujemy typowe godziny ustawione przez ekipę. Prognoza pojawi się bliżej daty." : "Prognoza jest chwilowo niedostępna; pokazujemy godziny ustawione przez ekipę."}</p> : null}
+            {time && slots.find((slot) => slot.time === time)?.recommendation?.detail ? <p className="mt-3 border-l-2 border-sky-400 pl-3 text-sm leading-5 text-white/60">{slots.find((slot) => slot.time === time)?.recommendation?.detail}</p> : null}
           </fieldset>
+          {recommendationNote ? <div className="border-l-2 border-sky-400 pl-4 text-sm leading-6 text-white/55">{recommendationNote}</div> : null}
           {selected?.notice && <div className="border-l-2 border-orange-500 pl-4 text-sm leading-6 text-white/55">{selected.notice}</div>}
+          <div className="border border-white/10 bg-white/[.035] p-4 text-sm leading-6 text-white/60"><strong className="text-white">Warun może się zmienić — to nie problem.</strong> Jeśli SUP, katamaran albo wake nie będą najlepszą opcją, ekipa powie, co w danym momencie działa najlepiej, i zaproponuje inny dostępny sprzęt.</div>
           <div className="grid gap-4 border-t border-white/10 pt-6 sm:grid-cols-2">
             <label className="sm:col-span-2"><span className="mb-2 block text-sm font-bold">Imię i nazwisko</span><input required name="name" autoComplete="name" minLength={2} maxLength={120} className="h-12 w-full border border-white/15 bg-white/[0.04] px-4 outline-none focus:border-orange-500" /></label>
             <label><span className="mb-2 block text-sm font-bold">Telefon</span><input required name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="500 000 000" className="h-12 w-full border border-white/15 bg-white/[0.04] px-4 outline-none focus:border-orange-500" /></label>
@@ -167,9 +177,22 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
           </div>
           {error && <p role="alert" className="border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">{error}</p>}
           <Button type="submit" size="lg" disabled={!selectedId || !date || !time || submitting} className="w-full">{submitting ? "Zapisuję…" : "Rezerwuję termin"}<ArrowRight className="size-4" /></Button>
-          <p className="text-center text-xs leading-5 text-white/35">Rezerwacja nie obejmuje płatności online. W kwestiach uprawnień lub warunków wydania sprzętu może skontaktować się obsługa.</p>
+          <p className="text-center text-xs leading-5 text-white/35">Prognoza jest podpowiedzią, nie gwarancją warunków. Rezerwacja nie obejmuje płatności online. Dane pogodowe: Open-Meteo.</p>
         </form>
       </Card>
     </div>
   );
+}
+
+function SlotPicker({ slots, selectedTime, onSelect }: { slots: Slot[]; selectedTime: string; onSelect: (time: string) => void }) {
+  const recommended = slots.filter((slot) => slot.recommendation?.recommended);
+  const regular = slots.filter((slot) => !slot.recommendation?.recommended);
+  return <div className="space-y-4">
+    {recommended.length ? <div><p className="mb-2 text-xs font-bold uppercase tracking-[.14em] text-sky-300">Polecane na ten warun</p><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{recommended.map((slot) => <SlotButton key={slot.time} slot={slot} selected={selectedTime === slot.time} onSelect={onSelect} />)}</div></div> : null}
+    {regular.length ? <div><p className="mb-2 text-xs font-bold uppercase tracking-[.14em] text-white/35">Pozostałe wolne</p><div className="grid grid-cols-3 gap-2 sm:grid-cols-4">{regular.map((slot) => <SlotButton key={slot.time} slot={slot} selected={selectedTime === slot.time} onSelect={onSelect} />)}</div></div> : null}
+  </div>;
+}
+
+function SlotButton({ slot, selected, onSelect }: { slot: Slot; selected: boolean; onSelect: (time: string) => void }) {
+  return <button type="button" onClick={() => onSelect(slot.time)} data-recommended={slot.recommendation?.recommended || undefined} className={`min-h-12 border px-2 py-2 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${selected ? "border-orange-500 bg-orange-500 text-black" : slot.recommendation?.recommended ? "border-sky-400/60 bg-sky-400/10 hover:border-sky-300" : "border-white/15 hover:border-orange-500"}`}><span className="block">{slot.time}</span>{slot.recommendation?.recommended ? <span className={`mt-0.5 block text-[.58rem] uppercase tracking-wide ${selected ? "text-black/60" : "text-sky-300"}`}>{slot.recommendation.label}</span> : null}</button>;
 }

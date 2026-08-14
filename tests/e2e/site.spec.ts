@@ -24,16 +24,18 @@ test("waterfront stays are published without invented pricing", async ({ page })
 });
 
 test("customer can reserve an available equipment slot", async ({ page }) => {
-  await page.route("**/api/reservations/availability?*", (route) => route.fulfill({ json: { slots: [{ time: "09:00", available: 1 }], durationMinutes: 60 } }));
+  await page.route("**/api/reservations/availability?*", (route) => route.fulfill({ json: { slots: [{ time: "09:00", available: 1, recommendation: { recommended: true, level: "best", basis: "forecast", label: "Najlepszy warun", detail: "Prognoza: spokojna woda, wiatr 6 km/h." } }], durationMinutes: 60, windStatus: "forecast" } }));
   await page.route("**/api/reservations", (route) => route.fulfill({ status: 201, json: { reference: "SHOW-TEST1234", equipment: "SUP", date: "2026-08-27", time: "09:00", endTime: "10:00" } }));
   await page.goto("/rezerwacje", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: /Sprzęt czeka/i })).toBeVisible();
+  await expect(page.getByText("Warun może się zmienić — to nie problem.")).toBeVisible();
   const bookingDate = new Date();
   bookingDate.setDate(bookingDate.getDate() + 14);
   const date = bookingDate.toISOString().slice(0, 10);
   await page.locator('input[type="date"]').fill(date);
   const firstSlot = page.getByRole("group", { name: "Godzina" }).getByRole("button").first();
   await expect(firstSlot).toBeVisible();
+  await expect(firstSlot).toContainText("Najlepszy warun");
   await firstSlot.click();
   await page.getByLabel("Imię i nazwisko").fill("Test Playwright");
   await page.getByLabel("Telefon").fill("500 128 090");
@@ -116,6 +118,11 @@ test("availability block management stays private", async ({ request }) => {
 test("rental hours management stays private", async ({ request }) => {
   expect((await request.get("/api/admin/availability-hours")).status()).toBe(401);
   expect((await request.post("/api/admin/availability-hours", { data: {} })).status()).toBe(401);
+});
+
+test("weather recommendation management stays private", async ({ request }) => {
+  expect((await request.get("/api/admin/recommendations")).status()).toBe(401);
+  expect((await request.put("/api/admin/recommendations", { data: {} })).status()).toBe(401);
 });
 
 test("reservation API requires an email address", async ({ request }) => {
