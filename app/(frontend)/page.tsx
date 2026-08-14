@@ -26,7 +26,14 @@ export default async function Home() {
         <div className="site-container relative flex min-h-[calc(100svh-5rem)] flex-col justify-end pb-10 pt-20 md:pb-16">
           <div className="mb-20 flex flex-wrap items-center gap-3 md:mb-24">
             <Badge>Sezon 2026</Badge>
-            <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em] text-white/60"><MapPin className="size-4 text-sky-300" /> Poręba · Dolomity · Andorra</span>
+            <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold uppercase tracking-[0.15em] text-white/60" aria-label="Lokalizacje SHOWteam">
+              <MapPin className="size-4 text-sky-300" aria-hidden="true" />
+              {[
+                ["Poręba", contact.map],
+                ["Dolomity", "https://www.google.com/maps/search/?api=1&query=Trentino+Dolomites+Italy"],
+                ["Andorra", "https://www.google.com/maps/search/?api=1&query=Grandvalira+Andorra"],
+              ].map(([label, href], index) => <span className="contents" key={label}>{index ? <span aria-hidden="true">·</span> : null}<a href={href} target="_blank" rel="noreferrer" className="border-b border-transparent py-1 transition hover:border-sky-300 hover:text-white focus-visible:border-sky-300 focus-visible:text-white focus-visible:outline-none">{label}</a></span>)}
+            </nav>
           </div>
           <h1 className="font-display max-w-6xl text-[clamp(3.25rem,16vw,7rem)] font-black uppercase leading-[0.84] tracking-[-0.055em] md:text-[clamp(7rem,14vw,11.5rem)] md:leading-[0.82] md:tracking-[-0.065em]">
             Zrób<br /><span className="text-orange-500">sobie SHOW.</span>
@@ -35,7 +42,7 @@ export default async function Home() {
             <p className="max-w-xl border-l-2 border-orange-500 pl-5 text-base leading-7 text-white/75 md:text-lg">Sport, podróże i ludzie z energią. Od własnej plaży nad Jeziorem Łąckim po śnieg w Dolomitach.</p>
             <div className="flex flex-wrap gap-3 sm:justify-end">
               <Button asChild size="lg"><Link href="#oferta">Poznaj ofertę <ArrowDown className="size-4" /></Link></Button>
-              <Button asChild variant="outline" size="lg"><Link href="/kontakt">Kontakt</Link></Button>
+              <Button asChild variant="outline" size="lg"><Link href="/kontakt">Kontakt i o nas</Link></Button>
             </div>
           </div>
         </div>

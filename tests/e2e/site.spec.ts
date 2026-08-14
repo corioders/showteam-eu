@@ -7,6 +7,15 @@ test("main navigation reaches every public section", async ({ page }) => {
   for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/oferta/noclegi-nad-woda", "/wydarzenia", "/aktualnosci", "/rezerwacje", "/galeria", "/kontakt", "/zgloszenie"]) {
     await expect(page.locator(`header a[href="${path}"]`)).toHaveCount(1);
   }
+  const locations = page.getByRole("navigation", { name: "Lokalizacje SHOWteam" }).getByRole("link");
+  await expect(locations).toHaveCount(3);
+  expect(await locations.evaluateAll((links) => links.every((link) => link.getAttribute("target") === "_blank"))).toBe(true);
+});
+
+test("contact page also introduces SHOWteam", async ({ page }) => {
+  await page.goto("/kontakt");
+  await expect(page).toHaveTitle(/Kontakt i o nas/);
+  await expect(page.getByRole("heading", { name: /Asia, Adam i SHOWteam/i })).toBeVisible();
 });
 
 test("offer pages lead directly to a preselected application", async ({ page }) => {
@@ -234,6 +243,7 @@ test.describe("mobile", () => {
     await expect(menu.getByRole("link", { name: /Zgłoszenie/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /Galeria/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /Aktualności/ })).toBeVisible();
+    await expect(menu.getByRole("link", { name: /Kontakt i o nas/ })).toBeVisible();
     await expect(page.getByRole("link", { name: "+48 500 128 090" })).toBeVisible();
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);

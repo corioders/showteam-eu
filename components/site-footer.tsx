@@ -20,7 +20,7 @@ export function SiteFooter() {
           <Link href="/oferta/noclegi-nad-woda" className="hover:text-orange-400">Noclegi nad wodą</Link>
           <Link href="/rezerwacje" className="hover:text-orange-400">Rezerwacje</Link>
           <Link href="/galeria" className="hover:text-orange-400">Galeria</Link>
-          <Link href="/kontakt" className="hover:text-orange-400">Kontakt</Link>
+          <Link href="/kontakt" className="hover:text-orange-400">Kontakt i o nas</Link>
         </div>
       </div>
       <div className="site-container relative mt-12 overflow-hidden border-y border-white/10 py-3">

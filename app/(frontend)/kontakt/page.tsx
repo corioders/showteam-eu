@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowUpRight, Facebook, Instagram, Mail, MapPin, Music2, Pho
 import { Button } from "@/components/ui/button";
 import { contact } from "@/lib/offers";
 
-export const metadata: Metadata = { title: "Kontakt", description: "Skontaktuj się z SHOWteam — Poręba, Jezioro Łąckie.", alternates: { canonical: "/kontakt" } };
+export const metadata: Metadata = { title: "Kontakt i o nas", description: "Poznaj SHOWteam i skontaktuj się z Asią lub Adamem — Poręba, Jezioro Łąckie.", alternates: { canonical: "/kontakt" } };
 
 export default function ContactPage() {
   return (
@@ -31,6 +31,15 @@ export default function ContactPage() {
           <Button asChild size="lg" className="bg-neutral-950 text-white hover:bg-neutral-800"><a href={contact.tiktok} target="_blank" rel="noreferrer"><Music2 className="size-5" /> TikTok <ArrowUpRight className="size-4" /></a></Button>
           <Button asChild size="lg" className="border border-black/20 bg-transparent text-black hover:bg-black/10"><a href={contact.facebook} target="_blank" rel="noreferrer"><Facebook className="size-5" /> Facebook <ArrowUpRight className="size-4" /></a></Button>
         </div>
+        <section className="mt-16 border-y border-black/20 py-12 md:mt-24 md:py-16" aria-labelledby="o-nas">
+          <div className="grid gap-8 lg:grid-cols-[.7fr_1.3fr] lg:gap-16">
+            <div><span className="text-xs font-bold uppercase tracking-[0.2em]">O nas</span><h2 id="o-nas" className="font-display mt-4 text-5xl font-black uppercase leading-[.9] sm:text-7xl">Asia, Adam<br />i SHOWteam.</h2></div>
+            <div className="max-w-3xl space-y-5 text-lg leading-8 text-neutral-800">
+              <p>SHOWteam tworzą Joanna i Adam SHOWtysek. Od lat łączą ludzi wokół sportów wodnych, zimowych wyjazdów i aktywnego czasu spędzanego razem.</p>
+              <p>Naszą bazą jest Wake & Surf Village nad Jeziorem Łąckim w Porębie. Stąd ruszamy na wodę, szkolenia, obozy i wyjazdy w góry — osobiście prowadzimy każdy projekt i pozostajemy w bezpośrednim kontakcie z uczestnikami.</p>
+            </div>
+          </div>
+        </section>
       </div>
     </section>
   );
