@@ -27,7 +27,7 @@ export default async function EventsPage() {
   const groups = groupEvents(events);
 
   return <section className="pb-24 pt-32 md:pb-32 md:pt-40"><div className="site-container">
-    <div className="mb-12 border-b border-white/15 pb-10"><span className="eyebrow">Kalendarz SHOWteam</span><h1 className="font-display mt-4 text-7xl font-black uppercase leading-[0.82] tracking-[-0.055em] sm:text-9xl">Wydarzenia<span className="text-orange-500">.</span></h1><p className="mt-7 max-w-2xl leading-7 text-white/55">Terminy porządkujemy automatycznie według daty. Aktualną dostępność zawsze potwierdź bezpośrednio z SHOWteam.</p></div>
+    <div className="mb-12 border-b border-white/15 pb-10"><span className="eyebrow">Kalendarz SHOWteam</span><h1 className="font-display mt-4 text-7xl font-black uppercase leading-[0.82] tracking-[-0.055em] sm:text-9xl">Wydarzenia<span className="text-orange-500">.</span></h1><p className="mt-7 max-w-2xl leading-7 text-white/55">Sprawdź, co trwa teraz, co dopiero przed nami i jak wyglądały poprzednie wydarzenia.</p></div>
     {sections.map(({ status, eyebrow, title }) => groups[status].length ? <section key={status} className="mb-16 last:mb-0">
       <div className="mb-6 flex items-end justify-between gap-4 border-b border-white/10 pb-4"><div><span className="eyebrow">{eyebrow}</span><h2 className="font-display mt-2 text-4xl font-black uppercase sm:text-5xl">{title}</h2></div><span className="font-mono text-sm text-white/35">{String(groups[status].length).padStart(2, "0")}</span></div>
       <div className="grid gap-5 lg:grid-cols-2">{groups[status].map((event) => <EventCard key={event.id} event={event} status={status} />)}</div>

@@ -17,7 +17,7 @@ export default async function GalleryPage() {
       <div className="gallery-container">
         <div className="mb-12 grid gap-8 border-b border-white/15 pb-10 lg:grid-cols-[1fr_30rem] lg:items-end">
           <div><span className="eyebrow">Bez stocków. Prosto z akcji.</span><h1 className="font-display mt-4 text-7xl font-black uppercase leading-[0.82] tracking-[-0.055em] sm:text-9xl">Galeria<br /><span className="text-orange-500">SHOWteam.</span></h1></div>
-          <p className="max-w-xl leading-7 text-white/55">Jezioro Łąckie, Dolomity, Andorra i ludzie, którzy naprawdę tam byli. Zdjęcia są zarządzane przez właścicieli w CMS.</p>
+          <p className="max-w-xl leading-7 text-white/55">Jezioro Łąckie, Dolomity i Andorra — obozy, wyjazdy i codzienność SHOWteam uchwycone w akcji.</p>
         </div>
         <GalleryGrid photos={gallery.photos} filtersEnabled initialPage={gallery.page} initialTotalPages={gallery.totalPages} />
       </div>

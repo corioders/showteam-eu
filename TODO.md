@@ -57,6 +57,10 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## Ukończone
 
+- [x] Publiczne copy nie pokazuje technicznych, roboczych ani CMS-owych dopowiedzeń.
+- [x] Prognoza wiatru wpływa na rekomendacje maksymalnie 7 dni naprzód; kafle sprzętu pokazują najlepszy warun.
+- [x] CTA ofert lata, zimy i szkoleń prowadzą bezpośrednio do formularza zgłoszeniowego.
+- [x] „Noclegi nad wodą” są widoczne w menu, stopce i skrótach oferty na stronie głównej.
 - [x] Oficjalne logotypy z `Flagi ShowTeam.pdf` są używane w nagłówku, CMS, faviconie i ikonach PWA.
 - [x] Dodać pełny film promocyjny SHOWteam z muzyką do galerii.
 - [x] Każdy ekran CMS ma wyraźny przycisk „Wróć do panelu”; wspólny dla Payload i ujednolicony na `/a/*`.

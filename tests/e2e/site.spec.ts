@@ -4,8 +4,22 @@ import path from "node:path";
 test("main navigation reaches every public section", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator('header img[src="/media/showteam-logo.svg"]')).toBeVisible();
-  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/wydarzenia", "/aktualnosci", "/rezerwacje", "/galeria", "/kontakt", "/zgloszenie"]) {
+  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/oferta/noclegi-nad-woda", "/wydarzenia", "/aktualnosci", "/rezerwacje", "/galeria", "/kontakt", "/zgloszenie"]) {
     await expect(page.locator(`header a[href="${path}"]`)).toHaveCount(1);
+  }
+});
+
+test("offer pages lead directly to a preselected application", async ({ page }) => {
+  for (const [path, offer] of [["/oferta/lato", "SHOWlato 2026"], ["/oferta/zima", "SHOWzima 2026"], ["/oferta/szkolenia", "Patent i progres"]]) {
+    await page.goto(path);
+    await expect(page.getByRole("link", { name: "Wyślij zgłoszenie" })).toHaveAttribute("href", `/zgloszenie?oferta=${encodeURIComponent(offer)}`);
+  }
+});
+
+test("public copy does not expose implementation notes", async ({ page }) => {
+  for (const path of ["/galeria", "/wydarzenia", "/zgloszenie", "/oferta/lato", "/oferta/zima", "/oferta/noclegi-nad-woda"]) {
+    await page.goto(path);
+    await expect(page.locator("body")).not.toContainText(/zarządzane przez właścicieli w CMS|porządkujemy automatycznie|po podłączeniu skrzynki|opublikowanego programu|termin opublikowanego wyjazdu|ostatni opublikowany turnus|zdjęcia kontenerów i domków dodamy po sesji/i);
   }
 });
 
@@ -36,6 +50,7 @@ test("customer can reserve an available equipment slot", async ({ page }) => {
   await page.route("**/api/reservations", (route) => route.fulfill({ status: 201, json: { reference: "SHOW-TEST1234", equipment: "SUP", date: "2026-08-27", time: "09:00", endTime: "10:00" } }));
   await page.goto("/rezerwacje", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: /Sprzęt czeka/i })).toBeVisible();
+  await expect(page.getByText(/Najlepszy warun|Dobry w każdy warun/).first()).toBeVisible();
   await expect(page.getByText("Warun może się zmienić — to nie problem.")).toBeVisible();
   const bookingDate = new Date();
   bookingDate.setDate(bookingDate.getDate() + 14);
@@ -197,7 +212,7 @@ test.describe("mobile", () => {
     await page.goto("/");
     await page.getByRole("button", { name: "Otwórz menu" }).click();
     const menu = page.getByRole("navigation", { name: "Menu mobilne" });
-    await expect(menu.getByRole("link")).toHaveCount(10);
+    await expect(menu.getByRole("link")).toHaveCount(11);
     await expect(menu.getByRole("link", { name: /Zgłoszenie/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /Galeria/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /Aktualności/ })).toBeVisible();

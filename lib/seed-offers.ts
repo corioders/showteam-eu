@@ -71,7 +71,7 @@ const initialOffers = [
     staticImage: "stay",
     dates: [],
     highlights: [{ text: "Kontenery mieszkalne" }, { text: "Domki holenderskie" }, { text: "Lokalizacja nad wodą" }],
-    sections: [{ title: "Zdjęcia obiektów", body: "Zdjęcia kontenerów i domków dodamy po sesji. Aktualne informacje otrzymasz bezpośrednio od SHOWteam." }],
+    sections: [],
     published: true,
   },
 ];

@@ -28,7 +28,7 @@ export default async function SummerPage() {
       <section className="py-20 md:py-28">
         <div className="site-container">
           <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
-            <div><span className="eyebrow">SHOWCamp 2026</span><h2 className="font-display mt-4 text-6xl font-black uppercase leading-[0.88] tracking-tight sm:text-8xl">Pięć turnusów.<br /><span className="text-sky-300">Jedno lato.</span></h2><p className="mt-6 max-w-lg leading-7 text-white/55">Daty pochodzą z opublikowanego programu sezonu 2026. Zapytaj o aktualną dostępność miejsc.</p></div>
+            <div><span className="eyebrow">SHOWCamp 2026</span><h2 className="font-display mt-4 text-6xl font-black uppercase leading-[0.88] tracking-tight sm:text-8xl">Pięć turnusów.<br /><span className="text-sky-300">Jedno lato.</span></h2><p className="mt-6 max-w-lg leading-7 text-white/55">Wybierz termin i zapytaj nas o wolne miejsce.</p></div>
             <div className="poster-cut overflow-hidden border border-white/10">
               {offer.dates.map((date, index) => (
                 <div key={`${date}-${index}`} className="grid grid-cols-[3rem_1fr_auto] items-center gap-4 border-b border-white/10 px-5 py-6 last:border-0 sm:grid-cols-[4rem_1fr_auto] sm:px-8">
@@ -54,7 +54,7 @@ export default async function SummerPage() {
       <section className="py-20 md:py-28"><div className="site-container grid gap-10 lg:grid-cols-2"><div><span className="eyebrow">Dobra baza to połowa przygody</span><h2 className="font-display mt-4 text-5xl font-black uppercase leading-[0.9] sm:text-7xl">Co czeka<br />na miejscu?</h2></div><Accordion type="single" collapsible className="w-full"><AccordionItem value="sprzet"><AccordionTrigger>Sprzęt i instruktorzy</AccordionTrigger><AccordionContent>Wakeboard, windsurfing, katamarany, SUP-y, kajaki, łodzie żaglowe, narty wodne i sprzęt motorowodny. Zajęcia dopasowujemy do poziomu uczestników.</AccordionContent></AccordionItem><AccordionItem value="baza"><AccordionTrigger>Wake & Surf Village</AccordionTrigger><AccordionContent>Prywatne molo, piaszczysta plaża, strefa chill, miejsce grillowe i ogniskowe, sauna, boisko, parking oraz zaplecze sanitarne.</AccordionContent></AccordionItem><AccordionItem value="jedzenie"><AccordionTrigger>Surf Bistro i eventy</AccordionTrigger><AccordionContent>Menu cateringowe na zamówienie, włoska pizza z pieca opalanego drewnem oraz przestrzeń na imprezy rodzinne i firmowe.</AccordionContent></AccordionItem><AccordionItem value="lokalizacja"><AccordionTrigger>Dojazd</AccordionTrigger><AccordionContent>Poręba, ul. Nad Zaporą 21 — nad Jeziorem Łąckim, kilka minut od Pszczyny.</AccordionContent></AccordionItem></Accordion></div></section>
       <PhotoMosaic label="SHOWlato bez filtra" photos={[{ src: "/media/summer-wake-hero.jpg", alt: "Wakeboard na Jeziorze Łąckim z lotu ptaka", position: "object-[60%_center]" }, { src: "/media/summer-sailing-drone.jpg", alt: "Katamaran SHOWteam na Jeziorze Łąckim", position: "object-[35%_center]" }, { src: "/media/summer-double-wake.jpg", alt: "Dwie osoby na wakeboardzie za łodzią SHOWteam" }]} />
       <CmsDetails offer={offer} />
-      <ContactCta title="Wskakujesz do wody?" />
+      <ContactCta title="Wskakujesz do wody?" applicationOffer={offer.title} />
     </>
   );
 }

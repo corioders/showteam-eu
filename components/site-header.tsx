@@ -11,6 +11,7 @@ const links = [
   { href: "/oferta/lato", label: "Lato" },
   { href: "/oferta/zima", label: "Zima" },
   { href: "/oferta/szkolenia", label: "Szkolenia" },
+  { href: "/oferta/noclegi-nad-woda", label: "Noclegi" },
   { href: "/wydarzenia", label: "Wydarzenia" },
   { href: "/aktualnosci", label: "Aktualności" },
   { href: "/rezerwacje", label: "Rezerwacje" },
@@ -27,7 +28,7 @@ export function SiteHeader() {
           <Image src="/media/showteam-logo.svg" alt="" width={1022} height={241} className="h-auto w-36 sm:w-40" priority />
         </Link>
 
-        <nav className="hidden items-center gap-1 xl:flex" aria-label="Główna nawigacja">
+        <nav className="hidden items-center gap-1 2xl:flex" aria-label="Główna nawigacja">
           {links.map((link) => (
             <Button asChild variant="ghost" size="sm" key={link.href}>
               <Link href={link.href} prefetch>{link.label}</Link>
@@ -42,7 +43,7 @@ export function SiteHeader() {
 
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="xl:hidden" aria-label="Otwórz menu">
+            <Button variant="ghost" size="icon" className="2xl:hidden" aria-label="Otwórz menu">
               <Menu className="size-6" />
             </Button>
           </SheetTrigger>

@@ -63,7 +63,7 @@ export default async function Home() {
         <div className="site-container">
           <div className="mb-12 grid gap-6 md:grid-cols-[1fr_28rem] md:items-end">
             <div><span className="eyebrow">Wybierz swój kierunek</span><h2 className="font-display mt-4 text-6xl font-black uppercase leading-[0.87] tracking-[-0.045em] sm:text-8xl">Zrób sobie<br /><span className="text-sky-300">SHOW.</span></h2></div>
-            <p className="text-base leading-7 text-white/55">Nie wybieramy między sportem i odpoczynkiem. Łączymy je w programach dla rodzin, dzieci, grup i dorosłych, którzy nadal chcą próbować nowych rzeczy.</p>
+            <p className="text-base leading-7 text-white/55">Nie wybieramy między sportem a odpoczynkiem. Łączymy je w programach dla rodzin, dzieci, grup i dorosłych, którzy nadal chcą próbować nowych rzeczy.</p>
           </div>
           <div className="grid gap-4 lg:grid-cols-12 lg:gap-5">
             {offers.map((offer, index) => (
@@ -74,14 +74,14 @@ export default async function Home() {
                 className={index === 0 ? "lg:col-span-7 lg:min-h-[42rem]" : index === 1 ? "lg:col-span-5 lg:mt-20 lg:min-h-[34rem]" : index === 3 ? "lg:col-span-7 lg:min-h-[34rem]" : "lg:col-span-5 lg:min-h-[34rem]"}
               />
             ))}
-            <aside className="poster-cut relative flex min-h-[34rem] flex-col justify-between overflow-hidden bg-sky-300 p-7 text-neutral-950 sm:p-10 lg:col-span-7">
+            <aside className="poster-cut relative flex min-h-[34rem] flex-col justify-between overflow-hidden bg-sky-300 p-7 text-neutral-950 sm:p-10 lg:col-span-12">
               <div className="absolute -right-8 -top-10 font-display text-[13rem] font-black leading-none text-black/[0.06]" aria-hidden="true">!</div>
               <div className="relative flex items-center justify-between border-b border-black/25 pb-4 font-mono text-[0.68rem] font-bold uppercase tracking-[0.18em]">
-                <span>Plan na cały rok</span><span>03 / 03</span>
+                <span>Plan na cały rok</span><span>04 / 04</span>
               </div>
               <p className="relative font-display max-w-2xl text-5xl font-black uppercase leading-[0.88] tracking-[-0.04em] sm:text-7xl">Nie czekaj<br />na dobry<br /><span className="text-orange-600">moment.</span></p>
-              <nav className="relative grid border-l border-t border-black/25 sm:grid-cols-3" aria-label="Skróty do oferty">
-                {[{ href: "/oferta/lato", label: "Woda" }, { href: "/oferta/zima", label: "Śnieg" }, { href: "/oferta/szkolenia", label: "Szkolenia" }].map((item, index) => (
+              <nav className="relative grid border-l border-t border-black/25 sm:grid-cols-4" aria-label="Skróty do oferty">
+                {[{ href: "/oferta/lato", label: "Woda" }, { href: "/oferta/zima", label: "Śnieg" }, { href: "/oferta/szkolenia", label: "Szkolenia" }, { href: "/oferta/noclegi-nad-woda", label: "Noclegi" }].map((item, index) => (
                   <Link key={item.href} href={item.href} className="flex items-center justify-between border-b border-r border-black/25 p-4 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:bg-black hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black">
                     <span>0{index + 1} {item.label}</span><ArrowUpRight className="size-4" />
                   </Link>
@@ -100,7 +100,7 @@ export default async function Home() {
             <p className="absolute bottom-6 left-6 max-w-xs font-display text-3xl font-black uppercase leading-tight">Jedyny taki adres na Śląsku.</p>
           </div>
           <div>
-            <span className="eyebrow">To nie jest katalog wycieczek</span>
+            <span className="eyebrow">SHOWteam od środka</span>
             <h2 className="font-display mt-5 text-6xl font-black uppercase leading-[0.87] tracking-[-0.04em] sm:text-8xl">Robimy<br />rzeczy <span className="text-orange-500">razem.</span></h2>
             <p className="mt-8 max-w-2xl text-lg leading-8 text-white/60">Joanna i Adam SHOWtysek od lat budują aktywną społeczność wokół sportu, dobrej energii i miejsc, do których chce się wracać. Profesjonalnie, osobiście i z charakterem.</p>
             <Button asChild variant="outline" className="mt-8"><Link href="/kontakt">Poznaj SHOWteam <ArrowRight className="size-4" /></Link></Button>

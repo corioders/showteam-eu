@@ -67,7 +67,6 @@ export const offers: Offer[] = [
     imageAlt: "Sprzęt wodny przy bazie SHOWteam nad Jeziorem Łąckim",
     href: "/oferta/noclegi-nad-woda",
     contactHref: "mailto:biuro@showteam.eu?subject=Noclegi%20nad%20wod%C4%85",
-    sections: [{ title: "Zdjęcia obiektów", body: "Zdjęcia kontenerów i domków dodamy po sesji. Aktualne informacje otrzymasz bezpośrednio od SHOWteam." }],
   },
 ];
 

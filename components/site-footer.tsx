@@ -8,7 +8,7 @@ export function SiteFooter() {
       <div className="site-container relative grid gap-10 md:grid-cols-[1fr_auto] md:items-end">
         <div>
           <p className="font-display text-4xl font-black uppercase tracking-tight md:text-6xl">Love the things<br /><span className="text-orange-500">that make you happy.</span></p>
-          <p className="mt-5 max-w-lg text-sm leading-6 text-white/45">Aktywne wyjazdy, sport i emocje od Śląska po Dolomity. Projektujemy czas, który zostaje w pamięci.</p>
+          <p className="mt-5 max-w-lg text-sm leading-6 text-white/45">Wyjazdy, obozy i sporty wodne od Jeziora Łąckiego po Dolomity.</p>
         </div>
         <div className="grid gap-2 text-sm font-semibold md:text-right">
           <a href={`mailto:${contact.email}`} className="hover:text-orange-400">{contact.email}</a>
@@ -17,6 +17,7 @@ export function SiteFooter() {
           <Link href="/wydarzenia" className="hover:text-orange-400">Wydarzenia</Link>
           <Link href="/aktualnosci" className="hover:text-orange-400">Aktualności</Link>
           <Link href="/zgloszenie" className="hover:text-orange-400">Zgłoszenie</Link>
+          <Link href="/oferta/noclegi-nad-woda" className="hover:text-orange-400">Noclegi nad wodą</Link>
           <Link href="/rezerwacje" className="hover:text-orange-400">Rezerwacje</Link>
           <Link href="/galeria" className="hover:text-orange-400">Galeria</Link>
           <Link href="/kontakt" className="hover:text-orange-400">Kontakt</Link>
