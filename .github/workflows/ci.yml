@@ -28,6 +28,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm test:unit
+      - name: Prepare local D1 schema
+        run: pnpm payload migrate
       - run: pnpm build
       - run: pnpm exec playwright install chromium
       - run: pnpm test:e2e
