@@ -62,6 +62,12 @@ button {
   clip-path: polygon(0 0, calc(100% - 2.25rem) 0, 100% 2.25rem, 100% 100%, 0 100%);
 }
 
+.autoplay-video::-webkit-media-controls,
+.autoplay-video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none;
+}
+
 .gallery-tile:nth-child(5n + 2),
 .gallery-tile:nth-child(5n + 4),
 .gallery-cut-br {

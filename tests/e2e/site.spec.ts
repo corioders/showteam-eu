@@ -64,6 +64,10 @@ test("hero video stops on its last frame and restarts after leaving the viewport
   await page.goto("/");
   const video = page.locator("section video").first();
   await expect(video).toBeVisible();
+  await expect(video).toHaveJSProperty("muted", true);
+  await expect(video).toHaveAttribute("autoplay", "");
+  await expect(video).toHaveAttribute("playsinline", "");
+  expect(await video.getAttribute("controls")).toBeNull();
   expect(await video.getAttribute("loop")).toBeNull();
   await video.evaluate(async (element) => {
     const player = element as HTMLVideoElement;

@@ -31,7 +31,7 @@ export function HeroVideo() {
       playsInline
       preload="auto"
       poster="/media/hero-boat-poster.jpg"
-      className="absolute inset-0 size-full object-cover object-right md:object-center"
+      className="autoplay-video absolute inset-0 size-full object-cover object-right md:object-center"
       aria-label="Motorówka SHOWteam wpływa w kadr na Jeziorze Łąckim"
     >
       <source src="/media/hero-boat-trimmed.mp4" type="video/mp4" />
