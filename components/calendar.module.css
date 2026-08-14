@@ -20,4 +20,5 @@
 .detail { color: rgba(255,255,255,.65); }
 .phone { color: #ff8840; font-weight: 800; margin-top: .75rem; text-decoration: none; }
 .notes { border-top: 1px solid rgba(255,255,255,.1); color: rgba(255,255,255,.6); font-size: .875rem; line-height: 1.5; margin: 1.25rem 0 0; padding-top: 1.25rem; }
+.external { align-items: center; color: #c4b5fd; display: inline-flex; font-weight: 800; gap: .5rem; margin-top: 1rem; }
 @media (min-width: 640px) { .overlay { align-items: center; } }

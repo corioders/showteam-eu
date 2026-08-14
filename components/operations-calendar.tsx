@@ -7,10 +7,10 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
 import plLocale from "@fullcalendar/core/locales/pl";
 import type { EventSourceFuncArg } from "@fullcalendar/core";
-import { Ban, Clock3, Mail, Phone, X } from "lucide-react";
+import { Ban, CalendarDays, Clock3, ExternalLink, Mail, Phone, X } from "lucide-react";
 import styles from "@/components/calendar.module.css";
 
-type CalendarEvent = { id: string; title: string; start: string; end: string; extendedProps: { kind: "booking" | "block"; reference: string; phone: string; email: string; status: string; notes: string } };
+type CalendarEvent = { id: string; title: string; start: string; end: string; allDay?: boolean; extendedProps: { kind: "booking" | "block" | "availability" | "google"; reference: string; phone: string; email: string; status: string; notes: string; url?: string } };
 
 export function OperationsCalendar({ tv = false }: { tv?: boolean }) {
   const calendarRef = useRef<FullCalendar>(null);
@@ -46,7 +46,7 @@ export function OperationsCalendar({ tv = false }: { tv?: boolean }) {
   return (
     <div className={`${styles.calendar} ${tv ? styles.calendarTv : ""}`}>
       <FullCalendar key={compact ? "compact" : "desktop"} ref={calendarRef} plugins={[dayGridPlugin, timeGridPlugin, listPlugin]} locale={plLocale} initialView={compact ? "listUpcoming" : "timeGridWeek"} events={events}
-        firstDay={1} allDaySlot={false} nowIndicator height={tv ? "calc(100vh - 8rem)" : "auto"} slotMinTime="07:00:00" slotMaxTime="22:00:00"
+        firstDay={1} allDaySlot nowIndicator height={tv ? "calc(100vh - 8rem)" : "auto"} slotMinTime="07:00:00" slotMaxTime="22:00:00"
         views={{ listUpcoming: { type: "list", duration: { days: tv ? 365 : 31 }, buttonText: "Lista" } }}
         eventOrder="start"
         headerToolbar={{ left: "prev,next today", center: "title", right: compact ? "listUpcoming" : "timeGridDay,timeGridWeek,dayGridMonth,listUpcoming" }}
@@ -55,12 +55,13 @@ export function OperationsCalendar({ tv = false }: { tv?: boolean }) {
       {selected && <div className={styles.overlay} onClick={() => setSelected(null)}>
         <div role="dialog" aria-modal="true" aria-label="Szczegóły rezerwacji" className={styles.dialog} onClick={(event) => event.stopPropagation()}>
           <button className={styles.close} onClick={() => setSelected(null)} aria-label="Zamknij"><X /></button>
-          <p className={styles.reference}>{selected.extendedProps.kind === "block" ? <><Ban size={14} /> Blokada terminu</> : selected.extendedProps.reference}</p>
+          <p className={styles.reference}>{selected.extendedProps.kind === "block" ? <><Ban size={14} /> Blokada terminu</> : selected.extendedProps.kind === "google" ? <><CalendarDays size={14} /> Plan bazy</> : selected.extendedProps.reference}</p>
           <h2 className={styles.eventTitle}>{selected.title}</h2>
-          <p className={styles.detail}><Clock3 size={16} />{selected.start.slice(0, 10)} · {selected.start.slice(11, 16)}–{selected.end.slice(11, 16)}</p>
+          <p className={styles.detail}><Clock3 size={16} />{selected.start.slice(0, 10)}{selected.allDay ? " · cały dzień" : ` · ${selected.start.slice(11, 16)}–${selected.end.slice(11, 16)}`}</p>
           {selected.extendedProps.phone && <a href={`tel:${selected.extendedProps.phone}`} className={styles.phone}><Phone size={16} />{selected.extendedProps.phone}</a>}
           {selected.extendedProps.email && <a href={`mailto:${selected.extendedProps.email}`} className={styles.phone}><Mail size={16} />{selected.extendedProps.email}</a>}
           {selected.extendedProps.notes && <p className={styles.notes}>{selected.extendedProps.notes}</p>}
+          {selected.extendedProps.url && <a className={styles.external} href={selected.extendedProps.url} target="_blank" rel="noreferrer">Otwórz w Google Calendar <ExternalLink size={16} /></a>}
         </div>
       </div>}
     </div>
