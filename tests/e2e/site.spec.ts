@@ -305,6 +305,17 @@ test.describe("mobile", () => {
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });
 
+  test("visual editor opens a usable mobile equipment form", async ({ page }) => {
+    await page.route("**/api/admin/session", (route) => route.fulfill({ json: { user: { email: "asia@showteam.eu", name: "Asia" } } }));
+    await page.goto("/rezerwacje");
+    await expect(page.getByRole("complementary", { name: "Narzędzia administratora" })).toBeVisible();
+    await page.getByRole("button", { name: "Dodaj sprzęt" }).click();
+    await expect(page.getByRole("dialog", { name: "Dodaj sprzęt" })).toBeVisible();
+    await expect(page.getByLabel("Nazwa sprzętu")).toBeVisible();
+    const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
+    expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
+  });
+
   test("gallery images load and retain varied proportions", async ({ page }) => {
     await page.goto("/galeria");
     const figures = page.locator("figure");
