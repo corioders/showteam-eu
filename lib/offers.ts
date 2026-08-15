@@ -98,5 +98,5 @@ export const contact = {
   instagram: "https://www.instagram.com/showteam.eu/",
   facebook: "https://www.facebook.com/SHOW.SHOWteam/",
   tiktok: "https://www.tiktok.com/@showteam1969",
-  map: "https://maps.google.com/?q=Poręba+Nad+Zaporą+21",
+  map: "https://www.google.com/maps/place/SHOWteam+WAKE+%26+SURF+Village/@49.97635,18.8755667,17z/data=!4m15!1m8!3m7!1s0x4716b016d42ca55b:0xc4af35ca30fb79f!2sNad+Zapor%C4%85+21,+43-200+Por%C4%99ba!3b1!8m2!3d49.97635!4d18.8781416!16s%2Fg%2F11hbqp7wq2!3m5!1s0x4716b016d3bd39e5:0x758abd7d20fca32b!8m2!3d49.97635!4d18.8781416!16s%2Fg%2F11g8v1zps5?entry=ttu&g_ep=EgoyMDI2MDgxMi4wIKXMDSoASAFQAw%3D%3D",
 };

@@ -16,6 +16,7 @@ test("contact page also introduces SHOWteam", async ({ page }) => {
   await page.goto("/kontakt");
   await expect(page).toHaveTitle(/Kontakt i o nas/);
   await expect(page.getByRole("heading", { name: /Asia, Adam i SHOWteam/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Wake & Surf Village/i })).toHaveAttribute("href", /google\.com\/maps\/place\/SHOWteam\+WAKE\+%26\+SURF\+Village/);
 });
 
 test("offer pages lead directly to a preselected application", async ({ page }) => {
