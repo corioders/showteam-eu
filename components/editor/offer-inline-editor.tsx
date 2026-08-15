@@ -6,18 +6,8 @@ import { LoaderCircle, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { useEditor } from "@/components/editor/editor-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { restoreOfferDraft, toOfferDraft, type OfferDraft } from "@/lib/offer-draft";
 import type { Offer, OfferCategory } from "@/lib/offers";
-
-type OfferDraft = {
-  title: string;
-  category: OfferCategory;
-  location: string;
-  summary: string;
-  season: string;
-  dates: string[];
-  highlights: string[];
-  published: boolean;
-};
 
 type OfferEditing = {
   editing: boolean;
@@ -33,7 +23,7 @@ const OfferEditingContext = createContext<OfferEditing | null>(null);
 export function OfferInlineEditor({ offer, children }: { offer: Offer; children: React.ReactNode }) {
   const { enabled, visible } = useEditor();
   const router = useRouter();
-  const initial = useMemo(() => toDraft(offer), [offer]);
+  const initial = useMemo(() => toOfferDraft(offer), [offer]);
   const [value, setValue] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -45,13 +35,13 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
     if (!editing) return;
     const saved = localStorage.getItem(draftKey);
     if (!saved) return;
-    try {
-      const restored = JSON.parse(saved) as OfferDraft;
+    const restored = restoreOfferDraft(saved, initial);
+    if (restored) {
       queueMicrotask(() => setValue(restored));
-    } catch {
+    } else {
       localStorage.removeItem(draftKey);
     }
-  }, [draftKey, editing]);
+  }, [draftKey, editing, initial]);
 
   function persist(next: OfferDraft) {
     setValue(next);
@@ -126,7 +116,7 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
 
 export function OfferHeroFields({ offer }: { offer: Offer }) {
   const editor = useContext(OfferEditingContext);
-  const value = editor?.value ?? toDraft(offer);
+  const value = editor?.value ?? toOfferDraft(offer);
   const editing = editor?.editing ?? false;
 
   return (
@@ -191,8 +181,4 @@ export function OfferListsSection({ offer }: { offer: Offer }) {
   if (!editing && offer.dates.length === 0 && offer.highlights.length === 0) return null;
 
   return <section className="py-20 md:py-28"><div className="site-container grid gap-12 lg:grid-cols-2"><div><span className="eyebrow">Terminy</span><div className="mt-5"><OfferDateList offer={offer} /></div></div><div><span className="eyebrow">Najważniejsze</span><div className="mt-5"><OfferHighlightList offer={offer} /></div></div></div></section>;
-}
-
-function toDraft(offer: Offer): OfferDraft {
-  return { title: offer.title, category: offer.category, location: offer.location, summary: offer.summary, season: offer.season, dates: offer.dates, highlights: offer.highlights, published: true };
 }
