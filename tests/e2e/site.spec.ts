@@ -177,6 +177,14 @@ test("visual editor session stays private", async ({ page, request }) => {
   await expect(page.getByRole("complementary", { name: "Narzędzia administratora" })).toHaveCount(0);
 });
 
+test("operator workspaces require an admin login", async ({ request }) => {
+  for (const path of ["/a/kalendarz", "/a/zgloszenia", "/a/statystyki", "/a/telewizory"]) {
+    const response = await request.get(path, { maxRedirects: 0 });
+    expect(response.status()).toBe(307);
+    expect(response.headers().location).toContain("/admin/login?redirect=");
+  }
+});
+
 test("application administration and export stay private", async ({ request }) => {
   expect((await request.get("/api/admin/applications")).status()).toBe(401);
   expect((await request.get("/api/admin/applications/export")).status()).toBe(401);

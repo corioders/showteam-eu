@@ -224,6 +224,31 @@ button {
 .editor-field select:focus { border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
 .editor-field small { color: rgb(255 255 255 / 0.45); font-size: 0.75rem; font-weight: 500; }
 
+.admin-workspace {
+  --theme-elevation-0: #f5f4ed;
+  --theme-elevation-50: #151718;
+  --theme-elevation-100: #1d2021;
+  --theme-elevation-150: #303334;
+  --theme-elevation-200: #3a3d3e;
+  --theme-elevation-250: #484b4c;
+  --theme-elevation-300: #585b5c;
+  --theme-elevation-550: #999d9f;
+  --theme-elevation-600: #a9adaf;
+  --theme-elevation-650: #babdbf;
+  --theme-elevation-700: #ced0d1;
+  --theme-elevation-900: #f06414;
+  --theme-text: #f5f4ed;
+  --theme-input-bg: #111314;
+  background: #0c0e0f;
+  color: #f5f4ed;
+}
+
+.admin-workspace__content { min-width: 0; padding-bottom: 6rem; }
+.admin-workspace button,
+.admin-workspace input,
+.admin-workspace select,
+.admin-workspace textarea { font: inherit; }
+
 @media (min-width: 640px) {
   .editor-toolbar__status { display: flex; }
 }

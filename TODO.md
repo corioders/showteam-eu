@@ -12,7 +12,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
     - [ ] Zdjęcie okładkowe i pozostałe teksty specyficzne dla podstron Lato, Zima i Szkolenia.
   - [x] Kontekstowe dodawanie i edytowanie sprzętu na stronie Rezerwacje.
   - [x] Kontekstowe dodawanie i edytowanie mediów w Galerii.
-  - [ ] Kalendarz, zgłoszenia, statystyki i telewizory w spójnym interfejsie strony.
+  - [x] Kalendarz, zgłoszenia, statystyki i telewizory w spójnym interfejsie strony.
   - [ ] Pełny Payload wyłącznie jako drugorzędny tryb „Zaawansowane”.
 
 - [x] Przejrzeć folder `media od asi`, skatalogować oficjalne logotypy i materiały oraz wykorzystać właściwe źródła w serwisie.
