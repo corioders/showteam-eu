@@ -6,6 +6,7 @@ import { LoaderCircle, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { useEditor } from "@/components/editor/editor-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { formatOfferDateRange, type OfferDate } from "@/lib/offer-dates";
 import { restoreOfferDraft, toOfferDraft, type OfferDraft } from "@/lib/offer-draft";
 import type { Offer, OfferCategory } from "@/lib/offers";
 
@@ -13,9 +14,12 @@ type OfferEditing = {
   editing: boolean;
   value: OfferDraft;
   update: <K extends keyof OfferDraft>(field: K, value: OfferDraft[K]) => void;
-  updateListItem: (field: "dates" | "highlights", index: number, value: string) => void;
-  addListItem: (field: "dates" | "highlights") => void;
-  removeListItem: (field: "dates" | "highlights", index: number) => void;
+  updateDate: (index: number, field: keyof OfferDate, value: string) => void;
+  addDate: () => void;
+  removeDate: (index: number) => void;
+  updateHighlight: (index: number, value: string) => void;
+  addHighlight: () => void;
+  removeHighlight: (index: number) => void;
 };
 
 const OfferEditingContext = createContext<OfferEditing | null>(null);
@@ -54,18 +58,30 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
     persist({ ...value, [field]: nextValue });
   }
 
-  function updateListItem(field: "dates" | "highlights", index: number, nextValue: string) {
-    const items = [...value[field]];
-    items[index] = nextValue;
-    persist({ ...value, [field]: items });
+  function updateDate(index: number, field: keyof OfferDate, nextValue: string) {
+    const dates = value.dates.map((date, itemIndex) => itemIndex === index ? { ...date, [field]: nextValue } : date);
+    persist({ ...value, dates });
   }
 
-  function addListItem(field: "dates" | "highlights") {
-    persist({ ...value, [field]: [...value[field], ""] });
+  function addDate() {
+    persist({ ...value, dates: [...value.dates, { label: "", startDate: "", endDate: "" }] });
   }
 
-  function removeListItem(field: "dates" | "highlights", index: number) {
-    persist({ ...value, [field]: value[field].filter((_, itemIndex) => itemIndex !== index) });
+  function removeDate(index: number) {
+    persist({ ...value, dates: value.dates.filter((_, itemIndex) => itemIndex !== index) });
+  }
+
+  function updateHighlight(index: number, nextValue: string) {
+    const highlights = value.highlights.map((highlight, itemIndex) => itemIndex === index ? nextValue : highlight);
+    persist({ ...value, highlights });
+  }
+
+  function addHighlight() {
+    persist({ ...value, highlights: [...value.highlights, ""] });
+  }
+
+  function removeHighlight(index: number) {
+    persist({ ...value, highlights: value.highlights.filter((_, itemIndex) => itemIndex !== index) });
   }
 
   function clear() {
@@ -95,7 +111,7 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
     }
   }
 
-  const context: OfferEditing = { editing, value, update, updateListItem, addListItem, removeListItem };
+  const context: OfferEditing = { editing, value, update, updateDate, addDate, removeDate, updateHighlight, addHighlight, removeHighlight };
 
   return (
     <OfferEditingContext.Provider value={context}>
@@ -150,14 +166,13 @@ export function OfferDateList({ offer, variant = "generic" }: { offer: Offer; va
   return (
     <div className={container}>
       {dates.map((date, index) => {
-        const rowClass = variant === "summer" ? "grid grid-cols-[3rem_1fr_auto] items-center gap-4 border-b border-white/10 px-5 py-6 last:border-0 sm:grid-cols-[4rem_1fr_auto] sm:px-8" : variant === "winter" ? "flex min-h-24 items-center gap-4 border-b border-r border-white/15 p-5" : "flex items-center gap-3 border-b border-white/10 p-4 last:border-0";
+        const rowClass = editing ? "flex items-start gap-3 border-b border-r border-white/15 p-4" : variant === "summer" ? "grid grid-cols-[3rem_1fr_auto] items-center gap-4 border-b border-white/10 px-5 py-6 last:border-0 sm:grid-cols-[4rem_1fr_auto] sm:px-8" : variant === "winter" ? "flex min-h-24 items-center gap-4 border-b border-r border-white/15 p-5" : "flex items-center gap-3 border-b border-white/10 p-4 last:border-0";
         return <div key={index} className={rowClass}>
-          {variant !== "generic" && <span className="font-display text-3xl font-black text-orange-500">{String(index + 1).padStart(2, "0")}</span>}
-          {variant === "summer" && !editing && <span className="font-semibold">Turnus {index + 1}</span>}
-          {editing ? <><label className="min-w-0 flex-1"><span className="sr-only">Termin {index + 1}</span><input className="inline-editor-list-input" value={date} maxLength={120} onChange={(event) => editor?.updateListItem("dates", index, event.target.value)} /></label><button type="button" className="inline-editor-remove" onClick={() => editor?.removeListItem("dates", index)} aria-label={`Usuń termin ${index + 1}`}><Trash2 className="size-4" /></button></> : <span className={variant === "summer" ? "text-right text-sm text-white/50" : variant === "generic" ? "font-semibold" : "text-sm font-semibold"}>{date}</span>}
+          {!editing && variant !== "generic" && <span className="font-display text-3xl font-black text-orange-500">{String(index + 1).padStart(2, "0")}</span>}
+          {editing ? <><div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2"><label className="sm:col-span-2"><span className="mb-1 block text-xs font-bold uppercase tracking-wide text-white/55">Nazwa terminu</span><input className="inline-editor-list-input" value={date.label} maxLength={80} placeholder="np. Turnus I" onChange={(event) => editor?.updateDate(index, "label", event.target.value)} /></label><label><span className="mb-1 block text-xs font-bold uppercase tracking-wide text-white/55">Od</span><input type="date" className="inline-editor-list-input" value={date.startDate} onChange={(event) => editor?.updateDate(index, "startDate", event.target.value)} /></label><label><span className="mb-1 block text-xs font-bold uppercase tracking-wide text-white/55">Do</span><input type="date" min={date.startDate || undefined} className="inline-editor-list-input" value={date.endDate} onChange={(event) => editor?.updateDate(index, "endDate", event.target.value)} /></label></div><button type="button" className="inline-editor-remove mt-5" onClick={() => editor?.removeDate(index)} aria-label={`Usuń termin ${index + 1}`}><Trash2 className="size-4" /></button></> : <><span className="font-semibold">{date.label}</span><span className={variant === "summer" ? "text-right text-sm text-white/50" : "ml-auto text-right text-sm text-white/55"}>{formatOfferDateRange(date)}</span></>}
         </div>;
       })}
-      {editing && <button type="button" className="inline-editor-add" onClick={() => editor?.addListItem("dates")}><Plus className="size-4" /> Dodaj termin</button>}
+      {editing && <button type="button" className="inline-editor-add" onClick={() => editor?.addDate()}><Plus className="size-4" /> Dodaj termin</button>}
     </div>
   );
 }
@@ -169,8 +184,8 @@ export function OfferHighlightList({ offer }: { offer: Offer }) {
 
   return (
     <div className="border border-white/15">
-      {highlights.map((highlight, index) => <div key={index} className="flex items-center gap-3 border-b border-white/10 p-4 last:border-0">{editing ? <><label className="min-w-0 flex-1"><span className="sr-only">Najważniejszy punkt {index + 1}</span><input className="inline-editor-list-input" value={highlight} maxLength={180} onChange={(event) => editor?.updateListItem("highlights", index, event.target.value)} /></label><button type="button" className="inline-editor-remove" onClick={() => editor?.removeListItem("highlights", index)} aria-label={`Usuń punkt ${index + 1}`}><Trash2 className="size-4" /></button></> : <p className="text-white/70">{highlight}</p>}</div>)}
-      {editing && <button type="button" className="inline-editor-add" onClick={() => editor?.addListItem("highlights")}><Plus className="size-4" /> Dodaj punkt</button>}
+      {highlights.map((highlight, index) => <div key={index} className="flex items-center gap-3 border-b border-white/10 p-4 last:border-0">{editing ? <><label className="min-w-0 flex-1"><span className="sr-only">Najważniejszy punkt {index + 1}</span><input className="inline-editor-list-input" value={highlight} maxLength={180} onChange={(event) => editor?.updateHighlight(index, event.target.value)} /></label><button type="button" className="inline-editor-remove" onClick={() => editor?.removeHighlight(index)} aria-label={`Usuń punkt ${index + 1}`}><Trash2 className="size-4" /></button></> : <p className="text-white/70">{highlight}</p>}</div>)}
+      {editing && <button type="button" className="inline-editor-add" onClick={() => editor?.addHighlight()}><Plus className="size-4" /> Dodaj punkt</button>}
     </div>
   );
 }

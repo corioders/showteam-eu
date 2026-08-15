@@ -22,7 +22,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       id,
       data: {
         ...data,
-        dates: data.dates.map((date) => ({ date })),
+        dates: data.dates,
         highlights: data.highlights.map((text) => ({ text })),
       },
       overrideAccess: false,

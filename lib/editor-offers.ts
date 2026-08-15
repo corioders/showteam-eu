@@ -1,4 +1,5 @@
 import type { OfferCategory } from "@/lib/offers";
+import { isIsoDate, type OfferDate } from "./offer-dates";
 
 export type EditableOffer = {
   title: string;
@@ -6,7 +7,7 @@ export type EditableOffer = {
   location: string;
   summary: string;
   season: string;
-  dates: string[];
+  dates: OfferDate[];
   highlights: string[];
   published: boolean;
 };
@@ -21,7 +22,7 @@ export function parseEditableOffer(input: unknown): { data?: EditableOffer; erro
   const location = text(value.location);
   const summary = text(value.summary);
   const season = text(value.season);
-  const dates = textList(value.dates, 30);
+  const dates = dateList(value.dates);
   const highlights = textList(value.highlights, 12);
   const errors: string[] = [];
 
@@ -30,11 +31,11 @@ export function parseEditableOffer(input: unknown): { data?: EditableOffer; erro
   if (location.length < 2 || location.length > 160) errors.push("Wpisz lokalizację oferty.");
   if (summary.length < 10 || summary.length > 360) errors.push("Krótki opis musi mieć od 10 do 360 znaków.");
   if (season.length < 2 || season.length > 80) errors.push("Wpisz nazwę sezonu.");
-  if (dates === null) errors.push("Możesz dodać najwyżej 30 terminów po 120 znaków.");
+  errors.push(...dates.errors);
   if (highlights === null) errors.push("Możesz dodać najwyżej 12 punktów po 180 znaków.");
-  if (errors.length || !category || !dates || !highlights) return { errors };
+  if (errors.length || !category || !dates.data || !highlights) return { errors };
 
-  return { data: { title, category, location, summary, season, dates, highlights, published: value.published !== false } };
+  return { data: { title, category, location, summary, season, dates: dates.data, highlights, published: value.published !== false } };
 }
 
 function text(value: unknown) {
@@ -45,4 +46,24 @@ function textList(value: unknown, limit: number) {
   if (!Array.isArray(value) || value.length > limit) return null;
   const result = value.map(text).filter(Boolean);
   return result.some((entry) => entry.length > 180) ? null : result;
+}
+
+function dateList(value: unknown): { data?: OfferDate[]; errors: string[] } {
+  if (!Array.isArray(value)) return { errors: ["Nie udało się odczytać terminów. Odśwież stronę i spróbuj ponownie."] };
+  if (value.length > 30) return { errors: ["Możesz dodać najwyżej 30 terminów."] };
+  const dates: OfferDate[] = [];
+  const errors: string[] = [];
+  value.forEach((item, index) => {
+    const row = item && typeof item === "object" ? item as Record<string, unknown> : {};
+    const label = text(row.label);
+    const startDate = text(row.startDate).slice(0, 10);
+    const endDate = text(row.endDate).slice(0, 10);
+    const number = index + 1;
+    if (label.length < 2 || label.length > 80) errors.push(`Termin ${number}: wpisz krótką nazwę.`);
+    if (!isIsoDate(startDate)) errors.push(`Termin ${number}: wybierz datę rozpoczęcia.`);
+    if (!isIsoDate(endDate)) errors.push(`Termin ${number}: wybierz datę zakończenia.`);
+    if (isIsoDate(startDate) && isIsoDate(endDate) && endDate < startDate) errors.push(`Termin ${number}: zakończenie nie może być przed rozpoczęciem.`);
+    dates.push({ label, startDate, endDate });
+  });
+  return errors.length ? { errors } : { data: dates, errors };
 }

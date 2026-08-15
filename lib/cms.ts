@@ -1,6 +1,7 @@
 import { getPayload } from "payload";
 import config from "@payload-config";
 import { offers as fallbackOffers, type Offer } from "@/lib/offers";
+import { isIsoDate, type OfferDate } from "@/lib/offer-dates";
 
 const staticImages = {
   lake: "/media/summer-wake-hero.jpg",
@@ -12,7 +13,11 @@ const staticImages = {
 function toOffer(document: Record<string, unknown>): Offer {
   const slug = String(document.slug);
   const cover = document.cover as { url?: string; alt?: string } | number | null | undefined;
-  const dates = (document.dates as { date?: string }[] | undefined)?.flatMap((entry) => entry.date ? [entry.date] : []) ?? [];
+  const dates = (document.dates as { label?: string; startDate?: string; endDate?: string }[] | undefined)?.flatMap((entry) => {
+    const startDate = entry.startDate?.slice(0, 10) ?? "";
+    const endDate = entry.endDate?.slice(0, 10) ?? "";
+    return entry.label && isIsoDate(startDate) && isIsoDate(endDate) ? [{ label: entry.label, startDate, endDate } satisfies OfferDate] : [];
+  }) ?? [];
   const highlights = (document.highlights as { text?: string }[] | undefined)?.flatMap((entry) => entry.text ? [entry.text] : []) ?? [];
   const sections = (document.sections as { title?: string; body?: string }[] | undefined)?.flatMap((section) => section.title && section.body ? [{ title: section.title, body: section.body }] : []) ?? [];
   const category = document.category as Offer["category"];

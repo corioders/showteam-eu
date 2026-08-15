@@ -16,6 +16,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
   - [x] Kalendarz, zgłoszenia, statystyki i telewizory w spójnym interfejsie strony.
   - [x] Pełny Payload wyłącznie jako drugorzędny tryb „Zaawansowane”.
   - [x] Zapis oferty natychmiast odświeża edytowaną podstronę i stronę główną.
+  - [x] Terminy ofert są strukturalne: obowiązkowa nazwa, data rozpoczęcia i data zakończenia; bez dowolnego tekstu zamiast daty.
 
 - [x] Przejrzeć folder `media od asi`, skatalogować oficjalne logotypy i materiały oraz wykorzystać właściwe źródła w serwisie.
 - [x] Rezerwacje: dodać przy każdym sprzęcie edytowalne progi wiatru dla warunu słabego, średniego i najlepszego; przy sprzęcie wymagającym wiatru opcjonalny próg „profesjonalny” od wskazanej prędkości.

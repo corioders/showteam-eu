@@ -1,3 +1,5 @@
+import type { OfferDate } from "@/lib/offer-dates";
+
 export type OfferCategory = "Lato" | "Zima" | "Szkolenia" | "Noclegi";
 
 export type Offer = {
@@ -6,7 +8,7 @@ export type Offer = {
   title: string;
   location: string;
   season: string;
-  dates: string[];
+  dates: OfferDate[];
   summary: string;
   highlights: string[];
   image: string;
@@ -22,7 +24,13 @@ export const offers: Offer[] = [
     title: "SHOWlato 2026",
     location: "Wake & Surf Village · Poręba",
     season: "Sezon 2026",
-    dates: ["28.06–10.07", "12–24.07", "26.07–7.08", "9–15.08", "15–21.08"],
+    dates: [
+      { label: "Turnus I", startDate: "2026-06-28", endDate: "2026-07-10" },
+      { label: "Turnus II", startDate: "2026-07-12", endDate: "2026-07-24" },
+      { label: "Turnus III", startDate: "2026-07-26", endDate: "2026-08-07" },
+      { label: "Turnus IV", startDate: "2026-08-09", endDate: "2026-08-15" },
+      { label: "Turnus V", startDate: "2026-08-15", endDate: "2026-08-21" },
+    ],
     summary: "Kameralna baza nad Jeziorem Łąckim. Woda, wiatr, ruch i wakacje bez trybu oszczędzania energii.",
     highlights: ["Wakeboard i narty wodne", "Windsurfing, SUP i kajaki", "Padel, glamping i strefa chill"],
     image: "/media/summer-wake-hero.jpg",
@@ -35,7 +43,18 @@ export const offers: Offer[] = [
     title: "SHOWzima 2026",
     location: "Trentino · Dolomity",
     season: "Sezon 2026",
-    dates: ["21–27.12", "27.12–2.01", "3–10.01", "17–24.01", "24–31.01", "31.01–7.02", "7–14.02", "14–21.02", "21–28.02", "28.02–7.03"],
+    dates: [
+      { label: "Boże Narodzenie", startDate: "2025-12-21", endDate: "2025-12-27" },
+      { label: "San Silvestro", startDate: "2025-12-27", endDate: "2026-01-02" },
+      { label: "Turnus III", startDate: "2026-01-03", endDate: "2026-01-10" },
+      { label: "Turnus IV", startDate: "2026-01-17", endDate: "2026-01-24" },
+      { label: "Turnus V", startDate: "2026-01-24", endDate: "2026-01-31" },
+      { label: "Turnus VI", startDate: "2026-01-31", endDate: "2026-02-07" },
+      { label: "Turnus VII", startDate: "2026-02-07", endDate: "2026-02-14" },
+      { label: "Turnus VIII", startDate: "2026-02-14", endDate: "2026-02-21" },
+      { label: "Turnus IX", startDate: "2026-02-21", endDate: "2026-02-28" },
+      { label: "Turnus X", startDate: "2026-02-28", endDate: "2026-03-07" },
+    ],
     summary: "Rodzinne tygodnie na stoku: szkolenie, sport, włoskie jedzenie i après-ski w wydaniu SHOWteam.",
     highlights: ["Hotel na stoku", "Szkolenie dla dzieci i dorosłych", "Garda, trekking i après-ski"],
     image: "/media/showteam-winter-fire.jpg",
@@ -48,7 +67,7 @@ export const offers: Offer[] = [
     title: "Patent i progres",
     location: "Poręba · Jezioro Łąckie",
     season: "Od 14. roku życia",
-    dates: ["Terminy indywidualne", "Egzaminy w sezonie"],
+    dates: [],
     summary: "Kurs sternika motorowodnego, żeglarstwo i autorskie programy FizjoSPORT prowadzone przez praktyków.",
     highlights: ["Sternik motorowodny", "Żeglarz jachtowy", "FizjoSPORT i obozy"],
     image: "/media/summer-sailing-drone.jpg",
@@ -70,27 +89,6 @@ export const offers: Offer[] = [
     contactHref: "mailto:biuro@showteam.eu?subject=Noclegi%20nad%20wod%C4%85",
   },
 ];
-
-export const summerDates = [
-  ["Turnus I", "28 czerwca – 10 lipca"],
-  ["Turnus II", "12–24 lipca"],
-  ["Turnus III", "26 lipca – 7 sierpnia"],
-  ["Turnus IV", "9–15 sierpnia"],
-  ["Turnus V", "15–21 sierpnia"],
-] as const;
-
-export const winterDates = [
-  "21–27 grudnia · Boże Narodzenie",
-  "27 grudnia–2 stycznia · San Silvestro",
-  "3–10 stycznia",
-  "17–24 stycznia",
-  "24–31 stycznia",
-  "31 stycznia–7 lutego",
-  "7–14 lutego",
-  "14–21 lutego",
-  "21–28 lutego",
-  "28 lutego–7 marca",
-] as const;
 
 export const contact = {
   joanna: { name: "Joanna SHOWtysek", phone: "+48 500 128 090", href: "tel:+48500128090" },

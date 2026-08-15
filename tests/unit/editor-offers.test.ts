@@ -4,12 +4,18 @@ import { parseEditableOffer } from "../../lib/editor-offers";
 describe("visual offer editor", () => {
   it("accepts and trims operator content", () => {
     expect(parseEditableOffer({
-      title: " SHOWlato ", category: "Lato", location: " Poręba ", summary: " Wakacje pełne sportu i dobrej energii. ", season: " Sezon 2027 ", dates: [" 1–7 lipca ", ""], highlights: [" Wakeboard "], published: true,
-    }).data).toEqual({ title: "SHOWlato", category: "Lato", location: "Poręba", summary: "Wakacje pełne sportu i dobrej energii.", season: "Sezon 2027", dates: ["1–7 lipca"], highlights: ["Wakeboard"], published: true });
+      title: " SHOWlato ", category: "Lato", location: " Poręba ", summary: " Wakacje pełne sportu i dobrej energii. ", season: " Sezon 2027 ", dates: [{ label: " Turnus I ", startDate: "2027-07-01", endDate: "2027-07-07" }], highlights: [" Wakeboard "], published: true,
+    }).data).toEqual({ title: "SHOWlato", category: "Lato", location: "Poręba", summary: "Wakacje pełne sportu i dobrej energii.", season: "Sezon 2027", dates: [{ label: "Turnus I", startDate: "2027-07-01", endDate: "2027-07-07" }], highlights: ["Wakeboard"], published: true });
   });
 
   it("returns messages an operator can act on", () => {
     const result = parseEditableOffer({ title: "", category: "X", location: "", summary: "za krótko", season: "", dates: [], highlights: [] });
     expect(result.errors).toEqual(expect.arrayContaining(["Nazwa oferty musi mieć od 2 do 120 znaków.", "Wybierz kategorię oferty.", "Wpisz lokalizację oferty."]));
+  });
+
+  it("rejects an ambiguous or reversed term", () => {
+    const result = parseEditableOffer({ title: "SHOWlato", category: "Lato", location: "Poręba", summary: "Wakacje pełne sportu i dobrej energii.", season: "Sezon 2027", dates: [{ label: "Turnus I", startDate: "2027-07-07", endDate: "2027-07-01" }], highlights: [] });
+
+    expect(result.errors).toContain("Termin 1: zakończenie nie może być przed rozpoczęciem.");
   });
 });

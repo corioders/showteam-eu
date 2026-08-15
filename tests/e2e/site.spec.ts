@@ -319,8 +319,11 @@ test.describe("mobile", () => {
   test("offer content is edited directly on the page", async ({ page }) => {
     await page.route("**/api/admin/session", (route) => route.fulfill({ json: { user: { email: "asia@showteam.eu", name: "Asia" } } }));
     let savedTitle = "";
+    let savedDates: { label: string; startDate: string; endDate: string }[] = [];
     await page.route("**/api/admin/offers/*", async (route) => {
-      savedTitle = (await route.request().postDataJSON() as { title: string }).title;
+      const data = await route.request().postDataJSON() as { title: string; dates: typeof savedDates };
+      savedTitle = data.title;
+      savedDates = data.dates;
       await route.fulfill({ json: { message: "Oferta została opublikowana." } });
     });
     await page.goto("/oferta/zima");
@@ -328,9 +331,14 @@ test.describe("mobile", () => {
     await expect(title).toBeVisible();
     await title.fill("SHOWzima bez formularza");
     await expect(title).toHaveValue("SHOWzima bez formularza");
+    await page.getByRole("button", { name: "Dodaj termin" }).click();
+    await page.getByLabel("Nazwa terminu").last().fill("Nowy Rok");
+    await page.getByLabel("Od").last().fill("2027-01-02");
+    await page.getByLabel("Do").last().fill("2027-01-09");
     await expect(page.getByText("Podgląd", { exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Zapisz zmiany" }).click();
     await expect.poll(() => savedTitle).toBe("SHOWzima bez formularza");
+    expect(savedDates.at(-1)).toEqual({ label: "Nowy Rok", startDate: "2027-01-02", endDate: "2027-01-09" });
   });
 
   test("gallery images load and retain varied proportions", async ({ page }) => {

@@ -49,9 +49,16 @@ export const Offers: CollectionConfig = {
         { name: "season", label: "Nazwa sezonu", type: "text", required: true, defaultValue: "Sezon 2026", admin: { description: "Np. „Sezon 2026”." } },
       ] },
       { label: "2. Terminy i szczegóły", description: "Lista terminów i informacje rozwijane niżej na stronie.", fields: [
-        { name: "dates", label: "Terminy", type: "array", labels: { singular: "Termin", plural: "Terminy" }, admin: { description: "Dodaj każdy turnus lub wyjazd jako osobny termin." }, fields: [
-          { name: "label", label: "Nazwa", type: "text", admin: { placeholder: "np. Turnus I" } },
-          { name: "date", label: "Data lub zakres dat", type: "text", required: true, admin: { placeholder: "np. 5–11 lipca 2026" } },
+        { name: "dates", label: "Terminy", type: "array", labels: { singular: "Termin", plural: "Terminy" }, admin: { description: "Każdy termin musi mieć nazwę oraz dokładną datę rozpoczęcia i zakończenia." }, fields: [
+          { name: "label", label: "Nazwa terminu", type: "text", required: true, admin: { placeholder: "np. Turnus I albo Boże Narodzenie" } },
+          { name: "startDate", label: "Data rozpoczęcia", type: "date", required: true, admin: { date: { pickerAppearance: "dayOnly", displayFormat: "dd.MM.yyyy" } } },
+          { name: "endDate", label: "Data zakończenia", type: "date", required: true, validate: (value, { siblingData }) => {
+            if (!value) return "Wybierz datę zakończenia.";
+            const startDateValue = (siblingData as { startDate?: unknown } | undefined)?.startDate;
+            if (!startDateValue) return true;
+            return new Date(value).getTime() >= new Date(String(startDateValue)).getTime()
+              || "Data zakończenia nie może być wcześniejsza niż rozpoczęcie.";
+          }, admin: { date: { pickerAppearance: "dayOnly", displayFormat: "dd.MM.yyyy" } } },
         ] },
         { name: "highlights", label: "Najważniejsze punkty", type: "array", labels: { singular: "Punkt", plural: "Punkty" }, maxRows: 8, fields: [{ name: "text", label: "Treść", type: "text", required: true }] },
         { name: "sections", label: "Dłuższe sekcje", type: "array", labels: { singular: "Sekcja", plural: "Sekcje" }, fields: [
