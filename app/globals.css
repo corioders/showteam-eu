@@ -196,6 +196,34 @@ button {
   outline: none;
 }
 
+.editor-field {
+  display: grid;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.editor-field input,
+.editor-field textarea,
+.editor-field select {
+  width: 100%;
+  min-height: 3rem;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  border-radius: 0;
+  background: rgb(255 255 255 / 0.06);
+  padding: 0.75rem;
+  color: white;
+  font: inherit;
+  font-weight: 500;
+  outline: none;
+}
+
+.editor-field textarea { resize: vertical; }
+.editor-field input:focus,
+.editor-field textarea:focus,
+.editor-field select:focus { border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
+.editor-field small { color: rgb(255 255 255 / 0.45); font-size: 0.75rem; font-weight: 500; }
+
 @media (min-width: 640px) {
   .editor-toolbar__status { display: flex; }
 }

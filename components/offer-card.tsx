@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { Offer } from "@/lib/offers";
 import { cn } from "@/lib/utils";
+import { OfferEditor } from "@/components/editor/offer-editor";
 
 export function OfferCard({ offer, index, className }: { offer: Offer; index: number; className?: string }) {
   return (
@@ -15,6 +16,7 @@ export function OfferCard({ offer, index, className }: { offer: Offer; index: nu
         <span className="mr-3 text-orange-500">0{index + 1}</span> / SHOWteam
       </div>
       <Link href={offer.href} className="absolute inset-0 z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange-500" aria-label={`${offer.title} — zobacz ofertę`} />
+      <OfferEditor offer={offer} compact className="absolute right-4 top-4" />
       <div className="absolute inset-x-0 bottom-0 z-0 p-6 sm:p-8">
         <Badge>{offer.category}</Badge>
         <div className="mt-5 flex items-end justify-between gap-4">

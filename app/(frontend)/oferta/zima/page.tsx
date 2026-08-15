@@ -18,7 +18,7 @@ export default async function WinterPage() {
   if (!offer) notFound();
   return (
     <>
-      <PageHero eyebrow={`${offer.category} · ${offer.season}`} title={offer.title} description={offer.summary} location={offer.location} image={offer.image} imageAlt={offer.imageAlt} />
+      <PageHero eyebrow={`${offer.category} · ${offer.season}`} title={offer.title} description={offer.summary} location={offer.location} image={offer.image} imageAlt={offer.imageAlt} offer={offer} />
       <LocationLinks locations={[
         { label: "Trentino · Dolomity", href: "https://www.google.com/maps/search/?api=1&query=Trentino+Dolomites+Italy" },
         { label: "Grandvalira · Andorra", href: "https://www.google.com/maps/search/?api=1&query=Grandvalira+Andorra" },

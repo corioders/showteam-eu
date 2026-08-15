@@ -25,7 +25,7 @@ export default async function SummerPage() {
   if (!offer) notFound();
   return (
     <>
-      <PageHero eyebrow={`${offer.category} · ${offer.season}`} title={offer.title} description={offer.summary} location={offer.location} image={offer.image} imageAlt={offer.imageAlt} />
+      <PageHero eyebrow={`${offer.category} · ${offer.season}`} title={offer.title} description={offer.summary} location={offer.location} image={offer.image} imageAlt={offer.imageAlt} offer={offer} />
       <LocationLinks locations={[{ label: "Wake & Surf Village · Nad Zaporą 21, Poręba", href: contact.map }]} />
 
       <section className="py-20 md:py-28">

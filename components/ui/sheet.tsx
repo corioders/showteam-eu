@@ -9,7 +9,7 @@ const Sheet = DialogPrimitive.Root;
 const SheetTrigger = DialogPrimitive.Trigger;
 const SheetClose = DialogPrimitive.Close;
 
-function SheetContent({ className, children, ...props }: React.ComponentProps<typeof DialogPrimitive.Content>) {
+function SheetContent({ className, children, title = "Panel", description = "", ...props }: React.ComponentProps<typeof DialogPrimitive.Content> & { title?: string; description?: string }) {
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm data-[state=closed]:animate-out data-[state=open]:animate-in" />
@@ -20,8 +20,8 @@ function SheetContent({ className, children, ...props }: React.ComponentProps<ty
         )}
         {...props}
       >
-        <DialogPrimitive.Title className="sr-only">Menu główne</DialogPrimitive.Title>
-        <DialogPrimitive.Description className="sr-only">Nawigacja po stronie SHOWteam</DialogPrimitive.Description>
+        <DialogPrimitive.Title className="sr-only">{title}</DialogPrimitive.Title>
+        <DialogPrimitive.Description className="sr-only">{description || title}</DialogPrimitive.Description>
         {children}
         <DialogPrimitive.Close className="absolute right-4 top-[calc(1rem+env(safe-area-inset-top))] z-10 grid size-11 place-items-center rounded-full border border-white/15 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
           <X className="size-6" />

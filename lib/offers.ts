@@ -1,6 +1,7 @@
 export type OfferCategory = "Lato" | "Zima" | "Szkolenia" | "Noclegi";
 
 export type Offer = {
+  cmsId?: string;
   category: OfferCategory;
   title: string;
   location: string;

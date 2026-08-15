@@ -18,6 +18,7 @@ function toOffer(document: Record<string, unknown>): Offer {
   const category = document.category as Offer["category"];
 
   return {
+    cmsId: String(document.id),
     category,
     title: String(document.title),
     location: String(document.location),
