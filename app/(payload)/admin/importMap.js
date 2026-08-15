@@ -7,6 +7,7 @@ import { QuickUploadCard as QuickUploadCard_9a11b25b22cf5ee26358b6f84a63723a } f
 import { LoginIntro as LoginIntro_3db7ad225bd85fd7c2b1c1cf21568361 } from '@/components/payload/brand'
 import { R2ClientUploadHandler as R2ClientUploadHandler_85cc02ed84006fcc91d3aff39dda669d } from '@payloadcms/storage-r2/client'
 import { DashboardRedirect as DashboardRedirect_8e1ae8668b207d648d187c60c8a9ccb4 } from '@/components/payload/dashboard-redirect'
+import { AdvancedAdminView as AdvancedAdminView_9c973047fdc7ca2d750b2e2dfa8f0c6a } from '@/components/payload/advanced-admin-view'
 import { CalendarAdminView as CalendarAdminView_dcda57cf67ab4f07c23f876e5b43fe3d } from '@/components/payload/calendar-admin-view'
 import { ApplicationsAdminView as ApplicationsAdminView_1d1aec5f14ad22e0e686223d9022d0a4 } from '@/components/payload/applications-admin-view'
 import { StatisticsAdminView as StatisticsAdminView_fc0450413d7b4e318d65a16ec9935cfd } from '@/components/payload/statistics-admin-view'
@@ -24,6 +25,7 @@ export const importMap = {
   "@/components/payload/brand#LoginIntro": LoginIntro_3db7ad225bd85fd7c2b1c1cf21568361,
   "@payloadcms/storage-r2/client#R2ClientUploadHandler": R2ClientUploadHandler_85cc02ed84006fcc91d3aff39dda669d,
   "@/components/payload/dashboard-redirect#DashboardRedirect": DashboardRedirect_8e1ae8668b207d648d187c60c8a9ccb4,
+  "@/components/payload/advanced-admin-view#AdvancedAdminView": AdvancedAdminView_9c973047fdc7ca2d750b2e2dfa8f0c6a,
   "@/components/payload/calendar-admin-view#CalendarAdminView": CalendarAdminView_dcda57cf67ab4f07c23f876e5b43fe3d,
   "@/components/payload/applications-admin-view#ApplicationsAdminView": ApplicationsAdminView_1d1aec5f14ad22e0e686223d9022d0a4,
   "@/components/payload/statistics-admin-view#StatisticsAdminView": StatisticsAdminView_fc0450413d7b4e318d65a16ec9935cfd,

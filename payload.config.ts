@@ -73,6 +73,7 @@ export default buildConfig({
       graphics: { Logo: "@/components/payload/brand#ShowteamLogo", Icon: "@/components/payload/brand#ShowteamIcon" },
       views: {
         dashboard: { Component: "@/components/payload/dashboard-redirect#DashboardRedirect", path: "/" },
+        advanced: { Component: "@/components/payload/advanced-admin-view#AdvancedAdminView", path: "/zaawansowane" },
         calendar: { Component: "@/components/payload/calendar-admin-view#CalendarAdminView", path: "/kalendarz" },
         applications: { Component: "@/components/payload/applications-admin-view#ApplicationsAdminView", path: "/zgloszenia" },
         statistics: { Component: "@/components/payload/statistics-admin-view#StatisticsAdminView", path: "/statystyki" },

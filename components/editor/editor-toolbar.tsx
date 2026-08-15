@@ -11,7 +11,7 @@ const tools = [
   { href: "/a/kalendarz", label: "Kalendarz", icon: CalendarDays },
   { href: "/a/zgloszenia", label: "Zgłoszenia", icon: UsersRound },
   { href: "/galeria", label: "Galeria", icon: Images },
-  { href: "/admin/collections/offers", label: "Zaawansowane", icon: Settings2 },
+  { href: "/admin/zaawansowane", label: "Zaawansowane", icon: Settings2 },
 ] as const;
 
 export function EditorToolbar() {
