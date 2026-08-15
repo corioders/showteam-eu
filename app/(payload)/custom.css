@@ -7,10 +7,11 @@
 .showteam-admin-logout { align-items: center; color: var(--theme-elevation-700); display: flex; font-weight: 700; gap: .65rem; min-height: 2.75rem; padding: .65rem 1rem; text-decoration: none; }
 .showteam-admin-logout:hover, .showteam-admin-logout:focus-visible { background: var(--theme-elevation-100); color: #e85200; outline: none; }
 .showteam-admin-logout svg { height: 1.25rem; width: 1.25rem; }
-.showteam-back-wrap { margin: 1rem var(--gutter-h); }
+.showteam-back-wrap { margin: 0; position: fixed; right: var(--gutter-h); top: .65rem; z-index: 30; }
 .showteam-back { align-items: center; background: #f06414; color: #111; display: inline-flex; font-size: .85rem; font-weight: 800; gap: .55rem; min-height: 2.75rem; padding: .65rem .9rem; text-decoration: none; }
 .showteam-back:hover, .showteam-back:focus-visible { background: #ff7a2d; outline: 2px solid var(--theme-text); outline-offset: 2px; }
 .showteam-back svg { height: 1.1rem; width: 1.1rem; }
+.app-header__account { display: none !important; }
 
 .login { background: #0b0c0d; color: #f7f6f1; }
 .login .template-minimal__wrap { max-width: 30rem; }
@@ -36,8 +37,8 @@
 
 @media (max-width: 900px) { .admin-task-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) {
-  .showteam-back-wrap { margin: .75rem 1rem; }
-  .showteam-back { justify-content: center; width: 100%; }
+  .showteam-back-wrap { right: 1rem; top: .65rem; }
+  .showteam-back { min-height: 2.7rem; padding: .6rem .8rem; }
   .dashboard .gutter { padding-left: .75rem; padding-right: .75rem; }
   .dashboard .app-header, .dashboard .app-header__wrapper, .dashboard .app-header__content { max-width: 100%; min-width: 0; overflow: hidden; }
   .dashboard .app-header__step-header, .dashboard .app-header__step-nav-wrapper { min-width: 0; }
