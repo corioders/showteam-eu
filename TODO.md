@@ -9,6 +9,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
   - [x] Wspólny pasek administratora oraz możliwość ukrycia przycisków edycji.
   - [ ] Kontekstowe edytowanie treści ofert bez opuszczania strony.
     - [x] Nazwa, kategoria, sezon, lokalizacja, opis, terminy, wyróżniki i publikacja.
+    - [x] Pola podstawowej oferty edytowane bezpośrednio w miejscu ich wyświetlania, z natychmiastowym podglądem.
     - [ ] Zdjęcie okładkowe i pozostałe teksty specyficzne dla podstron Lato, Zima i Szkolenia.
   - [x] Kontekstowe dodawanie i edytowanie sprzętu na stronie Rezerwacje.
   - [x] Kontekstowe dodawanie i edytowanie mediów w Galerii.

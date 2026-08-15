@@ -224,6 +224,69 @@ button {
 .editor-field select:focus { border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
 .editor-field small { color: rgb(255 255 255 / 0.45); font-size: 0.75rem; font-weight: 500; }
 
+.inline-editor-badge {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  border-left: 2px solid var(--orange);
+  background: rgb(8 10 11 / 0.82);
+  padding: 0.4rem 0.55rem;
+}
+
+.inline-editor-badge select,
+.inline-editor-badge input,
+.inline-editor-title,
+.inline-editor-copy,
+.inline-editor-location,
+.inline-editor-list-input {
+  border: 1px dashed rgb(255 154 98 / 0.8);
+  background: rgb(8 10 11 / 0.82);
+  color: white;
+  outline: none;
+}
+
+.inline-editor-badge select,
+.inline-editor-badge input {
+  max-width: 11rem;
+  padding: 0.3rem 0.4rem;
+  font: 700 0.72rem/1 var(--font-body), sans-serif;
+  text-transform: uppercase;
+}
+
+.inline-editor-title {
+  field-sizing: content;
+  width: 100%;
+  min-height: 1.8em;
+  margin-top: 1.5rem;
+  resize: none;
+  padding: 0.08em;
+  font: 900 clamp(4.2rem, 13vw, 10rem)/0.84 var(--font-display), Impact, sans-serif;
+  letter-spacing: -0.055em;
+  text-transform: uppercase;
+}
+
+.inline-editor-copy,
+.inline-editor-location {
+  width: 100%;
+  resize: vertical;
+  padding: 0.7rem;
+  font: inherit;
+}
+
+.inline-editor-location { min-width: min(18rem, 100%); }
+.inline-editor-list-input { width: 100%; min-height: 2.75rem; padding: 0.65rem 0.75rem; font: inherit; }
+.inline-editor-badge select:focus,
+.inline-editor-badge input:focus,
+.inline-editor-title:focus,
+.inline-editor-copy:focus,
+.inline-editor-location:focus,
+.inline-editor-list-input:focus { border-style: solid; box-shadow: 0 0 0 2px rgb(255 107 26 / 0.35); }
+.inline-editor-remove { display: grid; width: 2.75rem; height: 2.75rem; flex: none; place-items: center; border: 1px solid rgb(248 113 113 / 0.45); color: rgb(252 165 165); }
+.inline-editor-add { display: flex; min-height: 3.25rem; width: 100%; align-items: center; justify-content: center; gap: 0.5rem; border-top: 1px dashed rgb(255 154 98 / 0.55); color: rgb(255 154 98); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+.inline-editor-remove:hover,
+.inline-editor-add:hover { background: rgb(255 107 26 / 0.12); color: white; }
+
 .admin-workspace {
   --theme-elevation-0: #f5f4ed;
   --theme-elevation-50: #151718;

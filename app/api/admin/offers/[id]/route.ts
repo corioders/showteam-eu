@@ -28,7 +28,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       overrideAccess: false,
       user,
     });
-    revalidateOffers(updatedOffer.slug);
+    revalidateOffers(updatedOffer.slug, updatedOffer.category);
     return NextResponse.json({ message: "Oferta została opublikowana." });
   } catch (error) {
     payload.logger.error({ err: error, msg: "Visual offer update failed" });

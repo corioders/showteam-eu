@@ -3,11 +3,12 @@ import { notFound } from "next/navigation";
 import { Activity, BadgeCheck, HeartPulse, Sailboat, Waves } from "lucide-react";
 import { ContactCta } from "@/components/contact-cta";
 import { CmsDetails } from "@/components/cms-details";
+import { OfferInlineEditor } from "@/components/editor/offer-inline-editor";
 import { PageHero } from "@/components/page-hero";
 import { PhotoMosaic } from "@/components/photo-mosaic";
 import { LocationLinks } from "@/components/location-links";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { getOffer } from "@/lib/cms";
+import { getOfferByCategory } from "@/lib/cms";
 import { contact } from "@/lib/offers";
 
 export const metadata: Metadata = { title: "Szkolenia i FizjoSPORT", description: "Kurs sternika motorowodnego, żeglarstwo, obozy i FizjoSPORT.", alternates: { canonical: "/oferta/szkolenia" } };
@@ -21,10 +22,10 @@ const programs = [
 ];
 
 export default async function TrainingPage() {
-  const offer = await getOffer("szkolenia");
+  const offer = await getOfferByCategory("Szkolenia");
   if (!offer) notFound();
   return (
-    <>
+    <OfferInlineEditor key={offer.cmsId ?? offer.href} offer={offer}>
       <PageHero eyebrow={`${offer.category} · ${offer.season}`} title={offer.title} description={offer.summary} location={offer.location} image={offer.image} imageAlt={offer.imageAlt} offer={offer} />
       <LocationLinks locations={[{ label: "Baza szkoleń · Nad Zaporą 21, Poręba", href: contact.map }]} />
       <section className="py-20 md:py-28"><div className="site-container"><div className="mb-12 max-w-4xl"><span className="eyebrow">Uprawnienia i umiejętności</span><h2 className="font-display mt-4 text-6xl font-black uppercase leading-[0.87] tracking-tight sm:text-8xl">Papier to start.<br /><span className="text-orange-500">Liczy się praktyka.</span></h2></div><div className="grid gap-px bg-white/10 md:grid-cols-2">{programs.map(({icon:Icon,number,title,text}) => <div key={title} className="bg-[#080a0b] p-7 sm:p-9"><div className="flex items-center justify-between"><Icon className="size-8 text-sky-300" /><span className="font-display text-4xl font-black text-white/10">{number}</span></div><h3 className="font-display mt-16 text-3xl font-black uppercase sm:text-4xl">{title}</h3><p className="mt-4 max-w-lg leading-7 text-white/55">{text}</p></div>)}</div></div></section>
@@ -32,6 +33,6 @@ export default async function TrainingPage() {
       <PhotoMosaic label="Nauka przez ruch" photos={[{ src: "/media/summer-sailing-drone.jpg", alt: "Szkolenie żeglarskie na Jeziorze Łąckim", position: "object-[35%_center]" }, { src: "/media/summer-wake-aerial.jpg", alt: "Szkolenie wakeboardowe z lotu ptaka", position: "object-[60%_center]" }, { src: "/media/summer-sunset-wake.jpg", alt: "Łódź treningowa SHOWteam o zachodzie słońca" }]} />
       <CmsDetails offer={offer} />
       <ContactCta title="Zaczynamy trening?" applicationOffer={offer.title} />
-    </>
+    </OfferInlineEditor>
   );
 }

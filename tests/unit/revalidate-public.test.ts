@@ -10,9 +10,10 @@ describe("public offer revalidation", () => {
   beforeEach(() => revalidatePath.mockClear());
 
   it("invalidates the homepage and the edited offer immediately", () => {
-    revalidateOffers("showzima-2026");
+    revalidateOffers("showzima-2026", "Zima");
 
     expect(revalidatePath).toHaveBeenNthCalledWith(1, "/");
     expect(revalidatePath).toHaveBeenNthCalledWith(2, "/oferta/showzima-2026");
+    expect(revalidatePath).toHaveBeenNthCalledWith(3, "/oferta/zima");
   });
 });

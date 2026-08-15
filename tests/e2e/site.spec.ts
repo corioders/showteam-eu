@@ -316,6 +316,23 @@ test.describe("mobile", () => {
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });
 
+  test("offer content is edited directly on the page", async ({ page }) => {
+    await page.route("**/api/admin/session", (route) => route.fulfill({ json: { user: { email: "asia@showteam.eu", name: "Asia" } } }));
+    let savedTitle = "";
+    await page.route("**/api/admin/offers/*", async (route) => {
+      savedTitle = (await route.request().postDataJSON() as { title: string }).title;
+      await route.fulfill({ json: { message: "Oferta została opublikowana." } });
+    });
+    await page.goto("/oferta/zima");
+    const title = page.getByLabel("Nazwa oferty");
+    await expect(title).toBeVisible();
+    await title.fill("SHOWzima bez formularza");
+    await expect(title).toHaveValue("SHOWzima bez formularza");
+    await expect(page.getByText("Podgląd", { exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Zapisz zmiany" }).click();
+    await expect.poll(() => savedTitle).toBe("SHOWzima bez formularza");
+  });
+
   test("gallery images load and retain varied proportions", async ({ page }) => {
     await page.goto("/galeria");
     const figures = page.locator("figure");

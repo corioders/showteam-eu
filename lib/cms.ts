@@ -49,3 +49,8 @@ export async function getOffer(slug: string) {
   const cmsOffers = await getOffers();
   return cmsOffers.find((offer) => offer.href === `/oferta/${slug}`) ?? fallbackOffers.find((offer) => offer.href === `/oferta/${slug}`);
 }
+
+export async function getOfferByCategory(category: Offer["category"]) {
+  const cmsOffers = await getOffers();
+  return cmsOffers.find((offer) => offer.category === category) ?? fallbackOffers.find((offer) => offer.category === category);
+}
