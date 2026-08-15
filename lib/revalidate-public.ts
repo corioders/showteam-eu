@@ -1,8 +1,12 @@
 import { revalidatePath } from "next/cache";
 
-export function revalidateOffers() {
+export function revalidateOffers(slug?: string) {
   revalidatePath("/");
-  revalidatePath("/oferta/[slug]", "page");
+  if (slug) {
+    revalidatePath(`/oferta/${slug}`);
+  } else {
+    revalidatePath("/oferta/[slug]", "page");
+  }
 }
 
 export function revalidateGallery() {

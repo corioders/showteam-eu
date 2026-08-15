@@ -3,6 +3,7 @@ import { getPayload } from "payload";
 import config from "@payload-config";
 import { validSameOrigin } from "@/lib/admin-auth";
 import { parseEditableOffer } from "@/lib/editor-offers";
+import { revalidateOffers } from "@/lib/revalidate-public";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!validSameOrigin(request)) return NextResponse.json({ message: "Ta operacja została zablokowana. Odśwież stronę i spróbuj ponownie." }, { status: 403 });
@@ -16,7 +17,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     const data = parsed.data;
-    await payload.update({
+    const updatedOffer = await payload.update({
       collection: "offers",
       id,
       data: {
@@ -27,6 +28,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       overrideAccess: false,
       user,
     });
+    revalidateOffers(updatedOffer.slug);
     return NextResponse.json({ message: "Oferta została opublikowana." });
   } catch (error) {
     payload.logger.error({ err: error, msg: "Visual offer update failed" });
