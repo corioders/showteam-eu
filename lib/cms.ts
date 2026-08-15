@@ -16,6 +16,7 @@ function toOffer(document: Record<string, unknown>): Offer {
   const highlights = (document.highlights as { text?: string }[] | undefined)?.flatMap((entry) => entry.text ? [entry.text] : []) ?? [];
   const sections = (document.sections as { title?: string; body?: string }[] | undefined)?.flatMap((section) => section.title && section.body ? [{ title: section.title, body: section.body }] : []) ?? [];
   const category = document.category as Offer["category"];
+  const archivedOffer = fallbackOffers.find((offer) => offer.href === `/oferta/${slug}`);
 
   return {
     cmsId: String(document.id),
@@ -25,7 +26,7 @@ function toOffer(document: Record<string, unknown>): Offer {
     season: String(document.season),
     dates,
     summary: String(document.summary),
-    highlights,
+    highlights: highlights.length ? highlights : archivedOffer?.highlights ?? [],
     image: typeof cover === "object" && cover?.url ? cover.url : staticImages[(document.staticImage as keyof typeof staticImages) ?? "lake"],
     imageAlt: typeof cover === "object" && cover?.alt ? cover.alt : `${category} z SHOWteam`,
     href: `/oferta/${slug}`,
