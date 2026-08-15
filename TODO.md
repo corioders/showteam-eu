@@ -4,6 +4,15 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## W toku
 
+- [ ] Nowy panel bezpośrednio na stronie (`codex/new-admin`):
+  - [x] `/admin` służy do logowania, a po zalogowaniu otwiera stronę w trybie edycji.
+  - [x] Wspólny pasek administratora oraz możliwość ukrycia przycisków edycji.
+  - [ ] Kontekstowe edytowanie treści ofert bez opuszczania strony.
+  - [ ] Kontekstowe dodawanie i edytowanie sprzętu na stronie Rezerwacje.
+  - [ ] Kontekstowe dodawanie i edytowanie mediów w Galerii.
+  - [ ] Kalendarz, zgłoszenia, statystyki i telewizory w spójnym interfejsie strony.
+  - [ ] Pełny Payload wyłącznie jako drugorzędny tryb „Zaawansowane”.
+
 - [x] Przejrzeć folder `media od asi`, skatalogować oficjalne logotypy i materiały oraz wykorzystać właściwe źródła w serwisie.
 - [x] Rezerwacje: dodać przy każdym sprzęcie edytowalne progi wiatru dla warunu słabego, średniego i najlepszego; przy sprzęcie wymagającym wiatru opcjonalny próg „profesjonalny” od wskazanej prędkości.
 - [x] Przebudować pełnoekranowe menu: zwarty układ desktopowy bez ogromnych pustych kafli; zachować czytelny układ mobilny.

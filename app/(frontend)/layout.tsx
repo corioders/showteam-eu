@@ -3,6 +3,8 @@ import { Inter, Oswald } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
+import { EditorProvider } from "@/components/editor/editor-provider";
+import { EditorToolbar } from "@/components/editor/editor-toolbar";
 import { contact } from "@/lib/offers";
 import "../globals.css";
 
@@ -30,9 +32,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="pl" className={`${inter.variable} ${oswald.variable}`}>
       <body>
         <AnalyticsTracker />
-        <SiteHeader />
-        <main>{children}</main>
-        <SiteFooter />
+        <EditorProvider>
+          <SiteHeader />
+          <main>{children}</main>
+          <SiteFooter />
+          <EditorToolbar />
+        </EditorProvider>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "SportsOrganization", name: "SHOWteam", url: "https://www.showteam.eu", logo: "https://www.showteam.eu/apple-touch-icon.png", email: contact.email, telephone: "+48 500 128 090", address: { "@type": "PostalAddress", streetAddress: "Nad Zaporą 21", addressLocality: "Poręba", addressCountry: "PL" }, sameAs: [contact.instagram, contact.facebook, contact.tiktok] }).replace(/</g, "\\u003c") }} />
       </body>
     </html>
