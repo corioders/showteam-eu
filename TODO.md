@@ -4,6 +4,20 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## W toku
 
+- [ ] Nowy panel bezpośrednio na stronie (`codex/new-admin`):
+  - [x] `/admin` służy do logowania, a po zalogowaniu otwiera stronę w trybie edycji.
+  - [x] Wspólny pasek administratora oraz możliwość ukrycia przycisków edycji.
+  - [ ] Kontekstowe edytowanie treści ofert bez opuszczania strony.
+    - [x] Nazwa, kategoria, sezon, lokalizacja, opis, terminy, wyróżniki i publikacja.
+    - [x] Pola podstawowej oferty edytowane bezpośrednio w miejscu ich wyświetlania, z natychmiastowym podglądem.
+    - [ ] Zdjęcie okładkowe i pozostałe teksty specyficzne dla podstron Lato, Zima i Szkolenia.
+  - [x] Kontekstowe dodawanie i edytowanie sprzętu na stronie Rezerwacje.
+  - [x] Kontekstowe dodawanie i edytowanie mediów w Galerii.
+  - [x] Kalendarz, zgłoszenia, statystyki i telewizory w spójnym interfejsie strony.
+  - [x] Pełny Payload wyłącznie jako drugorzędny tryb „Zaawansowane”.
+  - [x] Zapis oferty natychmiast odświeża edytowaną podstronę i stronę główną.
+  - [x] Terminy ofert są strukturalne: obowiązkowa nazwa, data rozpoczęcia i data zakończenia; bez dowolnego tekstu zamiast daty.
+
 - [x] Przejrzeć folder `media od asi`, skatalogować oficjalne logotypy i materiały oraz wykorzystać właściwe źródła w serwisie.
 - [x] Rezerwacje: dodać przy każdym sprzęcie edytowalne progi wiatru dla warunu słabego, średniego i najlepszego; przy sprzęcie wymagającym wiatru opcjonalny próg „profesjonalny” od wskazanej prędkości.
 - [x] Przebudować pełnoekranowe menu: zwarty układ desktopowy bez ogromnych pustych kafli; zachować czytelny układ mobilny.

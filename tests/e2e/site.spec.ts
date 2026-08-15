@@ -166,6 +166,25 @@ test("booking statistics stay private", async ({ request }) => {
   expect(response.status()).toBe(401);
 });
 
+test("visual editor session stays private", async ({ page, request }) => {
+  expect((await request.get("/api/admin/session")).status()).toBe(401);
+  expect((await request.post("/api/admin/equipment", { data: {} })).status()).toBe(401);
+  expect((await request.patch("/api/admin/equipment/1", { data: {} })).status()).toBe(401);
+  expect((await request.patch("/api/admin/offers/1", { data: {} })).status()).toBe(401);
+  expect((await request.patch("/api/admin/gallery/1", { data: {} })).status()).toBe(401);
+  expect((await request.delete("/api/admin/gallery/1")).status()).toBe(401);
+  await page.goto("/");
+  await expect(page.getByRole("complementary", { name: "Narzędzia administratora" })).toHaveCount(0);
+});
+
+test("operator workspaces require an admin login", async ({ request }) => {
+  for (const path of ["/a/kalendarz", "/a/zgloszenia", "/a/statystyki", "/a/telewizory"]) {
+    const response = await request.get(path, { maxRedirects: 0 });
+    expect(response.status()).toBe(307);
+    expect(response.headers().location).toContain("/admin/login?redirect=");
+  }
+});
+
 test("application administration and export stay private", async ({ request }) => {
   expect((await request.get("/api/admin/applications")).status()).toBe(401);
   expect((await request.get("/api/admin/applications/export")).status()).toBe(401);
@@ -284,6 +303,42 @@ test.describe("mobile", () => {
     await expect(page.getByRole("button", { name: "Poprzedni tydzień" })).toBeEnabled();
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
+  });
+
+  test("visual editor opens a usable mobile equipment form", async ({ page }) => {
+    await page.route("**/api/admin/session", (route) => route.fulfill({ json: { user: { email: "asia@showteam.eu", name: "Asia" } } }));
+    await page.goto("/rezerwacje");
+    await expect(page.getByRole("complementary", { name: "Narzędzia administratora" })).toBeVisible();
+    await page.getByRole("button", { name: "Dodaj sprzęt" }).click();
+    await expect(page.getByRole("dialog", { name: "Dodaj sprzęt" })).toBeVisible();
+    await expect(page.getByLabel("Nazwa sprzętu")).toBeVisible();
+    const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
+    expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
+  });
+
+  test("offer content is edited directly on the page", async ({ page }) => {
+    await page.route("**/api/admin/session", (route) => route.fulfill({ json: { user: { email: "asia@showteam.eu", name: "Asia" } } }));
+    let savedTitle = "";
+    let savedDates: { label: string; startDate: string; endDate: string }[] = [];
+    await page.route("**/api/admin/offers/*", async (route) => {
+      const data = await route.request().postDataJSON() as { title: string; dates: typeof savedDates };
+      savedTitle = data.title;
+      savedDates = data.dates;
+      await route.fulfill({ json: { message: "Oferta została opublikowana." } });
+    });
+    await page.goto("/oferta/zima");
+    const title = page.getByLabel("Nazwa oferty");
+    await expect(title).toBeVisible();
+    await title.fill("SHOWzima bez formularza");
+    await expect(title).toHaveValue("SHOWzima bez formularza");
+    await page.getByRole("button", { name: "Dodaj termin" }).click();
+    await page.getByLabel("Nazwa terminu").last().fill("Nowy Rok");
+    await page.getByLabel("Od").last().fill("2027-01-02");
+    await page.getByLabel("Do").last().fill("2027-01-09");
+    await expect(page.getByText("Podgląd", { exact: true })).toHaveCount(0);
+    await page.getByRole("button", { name: "Zapisz zmiany" }).click();
+    await expect.poll(() => savedTitle).toBe("SHOWzima bez formularza");
+    expect(savedDates.at(-1)).toEqual({ label: "Nowy Rok", startDate: "2027-01-02", endDate: "2027-01-09" });
   });
 
   test("gallery images load and retain varied proportions", async ({ page }) => {

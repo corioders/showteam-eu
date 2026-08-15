@@ -13,6 +13,18 @@
 .showteam-back svg { height: 1.1rem; width: 1.1rem; }
 .app-header__account { display: none !important; }
 
+.advanced-admin { margin: 0 auto; max-width: 72rem; padding: 2rem; }
+.advanced-admin > span { color: #e85200; font-size: .72rem; font-weight: 800; letter-spacing: .18em; }
+.advanced-admin > h1 { font-size: clamp(2.5rem, 6vw, 5rem); line-height: .95; margin: .5rem 0; }
+.advanced-admin > p { color: var(--theme-elevation-600); line-height: 1.5; max-width: 44rem; }
+.advanced-admin__back { background: #f06414; color: #111; display: inline-flex; font-weight: 800; margin-top: 1rem; padding: .85rem 1rem; text-decoration: none; }
+.advanced-admin > div { display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 2rem; }
+.advanced-admin section { background: var(--theme-elevation-50); border: 1px solid var(--theme-elevation-150); padding: 1.25rem; }
+.advanced-admin h2 { margin: 0 0 1rem; }
+.advanced-admin section a { border-top: 1px solid var(--theme-elevation-150); color: inherit; display: block; font-weight: 700; padding: .8rem 0; text-decoration: none; }
+.advanced-admin section a:hover { color: #e85200; }
+@media (max-width: 700px) { .advanced-admin { padding: 1rem; } .advanced-admin > div { grid-template-columns: 1fr; } }
+
 .login { background: #0b0c0d; color: #f7f6f1; }
 .login .template-minimal__wrap { max-width: 30rem; }
 .login .field-label, .login a { color: #f7f6f1; }

@@ -2,7 +2,7 @@
 
 import { CheckCircle2, LoaderCircle, Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { applicationCategories, type ApplicationCategory, type ApplicationOfferGroup } from "@/lib/application-options";
+import { applicationCategories, applicationOfferValue, type ApplicationCategory, type ApplicationOfferGroup } from "@/lib/application-options";
 import { applicationDisciplinesForCategory, applicationHasSportDetails, applicationLevels, applicationTransport } from "@/lib/applications";
 
 type Values = {
@@ -25,7 +25,7 @@ export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationO
   const initialGroup = initialOffer ? groups.find((group) => group.offers.some((offer) => offer.title === initialOffer)) : undefined;
   const initialSelection = initialGroup?.offers.find((offer) => offer.title === initialOffer);
   const initialOfferValue = initialSelection
-    ? initialSelection.dates.length ? `${initialSelection.title} — ${initialSelection.dates[0]}` : `${initialSelection.title} — termin do ustalenia`
+    ? initialSelection.dates.length ? applicationOfferValue(initialSelection.title, initialSelection.dates[0]) : `${initialSelection.title} — termin do ustalenia`
     : "";
   const formRef = useRef<HTMLFormElement>(null);
   const [values, setValues] = useState<Values>({ ...empty, category: initialGroup?.category || "", offer: initialOfferValue });
@@ -124,7 +124,7 @@ export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationO
   const showSportDetails = applicationHasSportDetails(values.category);
   const disciplineOptions = applicationDisciplinesForCategory(values.category);
   const options = selectedGroup?.offers.flatMap((offer) => offer.dates.length
-    ? offer.dates.map((date) => `${offer.title} — ${date}`)
+    ? offer.dates.map((date) => applicationOfferValue(offer.title, date))
     : [`${offer.title} — termin do ustalenia`]) ?? [];
 
   const inputClass = (field: Field) => `mt-2 w-full border bg-white/[.04] px-4 py-3 text-base text-white outline-none ${errors[field] ? "border-red-500" : "border-white/20 focus:border-orange-500"}`;

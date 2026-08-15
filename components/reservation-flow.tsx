@@ -7,6 +7,7 @@ import { weatherProfileLabel } from "@/lib/wind-recommendations";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { EquipmentEditor } from "@/components/editor/equipment-editor";
 
 type Slot = { time: string; available: number; recommendation?: { recommended: boolean; level: "best" | "medium" | "poor" | "professional"; basis: "forecast" | "typical" | "none"; label?: string; detail?: string; windKmh?: number; gustKmh?: number } };
 type WindStatus = "forecast" | "outside-range" | "unavailable";
@@ -108,14 +109,15 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
       <section aria-labelledby="equipment-heading" className="min-w-0">
         <div className="mb-5 flex items-end justify-between gap-4">
           <div><span className="eyebrow">01 / Sprzęt</span><h2 id="equipment-heading" className="mt-2 font-display text-4xl font-black uppercase">Co bierzesz?</h2></div>
-          <span className="hidden text-sm text-white/40 sm:block">{equipment.length} pozycji</span>
+          <div className="flex items-center gap-3"><span className="hidden text-sm text-white/40 sm:block">{equipment.length} pozycji</span><EquipmentEditor /></div>
         </div>
         <div className="flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-3 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0">
           {equipment.map((item) => {
             const Icon = categoryIcon[item.category as keyof typeof categoryIcon] || Sailboat;
             const active = item.id === selectedId;
             return (
-              <button key={item.id} type="button" onClick={() => { setSelectedId(item.id); setTime(""); setSlots([]); setWindStatus(null); setRecommendationNote(""); setError(""); if (date) setLoadingSlots(true); }} aria-pressed={active} className={`group min-h-52 w-[86%] shrink-0 snap-start border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 sm:w-auto ${active ? "border-orange-500 bg-orange-500 text-black" : "border-white/10 bg-white/[0.035] hover:border-white/30"}`}>
+              <div key={item.id} className="relative w-[86%] shrink-0 snap-start sm:w-auto">
+              <button type="button" onClick={() => { setSelectedId(item.id); setTime(""); setSlots([]); setWindStatus(null); setRecommendationNote(""); setError(""); if (date) setLoadingSlots(true); }} aria-pressed={active} className={`group min-h-52 w-full border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${active ? "border-orange-500 bg-orange-500 text-black" : "border-white/10 bg-white/[0.035] hover:border-white/30"}`}>
                 <div className="flex items-start justify-between">
                   <Icon className={`size-7 ${active ? "text-black" : "text-orange-500"}`} />
                   <ChevronRight className={`size-5 transition ${active ? "translate-x-0" : "-translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"}`} />
@@ -125,6 +127,8 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
                 <div className="mt-4 flex items-center gap-2 text-xs font-bold uppercase tracking-wider"><Clock3 className="size-3.5" /> {item.durationMinutes} min</div>
                 <div className={`mt-2 flex items-center gap-2 text-[.68rem] font-bold uppercase tracking-wider ${active ? "text-black/70" : "text-sky-300"}`}><Wind className="size-3.5" /> {weatherProfileLabel(item.weatherProfile)}</div>
               </button>
+              <EquipmentEditor equipment={item} compact className="absolute right-3 top-3" />
+              </div>
             );
           })}
         </div>

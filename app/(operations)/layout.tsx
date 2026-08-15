@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Oswald } from "next/font/google";
 import "../globals.css";
+import "../(payload)/custom.css";
 
 const inter = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-body", display: "swap" });
 const oswald = Oswald({ subsets: ["latin", "latin-ext"], variable: "--font-display", display: "swap" });

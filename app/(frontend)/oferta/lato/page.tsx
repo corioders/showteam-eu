@@ -3,11 +3,12 @@ import { notFound } from "next/navigation";
 import { Bike, Sailboat, TentTree, Waves } from "lucide-react";
 import { ContactCta } from "@/components/contact-cta";
 import { CmsDetails } from "@/components/cms-details";
+import { OfferDateList, OfferInlineEditor } from "@/components/editor/offer-inline-editor";
 import { PageHero } from "@/components/page-hero";
 import { PhotoMosaic } from "@/components/photo-mosaic";
 import { LocationLinks } from "@/components/location-links";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { getOffer } from "@/lib/cms";
+import { getOfferByCategory } from "@/lib/cms";
 import { contact } from "@/lib/offers";
 
 export const metadata: Metadata = { title: "SHOWlato 2026", description: "Wake & Surf Village, SHOWCamp i sporty wodne nad Jeziorem Łąckim.", alternates: { canonical: "/oferta/lato" } };
@@ -21,24 +22,18 @@ const activities = [
 ] as const;
 
 export default async function SummerPage() {
-  const offer = await getOffer("lato");
+  const offer = await getOfferByCategory("Lato");
   if (!offer) notFound();
   return (
-    <>
-      <PageHero eyebrow={`${offer.category} · ${offer.season}`} title={offer.title} description={offer.summary} location={offer.location} image={offer.image} imageAlt={offer.imageAlt} />
+    <OfferInlineEditor key={offer.cmsId ?? offer.href} offer={offer}>
+      <PageHero eyebrow={`${offer.category} · ${offer.season}`} title={offer.title} description={offer.summary} location={offer.location} image={offer.image} imageAlt={offer.imageAlt} offer={offer} />
       <LocationLinks locations={[{ label: "Wake & Surf Village · Nad Zaporą 21, Poręba", href: contact.map }]} />
 
       <section className="py-20 md:py-28">
         <div className="site-container">
           <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
             <div><span className="eyebrow">SHOWCamp 2026</span><h2 className="font-display mt-4 text-6xl font-black uppercase leading-[0.88] tracking-tight sm:text-8xl">Pięć turnusów.<br /><span className="text-sky-300">Jedno lato.</span></h2><p className="mt-6 max-w-lg leading-7 text-white/55">Wybierz termin i zapytaj nas o wolne miejsce.</p></div>
-            <div className="poster-cut overflow-hidden border border-white/10">
-              {offer.dates.map((date, index) => (
-                <div key={`${date}-${index}`} className="grid grid-cols-[3rem_1fr_auto] items-center gap-4 border-b border-white/10 px-5 py-6 last:border-0 sm:grid-cols-[4rem_1fr_auto] sm:px-8">
-                  <span className="font-display text-3xl font-black text-orange-500">0{index + 1}</span><span className="font-semibold">Turnus {index + 1}</span><span className="text-right text-sm text-white/50">{date}</span>
-                </div>
-              ))}
-            </div>
+            <OfferDateList offer={offer} variant="summer" />
           </div>
         </div>
       </section>
@@ -58,6 +53,6 @@ export default async function SummerPage() {
       <PhotoMosaic label="SHOWlato bez filtra" photos={[{ src: "/media/summer-wake-hero.jpg", alt: "Wakeboard na Jeziorze Łąckim z lotu ptaka", position: "object-[60%_center]" }, { src: "/media/summer-sailing-drone.jpg", alt: "Katamaran SHOWteam na Jeziorze Łąckim", position: "object-[35%_center]" }, { src: "/media/summer-double-wake.jpg", alt: "Dwie osoby na wakeboardzie za łodzią SHOWteam" }]} />
       <CmsDetails offer={offer} />
       <ContactCta title="Wskakujesz do wody?" applicationOffer={offer.title} />
-    </>
+    </OfferInlineEditor>
   );
 }

@@ -12,10 +12,10 @@ const categories = ["Lato", "Zima", "Szkolenia"] as const;
 type UploadItem = { id: string; file: File; focalX: number; focalY: number };
 
 export function QuickUploader() {
-  return <AdminSessionGate redirectPath="/a/dodaj/galeria">{(userName) => <QuickUploaderForm userName={userName} />}</AdminSessionGate>;
+  return <AdminSessionGate redirectPath="/a/dodaj/galeria">{(userName) => <GalleryUploaderForm userName={userName} />}</AdminSessionGate>;
 }
 
-function QuickUploaderForm({ userName }: { userName: string }) {
+export function GalleryUploaderForm({ userName, embedded = false, onUploaded }: { userName?: string; embedded?: boolean; onUploaded?: () => void }) {
   const input = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<UploadItem[]>([]);
   const [category, setCategory] = useState<(typeof categories)[number]>("Lato");
@@ -70,6 +70,7 @@ function QuickUploaderForm({ userName }: { userName: string }) {
       setItems([]);
       setCaption("");
       if (input.current) input.current.value = "";
+      onUploaded?.();
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "Nie udało się wysłać plików.");
@@ -77,12 +78,12 @@ function QuickUploaderForm({ userName }: { userName: string }) {
   }
 
   return (
-    <main className="min-h-dvh bg-[#080a0b] px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] text-white">
+    <main className={embedded ? "bg-[#080a0b] text-white" : "min-h-dvh bg-[#080a0b] px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] text-white"}>
       <div className="mx-auto max-w-xl">
-        <header className="mb-8 flex items-center justify-between border-b border-white/15 pb-4">
+        {!embedded && <header className="mb-8 flex items-center justify-between border-b border-white/15 pb-4">
           <div><p className="font-display text-xl font-black uppercase">SHOWteam<span className="text-orange-500">.</span></p><p className="text-xs text-white/45">Zalogowano: {userName}</p></div>
           <Link href="/admin" className="bg-orange-500 px-3 py-2 text-xs font-black uppercase text-black">← Wróć do panelu</Link>
-        </header>
+        </header>}
 
         <p className="font-mono text-xs font-bold uppercase tracking-[.18em] text-orange-400">Szybkie dodawanie</p>
         <h1 className="font-display mt-3 text-5xl font-black uppercase leading-[.9]">Wrzuć z telefonu.</h1>
@@ -119,7 +120,7 @@ function QuickUploaderForm({ userName }: { userName: string }) {
         <button type="button" disabled={!items.length || status === "uploading"} onClick={publish} className="mt-6 flex w-full items-center justify-center gap-2 bg-orange-500 px-5 py-4 text-base font-black uppercase text-black disabled:cursor-not-allowed disabled:opacity-35">
           {status === "uploading" ? <LoaderCircle className="size-5 animate-spin" /> : <Upload className="size-5" />}{status === "uploading" ? "Wysyłam…" : "Opublikuj w galerii"}
         </button>
-        <p className="mt-6 text-center text-xs leading-5 text-white/35">Instalacja: w Safari wybierz Udostępnij → „Do ekranu początkowego”. W Chrome: menu → „Zainstaluj aplikację”.</p>
+        {!embedded && <p className="mt-6 text-center text-xs leading-5 text-white/35">Instalacja: w Safari wybierz Udostępnij → „Do ekranu początkowego”. W Chrome: menu → „Zainstaluj aplikację”.</p>}
       </div>
     </main>
   );

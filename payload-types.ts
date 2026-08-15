@@ -149,12 +149,13 @@ export interface Offer {
    */
   season: string;
   /**
-   * Dodaj każdy turnus lub wyjazd jako osobny termin.
+   * Każdy termin musi mieć nazwę oraz dokładną datę rozpoczęcia i zakończenia.
    */
   dates?:
     | {
-        label?: string | null;
-        date: string;
+        label: string;
+        startDate: string;
+        endDate: string;
         id?: string | null;
       }[]
     | null;
@@ -508,7 +509,8 @@ export interface OffersSelect<T extends boolean = true> {
     | T
     | {
         label?: T;
-        date?: T;
+        startDate?: T;
+        endDate?: T;
         id?: T;
       };
   highlights?:
