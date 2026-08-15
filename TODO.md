@@ -11,7 +11,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
     - [x] Nazwa, kategoria, sezon, lokalizacja, opis, terminy, wyróżniki i publikacja.
     - [ ] Zdjęcie okładkowe i pozostałe teksty specyficzne dla podstron Lato, Zima i Szkolenia.
   - [x] Kontekstowe dodawanie i edytowanie sprzętu na stronie Rezerwacje.
-  - [ ] Kontekstowe dodawanie i edytowanie mediów w Galerii.
+  - [x] Kontekstowe dodawanie i edytowanie mediów w Galerii.
   - [ ] Kalendarz, zgłoszenia, statystyki i telewizory w spójnym interfejsie strony.
   - [ ] Pełny Payload wyłącznie jako drugorzędny tryb „Zaawansowane”.
 

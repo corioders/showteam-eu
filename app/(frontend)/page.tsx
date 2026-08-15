@@ -124,7 +124,7 @@ export default async function Home() {
               <Button asChild variant="outline" size="icon"><a href={contact.tiktok} target="_blank" rel="noreferrer" aria-label="TikTok SHOWteam"><Music2 className="size-5" /></a></Button>
             </div>
           </div>
-          <GalleryGrid photos={gallery.slice(0, 8)} />
+          <GalleryGrid key={`${gallery[0]?.id ?? "empty"}-${gallery.length}`} photos={gallery.slice(0, 8)} />
           <div className="mt-7 flex flex-wrap gap-3"><Button asChild variant="outline"><Link href="/galeria">Otwórz całą galerię</Link></Button><Button asChild variant="ghost"><a href={contact.instagram} target="_blank" rel="noreferrer">Instagram</a></Button><Button asChild variant="ghost"><a href={contact.tiktok} target="_blank" rel="noreferrer">TikTok</a></Button></div>
         </div>
       </section>

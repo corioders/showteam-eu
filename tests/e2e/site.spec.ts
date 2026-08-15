@@ -171,6 +171,8 @@ test("visual editor session stays private", async ({ page, request }) => {
   expect((await request.post("/api/admin/equipment", { data: {} })).status()).toBe(401);
   expect((await request.patch("/api/admin/equipment/1", { data: {} })).status()).toBe(401);
   expect((await request.patch("/api/admin/offers/1", { data: {} })).status()).toBe(401);
+  expect((await request.patch("/api/admin/gallery/1", { data: {} })).status()).toBe(401);
+  expect((await request.delete("/api/admin/gallery/1")).status()).toBe(401);
   await page.goto("/");
   await expect(page.getByRole("complementary", { name: "Narzędzia administratora" })).toHaveCount(0);
 });
