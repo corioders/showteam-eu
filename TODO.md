@@ -10,7 +10,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
   - [ ] Kontekstowe edytowanie treści ofert bez opuszczania strony.
     - [x] Nazwa, kategoria, sezon, lokalizacja, opis, terminy, wyróżniki i publikacja.
     - [ ] Zdjęcie okładkowe i pozostałe teksty specyficzne dla podstron Lato, Zima i Szkolenia.
-  - [ ] Kontekstowe dodawanie i edytowanie sprzętu na stronie Rezerwacje.
+  - [x] Kontekstowe dodawanie i edytowanie sprzętu na stronie Rezerwacje.
   - [ ] Kontekstowe dodawanie i edytowanie mediów w Galerii.
   - [ ] Kalendarz, zgłoszenia, statystyki i telewizory w spójnym interfejsie strony.
   - [ ] Pełny Payload wyłącznie jako drugorzędny tryb „Zaawansowane”.

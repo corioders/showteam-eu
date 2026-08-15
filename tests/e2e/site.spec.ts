@@ -168,6 +168,9 @@ test("booking statistics stay private", async ({ request }) => {
 
 test("visual editor session stays private", async ({ page, request }) => {
   expect((await request.get("/api/admin/session")).status()).toBe(401);
+  expect((await request.post("/api/admin/equipment", { data: {} })).status()).toBe(401);
+  expect((await request.patch("/api/admin/equipment/1", { data: {} })).status()).toBe(401);
+  expect((await request.patch("/api/admin/offers/1", { data: {} })).status()).toBe(401);
   await page.goto("/");
   await expect(page.getByRole("complementary", { name: "Narzędzia administratora" })).toHaveCount(0);
 });
