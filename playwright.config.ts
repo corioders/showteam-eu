@@ -8,7 +8,10 @@ const localBaseUrl = `http://localhost:${testPort}`;
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
-  workers: process.env.CI ? 1 : undefined,
+  // The local Cloudflare D1 emulator uses one SQLite database. Parallel browser
+  // workers can race its test-data setup and produce SQLITE_BUSY instead of an
+  // application response.
+  workers: 1,
   timeout: process.env.CI ? 60_000 : 30_000,
   expect: { timeout: process.env.CI ? 15_000 : 5_000 },
   retries: 1,
