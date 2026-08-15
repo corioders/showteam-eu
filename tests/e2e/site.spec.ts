@@ -4,7 +4,7 @@ import path from "node:path";
 test("main navigation reaches every public section", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator('header img[src="/media/showteam-logo.svg"]')).toBeVisible();
-  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/oferta/noclegi-nad-woda", "/wydarzenia", "/aktualnosci", "/rezerwacje", "/galeria", "/kontakt", "/zgloszenie"]) {
+  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/oferta/noclegi-nad-woda", "/rezerwacje", "/galeria", "/kontakt", "/zgloszenie"]) {
     await expect(page.locator(`header a[href="${path}"]`)).toHaveCount(1);
   }
   const locations = page.getByRole("navigation", { name: "Lokalizacje SHOWteam" }).getByRole("link");
@@ -36,7 +36,7 @@ test("offer pages open their locations in Google Maps", async ({ page }) => {
 });
 
 test("public copy does not expose implementation notes", async ({ page }) => {
-  for (const path of ["/galeria", "/wydarzenia", "/zgloszenie", "/oferta/lato", "/oferta/zima", "/oferta/noclegi-nad-woda"]) {
+  for (const path of ["/galeria", "/zgloszenie", "/oferta/lato", "/oferta/zima", "/oferta/noclegi-nad-woda"]) {
     await page.goto(path);
     await expect(page.locator("body")).not.toContainText(/zarządzane przez właścicieli w CMS|porządkujemy automatycznie|po podłączeniu skrzynki|opublikowanego programu|termin opublikowanego wyjazdu|ostatni opublikowany turnus|zdjęcia kontenerów i domków dodamy po sesji/i);
   }
@@ -148,11 +148,17 @@ test("gallery filters CMS photos", async ({ page }) => {
 });
 
 test("SEO and anonymous analytics endpoints are published", async ({ page }) => {
-  await page.goto("/wydarzenia");
-  await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(2);
+  await page.goto("/");
+  await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1);
   expect((await page.request.get("/sitemap.xml")).ok()).toBe(true);
   expect((await page.request.get("/robots.txt")).ok()).toBe(true);
-  expect((await page.request.post("/api/track", { data: { path: "/wydarzenia" } })).status()).toBe(204);
+  expect((await page.request.post("/api/track", { data: { path: "/" } })).status()).toBe(204);
+});
+
+test("events and news stay removed", async ({ request }) => {
+  for (const path of ["/wydarzenia", "/aktualnosci", "/a/dodaj/wydarzenie", "/a/dodaj/aktualnosc", "/api/quick-event", "/api/quick-news", "/api/events", "/api/news"]) {
+    expect((await request.get(path)).status()).toBe(404);
+  }
 });
 
 test("booking statistics stay private", async ({ request }) => {
@@ -240,10 +246,9 @@ test.describe("mobile", () => {
     await page.goto("/");
     await page.getByRole("button", { name: "Otwórz menu" }).click();
     const menu = page.getByRole("navigation", { name: "Menu mobilne" });
-    await expect(menu.getByRole("link")).toHaveCount(11);
+    await expect(menu.getByRole("link")).toHaveCount(9);
     await expect(menu.getByRole("link", { name: /Zgłoszenie/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /Galeria/ })).toBeVisible();
-    await expect(menu.getByRole("link", { name: /Aktualności/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /Kontakt i o nas/ })).toBeVisible();
     await expect(page.getByRole("link", { name: "+48 500 128 090" })).toBeVisible();
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
@@ -305,37 +310,6 @@ test.describe("mobile", () => {
   test("installed PWA opens the mobile CMS", async ({ page }) => {
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/admin/);
-    const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
-    expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
-  });
-
-  test("quick event form explains errors and can be cleared", async ({ page }) => {
-    await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
-    await page.goto("/a/dodaj/wydarzenie");
-    await expect(page.getByRole("link", { name: "Wróć do panelu" })).toHaveAttribute("href", "/admin");
-    await page.getByRole("button", { name: "Opublikuj wydarzenie" }).click();
-    await expect(page.getByText("Wpisz nazwę wydarzenia.")).toBeVisible();
-    await expect(page.getByText("Dodaj zdjęcie tego wydarzenia.")).toBeVisible();
-
-    await page.getByLabel("Nazwa wydarzenia").fill("Testowe wydarzenie");
-    await page.getByLabel("Miejsce").fill("Poręba");
-    const preview = page.getByLabel("Podgląd wydarzenia");
-    await expect(preview.getByRole("heading", { name: "Testowe wydarzenie" })).toBeVisible();
-    await expect(preview.getByText("Poręba", { exact: true })).toBeVisible();
-    page.once("dialog", (dialog) => dialog.accept());
-    await page.getByRole("button", { name: "Wyczyść formularz" }).click();
-    await expect(page.getByLabel("Nazwa wydarzenia")).toHaveValue("");
-    const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
-    expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
-  });
-
-  test("quick news form is clear and mobile-safe", async ({ page }) => {
-    await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
-    await page.goto("/a/dodaj/aktualnosc");
-    await expect(page.getByRole("link", { name: "Wróć do panelu" })).toHaveAttribute("href", "/admin");
-    await page.getByRole("button", { name: "Opublikuj aktualność" }).click();
-    await expect(page.getByText("Wpisz tytuł aktualności.")).toBeVisible();
-    await expect(page.getByText("Dodaj zdjęcie tej aktualności.")).toBeVisible();
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });

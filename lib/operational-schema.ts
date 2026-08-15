@@ -1,5 +1,38 @@
 import type { SQLiteSchemaHook } from "@payloadcms/db-d1-sqlite";
 import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
+
+// Retired CMS collections remain as inaccessible archive tables. Keeping their
+// schema prevents SQLite foreign keys in Payload's lock table from becoming
+// invalid while preserving a reversible data-removal decision.
+const legacyMediaReference = sqliteTable("media", { id: integer("id").primaryKey() });
+const legacyEvents = sqliteTable("events", {
+  id: integer("id").primaryKey().notNull(),
+  title: text("title").notNull(),
+  startDate: text("start_date").notNull(),
+  endDate: text("end_date"),
+  location: text("location").notNull(),
+  summary: text("summary").notNull(),
+  imageId: integer("image_id").notNull().references(() => legacyMediaReference.id, { onDelete: "set null" }),
+  category: text("category").default("Lato").notNull(),
+  published: integer("published", { mode: "boolean" }).default(true),
+  ctaLabel: text("cta_label").default("Zapytaj o miejsce"),
+  updatedAt: text("updated_at").default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`).notNull(),
+  createdAt: text("created_at").default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`).notNull(),
+}, (table) => [index("events_image_idx").on(table.imageId), index("events_updated_at_idx").on(table.updatedAt), index("events_created_at_idx").on(table.createdAt)]);
+
+const legacyNews = sqliteTable("news", {
+  id: integer("id").primaryKey().notNull(),
+  title: text("title").notNull(),
+  publicationDate: text("publication_date").notNull(),
+  summary: text("summary").notNull(),
+  content: text("content").notNull(),
+  imageId: integer("image_id").notNull().references(() => legacyMediaReference.id, { onDelete: "set null" }),
+  category: text("category").default("Baza").notNull(),
+  published: integer("published", { mode: "boolean" }).default(true),
+  updatedAt: text("updated_at").default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`).notNull(),
+  createdAt: text("created_at").default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`).notNull(),
+}, (table) => [index("news_image_idx").on(table.imageId), index("news_updated_at_idx").on(table.updatedAt), index("news_created_at_idx").on(table.createdAt)]);
 
 const bookingSlots = sqliteTable("booking_slots", {
   equipmentId: integer("equipment_id").notNull(),
@@ -92,6 +125,8 @@ const availabilityHours = sqliteTable("availability_hours", {
 }, (table) => [index("availability_hours_equipment_type_idx").on(table.equipmentId, table.ruleType)]);
 
 export const preserveOperationalTables: SQLiteSchemaHook = ({ schema }) => {
+  schema.tables.events = legacyEvents;
+  schema.tables.news = legacyNews;
   schema.tables.booking_slots = bookingSlots;
   schema.tables.tv_pairings = tvPairings;
   schema.tables.tv_devices = tvDevices;

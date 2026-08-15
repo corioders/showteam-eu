@@ -67,8 +67,6 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    events: Event;
-    news: News;
     offers: Offer;
     gallery: Gallery;
     equipment: Equipment;
@@ -84,8 +82,6 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    events: EventsSelect<false> | EventsSelect<true>;
-    news: NewsSelect<false> | NewsSelect<true>;
     offers: OffersSelect<false> | OffersSelect<true>;
     gallery: GallerySelect<false> | GallerySelect<true>;
     equipment: EquipmentSelect<false> | EquipmentSelect<true>;
@@ -132,80 +128,6 @@ export interface UserAuthOperations {
     email: string;
     password: string;
   };
-}
-/**
- * Tu dodajesz terminy widoczne w zakładce Wydarzenia. Wypełnij nazwę, datę, miejsce i krótki opis.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "events".
- */
-export interface Event {
-  id: number;
-  title: string;
-  startDate: string;
-  /**
-   * Zostaw puste przy wydarzeniu jednodniowym.
-   */
-  endDate?: string | null;
-  location: string;
-  /**
-   * Najważniejsze informacje w 2–4 zdaniach.
-   */
-  summary: string;
-  /**
-   * Obowiązkowe. Wybierz zdjęcie pasujące do tego konkretnego wydarzenia.
-   */
-  image: number | Media;
-  category: 'Lato' | 'Zima' | 'Szkolenia' | 'Inne';
-  published?: boolean | null;
-  /**
-   * Opcjonalne. Domyślny tekst jest odpowiedni w większości przypadków.
-   */
-  ctaLabel?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Biblioteka zdjęć i filmów używanych na stronie.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: number;
-  alt: string;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * Wiadomości widoczne w zakładce Aktualności. Zdjęcie jest obowiązkowe.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "news".
- */
-export interface News {
-  id: number;
-  title: string;
-  publicationDate: string;
-  /**
-   * Jedno–dwa zdania widoczne większym tekstem.
-   */
-  summary: string;
-  content: string;
-  image: number | Media;
-  category: 'Baza' | 'Wyjazdy' | 'Sport' | 'Inne';
-  published?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * Treści widoczne na stronie głównej i podstronach ofertowych.
@@ -259,6 +181,27 @@ export interface Offer {
   sortOrder: number;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * Biblioteka zdjęć i filmów używanych na stronie.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  alt: string;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * Dodaj zdjęcie lub film, ustaw układ i opublikuj w galerii. Najprościej zrobisz to przez Szybkie dodawanie na pulpicie.
@@ -478,14 +421,6 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'events';
-        value: number | Event;
-      } | null)
-    | ({
-        relationTo: 'news';
-        value: number | News;
-      } | null)
-    | ({
         relationTo: 'offers';
         value: number | Offer;
       } | null)
@@ -558,38 +493,6 @@ export interface PayloadMigration {
   batch?: number | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "events_select".
- */
-export interface EventsSelect<T extends boolean = true> {
-  title?: T;
-  startDate?: T;
-  endDate?: T;
-  location?: T;
-  summary?: T;
-  image?: T;
-  category?: T;
-  published?: T;
-  ctaLabel?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "news_select".
- */
-export interface NewsSelect<T extends boolean = true> {
-  title?: T;
-  publicationDate?: T;
-  summary?: T;
-  content?: T;
-  image?: T;
-  category?: T;
-  published?: T;
-  updatedAt?: T;
-  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

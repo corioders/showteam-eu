@@ -9,5 +9,5 @@ export function ShowteamIcon() {
 }
 
 export function LoginIntro() {
-  return <div className="showteam-login-intro"><strong>Panel SHOWteam</strong><p>Zaloguj się, aby zmieniać sprzęt, wydarzenia, galerię i rezerwacje.</p></div>;
+  return <div className="showteam-login-intro"><strong>Panel SHOWteam</strong><p>Zaloguj się, aby zmieniać ofertę, sprzęt, galerię i rezerwacje.</p></div>;
 }

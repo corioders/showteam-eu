@@ -6,8 +6,8 @@ describe("CMS form drafts", () => {
     const now = Date.UTC(2026, 7, 13);
     const raw = JSON.stringify({ version: 1, savedAt: now - 1_000, data: { title: "SHOWCamp" } });
 
-    expect(cmsDraftKey("events", 12)).toBe("showteam:cms-draft:events:12");
-    expect(cmsDraftKey("events")).toBe("showteam:cms-draft:events:new");
+    expect(cmsDraftKey("offers", 12)).toBe("showteam:cms-draft:offers:12");
+    expect(cmsDraftKey("offers")).toBe("showteam:cms-draft:offers:new");
     expect(parseCmsDraft(raw, now)?.data).toEqual({ title: "SHOWCamp" });
   });
 

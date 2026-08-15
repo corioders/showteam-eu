@@ -13,8 +13,6 @@ const links = [
   { href: "/oferta/zima", label: "Zima" },
   { href: "/oferta/szkolenia", label: "Szkolenia" },
   { href: "/oferta/noclegi-nad-woda", label: "Noclegi" },
-  { href: "/wydarzenia", label: "Wydarzenia" },
-  { href: "/aktualnosci", label: "Aktualności" },
   { href: "/rezerwacje", label: "Rezerwacje" },
   { href: "/galeria", label: "Galeria" },
   { href: "/kontakt", label: "Kontakt i o nas" },

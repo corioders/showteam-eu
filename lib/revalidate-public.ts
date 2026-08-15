@@ -5,14 +5,6 @@ export function revalidateOffers() {
   revalidatePath("/oferta/[slug]", "page");
 }
 
-export function revalidateEvents() {
-  revalidatePath("/wydarzenia");
-}
-
-export function revalidateNews() {
-  revalidatePath("/aktualnosci");
-}
-
 export function revalidateGallery() {
   revalidatePath("/");
   revalidatePath("/galeria");

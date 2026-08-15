@@ -11,8 +11,6 @@ import { Analytics } from "@/collections/Analytics";
 import { Applications } from "@/collections/Applications";
 import { createBookingsCollection } from "@/collections/Bookings";
 import { Equipment } from "@/collections/Equipment";
-import { Events } from "@/collections/Events";
-import { News } from "@/collections/News";
 import type { GetPlatformProxyOptions } from "wrangler";
 import { Media } from "@/collections/Media";
 import { Gallery } from "@/collections/Gallery";
@@ -81,7 +79,7 @@ export default buildConfig({
       },
     },
   },
-  collections: [Events, News, Offers, Gallery, Equipment, createBookingsCollection(database), Applications, Analytics, Media, Users],
+  collections: [Offers, Gallery, Equipment, createBookingsCollection(database), Applications, Analytics, Media, Users],
   i18n: { supportedLanguages: { pl: showteamPolish }, fallbackLanguage: "pl" },
   telemetry: false,
   graphQL: { disable: true },
