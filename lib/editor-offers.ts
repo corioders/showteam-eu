@@ -14,6 +14,7 @@ export type EditableOffer = {
   mapUrl: string;
   ctaTitle: string;
   sortOrder: number;
+  pageContent: Record<string, string>;
   published: boolean;
 };
 
@@ -34,6 +35,7 @@ export function parseEditableOffer(input: unknown): { data?: EditableOffer; erro
   const mapUrl = text(value.mapUrl);
   const ctaTitle = text(value.ctaTitle);
   const sortOrder = Number(value.sortOrder);
+  const pageContent = stringRecord(value.pageContent);
   const errors: string[] = [];
 
   if (title.length < 2 || title.length > 120) errors.push("Nazwa oferty musi mieć od 2 do 120 znaków.");
@@ -48,9 +50,10 @@ export function parseEditableOffer(input: unknown): { data?: EditableOffer; erro
   if (ctaTitle.length < 2 || ctaTitle.length > 120) errors.push("Hasło nad zgłoszeniem musi mieć od 2 do 120 znaków.");
   if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 999) errors.push("Kolejność musi być liczbą od 0 do 999.");
   if (!sections) errors.push("Możesz dodać najwyżej 20 sekcji. Każda potrzebuje krótkiego nagłówka i treści.");
-  if (errors.length || !category || !dates.data || !highlights || !sections) return { errors };
+  if (!pageContent) errors.push("Jedna z dodatkowych treści jest za długa.");
+  if (errors.length || !category || !dates.data || !highlights || !sections || !pageContent) return { errors };
 
-  return { data: { title, category, location, summary, season, dates: dates.data, highlights, sections, slug, mapUrl, ctaTitle, sortOrder, published: value.published !== false } };
+  return { data: { title, category, location, summary, season, dates: dates.data, highlights, sections, slug, mapUrl, ctaTitle, sortOrder, pageContent, published: value.published !== false } };
 }
 
 function text(value: unknown) {
@@ -81,6 +84,13 @@ function safeUrl(value: string) {
   } catch {
     return false;
   }
+}
+
+function stringRecord(value: unknown) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const entries = Object.entries(value);
+  if (entries.length > 100 || entries.some(([key, item]) => !/^[a-z][a-zA-Z0-9]*$/.test(key) || typeof item !== "string" || item.length > 2000)) return null;
+  return Object.fromEntries(entries.map(([key, item]) => [key, String(item).trim()]));
 }
 
 function dateList(value: unknown): { data?: OfferDate[]; errors: string[] } {

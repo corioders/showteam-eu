@@ -155,6 +155,15 @@ export interface Offer {
    */
   mapUrl: string;
   ctaTitle: string;
+  pageContent?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   /**
    * Każdy termin musi mieć nazwę oraz dokładną datę rozpoczęcia i zakończenia.
    */
@@ -535,6 +544,7 @@ export interface OffersSelect<T extends boolean = true> {
   season?: T;
   mapUrl?: T;
   ctaTitle?: T;
+  pageContent?: T;
   dates?:
     | T
     | {

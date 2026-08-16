@@ -49,6 +49,7 @@ export const Offers: CollectionConfig = {
         { name: "season", label: "Nazwa sezonu", type: "text", required: true, defaultValue: "Sezon 2026", admin: { description: "Np. „Sezon 2026”." } },
         { name: "mapUrl", label: "Link do mapy", type: "text", required: true, admin: { description: "Pełny link do właściwego miejsca w Google Maps." } },
         { name: "ctaTitle", label: "Hasło nad przyciskiem zgłoszenia", type: "text", required: true, defaultValue: "Jedziesz z nami?" },
+        { name: "pageContent", label: "Treści podstrony", type: "json", defaultValue: {}, admin: { hidden: true } },
       ] },
       { label: "2. Terminy i szczegóły", description: "Lista terminów i informacje rozwijane niżej na stronie.", fields: [
         { name: "dates", label: "Terminy", type: "array", labels: { singular: "Termin", plural: "Terminy" }, admin: { description: "Każdy termin musi mieć nazwę oraz dokładną datę rozpoczęcia i zakończenia." }, fields: [

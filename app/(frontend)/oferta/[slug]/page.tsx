@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ContactCta } from "@/components/contact-cta";
 import { CmsDetails } from "@/components/cms-details";
-import { OfferInlineEditor, OfferListsSection } from "@/components/editor/offer-inline-editor";
+import { OfferCtaTitle, OfferInlineEditor, OfferListsSection, OfferLocationLink } from "@/components/editor/offer-inline-editor";
 import { PageHero } from "@/components/page-hero";
 import { getOffer, getOffers } from "@/lib/cms";
 
@@ -29,8 +29,9 @@ export default async function OfferPage({ params }: Props) {
 
   return <OfferInlineEditor key={offer.cmsId ?? offer.href} offer={offer}>
     <PageHero eyebrow={`${offer.category} · ${offer.season}`} title={offer.title} description={offer.summary} location={offer.location} image={offer.image} imageAlt={offer.imageAlt} offer={offer} />
+    <OfferLocationLink />
     <OfferListsSection offer={offer} />
     <CmsDetails offer={offer} />
-    <ContactCta title="Zapytaj o szczegóły" />
+    <ContactCta title={<OfferCtaTitle />} applicationOffer={offer.title} />
   </OfferInlineEditor>;
 }

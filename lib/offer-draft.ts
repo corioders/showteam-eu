@@ -14,11 +14,12 @@ export type OfferDraft = {
   mapUrl: string;
   ctaTitle: string;
   sortOrder: number;
+  pageContent: Record<string, string>;
   published: boolean;
 };
 
 export function toOfferDraft(offer: Offer): OfferDraft {
-  return { title: offer.title, category: offer.category, location: offer.location, summary: offer.summary, season: offer.season, dates: offer.dates, highlights: offer.highlights, sections: offer.sections, slug: offer.slug, mapUrl: offer.mapUrl, ctaTitle: offer.ctaTitle, sortOrder: offer.sortOrder, published: offer.published };
+  return { title: offer.title, category: offer.category, location: offer.location, summary: offer.summary, season: offer.season, dates: offer.dates, highlights: offer.highlights, sections: offer.sections, slug: offer.slug, mapUrl: offer.mapUrl, ctaTitle: offer.ctaTitle, sortOrder: offer.sortOrder, pageContent: offer.pageContent, published: offer.published };
 }
 
 export function restoreOfferDraft(saved: string, fallback: OfferDraft): OfferDraft | null {
@@ -38,11 +39,17 @@ export function restoreOfferDraft(saved: string, fallback: OfferDraft): OfferDra
       mapUrl: text(parsed.mapUrl, fallback.mapUrl),
       ctaTitle: text(parsed.ctaTitle, fallback.ctaTitle),
       sortOrder: typeof parsed.sortOrder === "number" ? parsed.sortOrder : fallback.sortOrder,
+      pageContent: stringRecord(parsed.pageContent, fallback.pageContent),
       published: typeof parsed.published === "boolean" ? parsed.published : fallback.published,
     };
   } catch {
     return null;
   }
+}
+
+function stringRecord(value: unknown, fallback: Record<string, string>) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return fallback;
+  return Object.fromEntries(Object.entries(value).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
 }
 
 function sections(value: unknown, fallback: OfferDraft["sections"]) {

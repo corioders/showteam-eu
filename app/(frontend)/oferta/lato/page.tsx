@@ -3,13 +3,11 @@ import { notFound } from "next/navigation";
 import { Bike, Sailboat, TentTree, Waves } from "lucide-react";
 import { ContactCta } from "@/components/contact-cta";
 import { CmsDetails } from "@/components/cms-details";
-import { OfferDateList, OfferInlineEditor } from "@/components/editor/offer-inline-editor";
+import { OfferCtaTitle, OfferDateList, OfferInlineEditor, OfferLocationLink } from "@/components/editor/offer-inline-editor";
 import { PageHero } from "@/components/page-hero";
 import { PhotoMosaic } from "@/components/photo-mosaic";
-import { LocationLinks } from "@/components/location-links";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { getOfferByCategory } from "@/lib/cms";
-import { contact } from "@/lib/offers";
 
 export const metadata: Metadata = { title: "SHOWlato 2026", description: "Wake & Surf Village, SHOWCamp i sporty wodne nad Jeziorem Łąckim.", alternates: { canonical: "/oferta/lato" } };
 export const revalidate = false;
@@ -27,7 +25,7 @@ export default async function SummerPage() {
   return (
     <OfferInlineEditor key={offer.cmsId ?? offer.href} offer={offer}>
       <PageHero eyebrow={`${offer.category} · ${offer.season}`} title={offer.title} description={offer.summary} location={offer.location} image={offer.image} imageAlt={offer.imageAlt} offer={offer} />
-      <LocationLinks locations={[{ label: "Wake & Surf Village · Nad Zaporą 21, Poręba", href: contact.map }]} />
+      <OfferLocationLink label="Wake & Surf Village · Nad Zaporą 21, Poręba" />
 
       <section className="py-20 md:py-28">
         <div className="site-container">
@@ -52,7 +50,7 @@ export default async function SummerPage() {
       <section className="py-20 md:py-28"><div className="site-container grid gap-10 lg:grid-cols-2"><div><span className="eyebrow">Dobra baza to połowa przygody</span><h2 className="font-display mt-4 text-5xl font-black uppercase leading-[0.9] sm:text-7xl">Co czeka<br />na miejscu?</h2></div><Accordion type="single" collapsible className="w-full"><AccordionItem value="sprzet"><AccordionTrigger>Sprzęt i instruktorzy</AccordionTrigger><AccordionContent>Wakeboard, windsurfing, katamarany, SUP-y, kajaki, łodzie żaglowe, narty wodne i sprzęt motorowodny. Zajęcia dopasowujemy do poziomu uczestników.</AccordionContent></AccordionItem><AccordionItem value="baza"><AccordionTrigger>Wake & Surf Village</AccordionTrigger><AccordionContent>Prywatne molo, piaszczysta plaża, strefa chill, miejsce grillowe i ogniskowe, sauna, boisko, parking oraz zaplecze sanitarne.</AccordionContent></AccordionItem><AccordionItem value="jedzenie"><AccordionTrigger>Surf Bistro i eventy</AccordionTrigger><AccordionContent>Menu cateringowe na zamówienie, włoska pizza z pieca opalanego drewnem oraz przestrzeń na imprezy rodzinne i firmowe.</AccordionContent></AccordionItem><AccordionItem value="lokalizacja"><AccordionTrigger>Dojazd</AccordionTrigger><AccordionContent>Poręba, ul. Nad Zaporą 21 — nad Jeziorem Łąckim, kilka minut od Pszczyny.</AccordionContent></AccordionItem></Accordion></div></section>
       <PhotoMosaic label="SHOWlato bez filtra" photos={[{ src: "/media/summer-wake-hero.jpg", alt: "Wakeboard na Jeziorze Łąckim z lotu ptaka", position: "object-[60%_center]" }, { src: "/media/summer-sailing-drone.jpg", alt: "Katamaran SHOWteam na Jeziorze Łąckim", position: "object-[35%_center]" }, { src: "/media/summer-double-wake.jpg", alt: "Dwie osoby na wakeboardzie za łodzią SHOWteam" }]} />
       <CmsDetails offer={offer} />
-      <ContactCta title="Wskakujesz do wody?" applicationOffer={offer.title} />
+      <ContactCta title={<OfferCtaTitle />} applicationOffer={offer.title} />
     </OfferInlineEditor>
   );
 }

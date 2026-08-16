@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LoaderCircle, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
+import { ExternalLink, LoaderCircle, MapPin, Plus, RotateCcw, Save, Settings2, Trash2 } from "lucide-react";
 import { useEditor } from "@/components/editor/editor-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,10 @@ type OfferEditing = {
   updateHighlight: (index: number, value: string) => void;
   addHighlight: () => void;
   removeHighlight: (index: number) => void;
+  updateSection: (index: number, field: "title" | "body", value: string) => void;
+  addSection: () => void;
+  removeSection: (index: number) => void;
+  updatePageContent: (field: string, value: string) => void;
 };
 
 const OfferEditingContext = createContext<OfferEditing | null>(null);
@@ -84,6 +88,22 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
     persist({ ...value, highlights: value.highlights.filter((_, itemIndex) => itemIndex !== index) });
   }
 
+  function updateSection(index: number, field: "title" | "body", nextValue: string) {
+    persist({ ...value, sections: value.sections.map((section, itemIndex) => itemIndex === index ? { ...section, [field]: nextValue } : section) });
+  }
+
+  function addSection() {
+    persist({ ...value, sections: [...value.sections, { title: "", body: "" }] });
+  }
+
+  function removeSection(index: number) {
+    persist({ ...value, sections: value.sections.filter((_, itemIndex) => itemIndex !== index) });
+  }
+
+  function updatePageContent(field: string, nextValue: string) {
+    persist({ ...value, pageContent: { ...value.pageContent, [field]: nextValue } });
+  }
+
   function clear() {
     localStorage.removeItem(draftKey);
     setValue(initial);
@@ -111,7 +131,7 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
     }
   }
 
-  const context: OfferEditing = { editing, value, update, updateDate, addDate, removeDate, updateHighlight, addHighlight, removeHighlight };
+  const context: OfferEditing = { editing, value, update, updateDate, addDate, removeDate, updateHighlight, addHighlight, removeHighlight, updateSection, addSection, removeSection, updatePageContent };
 
   return (
     <OfferEditingContext.Provider value={context}>
@@ -122,6 +142,15 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
             {(message || errors.length > 0) && <p className={`w-full text-sm sm:order-none sm:w-auto ${errors.length ? "text-red-300" : "text-emerald-300"}`} role="status">{errors[0] ?? message}</p>}
             <Button type="button" variant="ghost" size="sm" onClick={clear}><RotateCcw className="size-4" /> Cofnij zmiany</Button>
             <Button type="button" size="sm" onClick={() => void save()} disabled={saving}>{saving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}{saving ? "Zapisuję…" : "Zapisz zmiany"}</Button>
+            <details className="inline-editor-settings w-full border-t border-white/10 pt-2">
+              <summary className="flex cursor-pointer items-center gap-2 py-2 text-xs font-bold uppercase tracking-wider text-white/70"><Settings2 className="size-4" /> Ustawienia strony</summary>
+              <div className="grid gap-3 py-3 sm:grid-cols-2 lg:grid-cols-4">
+                <label><span>Adres po /oferta/</span><input className="inline-editor-list-input" value={value.slug} onChange={(event) => update("slug", event.target.value.toLowerCase().replace(/\s+/g, "-"))} /></label>
+                <label><span>Link do mapy</span><input type="url" className="inline-editor-list-input" value={value.mapUrl} onChange={(event) => update("mapUrl", event.target.value)} /></label>
+                <label><span>Kolejność</span><input type="number" min="0" max="999" className="inline-editor-list-input" value={value.sortOrder} onChange={(event) => update("sortOrder", Number(event.target.value))} /></label>
+                <label className="flex min-h-12 items-center gap-3 pt-5"><input type="checkbox" checked={value.published} onChange={(event) => update("published", event.target.checked)} /><span>{value.published ? "Oferta widoczna" : "Oferta ukryta"}</span></label>
+              </div>
+            </details>
           </div>
         </aside>
       )}
@@ -188,6 +217,40 @@ export function OfferHighlightList({ offer }: { offer: Offer }) {
       {editing && <button type="button" className="inline-editor-add" onClick={() => editor?.addHighlight()}><Plus className="size-4" /> Dodaj punkt</button>}
     </div>
   );
+}
+
+export function OfferSectionList({ offer }: { offer: Offer }) {
+  const editor = useContext(OfferEditingContext);
+  const sections = editor?.value.sections ?? offer.sections;
+  const editing = editor?.editing ?? false;
+  if (!editing && sections.length === 0) return null;
+  return <div className="grid gap-3">
+    {sections.map((section, index) => <article key={index} className="border border-white/15 p-4">
+      {editing ? <div className="grid gap-3"><label><span className="mb-1 block text-xs font-bold uppercase text-white/55">Nagłówek</span><input className="inline-editor-list-input" value={section.title} maxLength={120} onChange={(event) => editor?.updateSection(index, "title", event.target.value)} /></label><label><span className="mb-1 block text-xs font-bold uppercase text-white/55">Treść</span><textarea rows={5} className="inline-editor-list-input" value={section.body} maxLength={2000} onChange={(event) => editor?.updateSection(index, "body", event.target.value)} /></label><button type="button" className="inline-editor-remove" onClick={() => editor?.removeSection(index)} aria-label={`Usuń sekcję ${index + 1}`}><Trash2 className="size-4" /></button></div> : <><h3 className="font-display text-2xl font-black uppercase">{section.title}</h3><p className="mt-3 whitespace-pre-line leading-7 text-white/60">{section.body}</p></>}
+    </article>)}
+    {editing ? <button type="button" className="inline-editor-add border border-dashed border-orange-400/60" onClick={() => editor?.addSection()}><Plus className="size-4" /> Dodaj sekcję</button> : null}
+  </div>;
+}
+
+export function OfferText({ field, fallback, multiline = false }: { field: string; fallback: string; multiline?: boolean }) {
+  const editor = useContext(OfferEditingContext);
+  const value = editor?.value.pageContent[field] ?? fallback;
+  if (!editor?.editing) return <>{value}</>;
+  const props = { value, onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => editor.updatePageContent(field, event.target.value), className: "inline-page-content", "aria-label": `Edytuj: ${fallback.slice(0, 40)}` };
+  return multiline ? <textarea {...props} rows={3} /> : <input {...props} />;
+}
+
+export function OfferLocationLink({ label }: { label?: string }) {
+  const editor = useContext(OfferEditingContext);
+  if (!editor) return null;
+  return <section className="border-b border-white/10 bg-white/[.025]" aria-label="Dojazd"><div className="site-container flex flex-col gap-3 py-5 sm:flex-row sm:items-center"><span className="eyebrow">Dojazd</span><a href={editor.value.mapUrl} target="_blank" rel="noreferrer" className="group flex min-h-12 flex-1 items-center gap-3 border border-white/15 px-4 text-sm font-bold transition hover:border-orange-500 hover:bg-orange-500 hover:text-black"><MapPin className="size-5 shrink-0 text-orange-500 group-hover:text-black" /><span>{label ?? editor.value.location}</span><ExternalLink className="ml-auto size-4 opacity-50" /></a>{editor.editing ? <label className="min-w-0 flex-1"><span className="mb-1 block text-xs font-bold uppercase text-white/55">Link do mapy</span><input type="url" className="inline-editor-list-input" value={editor.value.mapUrl} onChange={(event) => editor.update("mapUrl", event.target.value)} /></label> : null}</div></section>;
+}
+
+export function OfferCtaTitle() {
+  const editor = useContext(OfferEditingContext);
+  if (!editor) return null;
+  if (!editor.editing) return <>{editor.value.ctaTitle}</>;
+  return <textarea rows={2} className="inline-page-content" value={editor.value.ctaTitle} onChange={(event) => editor.update("ctaTitle", event.target.value)} aria-label="Hasło nad przyciskiem zgłoszenia" />;
 }
 
 export function OfferListsSection({ offer }: { offer: Offer }) {

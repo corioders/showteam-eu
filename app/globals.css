@@ -339,6 +339,7 @@ textarea.inline-page-content {
 .inline-editor-add { display: flex; min-height: 3.25rem; width: 100%; align-items: center; justify-content: center; gap: 0.5rem; border-top: 1px dashed rgb(255 154 98 / 0.55); color: rgb(255 154 98); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
 .inline-editor-remove:hover,
 .inline-editor-add:hover { background: rgb(255 107 26 / 0.12); color: white; }
+.inline-editor-settings label > span:first-child { display: block; margin-bottom: .3rem; color: rgb(255 255 255 / .55); font-size: .7rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 
 .admin-workspace {
   --theme-elevation-0: #f5f4ed;

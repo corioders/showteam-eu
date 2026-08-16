@@ -41,6 +41,7 @@ function toOffer(document: Record<string, unknown>): Offer {
     ctaTitle: String(document.ctaTitle || archivedOffer?.ctaTitle || "Zapytaj o szczegóły"),
     sortOrder: Number(document.sortOrder ?? archivedOffer?.sortOrder ?? 10),
     published: document.published !== false,
+    pageContent: document.pageContent && typeof document.pageContent === "object" && !Array.isArray(document.pageContent) ? document.pageContent as Record<string, string> : {},
     sections,
   };
 }
