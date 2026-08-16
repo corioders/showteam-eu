@@ -58,7 +58,7 @@ export const pageContentDefaults = {
   },
   reservations: {
     eyebrow: "Wake & Surf Village · Poręba",
-    title: "Sprzęt czeka. Wybierz godzinę.",
+    title: "Sprzęt czeka.\nWybierz godzinę.",
     description: "Wybierz sprzęt i wolny termin. Bez telefonu, kolejek i zgadywania — numer rezerwacji dostajesz od razu.",
   },
 } as const;

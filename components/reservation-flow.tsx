@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, CloudSun, Phone, Sailboat, Waves, Wind, Zap } from "lucide-react";
 import { addDaysToBookingDate, bookingDateChoices, type BookableEquipment } from "@/lib/reservations";
 import { weatherProfileLabel } from "@/lib/wind-recommendations";
@@ -118,6 +119,7 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
             return (
               <div key={item.id} className="relative w-[86%] shrink-0 snap-start sm:w-auto">
               <button type="button" onClick={() => { setSelectedId(item.id); setTime(""); setSlots([]); setWindStatus(null); setRecommendationNote(""); setError(""); if (date) setLoadingSlots(true); }} aria-pressed={active} className={`group min-h-52 w-full border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${active ? "border-orange-500 bg-orange-500 text-black" : "border-white/10 bg-white/[0.035] hover:border-white/30"}`}>
+                {typeof item.image === "object" && item.image?.url ? <div className="relative -mx-5 -mt-5 mb-5 aspect-[16/9] overflow-hidden bg-neutral-900"><Image src={item.image.url} alt={item.image.alt || item.name} fill unoptimized className="object-cover transition duration-500 group-hover:scale-[1.03]" /></div> : null}
                 <div className="flex items-start justify-between">
                   <Icon className={`size-7 ${active ? "text-black" : "text-orange-500"}`} />
                   <ChevronRight className={`size-5 transition ${active ? "translate-x-0" : "-translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"}`} />

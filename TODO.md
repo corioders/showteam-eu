@@ -8,7 +8,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
   - [ ] Strona główna: pozycje 1.1–1.12; bez edycji kafelków ofert bezpośrednio na stronie głównej (1.13).
   - [ ] Wspólne elementy ofert: cały punkt 2 — okładka, publikacja, tworzenie/usuwanie/kolejność/URL, mapy, CTA i sekcje szczegółowe.
   - [ ] Podstrony Lato, Zima, Szkolenia i Noclegi: całe punkty 3–6.
-  - [ ] Rezerwacje: cały punkt 7 — copy, zdjęcia i kolejność sprzętu, usuwanie oraz dostępność przy sprzęcie.
+  - [x] Rezerwacje: cały punkt 7 — copy, zdjęcia i kolejność sprzętu, usuwanie oraz dostępność przy sprzęcie.
   - [x] Galeria: cały punkt 8 — copy, kolejność i wymiana istniejących plików.
   - [ ] Galeria: zastąpić niedziałające suwaki kadru gotowym mobilnym edytorem open source; wdrożyć po głównym zakresie 1–9.
   - [x] Kontakt i o nas: cały punkt 9 — dane kontaktowe, social media, mapa i treść.

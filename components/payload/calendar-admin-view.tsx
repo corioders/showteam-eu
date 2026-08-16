@@ -11,8 +11,9 @@ const OperationsCalendar = dynamic(() => import("@/components/operations-calenda
 
 export function CalendarAdminView() {
   const [section, setSection] = useState<"calendar" | "availability" | "recommendations" | "sync">(() =>
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).has("google") ? "sync" : "calendar",
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).has("google") ? "sync" : typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab") === "dostepnosc" ? "availability" : "calendar",
   );
+  const selectedEquipmentId = typeof window === "undefined" ? undefined : Number(new URLSearchParams(window.location.search).get("equipment")) || undefined;
   const [calendarVersion, setCalendarVersion] = useState(0);
   const changed = () => setCalendarVersion((version) => version + 1);
   return (
@@ -25,7 +26,7 @@ export function CalendarAdminView() {
         <button type="button" aria-current={section === "sync" ? "page" : undefined} onClick={() => setSection("sync")}>Synchronizacja</button>
       </nav>
       {section === "calendar" ? <div key={calendarVersion} className="calendar-admin-calendar"><OperationsCalendar /></div> : null}
-      {section === "availability" ? <div className="calendar-admin-settings"><AvailabilityBlocks onChange={changed} /><AvailabilityHours onChange={changed} /></div> : null}
+      {section === "availability" ? <div className="calendar-admin-settings"><AvailabilityBlocks onChange={changed} selectedEquipmentId={selectedEquipmentId} /><AvailabilityHours onChange={changed} selectedEquipmentId={selectedEquipmentId} /></div> : null}
       {section === "recommendations" ? <EquipmentRecommendations /> : null}
       {section === "sync" ? <GoogleCalendarConnection /> : null}
     </div>

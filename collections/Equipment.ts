@@ -87,7 +87,7 @@ export const Equipment: CollectionConfig = {
     read: ({ req }) => req.user ? true : { active: { equals: true } },
     create: isLoggedIn,
     update: isLoggedIn,
-    delete: () => false,
+    delete: isLoggedIn,
   },
   defaultSort: "sortOrder",
   fields: [

@@ -34,5 +34,6 @@ export async function getBookableEquipment(): Promise<BookableEquipment[]> {
     professionalWindMinKmh: document.professionalWindMinKmh ?? undefined,
     recommendationNote: document.recommendationNote || undefined,
     image: document.image || null,
+    sortOrder: document.sortOrder,
   }));
 }

@@ -27,7 +27,7 @@ function ruleTarget(rule: HoursRule): string {
   return days.filter(([value]) => selected.has(value)).map(([, label]) => label).join(", ");
 }
 
-export function AvailabilityHours({ onChange }: { onChange: () => void }) {
+export function AvailabilityHours({ onChange, selectedEquipmentId }: { onChange: () => void; selectedEquipmentId?: number }) {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [rules, setRules] = useState<HoursRule[]>([]);
   const [ruleType, setRuleType] = useState<"date" | "weekly">("date");
@@ -96,7 +96,7 @@ export function AvailabilityHours({ onChange }: { onChange: () => void }) {
       <button type="button" role="tab" aria-selected={ruleType === "weekly"} onClick={() => setRuleType("weekly")}>Szablon tygodnia</button>
     </div>
     <form onSubmit={(event) => void saveRule(event)}>
-      <label><span>Dla czego?</span><select name="equipmentId" defaultValue="all"><option value="all">Wszystkie sprzęty</option>{equipment.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+      <label><span>Dla czego?</span><select name="equipmentId" defaultValue={selectedEquipmentId ? String(selectedEquipmentId) : "all"}><option value="all">Wszystkie sprzęty</option>{equipment.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
       {ruleType === "date"
         ? <label><span>Data</span><input required name="bookingDate" type="date" min={today} defaultValue={today} /></label>
         : <fieldset><legend>Dni tygodnia</legend><div>{days.map(([value, label]) => <label key={value}><input type="checkbox" name="weekdays" value={value} defaultChecked={value === 6 || value === 0} /><span>{label}</span></label>)}</div></fieldset>}

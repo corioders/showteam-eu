@@ -20,6 +20,7 @@ export type BookableEquipment = {
   professionalWindMinKmh?: number;
   recommendationNote?: string;
   image?: { url?: string | null; alt?: string | null } | number | null;
+  sortOrder: number;
 };
 
 export type WeatherProfile = "any" | "calm" | "wind";

@@ -15,7 +15,7 @@ type AvailabilityBlock = {
   created_at: number;
 };
 
-export function AvailabilityBlocks({ onChange }: { onChange: () => void }) {
+export function AvailabilityBlocks({ onChange, selectedEquipmentId }: { onChange: () => void; selectedEquipmentId?: number }) {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [blocks, setBlocks] = useState<AvailabilityBlock[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +71,7 @@ export function AvailabilityBlocks({ onChange }: { onChange: () => void }) {
   return <section className="availability-blocks">
     <div className="availability-blocks__intro"><span>BLOKOWANIE TERMINÓW</span><h2>Zamknij termin wynajmu</h2><p>Klienci nie zobaczą zablokowanych godzin. Możesz zablokować jeden sprzęt albo wszystko naraz.</p></div>
     <form onSubmit={(event) => void createBlock(event)}>
-      <label><span>Co blokujesz?</span><select name="equipmentId" defaultValue="all"> <option value="all">Wszystkie sprzęty</option>{equipment.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+      <label><span>Co blokujesz?</span><select name="equipmentId" defaultValue={selectedEquipmentId ? String(selectedEquipmentId) : "all"}> <option value="all">Wszystkie sprzęty</option>{equipment.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
       <label><span>Data</span><input required name="bookingDate" type="date" min={today} defaultValue={today} /></label>
       <label className="availability-blocks__all-day"><input type="checkbox" checked={allDay} onChange={(event) => setAllDay(event.target.checked)} /><span>Cały dzień</span></label>
       <fieldset className="availability-blocks__times" disabled={allDay} aria-hidden={allDay}>

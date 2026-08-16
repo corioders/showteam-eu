@@ -6,6 +6,7 @@ const valid = {
   durationMinutes: 60, openTime: "08:00", closeTime: "20:00", notice: "", active: true,
   weatherProfile: "calm", recommendedStart1: "07:00", recommendedEnd1: "09:00", recommendedStart2: "19:00", recommendedEnd2: "21:00",
   windMediumMinKmh: 0, windMediumMaxKmh: 16, windBestMinKmh: 0, windBestMaxKmh: 10, professionalWindMinKmh: "", recommendationNote: "Rano jest spokojniej.",
+  sortOrder: 100,
 };
 
 describe("visual equipment editor", () => {

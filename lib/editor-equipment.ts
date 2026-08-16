@@ -22,6 +22,7 @@ export type EditableEquipment = {
   windBestMaxKmh: number;
   professionalWindMinKmh: number | null;
   recommendationNote: string;
+  sortOrder: number;
 };
 
 const categories = ["Woda", "Ląd", "Szkolenie", "Inne"] as const;
@@ -47,6 +48,7 @@ export function parseEditableEquipment(input: unknown): { data?: EditableEquipme
   const windBestMinKmh = number(value.windBestMinKmh);
   const windBestMaxKmh = number(value.windBestMaxKmh);
   const professionalWindMinKmh = value.professionalWindMinKmh === "" || value.professionalWindMinKmh == null ? null : number(value.professionalWindMinKmh);
+  const sortOrder = integer(value.sortOrder);
   const errors: string[] = [];
 
   if (name.length < 2 || name.length > 120) errors.push("Nazwa sprzętu musi mieć od 2 do 120 znaków.");
@@ -63,7 +65,8 @@ export function parseEditableEquipment(input: unknown): { data?: EditableEquipme
   if (thresholds.some((item) => item === null || item < 0 || item > 100)) errors.push("Progi wiatru muszą być liczbami od 0 do 100 km/h.");
   else if (!(windMediumMinKmh! <= windBestMinKmh! && windBestMinKmh! <= windBestMaxKmh! && windBestMaxKmh! <= windMediumMaxKmh!)) errors.push("Najlepszy zakres wiatru musi mieścić się wewnątrz średniego zakresu.");
   if (professionalWindMinKmh !== null && (weatherProfile !== "wind" || professionalWindMinKmh <= (windBestMaxKmh ?? 0) || professionalWindMinKmh > 100)) errors.push("Próg profesjonalny działa tylko dla sprzętu wymagającego wiatru i musi być wyższy od najlepszego zakresu.");
-  if (errors.length || !category || !weatherProfile || quantity === null || durationMinutes === null || thresholds.some((item) => item === null)) return { errors };
+  if (sortOrder === null || sortOrder < 0) errors.push("Nie udało się ustawić kolejności sprzętu.");
+  if (errors.length || !category || !weatherProfile || quantity === null || durationMinutes === null || sortOrder === null || thresholds.some((item) => item === null)) return { errors };
 
   return { data: {
     name, description, category, quantity, durationMinutes, openTime, closeTime,
@@ -71,6 +74,7 @@ export function parseEditableEquipment(input: unknown): { data?: EditableEquipme
     recommendedStart1, recommendedEnd1, recommendedStart2, recommendedEnd2,
     windMediumMinKmh: windMediumMinKmh!, windMediumMaxKmh: windMediumMaxKmh!, windBestMinKmh: windBestMinKmh!, windBestMaxKmh: windBestMaxKmh!,
     professionalWindMinKmh, recommendationNote: text(value.recommendationNote),
+    sortOrder,
   } };
 }
 
