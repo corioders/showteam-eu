@@ -411,6 +411,10 @@ test.describe("mobile", () => {
     await expect(page.getByLabel(/Dyscyplina/)).toHaveCount(0);
     await expect(page.getByLabel(/Poziom/)).toHaveCount(0);
     await page.getByRole("button", { name: "Lato", exact: true }).click();
+    await page.getByLabel("Chcę fakturę").check();
+    await expect(page.getByLabel("NIP")).toBeVisible();
+    await expect(page.getByText("Jeśli nie zaznaczysz tej opcji, otrzymasz paragon.")).toBeVisible();
+    await page.getByLabel("Chcę fakturę").uncheck();
     await page.getByLabel("Następnie wybierz termin").selectOption({ index: 1 });
     await page.getByLabel("Imię").fill("Anna");
     await page.getByLabel("Nazwisko").fill("Testowa");

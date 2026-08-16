@@ -379,7 +379,7 @@ export interface Booking {
  */
 export interface Application {
   id: number;
-  status: 'new' | 'contacted' | 'accepted' | 'completed' | 'no_show' | 'cancelled';
+  status: 'new' | 'contacted' | 'confirmed' | 'rejected' | 'cancelled';
   staffNotes?: string | null;
   reference: string;
   offer: string;
@@ -395,6 +395,12 @@ export interface Application {
   level?: ('Od podstaw' | 'Doskonalenie' | 'Jazda sportowa') | null;
   transport?: ('Tak' | 'Nie' | 'Nie dotyczy') | null;
   notes?: string | null;
+  invoiceRequested?: boolean | null;
+  invoiceCompany?: string | null;
+  invoiceNip?: string | null;
+  invoiceStreet?: string | null;
+  invoicePostalCode?: string | null;
+  invoiceCity?: string | null;
   privacyConsent: boolean;
   accuracyConfirmed: boolean;
   newsletterConsent?: boolean | null;
@@ -735,6 +741,12 @@ export interface ApplicationsSelect<T extends boolean = true> {
   level?: T;
   transport?: T;
   notes?: T;
+  invoiceRequested?: T;
+  invoiceCompany?: T;
+  invoiceNip?: T;
+  invoiceStreet?: T;
+  invoicePostalCode?: T;
+  invoiceCity?: T;
   privacyConsent?: T;
   accuracyConfirmed?: T;
   newsletterConsent?: T;

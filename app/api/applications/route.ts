@@ -31,6 +31,12 @@ export async function POST(request: Request) {
   const level = string(input, "level", 40);
   const transport = string(input, "transport", 40);
   const notes = string(input, "notes", 2000);
+  const invoiceRequested = input.invoiceRequested === true;
+  const invoiceCompany = string(input, "invoiceCompany", 160);
+  const invoiceNip = string(input, "invoiceNip", 20).replace(/\D/g, "");
+  const invoiceStreet = string(input, "invoiceStreet", 160);
+  const invoicePostalCode = string(input, "invoicePostalCode", 10);
+  const invoiceCity = string(input, "invoiceCity", 100);
 
   if (!applicationCategories.some((value) => value === category)) return Response.json({ field: "category", error: "Wybierz rodzaj wyjazdu." }, { status: 400 });
   const applicationCategory = category as ApplicationCategory;
@@ -41,6 +47,13 @@ export async function POST(request: Request) {
   if (!/^\S+@\S+\.\S+$/.test(email)) return Response.json({ field: "email", error: "Wpisz poprawny adres e-mail." }, { status: 400 });
   if (participantEmail && !/^\S+@\S+\.\S+$/.test(participantEmail)) return Response.json({ field: "participantEmail", error: "Wpisz poprawny adres e-mail uczestnika." }, { status: 400 });
   if (phone.replace(/\D/g, "").length < 9) return Response.json({ field: "phone", error: "Wpisz poprawny numer telefonu." }, { status: 400 });
+  if (invoiceRequested) {
+    if (invoiceCompany.length < 2) return Response.json({ field: "invoiceCompany", error: "Wpisz nazwę firmy." }, { status: 400 });
+    if (!/^\d{10}$/.test(invoiceNip)) return Response.json({ field: "invoiceNip", error: "NIP musi mieć 10 cyfr." }, { status: 400 });
+    if (invoiceStreet.length < 3) return Response.json({ field: "invoiceStreet", error: "Wpisz ulicę i numer." }, { status: 400 });
+    if (!/^\d{2}-\d{3}$/.test(invoicePostalCode)) return Response.json({ field: "invoicePostalCode", error: "Wpisz kod pocztowy w formacie 00-000." }, { status: 400 });
+    if (invoiceCity.length < 2) return Response.json({ field: "invoiceCity", error: "Wpisz miejscowość." }, { status: 400 });
+  }
   const sportDetails = applicationHasSportDetails(applicationCategory);
   const allowedDisciplines = applicationDisciplinesForCategory(applicationCategory);
   if (discipline && (!sportDetails || !allowedDisciplines.some((value) => value === discipline))) return Response.json({ field: "discipline", error: "Wybierz dyscyplinę pasującą do wyjazdu." }, { status: 400 });
@@ -63,6 +76,8 @@ export async function POST(request: Request) {
       reference, status: "new", offer, participantName, participantKey: participantIdentity({ email, participantEmail, participantName, birthDate }), birthDate: `${birthDate}T12:00:00.000Z`, address,
       email, normalizedEmail: email, participantEmail: participantEmail || undefined, phone, discipline: disciplineValue,
       level: levelValue, transport: transportValue, notes: notes || undefined,
+      invoiceRequested, invoiceCompany: invoiceRequested ? invoiceCompany : undefined, invoiceNip: invoiceRequested ? invoiceNip : undefined,
+      invoiceStreet: invoiceRequested ? invoiceStreet : undefined, invoicePostalCode: invoiceRequested ? invoicePostalCode : undefined, invoiceCity: invoiceRequested ? invoiceCity : undefined,
       privacyConsent: true, accuracyConfirmed: true, newsletterConsent,
       newsletterConsentedAt: newsletterConsent ? new Date().toISOString() : undefined,
     } });

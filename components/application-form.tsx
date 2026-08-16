@@ -9,11 +9,12 @@ type Values = {
   category: ApplicationCategory | ""; offer: string; firstName: string; lastName: string; birthDate: string; address: string;
   email: string; participantEmail: string; phone: string; discipline: string; level: string;
   transport: string; notes: string; privacyConsent: boolean; accuracyConfirmed: boolean; newsletterConsent: boolean;
+  invoiceRequested: boolean; invoiceCompany: string; invoiceNip: string; invoiceStreet: string; invoicePostalCode: string; invoiceCity: string;
 };
 type Field = keyof Values;
 type Errors = Partial<Record<Field, string>>;
 const draftKey = "showteam:application-draft:v1";
-const empty: Values = { category: "", offer: "", firstName: "", lastName: "", birthDate: "", address: "", email: "", participantEmail: "", phone: "", discipline: "", level: "", transport: "", notes: "", privacyConsent: false, accuracyConfirmed: false, newsletterConsent: false };
+const empty: Values = { category: "", offer: "", firstName: "", lastName: "", birthDate: "", address: "", email: "", participantEmail: "", phone: "", discipline: "", level: "", transport: "", notes: "", invoiceRequested: false, invoiceCompany: "", invoiceNip: "", invoiceStreet: "", invoicePostalCode: "", invoiceCity: "", privacyConsent: false, accuracyConfirmed: false, newsletterConsent: false };
 
 function onlyApplicableDetails(values: Values): Values {
   if (values.category === "Szkolenia") return { ...values, discipline: "", level: "", transport: "" };
@@ -69,6 +70,13 @@ export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationO
     if (!/^\S+@\S+\.\S+$/.test(values.email)) next.email = "Wpisz poprawny e-mail kontaktowy.";
     if (values.participantEmail && !/^\S+@\S+\.\S+$/.test(values.participantEmail)) next.participantEmail = "Wpisz poprawny e-mail uczestnika.";
     if (values.phone.replace(/\D/g, "").length < 9) next.phone = "Wpisz poprawny numer telefonu.";
+    if (values.invoiceRequested) {
+      if (values.invoiceCompany.trim().length < 2) next.invoiceCompany = "Wpisz nazwę firmy.";
+      if (!/^\d{10}$/.test(values.invoiceNip.replace(/\D/g, ""))) next.invoiceNip = "NIP musi mieć 10 cyfr.";
+      if (values.invoiceStreet.trim().length < 3) next.invoiceStreet = "Wpisz ulicę i numer.";
+      if (!/^\d{2}-\d{3}$/.test(values.invoicePostalCode.trim())) next.invoicePostalCode = "Wpisz kod w formacie 00-000.";
+      if (values.invoiceCity.trim().length < 2) next.invoiceCity = "Wpisz miejscowość.";
+    }
     if (!values.privacyConsent) next.privacyConsent = "Ta zgoda jest potrzebna do obsługi zgłoszenia.";
     if (!values.accuracyConfirmed) next.accuracyConfirmed = "Potwierdź poprawność danych.";
     return next;
@@ -129,7 +137,7 @@ export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationO
 
   const inputClass = (field: Field) => `mt-2 w-full border bg-white/[.04] px-4 py-3 text-base text-white outline-none ${errors[field] ? "border-red-500" : "border-white/20 focus:border-orange-500"}`;
   const error = (field: Field) => errors[field] ? <span className="mt-2 block text-sm font-semibold text-red-300">{errors[field]}</span> : null;
-  const text = (field: keyof Pick<Values, "offer" | "firstName" | "lastName" | "birthDate" | "address" | "email" | "participantEmail" | "phone" | "discipline" | "level" | "transport" | "notes">) => ({ value: values[field], onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => set(field, event.target.value) });
+  const text = (field: keyof Pick<Values, "offer" | "firstName" | "lastName" | "birthDate" | "address" | "email" | "participantEmail" | "phone" | "discipline" | "level" | "transport" | "notes" | "invoiceCompany" | "invoiceNip" | "invoiceStreet" | "invoicePostalCode" | "invoiceCity">) => ({ value: values[field], onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => set(field, event.target.value) });
 
   return <form ref={formRef} onSubmit={(event) => void submit(event)} noValidate className="space-y-8">
     <section className="border border-white/15 bg-white/[.025] p-5 sm:p-8"><span className="eyebrow">01 · Wyjazd</span>
@@ -151,7 +159,14 @@ export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationO
       {values.category === "Zima" ? <label className="block font-bold">Transport autokarem<select {...text("transport")} className={inputClass("transport")}><option value="" className="text-black">Wybierz…</option>{applicationTransport.map((value) => <option key={value} className="text-black">{value}</option>)}</select></label> : null}
       <label className="block font-bold sm:col-span-3">Uwagi <span className="font-normal text-white/35">(opcjonalnie)</span><textarea {...text("notes")} rows={5} maxLength={2000} className={inputClass("notes")} /></label>
     </div></section>
-    <section className="space-y-5 border border-white/15 bg-white/[.025] p-5 text-sm leading-6 sm:p-8"><span className="eyebrow">04 · Zgody</span>
+    <section className="border border-white/15 bg-white/[.025] p-5 sm:p-8"><span className="eyebrow">04 · Dokument sprzedaży</span><label className="mt-5 flex cursor-pointer items-start gap-3"><input type="checkbox" checked={values.invoiceRequested} onChange={(event) => set("invoiceRequested", event.target.checked)} className="mt-1 size-5 shrink-0 accent-orange-500" /><span><strong>Chcę fakturę</strong><span className="mt-1 block text-sm text-white/45">Jeśli nie zaznaczysz tej opcji, otrzymasz paragon.</span></span></label>{values.invoiceRequested ? <div className="mt-6 grid gap-5 sm:grid-cols-2">
+      <label data-error={Boolean(errors.invoiceCompany)} className="block font-bold sm:col-span-2">Nazwa firmy<input {...text("invoiceCompany")} autoComplete="organization" className={inputClass("invoiceCompany")} />{error("invoiceCompany")}</label>
+      <label data-error={Boolean(errors.invoiceNip)} className="block font-bold">NIP<input {...text("invoiceNip")} inputMode="numeric" className={inputClass("invoiceNip")} />{error("invoiceNip")}</label>
+      <label data-error={Boolean(errors.invoiceStreet)} className="block font-bold">Ulica i numer<input {...text("invoiceStreet")} autoComplete="address-line1" className={inputClass("invoiceStreet")} />{error("invoiceStreet")}</label>
+      <label data-error={Boolean(errors.invoicePostalCode)} className="block font-bold">Kod pocztowy<input {...text("invoicePostalCode")} autoComplete="postal-code" placeholder="00-000" className={inputClass("invoicePostalCode")} />{error("invoicePostalCode")}</label>
+      <label data-error={Boolean(errors.invoiceCity)} className="block font-bold">Miejscowość<input {...text("invoiceCity")} autoComplete="address-level2" className={inputClass("invoiceCity")} />{error("invoiceCity")}</label>
+    </div> : null}</section>
+    <section className="space-y-5 border border-white/15 bg-white/[.025] p-5 text-sm leading-6 sm:p-8"><span className="eyebrow">05 · Zgody</span>
       <label data-error={Boolean(errors.privacyConsent)} className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={values.privacyConsent} onChange={(event) => set("privacyConsent", event.target.checked)} className="mt-1 size-5 shrink-0 accent-orange-500" /><span>Wyrażam zgodę na przetwarzanie podanych danych przez SHOWTEAM Adam Szołtysek w celu obsługi zgłoszenia. Zgodę można wycofać, pisząc na biuro@showteam.eu.</span></label>{error("privacyConsent")}
       <label data-error={Boolean(errors.accuracyConfirmed)} className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={values.accuracyConfirmed} onChange={(event) => set("accuracyConfirmed", event.target.checked)} className="mt-1 size-5 shrink-0 accent-orange-500" /><span>Potwierdzam poprawność danych oraz pełnoletność osoby zgłaszającej albo działanie jako prawny opiekun uczestnika.</span></label>{error("accuracyConfirmed")}
       <label className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={values.newsletterConsent} onChange={(event) => set("newsletterConsent", event.target.checked)} className="mt-1 size-5 shrink-0 accent-orange-500" /><span>Chcę otrzymywać od SHOWteam informacje o nowych turnusach i wydarzeniach na podany e-mail. Zgoda jest dobrowolna i można ją wycofać, pisząc na biuro@showteam.eu.</span></label>

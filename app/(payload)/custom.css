@@ -244,9 +244,8 @@
 .application-status { border: 1px solid currentColor; font-size: .68rem; font-weight: 800; padding: .3rem .5rem; text-transform: uppercase; }
 .application-status--new { color: #d94f00; }
 .application-status--contacted { color: #1f6fa3; }
-.application-status--accepted { color: #26763a; }
-.application-status--completed { color: #26763a; }
-.application-status--no_show { color: #a33b31; }
+.application-status--confirmed { color: #26763a; }
+.application-status--rejected { color: #a33b31; }
 .application-status--cancelled { color: var(--theme-elevation-500); }
 .participant-new, .participant-returning { display: inline-block; font-size: .75rem; font-weight: 800; margin-bottom: 1rem; padding: .35rem .55rem; }
 .participant-new { background: var(--theme-elevation-100); color: var(--theme-elevation-650); }
@@ -258,6 +257,8 @@
 .participant-history li div { display: flex; gap: .75rem; justify-content: space-between; }
 .participant-history li span, .participant-history li small { color: var(--theme-elevation-550); font-size: .75rem; }
 .application-open { color: #e85200; display: block; font-size: .78rem; font-weight: 800; margin-top: 1rem; text-transform: uppercase; }
+.application-quick-status { align-items: center; display: flex; font-size: .78rem; font-weight: 800; gap: .75rem; margin-top: 1rem; text-transform: uppercase; }
+.application-quick-status select { background: var(--theme-input-bg); border: 1px solid var(--theme-elevation-250); color: var(--theme-text); min-height: 2.6rem; padding: .45rem .65rem; text-transform: none; }
 .applications-empty { border: 1px solid var(--theme-elevation-150); margin-top: 1rem; padding: 2rem; }
 .newsletter-list { margin-top: 1.25rem; }
 .newsletter-list > div { align-items: center; display: flex; gap: 1rem; justify-content: space-between; }

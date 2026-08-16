@@ -24,6 +24,7 @@ import * as migration_20260816_180000_remove_google_and_news from './20260816_18
 import * as migration_20260816_190000_activities from './20260816_190000_activities';
 import * as migration_20260816_200000_staff_events from './20260816_200000_staff_events';
 import * as migration_20260816_210000_event_inquiries from './20260816_210000_event_inquiries';
+import * as migration_20260816_220000_application_workflow from './20260816_220000_application_workflow';
 
 export const migrations = [
   {
@@ -155,5 +156,10 @@ export const migrations = [
     up: migration_20260816_210000_event_inquiries.up,
     down: migration_20260816_210000_event_inquiries.down,
     name: '20260816_210000_event_inquiries'
+  },
+  {
+    up: migration_20260816_220000_application_workflow.up,
+    down: migration_20260816_220000_application_workflow.down,
+    name: '20260816_220000_application_workflow'
   },
 ];

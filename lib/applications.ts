@@ -1,6 +1,11 @@
 export const applicationDisciplines = ["Narty", "Snowboard", "Sporty wodne", "Inne"] as const;
 export const applicationLevels = ["Od podstaw", "Doskonalenie", "Jazda sportowa"] as const;
 export const applicationTransport = ["Tak", "Nie", "Nie dotyczy"] as const;
+export const applicationStatuses = ["new", "contacted", "confirmed", "rejected", "cancelled"] as const;
+export type ApplicationStatus = typeof applicationStatuses[number];
+export const applicationStatusLabels: Record<ApplicationStatus, string> = {
+  new: "Nowe", contacted: "Skontaktowano się", confirmed: "Potwierdzone", rejected: "Odrzucone", cancelled: "Anulowane",
+};
 
 export function applicationDisciplinesForCategory(category: string): readonly (typeof applicationDisciplines)[number][] {
   if (category === "Lato") return ["Sporty wodne", "Inne"];

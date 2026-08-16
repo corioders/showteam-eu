@@ -10,7 +10,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
   - [x] Dodać globalne godziny bazy, wyjątki kalendarzowe i zakaz weekendowy per aktywność.
   - [x] Zastąpić blokady wewnętrznymi wydarzeniami, także całodniowymi i cyklicznymi.
   - [x] Dodać formularz oraz obsługę imprez i spływów.
-  - [ ] Dodać statusy rezerwacji, instruktora, fakturę i wymagane przepływy zgłoszeń.
+  - [x] Dodać statusy rezerwacji, instruktora, fakturę i wymagane przepływy zgłoszeń.
   - [ ] Dodać powiadomienia PWA, przypomnienia SMS i eskalację do Asi.
   - [ ] Zbudować osobny przepływ rezerwacji noclegów.
   - [ ] Zaktualizować branding, oferty, szkolenia, partnerstwa i treści strony.

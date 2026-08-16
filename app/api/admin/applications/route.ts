@@ -1,5 +1,7 @@
 import { getPayload } from "payload";
 import config, { database } from "@payload-config";
+import { validSameOrigin } from "@/lib/admin-auth";
+import { applicationStatuses, type ApplicationStatus } from "@/lib/applications";
 
 type ApplicationRow = {
   id: number; reference: string; created_at: string; status: string; offer: string;
@@ -40,4 +42,16 @@ export async function GET(request: Request) {
     total: total?.total || 0,
     newsletter: newsletter.results,
   }, { headers: { "Cache-Control": "no-store" } });
+}
+
+export async function PATCH(request: Request) {
+  if (!validSameOrigin(request)) return Response.json({ error: "Ta operacja została zablokowana. Odśwież stronę i spróbuj ponownie." }, { status: 403 });
+  const payload = await getPayload({ config });
+  if (!(await payload.auth({ headers: request.headers })).user) return Response.json({ error: "Zaloguj się do panelu." }, { status: 401 });
+  const input = await request.json().catch(() => null) as { id?: unknown; status?: unknown } | null;
+  const id = Number(input?.id);
+  const status = String(input?.status || "") as ApplicationStatus;
+  if (!Number.isInteger(id) || !applicationStatuses.includes(status)) return Response.json({ error: "Wybierz poprawny status." }, { status: 400 });
+  const application = await payload.update({ collection: "applications", id, overrideAccess: true, data: { status } });
+  return Response.json({ application });
 }

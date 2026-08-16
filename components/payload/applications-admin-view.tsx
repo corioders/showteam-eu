@@ -4,14 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Download, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
-import { applicationAge } from "@/lib/applications";
+import { applicationAge, applicationStatusLabels, type ApplicationStatus } from "@/lib/applications";
 
-type Status = "new" | "contacted" | "accepted" | "completed" | "no_show" | "cancelled";
-type History = { id: number; reference: string; createdAt: string; status: Status; offer: string };
-type Application = { id: number; reference: string; createdAt: string; status: Status; offer: string; participantName: string; birthDate: string; email: string; phone: string; priorCount: number; history: History[] };
+type History = { id: number; reference: string; createdAt: string; status: ApplicationStatus; offer: string };
+type Application = { id: number; reference: string; createdAt: string; status: ApplicationStatus; offer: string; participantName: string; birthDate: string; email: string; phone: string; priorCount: number; history: History[] };
 type NewsletterContact = { email: string; contact_name: string; consented_at: string | null; applications: number };
 type Data = { applications: Application[]; total: number; newsletter: NewsletterContact[] };
-const statusLabel: Record<Status, string> = { new: "Nowe", contacted: "Skontaktowano", accepted: "Przyjęte", completed: "Uczestniczył/a", no_show: "Nie uczestniczył/a", cancelled: "Anulowane" };
 const date = (value: string) => new Intl.DateTimeFormat("pl-PL", { dateStyle: "medium" }).format(new Date(value));
 
 export function ApplicationsAdminView() {
@@ -19,6 +17,15 @@ export function ApplicationsAdminView() {
   const [data, setData] = useState<Data | null>(null);
   const [tab, setTab] = useState<"applications" | "newsletter">("applications");
   const [error, setError] = useState("");
+  const [savingId, setSavingId] = useState<number | null>(null);
+
+  async function changeStatus(id: number, status: ApplicationStatus) {
+    setSavingId(id);
+    const response = await fetch("/api/admin/applications", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, status }) });
+    setSavingId(null);
+    if (!response.ok) return setError("Nie udało się zmienić statusu. Odśwież stronę i spróbuj ponownie.");
+    setData((current) => current ? { ...current, applications: current.applications.map((entry) => entry.id === id ? { ...entry, status } : entry) } : current);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -42,11 +49,12 @@ export function ApplicationsAdminView() {
       <div className="applications-actions"><Link className="applications-export" href="/api/admin/applications/export"><Download aria-hidden="true" /> Pobierz zgłoszenia</Link><Link href="/admin/collections/applications">Zaawansowana lista</Link></div>
       <p className="applications-total">Najnowsze na górze{data.total > data.applications.length ? ` · pokazano ${data.applications.length} z ${data.total}` : ""}</p>
       {data.applications.length ? <div className="applications-list">{data.applications.map((entry) => <article className="application-card" key={entry.id}>
-        <div><strong>{entry.participantName}</strong><span className={`application-status application-status--${entry.status}`}>{statusLabel[entry.status]}</span></div>
+        <div><strong>{entry.participantName}</strong><span className={`application-status application-status--${entry.status}`}>{applicationStatusLabels[entry.status]}</span></div>
         <p>{entry.offer}</p><span className={entry.priorCount ? "participant-returning" : "participant-new"}>{entry.priorCount ? `Powracający · ${entry.priorCount} wcześniejszych zgłoszeń` : "Pierwszy raz w SHOWteam"}</span>
         <dl><div><dt>Data urodzenia</dt><dd>{new Intl.DateTimeFormat("pl-PL", { timeZone: "UTC" }).format(new Date(entry.birthDate))} · {applicationAge(entry.birthDate, today)} lat</dd></div><div><dt>Telefon</dt><dd>{entry.phone}</dd></div><div><dt>E-mail</dt><dd>{entry.email}</dd></div><div><dt>Wysłano</dt><dd>{date(entry.createdAt)}</dd></div><div><dt>Numer</dt><dd>{entry.reference}</dd></div></dl>
-        {entry.history.length ? <details className="participant-history"><summary>Historia uczestnika</summary><ol>{entry.history.map((past) => <li key={past.id}><div><strong>{past.offer}</strong><span>{date(past.createdAt)}</span></div><small>{statusLabel[past.status]} · {past.reference}</small></li>)}</ol></details> : null}
-        <Link href={`/admin/collections/applications/${entry.id}`} className="application-open">Otwórz i zmień status →</Link>
+        {entry.history.length ? <details className="participant-history"><summary>Historia uczestnika</summary><ol>{entry.history.map((past) => <li key={past.id}><div><strong>{past.offer}</strong><span>{date(past.createdAt)}</span></div><small>{applicationStatusLabels[past.status]} · {past.reference}</small></li>)}</ol></details> : null}
+        <label className="application-quick-status">Status<select value={entry.status} disabled={savingId === entry.id} onChange={(event) => void changeStatus(entry.id, event.target.value as ApplicationStatus)}>{Object.entries(applicationStatusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+        <Link href={`/admin/collections/applications/${entry.id}`} className="application-open">Otwórz szczegóły i notatki →</Link>
       </article>)}</div> : <p className="applications-empty">Nie ma jeszcze żadnych zgłoszeń.</p>}
     </> : <section className="newsletter-list"><div><p>Tylko osoby, które dobrowolnie zaznaczyły zgodę. Każdy adres występuje raz.</p><Link className="applications-export" href="/api/admin/newsletter/export"><Download aria-hidden="true" /> Pobierz kontakty</Link></div>{data.newsletter.length ? <ul>{data.newsletter.map((contact) => <li key={contact.email}><div><strong>{contact.email}</strong><span>{contact.contact_name}</span></div><small>{contact.applications} {contact.applications === 1 ? "zgłoszenie" : "zgłoszenia"}{contact.consented_at ? ` · zgoda ${date(contact.consented_at)}` : ""}</small></li>)}</ul> : <p className="applications-empty">Nikt jeszcze nie wyraził zgody na newsletter.</p>}</section>}
   </main>;
