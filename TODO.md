@@ -62,10 +62,10 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
   - [x] Przed jakimkolwiek merge’em pokazać użytkownikowi efekt i poczekać na zgodę; nie robić preview deployu.
 - [x] Rezerwacje zależne od warunków: edytowalne polecane godziny per sprzęt, prognoza wiatru Jeziora Łąckiego i jasna możliwość zamiany sprzętu.
 - [x] Naprawić mobilny nagłówek Payload na wszystkich ekranach edycji: tylko menu i logo, bez uciętych breadcrumbs/konta.
-- [ ] Zamienić pozostałe szybkie akcje na własne proste ekrany: wynajem/sprzęt i oferta. Galeria, kalendarz, statystyki i TV już mają własne ekrany.
-- [ ] Zostawić pełny Payload CMS jako drugorzędne „Zaawansowane”, dostępne z panelu awaryjnie.
-- [ ] Tryb redakcyjny strony: po zalogowaniu do `/admin` pokazać niewielkie przyciski „Edytuj” prowadzące do właściwego ekranu dla oferty, galerii i wynajmu.
-- [ ] Ekrany otwierane przez „Edytuj”: dodać live preview przy własnych formularzach oferty, galerii i wynajmu, kiedy powstaną.
+- [x] Zastąpić szybkie akcje ofert i sprzętu prostą edycją bezpośrednio na publicznej stronie.
+- [x] Zostawić pełny Payload CMS jako drugorzędne „Zaawansowane”, dostępne z panelu awaryjnie.
+- [x] Tryb redakcyjny strony: po zalogowaniu pokazać kontekstowe przyciski edycji ofert, galerii i wynajmu.
+- [x] Zapewnić live preview: oferta zmienia się w miejscu, galeria pokazuje dokładny kadr, a formularz sprzętu ma podgląd karty.
 - [x] Dodać widoczny przycisk „Wyczyść formularz” do własnych formularzy i formularzy Payload; musi usuwać także lokalnie zapisany draft.
 - [x] Formularz zgłoszeniowy wzorowany na obecnym SHOWteam: zapis do bazy, prosty ekran administracyjny i eksport do Excela. E-mail pozostaje wyłączony do późniejszej konfiguracji.
 - [ ] Po otrzymaniu docelowego formatu eksportu zmienić układ kolumn zgłoszeń; zapisane dane i formularz pozostają bez zmian.
