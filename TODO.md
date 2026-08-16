@@ -14,7 +14,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
   - [x] Kontakt i o nas: cały punkt 9 — dane kontaktowe, social media, mapa i treść.
   - Zgodnie z decyzją poza tym zakresem: formularz zgłoszeniowy (10) i elementy globalne (11).
 
-- [ ] Nowy panel bezpośrednio na stronie (`codex/new-admin`):
+- [x] Nowy panel bezpośrednio na stronie (`codex/new-admin`):
   - [x] `/admin` służy do logowania, a po zalogowaniu otwiera stronę w trybie edycji.
   - [x] Wspólny pasek administratora oraz możliwość ukrycia przycisków edycji.
   - [x] Kontekstowe edytowanie treści ofert bez opuszczania strony.
@@ -81,8 +81,8 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 - [ ] Safari/iPhone: `/admin/kalendarz` zawsze startuje jako lista; brak widoku tygodnia i zagnieżdżonego scrolla.
 - [ ] Safari/iPhone: CMS header nie nachodzi na tytuł formularza.
 - [ ] Blokady wynajmu: cały dzień domyślnie, opcjonalne własne godziny, wszystkie albo jeden sprzęt.
-- [ ] Statystyki używają etykiety „Odwiedziny strony”.
-- [ ] Oficjalny TikTok prowadzi do `https://www.tiktok.com/@showteam1969`.
+- [x] Statystyki używają etykiety „Odwiedziny strony”.
+- [x] Oficjalny TikTok prowadzi do `https://www.tiktok.com/@showteam1969`.
 
 ## Ukończone
 
