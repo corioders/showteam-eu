@@ -3,9 +3,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderCircle, RotateCcw, Save } from "lucide-react";
+import Image from "next/image";
 import { useEditor } from "@/components/editor/editor-provider";
 import { Button } from "@/components/ui/button";
 import type { PageContentName } from "@/lib/page-content-schema";
+import { createPhotoVariants } from "@/lib/client-image-variants";
 
 type ContentValues = Record<string, string>;
 type PageContentContextValue = { editing: boolean; values: ContentValues; update: (field: string, value: string) => void };
@@ -79,6 +81,45 @@ export function EditableUrl({ field, label }: { field: string; label: string }) 
     <span>{label}</span>
     <input type="url" inputMode="url" value={content.values[field] ?? ""} onChange={(event) => content.update(field, event.target.value)} />
   </label>;
+}
+
+export function usePageContentField(field: string, fallback: string) {
+  const content = useContext(PageContentContext);
+  return { value: content?.values[field] ?? fallback, editing: content?.editing ?? false, update: content?.update };
+}
+
+export function EditableImage({ field, alt, sizes, className }: { field: string; alt: string; sizes: string; className?: string }) {
+  const content = useContext(PageContentContext);
+  const src = content?.values[field] ?? "";
+  return <><Image src={src} alt={alt} fill unoptimized={!src.startsWith("/media/")} className={className} sizes={sizes} /><EditableMediaUpload field={field} accept="image" label="Zmień zdjęcie" /></>;
+}
+
+export function EditableMediaUpload({ field, accept, label, positionClassName = "right-3 top-3" }: { field: string; accept: "image" | "video"; label: string; positionClassName?: string }) {
+  const content = useContext(PageContentContext);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  if (!content?.editing) return null;
+
+  async function upload(file: File | undefined) {
+    if (!file || !content || uploading) return;
+    setUploading(true);
+    setError("");
+    try {
+      const body = new FormData();
+      body.set("field", field);
+      body.set("file", accept === "image" ? (await createPhotoVariants(file)).large : file);
+      const response = await fetch("/api/admin/page-content/home/media", { method: "POST", body });
+      const result = await response.json() as { url?: string; message?: string };
+      if (!response.ok || !result.url) throw new Error(result.message || "Nie udało się wysłać pliku.");
+      content.update(field, result.url);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Nie udało się wysłać pliku.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return <div className={`absolute z-30 max-w-[calc(100%-1.5rem)] ${positionClassName}`}><label className="flex min-h-11 cursor-pointer items-center justify-center bg-orange-500 px-4 text-xs font-black uppercase text-black shadow-xl"><input type="file" accept={accept === "image" ? "image/jpeg,image/png,image/webp,image/avif" : "video/mp4,video/webm,video/quicktime"} className="sr-only" disabled={uploading} onChange={(event) => void upload(event.target.files?.[0])} />{uploading ? "Wysyłam…" : label}</label>{error ? <p role="alert" className="mt-2 bg-red-950 p-2 text-xs text-red-100">{error}</p> : null}</div>;
 }
 
 function restore(key: string, initial: ContentValues) {

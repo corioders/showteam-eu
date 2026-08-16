@@ -5,7 +5,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 ## W toku
 
 - [ ] Rozszerzyć bezpośrednią edycję strony — zakres zatwierdzony 2026-08-16:
-  - [ ] Strona główna: pozycje 1.1–1.12; bez edycji kafelków ofert bezpośrednio na stronie głównej (1.13).
+  - [x] Strona główna: pozycje 1.1–1.12; bez edycji kafelków ofert bezpośrednio na stronie głównej (1.13).
   - [ ] Wspólne elementy ofert: cały punkt 2 — okładka, publikacja, tworzenie/usuwanie/kolejność/URL, mapy, CTA i sekcje szczegółowe.
   - [ ] Podstrony Lato, Zima, Szkolenia i Noclegi: całe punkty 3–6.
   - [x] Rezerwacje: cały punkt 7 — copy, zdjęcia i kolejność sprzętu, usuwanie oraz dostępność przy sprzęcie.

@@ -1,6 +1,8 @@
 export const pageContentDefaults = {
   home: {
     heroBadge: "Sezon 2026",
+    heroVideoUrl: "/media/hero-boat-trimmed.mp4",
+    heroPosterUrl: "/media/hero-boat-poster.jpg",
     locationPorebaLabel: "Poręba",
     locationPorebaUrl: "https://www.google.com/maps/place/SHOWteam+WAKE+%26+SURF+Village/@49.97635,18.8755667,17z/",
     locationDolomityLabel: "Dolomity",
@@ -15,6 +17,7 @@ export const pageContentDefaults = {
     ticker: "Wake · Wind · Snow · Camp · Padel · Adventure · FizjoSPORT",
     legacyTagline: "Just 4 fun",
     legacyNoLimits: "no limits...",
+    legacyImageUrl: "/media/legacy-light-trails-top.jpg",
     offersEyebrow: "Wybierz swój kierunek",
     offersTitleTop: "Zrób sobie",
     offersTitleAccent: "SHOW.",
@@ -22,6 +25,7 @@ export const pageContentDefaults = {
     planEyebrow: "Plan na cały rok",
     planTitle: "Nie czekaj na dobry moment.",
     aboutImageCaption: "Jedyny taki adres na Śląsku.",
+    aboutImageUrl: "/media/summer-sailing-drone.jpg",
     aboutEyebrow: "SHOWteam od środka",
     aboutTitle: "Robimy rzeczy razem.",
     aboutBody: "Joanna i Adam SHOWtysek od lat budują aktywną społeczność wokół sportu, dobrej energii i miejsc, do których chce się wracać. Profesjonalnie, osobiście i z charakterem.",
@@ -80,13 +84,14 @@ export function parsePageContent<T extends PageContentName>(page: T, input: unkn
     const value = source[String(key)];
     if (typeof value !== "string" || !value.trim()) errors.push(`Pole „${String(key)}” nie może być puste.`);
     else if (value.length > 1200) errors.push(`Pole „${String(key)}” jest za długie.`);
-    else if (String(key).endsWith("Url") && !isSafeWebUrl(value)) errors.push("Link musi zaczynać się od https:// lub http://.");
+    else if (String(key).endsWith("Url") && !isSafeUrl(value)) errors.push("Link musi zaczynać się od https:// lub http://.");
     else data[key] = value.trim() as PageContentValues<T>[typeof key];
   }
   return errors.length ? { errors } : { data };
 }
 
-function isSafeWebUrl(value: string): boolean {
+function isSafeUrl(value: string): boolean {
+  if (/^\/[a-zA-Z0-9/_.,%+?=&-]+$/.test(value)) return true;
   try {
     return ["http:", "https:"].includes(new URL(value).protocol);
   } catch {

@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowDown, ArrowRight, ArrowUpRight, Instagram, MapPin, Music2, Waves, Wind } from "lucide-react";
@@ -11,7 +10,7 @@ import { getGallery } from "@/lib/gallery";
 import { contact } from "@/lib/offers";
 import { GalleryGrid } from "@/components/gallery-grid";
 import { HeroVideo } from "@/components/hero-video";
-import { EditableText, EditableUrl, PageContentEditor } from "@/components/editor/page-content-editor";
+import { EditableImage, EditableText, EditableUrl, PageContentEditor } from "@/components/editor/page-content-editor";
 import { getPageContent } from "@/lib/page-content";
 
 export const revalidate = false;
@@ -23,7 +22,7 @@ export default async function Home() {
   return (
     <PageContentEditor page="home" initial={content}>
       <section className="grain relative min-h-svh overflow-hidden pt-20">
-        <HeroVideo />
+        <HeroVideo src={content.heroVideoUrl} poster={content.heroPosterUrl} />
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/45 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20" />
         <div className="site-container relative flex min-h-[calc(100svh-5rem)] flex-col justify-end pb-10 pt-20 md:pb-16">
@@ -67,7 +66,7 @@ export default async function Home() {
       </div>
 
       <section className="relative isolate overflow-hidden border-b border-red-950 bg-black py-10">
-        <Image src="/media/legacy-light-trails-top.jpg" alt="" fill className="-z-10 object-contain object-center opacity-75 sm:object-cover" sizes="100vw" />
+        <EditableImage field="legacyImageUrl" alt="" className="-z-10 object-contain object-center opacity-75 sm:object-cover" sizes="100vw" />
         <div className="site-container flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <p className="font-display text-5xl font-black uppercase leading-none tracking-tight sm:text-7xl"><EditableText field="legacyTagline" /></p>
           <p className="-rotate-2 font-mono text-2xl font-black lowercase text-red-500 sm:text-4xl"><EditableText field="legacyNoLimits" /></p>
@@ -110,7 +109,7 @@ export default async function Home() {
       <section className="border-y border-white/10 bg-white/[0.03] py-20 md:py-32">
         <div className="site-container grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
           <div className="poster-cut relative min-h-[32rem] overflow-hidden">
-            <Image src="/media/summer-sailing-drone.jpg" alt="Katamaran SHOWteam na Jeziorze Łąckim" fill className="object-cover object-[40%_center]" sizes="(min-width:1024px) 42vw, 100vw" />
+            <EditableImage field="aboutImageUrl" alt="Katamaran SHOWteam na Jeziorze Łąckim" className="object-cover object-[40%_center]" sizes="(min-width:1024px) 42vw, 100vw" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
             <p className="absolute bottom-6 left-6 max-w-xs font-display text-3xl font-black uppercase leading-tight"><EditableText field="aboutImageCaption" /></p>
           </div>
