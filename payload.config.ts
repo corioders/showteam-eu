@@ -57,6 +57,11 @@ const cloudflare = isCLI || !isProduction
 
 export const database = cloudflare.env.D1;
 
+// ponytail: Payload 3.88 generates `DELETE ... WHERE false` while cleaning
+// polymorphic document locks on D1. Re-enable locks after the adapter fixes it.
+const collections = [Offers, Gallery, PageContent, Equipment, createBookingsCollection(database), StayBookings, Applications, EventInquiries, Analytics, Media, Users]
+  .map((collection) => ({ ...collection, lockDocuments: false as const }));
+
 export default buildConfig({
   admin: {
     user: Users.slug,
@@ -83,8 +88,8 @@ export default buildConfig({
       },
     },
   },
-  collections: [Offers, Gallery, PageContent, Equipment, createBookingsCollection(database), StayBookings, Applications, EventInquiries, Analytics, Media, Users],
-  globals: [EventSettings],
+  collections,
+  globals: [{ ...EventSettings, lockDocuments: false }],
   i18n: { supportedLanguages: { pl: showteamPolish }, fallbackLanguage: "pl" },
   telemetry: false,
   graphQL: { disable: true },
