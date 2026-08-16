@@ -4,15 +4,15 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## W toku
 
-- [ ] Rozszerzyć bezpośrednią edycję strony — zakres zatwierdzony 2026-08-16:
+- [x] Rozszerzyć bezpośrednią edycję strony — zakres zatwierdzony 2026-08-16:
   - [x] Strona główna: pozycje 1.1–1.12; bez edycji kafelków ofert bezpośrednio na stronie głównej (1.13).
   - [x] Wspólne elementy ofert: cały punkt 2 — okładka, publikacja, tworzenie/usuwanie/kolejność/URL, mapy, CTA i sekcje szczegółowe.
   - [x] Podstrony Lato, Zima, Szkolenia i Noclegi: całe punkty 3–6.
   - [x] Rezerwacje: cały punkt 7 — copy, zdjęcia i kolejność sprzętu, usuwanie oraz dostępność przy sprzęcie.
   - [x] Galeria: cały punkt 8 — copy, kolejność i wymiana istniejących plików.
-  - [ ] Galeria: zastąpić niedziałające suwaki kadru gotowym mobilnym edytorem open source; wdrożyć po głównym zakresie 1–9.
+  - [x] Galeria: zastąpić niedziałające suwaki kadru gotowym mobilnym edytorem open source.
   - [x] Kontakt i o nas: cały punkt 9 — dane kontaktowe, social media, mapa i treść.
-  - [ ] Poza zakresem: formularz zgłoszeniowy (10) i elementy globalne (11).
+  - Zgodnie z decyzją poza tym zakresem: formularz zgłoszeniowy (10) i elementy globalne (11).
 
 - [ ] Nowy panel bezpośrednio na stronie (`codex/new-admin`):
   - [x] `/admin` służy do logowania, a po zalogowaniu otwiera stronę w trybie edycji.

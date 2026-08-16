@@ -240,10 +240,16 @@ test("quick uploader previews the exact gallery crop", async ({ page }) => {
   });
   await page.goto("/a/dodaj/galeria");
   await page.locator('input[type="file"]').setInputFiles(path.join(process.cwd(), "public/media/windsurf.jpg"));
-  await expect(page.getByText("Kadr widoczny w galerii")).toBeVisible();
-  await page.getByLabel(/Kadr poziomy/).fill("20");
-  await page.getByLabel(/Kadr pionowy/).fill("80");
-  await expect(page.getByAltText("Podgląd kadru")).toHaveCSS("object-position", "20% 80%");
+  await expect(page.getByText(/Przeciągnij zdjęcie palcem/)).toBeVisible();
+  const cropper = page.getByLabel(/Ustaw kadr:/);
+  await expect(cropper).toBeVisible();
+  const box = await cropper.boundingBox();
+  if (!box) throw new Error("Cropper nie ma widocznego obszaru");
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 - 45, box.y + box.height / 2 + 30, { steps: 5 });
+  await page.mouse.up();
+  await expect(page.getByText(/Punkt kadru:/)).not.toHaveText("Punkt kadru: 50%, 50%");
   await page.getByRole("button", { name: "Opublikuj w galerii" }).click();
   await expect(page.getByText("Opublikowano 1 materiał.")).toBeVisible();
 });
@@ -339,6 +345,15 @@ test.describe("mobile", () => {
     await page.getByRole("button", { name: "Zapisz zmiany" }).click();
     await expect.poll(() => savedTitle).toBe("SHOWzima bez formularza");
     expect(savedDates.at(-1)).toEqual({ label: "Nowy Rok", startDate: "2027-01-02", endDate: "2027-01-09" });
+  });
+
+  test("existing gallery photos use the touch crop editor", async ({ page }) => {
+    await page.route("**/api/admin/session", (route) => route.fulfill({ json: { user: { email: "asia@showteam.eu", name: "Asia" } } }));
+    await page.goto("/galeria");
+    await page.getByRole("button", { name: /^Edytuj / }).first().click();
+    await expect(page.getByLabel(/Ustaw kadr:/)).toBeVisible();
+    await expect(page.getByText(/Przeciągnij zdjęcie palcem/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Wyśrodkuj" })).toBeVisible();
   });
 
   test("gallery images load and retain varied proportions", async ({ page }) => {

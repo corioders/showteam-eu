@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { Camera, CheckCircle2, Film, ImagePlus, LoaderCircle, Upload, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AdminSessionGate } from "@/components/admin-session-gate";
 import { createPhotoVariants } from "@/lib/client-image-variants";
+import { ImageCropEditor } from "@/components/image-crop-editor";
 
 const MAX_TOTAL_BYTES = 80 * 1024 * 1024;
 const categories = ["Lato", "Zima", "Szkolenia"] as const;
@@ -99,17 +99,11 @@ export function GalleryUploaderForm({ userName, embedded = false, onUploaded }: 
         {previews.length ? <div className="mt-5 space-y-4">{previews.map(({ id, file, url, focalX, focalY }) => {
           const video = file.type.startsWith("video/");
           return <article key={id} className="border border-white/15 bg-white/[.035] p-3">
-            <div className={`relative overflow-hidden bg-black ${video ? "aspect-video" : "aspect-square"}`}>
-              {video ? <video src={url} muted playsInline controls className="size-full object-cover" /> : <Image src={url} alt="Podgląd kadru" fill unoptimized className="object-cover" style={{ objectPosition: `${focalX}% ${focalY}%` }} />}
+            <div className={`relative overflow-hidden bg-black ${video ? "aspect-video" : ""}`}>
+              {video ? <video src={url} muted playsInline controls className="size-full object-cover" /> : <ImageCropEditor src={url} label={`Ustaw kadr: ${file.name}`} focalX={focalX} focalY={focalY} onChange={(x, y) => updateFocalPoint(id, x, y)} />}
               <span className="absolute bottom-2 left-2 rounded bg-black/75 px-2 py-1 text-[.65rem]">{video ? <Film className="size-3.5" /> : <Camera className="size-3.5" />}</span>
               <button type="button" aria-label={`Usuń ${file.name}`} onClick={() => setItems((current) => current.filter((item) => item.id !== id))} className="absolute right-2 top-2 grid size-9 place-items-center rounded-full bg-black/85"><X className="size-4" /></button>
             </div>
-            {!video ? <div className="mt-3">
-              <p className="text-sm font-bold">Kadr widoczny w galerii</p>
-              <p className="mt-1 text-xs leading-5 text-white/45">Przesuń suwaki, aż najważniejsza część zdjęcia będzie dobrze widoczna w kwadracie powyżej.</p>
-              <label className="mt-3 grid grid-cols-[4.5rem_1fr] items-center gap-3 text-xs text-white/65">Lewo–prawo<input aria-label={`Kadr poziomy: ${file.name}`} type="range" min="0" max="100" value={focalX} onChange={(event) => updateFocalPoint(id, "focalX", Number(event.target.value))} className="accent-orange-500" /></label>
-              <label className="mt-2 grid grid-cols-[4.5rem_1fr] items-center gap-3 text-xs text-white/65">Góra–dół<input aria-label={`Kadr pionowy: ${file.name}`} type="range" min="0" max="100" value={focalY} onChange={(event) => updateFocalPoint(id, "focalY", Number(event.target.value))} className="accent-orange-500" /></label>
-            </div> : null}
           </article>;
         })}</div> : null}
 
@@ -125,7 +119,7 @@ export function GalleryUploaderForm({ userName, embedded = false, onUploaded }: 
     </main>
   );
 
-  function updateFocalPoint(id: string, axis: "focalX" | "focalY", value: number) {
-    setItems((current) => current.map((item) => item.id === id ? { ...item, [axis]: value } : item));
+  function updateFocalPoint(id: string, focalX: number, focalY: number) {
+    setItems((current) => current.map((item) => item.id === id ? { ...item, focalX, focalY } : item));
   }
 }

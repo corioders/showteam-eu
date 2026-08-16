@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { LoaderCircle, Pencil, RefreshCw, RotateCcw, Save, Trash2 } from "lucide-react";
 import { useEditor } from "@/components/editor/editor-provider";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import type { GalleryPhoto } from "@/lib/gallery";
 import type { EditableGalleryItem } from "@/lib/editor-gallery";
 import { cn } from "@/lib/utils";
 import { createPhotoVariants } from "@/lib/client-image-variants";
+import { ImageCropEditor } from "@/components/image-crop-editor";
 
 export function GalleryItemEditor({ photo, className }: { photo: GalleryPhoto; className?: string }) {
   const { enabled, visible } = useEditor();
@@ -32,6 +32,14 @@ export function GalleryItemEditor({ photo, className }: { photo: GalleryPhoto; c
 
   function update<K extends keyof EditableGalleryItem>(field: K, nextValue: EditableGalleryItem[K]) {
     const next = { ...value, [field]: nextValue };
+    setValue(next);
+    localStorage.setItem(draftKey, JSON.stringify(next));
+    setMessage(null);
+    setErrors([]);
+  }
+
+  function updateCrop(focalX: number, focalY: number) {
+    const next = { ...value, focalX, focalY, mobilePosition: "same" as const };
     setValue(next);
     localStorage.setItem(draftKey, JSON.stringify(next));
     setMessage(null);
@@ -97,15 +105,14 @@ export function GalleryItemEditor({ photo, className }: { photo: GalleryPhoto; c
     <SheetContent title={`Edytuj ${photo.caption}`} description="Zmień podpis, kategorię i kadr materiału." className="overflow-y-auto sm:left-auto sm:w-[min(40rem,100vw)]">
       <form onSubmit={save} className="min-h-full px-5 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(4.5rem+env(safe-area-inset-top))] sm:px-8">
         <span className="eyebrow">Galeria</span><h2 className="mt-3 font-display text-4xl font-black uppercase leading-none">Edytuj materiał</h2>
-        <div className={`relative mt-7 overflow-hidden bg-black ${photo.type === "video" ? "aspect-video" : "aspect-square"}`}>{photo.type === "video" ? <video src={photo.src} muted playsInline className={`size-full ${value.fit === "contain" ? "object-contain" : "object-cover"}`} /> : <Image src={photo.src} alt="Podgląd kadru" fill unoptimized className={value.fit === "contain" ? "object-contain" : "object-cover"} style={{ objectPosition: `${value.focalX}% ${value.focalY}%` }} />}</div>
+        <div className={`mt-7 overflow-hidden bg-black ${photo.type === "video" ? "aspect-video" : ""}`}>{photo.type === "video" ? <video src={photo.src} muted playsInline className={`size-full ${value.fit === "contain" ? "object-contain" : "object-cover"}`} /> : value.fit === "cover" ? <ImageCropEditor src={photo.src} label={`Ustaw kadr: ${photo.caption}`} focalX={value.focalX} focalY={value.focalY} aspect={mobileAspect(value.mobileLayout)} onChange={updateCrop} /> : <div className="grid min-h-72 place-items-center px-6 text-center text-sm text-white/55">Całe zdjęcie będzie widoczne — kadrowanie nie jest potrzebne.</div>}</div>
         <label className="mt-3 flex min-h-12 cursor-pointer items-center justify-center gap-2 border border-orange-500/60 px-4 text-sm font-bold"><RefreshCw className="size-4" /><input type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm,video/quicktime" className="sr-only" disabled={saving} onChange={(event) => void replaceMedia(event.target.files?.[0])} />Wymień zdjęcie lub film</label>
         <div className="mt-7 grid gap-5">
           <Field label="Podpis"><input required minLength={2} maxLength={100} value={value.caption} onChange={(event) => update("caption", event.target.value)} /></Field>
           <Field label="Opis zdjęcia" hint="Opcjonalny opis dla osób używających czytnika ekranu."><input maxLength={180} value={value.alt} onChange={(event) => update("alt", event.target.value)} /></Field>
           <Field label="Kategoria"><select value={value.season} onChange={(event) => update("season", event.target.value as EditableGalleryItem["season"])}>{["Lato", "Zima", "Szkolenia"].map((season) => <option key={season}>{season}</option>)}</select></Field>
-          {photo.type === "image" && <><Field label="Kadr lewo–prawo"><input type="range" min={0} max={100} value={value.focalX} onChange={(event) => update("focalX", Number(event.target.value))} /></Field><Field label="Kadr góra–dół"><input type="range" min={0} max={100} value={value.focalY} onChange={(event) => update("focalY", Number(event.target.value))} /></Field></>}
           <div className="grid gap-4 sm:grid-cols-2"><Field label="Rozmiar na komputerze"><select value={value.layout} onChange={(event) => update("layout", event.target.value as EditableGalleryItem["layout"])}><option value="large">Duży</option><option value="wide">Szeroki</option><option value="tall">Wysoki</option><option value="square">Kwadrat</option></select></Field><Field label="Kształt na telefonie"><select value={value.mobileLayout} onChange={(event) => update("mobileLayout", event.target.value as EditableGalleryItem["mobileLayout"])}><option value="landscape">Poziomy</option><option value="portrait">Pionowy</option><option value="square">Kwadrat</option></select></Field></div>
-          <div className="grid gap-4 sm:grid-cols-2"><Field label="Dopasowanie"><select value={value.fit} onChange={(event) => update("fit", event.target.value as EditableGalleryItem["fit"])}><option value="cover">Wypełnij kafel</option><option value="contain">Pokaż cały materiał</option></select></Field><Field label="Kadr na telefonie"><select value={value.mobilePosition} onChange={(event) => update("mobilePosition", event.target.value as EditableGalleryItem["mobilePosition"])}><option value="same">Tak jak powyżej</option><option value="50% 20%">Góra</option><option value="50% 50%">Środek</option><option value="50% 80%">Dół</option><option value="20% 50%">Lewa strona</option><option value="80% 50%">Prawa strona</option></select></Field></div>
+          <Field label="Dopasowanie"><select value={value.fit} onChange={(event) => update("fit", event.target.value as EditableGalleryItem["fit"])}><option value="cover">Wypełnij kafel</option><option value="contain">Pokaż całe zdjęcie</option></select></Field>
           <Field label="Link do posta" hint="Opcjonalny link do Instagrama, Facebooka lub TikToka."><input type="url" placeholder="https://…" value={value.sourceUrl} onChange={(event) => update("sourceUrl", event.target.value)} /></Field>
           <div className="grid grid-cols-2 gap-3"><Button type="button" variant="outline" onClick={() => update("sortOrder", Date.now())}>Przenieś na początek</Button><Button type="button" variant="outline" onClick={() => update("sortOrder", 0)}>Przenieś na koniec</Button></div>
           <label className="flex min-h-12 items-center gap-3 border border-white/15 p-3 font-semibold"><input type="checkbox" checked={value.published} onChange={(event) => update("published", event.target.checked)} className="size-5 accent-orange-500" /> Pokaż w galerii</label>
@@ -120,3 +127,4 @@ export function GalleryItemEditor({ photo, className }: { photo: GalleryPhoto; c
 
 function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) { return <label className="editor-field"><span>{label}</span>{children}{hint && <small>{hint}</small>}</label>; }
 function toForm(photo: GalleryPhoto): EditableGalleryItem { const match = /^(\d+(?:\.\d+)?)% (\d+(?:\.\d+)?)%$/.exec(photo.objectPosition); return { caption: photo.caption, alt: photo.alt, season: photo.season, published: true, layout: photo.layout, mobileLayout: photo.mobileLayout, fit: photo.fit, mobilePosition: (["same", "50% 20%", "50% 50%", "50% 80%", "20% 50%", "80% 50%"].includes(photo.mobilePosition) ? photo.mobilePosition : "same") as EditableGalleryItem["mobilePosition"], sourceUrl: photo.sourceUrl ?? "", focalX: match ? Number(match[1]) : 50, focalY: match ? Number(match[2]) : 50, sortOrder: photo.sortOrder }; }
+function mobileAspect(layout: EditableGalleryItem["mobileLayout"]) { return layout === "landscape" ? 16 / 10 : layout === "portrait" ? 4 / 5 : 1; }
