@@ -11,38 +11,46 @@ import { getGallery } from "@/lib/gallery";
 import { contact } from "@/lib/offers";
 import { GalleryGrid } from "@/components/gallery-grid";
 import { HeroVideo } from "@/components/hero-video";
+import { EditableText, EditableUrl, PageContentEditor } from "@/components/editor/page-content-editor";
+import { getPageContent } from "@/lib/page-content";
 
 export const revalidate = false;
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {
-  const [offers, gallery] = await Promise.all([getOffers(), getGallery(8)]);
+  const [offers, gallery, pageContent] = await Promise.all([getOffers(), getGallery(8), getPageContent("home")]);
+  const content = pageContent.values;
   return (
-    <>
+    <PageContentEditor page="home" initial={content}>
       <section className="grain relative min-h-svh overflow-hidden pt-20">
         <HeroVideo />
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/45 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20" />
         <div className="site-container relative flex min-h-[calc(100svh-5rem)] flex-col justify-end pb-10 pt-20 md:pb-16">
           <div className="mb-20 flex flex-wrap items-center gap-3 md:mb-24">
-            <Badge>Sezon 2026</Badge>
+            <Badge><EditableText field="heroBadge" /></Badge>
             <nav className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold uppercase tracking-[0.15em] text-white/60" aria-label="Lokalizacje SHOWteam">
               <MapPin className="size-4 text-sky-300" aria-hidden="true" />
               {[
-                ["Poręba", contact.map],
-                ["Dolomity", "https://www.google.com/maps/search/?api=1&query=Trentino+Dolomites+Italy"],
-                ["Andorra", "https://www.google.com/maps/search/?api=1&query=Grandvalira+Andorra"],
-              ].map(([label, href], index) => <span className="contents" key={label}>{index ? <span aria-hidden="true">·</span> : null}<a href={href} target="_blank" rel="noreferrer" className="border-b border-transparent py-1 transition hover:border-sky-300 hover:text-white focus-visible:border-sky-300 focus-visible:text-white focus-visible:outline-none">{label}</a></span>)}
+                ["locationPorebaLabel", content.locationPorebaUrl],
+                ["locationDolomityLabel", content.locationDolomityUrl],
+                ["locationAndorraLabel", content.locationAndorraUrl],
+              ].map(([label, href], index) => <span className="contents" key={label}>{index ? <span aria-hidden="true">·</span> : null}<a href={href} target="_blank" rel="noreferrer" className="border-b border-transparent py-1 transition hover:border-sky-300 hover:text-white focus-visible:border-sky-300 focus-visible:text-white focus-visible:outline-none"><EditableText field={label} /></a></span>)}
             </nav>
+            <div className="grid w-full gap-2 sm:grid-cols-3">
+              <EditableUrl field="locationPorebaUrl" label="Mapa: Poręba" />
+              <EditableUrl field="locationDolomityUrl" label="Mapa: Dolomity" />
+              <EditableUrl field="locationAndorraUrl" label="Mapa: Andorra" />
+            </div>
           </div>
           <h1 className="font-display max-w-6xl text-[clamp(3.25rem,16vw,7rem)] font-black uppercase leading-[0.84] tracking-[-0.055em] md:text-[clamp(7rem,14vw,11.5rem)] md:leading-[0.82] md:tracking-[-0.065em]">
-            Zrób<br /><span className="text-orange-500">sobie SHOW.</span>
+            <EditableText field="heroTitleTop" /><br /><span className="text-orange-500"><EditableText field="heroTitleAccent" /></span>
           </h1>
           <div className="mt-8 grid gap-6 sm:grid-cols-[minmax(0,34rem)_auto] sm:items-end">
-            <p className="max-w-xl border-l-2 border-orange-500 pl-5 text-base leading-7 text-white/75 md:text-lg">Sport, podróże i ludzie z energią. Od własnej plaży nad Jeziorem Łąckim po śnieg w Dolomitach.</p>
+            <p className="max-w-xl border-l-2 border-orange-500 pl-5 text-base leading-7 text-white/75 md:text-lg"><EditableText field="heroDescription" multiline /></p>
             <div className="flex flex-wrap gap-3 sm:justify-end">
-              <Button asChild size="lg"><Link href="#oferta">Poznaj ofertę <ArrowDown className="size-4" /></Link></Button>
-              <Button asChild variant="outline" size="lg"><Link href="/kontakt">Kontakt i o nas</Link></Button>
+              <Button asChild size="lg"><Link href="#oferta"><EditableText field="heroPrimaryCta" /> <ArrowDown className="size-4" /></Link></Button>
+              <Button asChild variant="outline" size="lg"><Link href="/kontakt"><EditableText field="heroSecondaryCta" /></Link></Button>
             </div>
           </div>
         </div>
@@ -52,7 +60,7 @@ export default async function Home() {
         <div className="marquee-track flex w-max items-center gap-8 whitespace-nowrap font-display text-xl font-black uppercase tracking-tight">
           {[0, 1].map((copy) => (
             <div className="flex items-center gap-8" key={copy} aria-hidden={copy === 1}>
-              <span>Wake</span><Waves className="size-5" /><span>Wind</span><Wind className="size-5" /><span>Snow</span><span className="text-orange-600">●</span><span>Camp</span><span>Padel</span><span className="text-orange-600">●</span><span>Adventure</span><span>FizjoSPORT</span><span className="text-orange-600">●</span>
+              <span><EditableText field="ticker" /></span><Waves className="size-5" /><Wind className="size-5" /><span className="text-orange-600">●</span>
             </div>
           ))}
         </div>
@@ -61,16 +69,16 @@ export default async function Home() {
       <section className="relative isolate overflow-hidden border-b border-red-950 bg-black py-10">
         <Image src="/media/legacy-light-trails-top.jpg" alt="" fill className="-z-10 object-contain object-center opacity-75 sm:object-cover" sizes="100vw" />
         <div className="site-container flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <p className="font-display text-5xl font-black uppercase leading-none tracking-tight sm:text-7xl">Just <span className="text-orange-500">4</span> fun</p>
-          <p className="-rotate-2 font-mono text-2xl font-black lowercase text-red-500 sm:text-4xl">no limits...</p>
+          <p className="font-display text-5xl font-black uppercase leading-none tracking-tight sm:text-7xl"><EditableText field="legacyTagline" /></p>
+          <p className="-rotate-2 font-mono text-2xl font-black lowercase text-red-500 sm:text-4xl"><EditableText field="legacyNoLimits" /></p>
         </div>
       </section>
 
       <section id="oferta" className="py-20 md:py-32">
         <div className="site-container">
           <div className="mb-12 grid gap-6 md:grid-cols-[1fr_28rem] md:items-end">
-            <div><span className="eyebrow">Wybierz swój kierunek</span><h2 className="font-display mt-4 text-6xl font-black uppercase leading-[0.87] tracking-[-0.045em] sm:text-8xl">Zrób sobie<br /><span className="text-sky-300">SHOW.</span></h2></div>
-            <p className="text-base leading-7 text-white/55">Nie wybieramy między sportem a odpoczynkiem. Łączymy je w programach dla rodzin, dzieci, grup i dorosłych, którzy nadal chcą próbować nowych rzeczy.</p>
+            <div><span className="eyebrow"><EditableText field="offersEyebrow" /></span><h2 className="font-display mt-4 text-6xl font-black uppercase leading-[0.87] tracking-[-0.045em] sm:text-8xl"><EditableText field="offersTitleTop" /><br /><span className="text-sky-300"><EditableText field="offersTitleAccent" /></span></h2></div>
+            <p className="text-base leading-7 text-white/55"><EditableText field="offersDescription" multiline /></p>
           </div>
           <div className="grid gap-4 lg:grid-cols-12 lg:gap-5">
             {offers.map((offer, index) => (
@@ -84,9 +92,9 @@ export default async function Home() {
             <aside className="poster-cut relative flex min-h-[34rem] flex-col justify-between overflow-hidden bg-sky-300 p-7 text-neutral-950 sm:p-10 lg:col-span-12">
               <div className="absolute -right-8 -top-10 font-display text-[13rem] font-black leading-none text-black/[0.06]" aria-hidden="true">!</div>
               <div className="relative flex items-center justify-between border-b border-black/25 pb-4 font-mono text-[0.68rem] font-bold uppercase tracking-[0.18em]">
-                <span>Plan na cały rok</span><span>04 / 04</span>
+                <span><EditableText field="planEyebrow" /></span><span>04 / 04</span>
               </div>
-              <p className="relative font-display max-w-2xl text-5xl font-black uppercase leading-[0.88] tracking-[-0.04em] sm:text-7xl">Nie czekaj<br />na dobry<br /><span className="text-orange-600">moment.</span></p>
+              <p className="relative font-display max-w-2xl text-5xl font-black uppercase leading-[0.88] tracking-[-0.04em] sm:text-7xl"><EditableText field="planTitle" multiline /></p>
               <nav className="relative grid border-l border-t border-black/25 sm:grid-cols-4" aria-label="Skróty do oferty">
                 {[{ href: "/oferta/lato", label: "Woda" }, { href: "/oferta/zima", label: "Śnieg" }, { href: "/oferta/szkolenia", label: "Szkolenia" }, { href: "/oferta/noclegi-nad-woda", label: "Noclegi" }].map((item, index) => (
                   <Link key={item.href} href={item.href} className="flex items-center justify-between border-b border-r border-black/25 p-4 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:bg-black hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black">
@@ -104,13 +112,13 @@ export default async function Home() {
           <div className="poster-cut relative min-h-[32rem] overflow-hidden">
             <Image src="/media/summer-sailing-drone.jpg" alt="Katamaran SHOWteam na Jeziorze Łąckim" fill className="object-cover object-[40%_center]" sizes="(min-width:1024px) 42vw, 100vw" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
-            <p className="absolute bottom-6 left-6 max-w-xs font-display text-3xl font-black uppercase leading-tight">Jedyny taki adres na Śląsku.</p>
+            <p className="absolute bottom-6 left-6 max-w-xs font-display text-3xl font-black uppercase leading-tight"><EditableText field="aboutImageCaption" /></p>
           </div>
           <div>
-            <span className="eyebrow">SHOWteam od środka</span>
-            <h2 className="font-display mt-5 text-6xl font-black uppercase leading-[0.87] tracking-[-0.04em] sm:text-8xl">Robimy<br />rzeczy <span className="text-orange-500">razem.</span></h2>
-            <p className="mt-8 max-w-2xl text-lg leading-8 text-white/60">Joanna i Adam SHOWtysek od lat budują aktywną społeczność wokół sportu, dobrej energii i miejsc, do których chce się wracać. Profesjonalnie, osobiście i z charakterem.</p>
-            <Button asChild variant="outline" className="mt-8"><Link href="/kontakt">Poznaj SHOWteam <ArrowRight className="size-4" /></Link></Button>
+            <span className="eyebrow"><EditableText field="aboutEyebrow" /></span>
+            <h2 className="font-display mt-5 text-6xl font-black uppercase leading-[0.87] tracking-[-0.04em] sm:text-8xl"><EditableText field="aboutTitle" multiline /></h2>
+            <p className="mt-8 max-w-2xl text-lg leading-8 text-white/60"><EditableText field="aboutBody" multiline /></p>
+            <Button asChild variant="outline" className="mt-8"><Link href="/kontakt"><EditableText field="aboutCta" /> <ArrowRight className="size-4" /></Link></Button>
           </div>
         </div>
       </section>
@@ -118,18 +126,18 @@ export default async function Home() {
       <section className="py-20 md:py-32">
         <div className="gallery-container">
           <div className="mb-10 flex flex-col items-start gap-6 sm:flex-row sm:items-end sm:justify-between">
-            <div><span className="eyebrow">Prosto z akcji</span><h2 className="font-display mt-3 text-5xl font-black uppercase tracking-tight sm:text-7xl">#showteam.eu</h2></div>
+            <div><span className="eyebrow"><EditableText field="galleryEyebrow" /></span><h2 className="font-display mt-3 text-5xl font-black uppercase tracking-tight sm:text-7xl"><EditableText field="galleryTitle" /></h2></div>
             <div className="flex gap-2">
               <Button asChild variant="outline" size="icon"><a href={contact.instagram} target="_blank" rel="noreferrer" aria-label="Instagram SHOWteam"><Instagram className="size-5" /></a></Button>
               <Button asChild variant="outline" size="icon"><a href={contact.tiktok} target="_blank" rel="noreferrer" aria-label="TikTok SHOWteam"><Music2 className="size-5" /></a></Button>
             </div>
           </div>
           <GalleryGrid key={`${gallery[0]?.id ?? "empty"}-${gallery.length}`} photos={gallery.slice(0, 8)} />
-          <div className="mt-7 flex flex-wrap gap-3"><Button asChild variant="outline"><Link href="/galeria">Otwórz całą galerię</Link></Button><Button asChild variant="ghost"><a href={contact.instagram} target="_blank" rel="noreferrer">Instagram</a></Button><Button asChild variant="ghost"><a href={contact.tiktok} target="_blank" rel="noreferrer">TikTok</a></Button></div>
+          <div className="mt-7 flex flex-wrap gap-3"><Button asChild variant="outline"><Link href="/galeria"><EditableText field="galleryCta" /></Link></Button><Button asChild variant="ghost"><a href={contact.instagram} target="_blank" rel="noreferrer">Instagram</a></Button><Button asChild variant="ghost"><a href={contact.tiktok} target="_blank" rel="noreferrer">TikTok</a></Button></div>
         </div>
       </section>
 
-      <ContactCta />
-    </>
+      <ContactCta title={<EditableText field="finalCtaTitle" />} />
+    </PageContentEditor>
   );
 }

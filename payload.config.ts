@@ -15,6 +15,7 @@ import type { GetPlatformProxyOptions } from "wrangler";
 import { Media } from "@/collections/Media";
 import { Gallery } from "@/collections/Gallery";
 import { Offers } from "@/collections/Offers";
+import { PageContent } from "@/collections/PageContent";
 import { Users } from "@/collections/Users";
 import { seedOffers } from "@/lib/seed-offers";
 import { seedGallery } from "@/lib/seed-gallery";
@@ -81,7 +82,7 @@ export default buildConfig({
       },
     },
   },
-  collections: [Offers, Gallery, Equipment, createBookingsCollection(database), Applications, Analytics, Media, Users],
+  collections: [Offers, Gallery, PageContent, Equipment, createBookingsCollection(database), Applications, Analytics, Media, Users],
   i18n: { supportedLanguages: { pl: showteamPolish }, fallbackLanguage: "pl" },
   telemetry: false,
   graphQL: { disable: true },

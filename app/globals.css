@@ -83,6 +83,59 @@ button {
   object-position: var(--mobile-position, 50% 50%);
 }
 
+.inline-page-content {
+  min-width: 3ch;
+  max-width: 100%;
+  border: 1px dashed rgb(251 146 60 / 0.75);
+  background: rgb(0 0 0 / 0.35);
+  padding: 0.08em 0.16em;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  outline: none;
+}
+
+.inline-page-content:focus {
+  border-style: solid;
+  border-color: rgb(249 115 22);
+  box-shadow: 0 0 0 2px rgb(249 115 22 / 0.35);
+}
+
+textarea.inline-page-content {
+  display: block;
+  width: 100%;
+  resize: vertical;
+}
+
+.inline-page-url {
+  display: grid;
+  gap: .25rem;
+  border: 1px solid rgb(251 146 60 / .55);
+  background: rgb(10 10 10 / .92);
+  padding: .5rem;
+  color: white;
+  font: 700 .68rem/1.2 var(--font-mono), monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.inline-page-url input {
+  min-width: 0;
+  border: 1px solid rgb(255 255 255 / .25);
+  background: #171717;
+  padding: .6rem;
+  color: white;
+  font: 500 .8rem/1.2 system-ui, sans-serif;
+  text-transform: none;
+}
+
+.inline-page-url input:focus {
+  outline: 2px solid #f97316;
+  outline-offset: 2px;
+}
+
 @media (min-width: 768px) {
   .gallery-image { object-position: var(--desktop-position, 50% 50%); }
 }

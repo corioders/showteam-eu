@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function ContactCta({ title = "Masz ochotę na SHOW?", applicationOffer }: { title?: string; applicationOffer?: string }) {
+export function ContactCta({ title = "Masz ochotę na SHOW?", applicationOffer }: { title?: React.ReactNode; applicationOffer?: string }) {
   return (
     <section className="bg-orange-500 py-16 text-neutral-950 md:py-24">
       <div className="site-container grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">

@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     offers: Offer;
     gallery: Gallery;
+    'page-content': PageContent;
     equipment: Equipment;
     bookings: Booking;
     applications: Application;
@@ -84,6 +85,7 @@ export interface Config {
   collectionsSelect: {
     offers: OffersSelect<false> | OffersSelect<true>;
     gallery: GallerySelect<false> | GallerySelect<true>;
+    'page-content': PageContentSelect<false> | PageContentSelect<true>;
     equipment: EquipmentSelect<false> | EquipmentSelect<true>;
     bookings: BookingsSelect<false> | BookingsSelect<true>;
     applications: ApplicationsSelect<false> | ApplicationsSelect<true>;
@@ -252,6 +254,23 @@ export interface Gallery {
   sortOrder: number;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "page-content".
+ */
+export interface PageContent {
+  id: number;
+  page: 'home' | 'contact' | 'gallery' | 'reservations';
+  content:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
 }
 /**
  * Jedyne miejsce zarządzania wynajmem. To, co ustawisz tutaj, automatycznie pojawi się na stronie Rezerwacje, w dostępności i kalendarzu.
@@ -430,6 +449,10 @@ export interface PayloadLockedDocument {
         value: number | Gallery;
       } | null)
     | ({
+        relationTo: 'page-content';
+        value: number | PageContent;
+      } | null)
+    | ({
         relationTo: 'equipment';
         value: number | Equipment;
       } | null)
@@ -555,6 +578,14 @@ export interface GallerySelect<T extends boolean = true> {
   sortOrder?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "page-content_select".
+ */
+export interface PageContentSelect<T extends boolean = true> {
+  page?: T;
+  content?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
