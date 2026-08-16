@@ -4,6 +4,8 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## W toku
 
+- [ ] Naprawić produkcyjny błąd 500 podczas bezpośredniego zapisu treści strony i potwierdzić zapis z przeglądarki.
+
 - [ ] Przebudowa WAKE & SURF Village — zakres roboczy w `USTALENIA-WAKE-SURF.md`:
   - [x] Usunąć Aktualności oraz integrację i testowe dane Google Calendar.
   - [x] Zastąpić publiczny model sprzętu katalogiem aktywności bez cen.

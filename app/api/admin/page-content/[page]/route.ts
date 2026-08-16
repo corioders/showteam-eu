@@ -22,7 +22,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ page
     revalidatePageContent(page);
     return NextResponse.json({ message: "Zmiany są już widoczne na stronie." });
   } catch (error) {
-    payload.logger.error({ err: error, msg: "Inline page content update failed" });
+    console.error("Inline page content update failed", error instanceof Error ? {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    } : String(error));
     return NextResponse.json({ message: "Nie udało się zapisać zmian. Treść nadal jest w formularzu." }, { status: 500 });
   }
 }
