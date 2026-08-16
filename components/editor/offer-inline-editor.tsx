@@ -238,7 +238,7 @@ export function OfferText({ field, fallback, multiline = false }: { field: strin
   const editor = useContext(OfferEditingContext);
   const value = editor?.value.pageContent[field] ?? fallback;
   if (!editor?.editing) return <>{value}</>;
-  const props = { value, onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => editor.updatePageContent(field, event.target.value), className: "inline-page-content", "aria-label": `Edytuj: ${fallback.slice(0, 40)}` };
+  const props = { value, onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => editor.updatePageContent(field, event.target.value), onClick: (event: React.MouseEvent) => event.stopPropagation(), onKeyDown: (event: React.KeyboardEvent) => event.stopPropagation(), className: "inline-page-content", "aria-label": `Edytuj: ${fallback.slice(0, 40)}` };
   return multiline ? <textarea {...props} rows={3} /> : <input {...props} />;
 }
 
@@ -246,6 +246,13 @@ export function OfferLocationLink({ label }: { label?: string }) {
   const editor = useContext(OfferEditingContext);
   if (!editor) return null;
   return <section className="border-b border-white/10 bg-white/[.025]" aria-label="Dojazd"><div className="site-container flex flex-col gap-3 py-5 sm:flex-row sm:items-center"><span className="eyebrow">Dojazd</span><a href={editor.value.mapUrl} target="_blank" rel="noreferrer" className="group flex min-h-12 flex-1 items-center gap-3 border border-white/15 px-4 text-sm font-bold transition hover:border-orange-500 hover:bg-orange-500 hover:text-black"><MapPin className="size-5 shrink-0 text-orange-500 group-hover:text-black" /><span>{label ?? editor.value.location}</span><ExternalLink className="ml-auto size-4 opacity-50" /></a>{editor.editing ? <label className="min-w-0 flex-1"><span className="mb-1 block text-xs font-bold uppercase text-white/55">Link do mapy</span><input type="url" className="inline-editor-list-input" value={editor.value.mapUrl} onChange={(event) => editor.update("mapUrl", event.target.value)} /></label> : null}</div></section>;
+}
+
+export function OfferAdditionalLocation({ label, field, fallback }: { label: string; field: string; fallback: string }) {
+  const editor = useContext(OfferEditingContext);
+  if (!editor) return null;
+  const href = editor.value.pageContent[field] ?? fallback;
+  return <section className="border-b border-white/10 bg-white/[.025]" aria-label="Dodatkowy dojazd"><div className="site-container flex flex-col gap-3 py-5 sm:flex-row sm:items-center"><a href={href} target="_blank" rel="noreferrer" className="group flex min-h-12 flex-1 items-center gap-3 border border-white/15 px-4 text-sm font-bold transition hover:border-orange-500 hover:bg-orange-500 hover:text-black"><MapPin className="size-5 shrink-0 text-orange-500 group-hover:text-black" /><span>{label}</span><ExternalLink className="ml-auto size-4 opacity-50" /></a>{editor.editing ? <label className="min-w-0 flex-1"><span className="mb-1 block text-xs font-bold uppercase text-white/55">Link do mapy: {label}</span><input type="url" className="inline-editor-list-input" value={href} onChange={(event) => editor.updatePageContent(field, event.target.value)} /></label> : null}</div></section>;
 }
 
 export function OfferCtaTitle() {
