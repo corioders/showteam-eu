@@ -15,6 +15,11 @@ type Field = keyof Values;
 type Errors = Partial<Record<Field, string>>;
 const draftKey = "showteam:application-draft:v1";
 const empty: Values = { category: "", offer: "", firstName: "", lastName: "", birthDate: "", address: "", email: "", participantEmail: "", phone: "", discipline: "", level: "", transport: "", notes: "", invoiceRequested: false, invoiceCompany: "", invoiceNip: "", invoiceStreet: "", invoicePostalCode: "", invoiceCity: "", privacyConsent: false, accuracyConfirmed: false, newsletterConsent: false };
+const upcomingByCategory: Record<ApplicationCategory, string[]> = {
+  Lato: ["WAKE & SURF Village · Poręba", "Garda", "Andorra lato"],
+  Zima: ["Trentino", "Andorra", "Lodowiec · listopad"],
+  Szkolenia: ["Sternik motorowodny", "Żeglarz jachtowy", "Operator radiowy"],
+};
 
 function onlyApplicableDetails(values: Values): Values {
   if (values.category === "Szkolenia") return { ...values, discipline: "", level: "", transport: "" };
@@ -131,9 +136,15 @@ export function ApplicationForm({ groups, initialOffer }: { groups: ApplicationO
   const selectedGroup = groups.find((group) => group.category === values.category);
   const showSportDetails = applicationHasSportDetails(values.category);
   const disciplineOptions = applicationDisciplinesForCategory(values.category);
-  const options = selectedGroup?.offers.flatMap((offer) => offer.dates.length
+  const datedOptions = selectedGroup?.offers.flatMap((offer) => offer.dates.length
     ? offer.dates.map((date) => applicationOfferValue(offer.title, date))
     : [`${offer.title} — termin do ustalenia`]) ?? [];
+  const options = values.category ? [
+    ...datedOptions,
+    ...upcomingByCategory[values.category]
+      .filter((name) => !datedOptions.some((option) => option.toLocaleLowerCase("pl").includes(name.toLocaleLowerCase("pl"))))
+      .map((name) => `${name} — terminy wkrótce`),
+  ] : datedOptions;
 
   const inputClass = (field: Field) => `mt-2 w-full border bg-white/[.04] px-4 py-3 text-base text-white outline-none ${errors[field] ? "border-red-500" : "border-white/20 focus:border-orange-500"}`;
   const error = (field: Field) => errors[field] ? <span className="mt-2 block text-sm font-semibold text-red-300">{errors[field]}</span> : null;

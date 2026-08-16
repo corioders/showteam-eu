@@ -232,6 +232,7 @@ export function OfferDateList({ offer, variant = "generic" }: { offer: Offer; va
 
   return (
     <div className={container}>
+      {!editing && dates.length === 0 ? <p className="p-6 text-lg font-bold text-white/70">Terminy wkrótce</p> : null}
       {dates.map((date, index) => {
         const rowClass = editing ? "flex items-start gap-3 border-b border-r border-white/15 p-4" : variant === "summer" ? "grid grid-cols-[3rem_1fr_auto] items-center gap-4 border-b border-white/10 px-5 py-6 last:border-0 sm:grid-cols-[4rem_1fr_auto] sm:px-8" : variant === "winter" ? "flex min-h-24 items-center gap-4 border-b border-r border-white/15 p-5" : "flex items-center gap-3 border-b border-white/10 p-4 last:border-0";
         return <div key={index} className={rowClass}>

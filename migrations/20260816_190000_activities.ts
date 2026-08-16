@@ -31,7 +31,7 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
   await insertActivity(db, "Łódź wiosłowa", "lodz-wioslowa", "Spokojne pływanie łodzią wiosłową po Jeziorze Łąckim.", "Woda", 120, "calm");
   await insertActivity(db, "SUP z osadnią", "sup-z-osadnia", "Stabilny SUP z osadnią dla wygodnego pływania po jeziorze.", "Woda", 130, "calm");
   await insertActivity(db, "Motocykl", "motocykl", "Jazda motocyklem — wymagania i szczegóły potwierdza obsługa.", "Ląd", 140, "any");
-  await insertActivity(db, "Skuter elektryczny szosowy", "skuter-elektryczny-szosowy", "Elektryczny skuter szosowy na wycieczki po okolicy.", "Ląd", 150, "any");
+  await insertActivity(db, "Skutery elektryczne szosowe", "skuter-elektryczny-szosowy", "Elektryczne skutery szosowe na wycieczki po okolicy.", "Ląd", 150, "any");
   await insertActivity(db, "Tenis", "tenis", "Rezerwacja wspólnego kortu do tenisa w WAKE & SURF Village.", "Ląd", 160, "any", "kort");
   await insertActivity(db, "Sauna fińska", "sauna-finska", "Prywatna sauna fińska dla maksymalnie czterech osób.", "Inne", 170, "any");
 

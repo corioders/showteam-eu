@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowDown, ArrowRight, ArrowUpRight, Instagram, MapPin, Music2, Waves, Wind } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUpRight, Facebook, Instagram, MapPin, Music2, Plane, Waves, Wind } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContactCta } from "@/components/contact-cta";
@@ -122,17 +122,25 @@ export default async function Home() {
         </div>
       </section>
 
+      <section className="border-b border-white/10 py-20 md:py-32">
+        <div className="site-container grid gap-10 lg:grid-cols-[.8fr_1.2fr]">
+          <div><span className="eyebrow"><EditableText field="partnersEyebrow" /></span><h2 className="font-display mt-4 text-6xl font-black uppercase leading-[.87] tracking-tight sm:text-8xl"><EditableText field="partnersTitle" multiline /></h2><p className="mt-7 max-w-xl leading-7 text-white/55"><EditableText field="partnersBody" multiline /></p></div>
+          <article className="poster-cut flex min-h-80 flex-col justify-between bg-sky-300 p-7 text-black sm:p-10"><Plane className="size-10" /><div><h3 className="font-display text-4xl font-black uppercase sm:text-6xl"><EditableText field="droneTitle" /></h3><p className="mt-5 max-w-2xl leading-7 text-black/65"><EditableText field="droneBody" multiline /></p><Button asChild className="mt-7 bg-black text-white hover:bg-black/80"><a href="mailto:biuro@showteam.eu?subject=Filmowanie%20dronem"><EditableText field="droneCta" /> <ArrowUpRight className="size-4" /></a></Button></div></article>
+        </div>
+      </section>
+
       <section className="py-20 md:py-32">
         <div className="gallery-container">
           <div className="mb-10 flex flex-col items-start gap-6 sm:flex-row sm:items-end sm:justify-between">
             <div><span className="eyebrow"><EditableText field="galleryEyebrow" /></span><h2 className="font-display mt-3 text-5xl font-black uppercase tracking-tight sm:text-7xl"><EditableText field="galleryTitle" /></h2></div>
             <div className="flex gap-2">
               <Button asChild variant="outline" size="icon"><a href={contact.instagram} target="_blank" rel="noreferrer" aria-label="Instagram SHOWteam"><Instagram className="size-5" /></a></Button>
+              <Button asChild variant="outline" size="icon"><a href={contact.facebook} target="_blank" rel="noreferrer" aria-label="Facebook SHOWteam"><Facebook className="size-5" /></a></Button>
               <Button asChild variant="outline" size="icon"><a href={contact.tiktok} target="_blank" rel="noreferrer" aria-label="TikTok SHOWteam"><Music2 className="size-5" /></a></Button>
             </div>
           </div>
           <GalleryGrid key={`${gallery[0]?.id ?? "empty"}-${gallery.length}`} photos={gallery.slice(0, 8)} />
-          <div className="mt-7 flex flex-wrap gap-3"><Button asChild variant="outline"><Link href="/galeria"><EditableText field="galleryCta" /></Link></Button><Button asChild variant="ghost"><a href={contact.instagram} target="_blank" rel="noreferrer">Instagram</a></Button><Button asChild variant="ghost"><a href={contact.tiktok} target="_blank" rel="noreferrer">TikTok</a></Button></div>
+          <div className="mt-7 flex flex-wrap gap-3"><Button asChild variant="outline"><Link href="/galeria"><EditableText field="galleryCta" /></Link></Button><Button asChild variant="ghost"><a href={contact.instagram} target="_blank" rel="noreferrer">Instagram</a></Button><Button asChild variant="ghost"><a href={contact.facebook} target="_blank" rel="noreferrer">Facebook</a></Button><Button asChild variant="ghost"><a href={contact.tiktok} target="_blank" rel="noreferrer">TikTok</a></Button></div>
         </div>
       </section>
 

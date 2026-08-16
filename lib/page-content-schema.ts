@@ -1,6 +1,6 @@
 export const pageContentDefaults = {
   home: {
-    heroBadge: "Sezon 2026",
+    heroBadge: "Sezon 2026/2027",
     heroVideoUrl: "/media/hero-boat-trimmed.mp4",
     heroPosterUrl: "/media/hero-boat-poster.jpg",
     locationPorebaLabel: "Poręba",
@@ -30,6 +30,12 @@ export const pageContentDefaults = {
     aboutTitle: "Robimy rzeczy razem.",
     aboutBody: "Joanna i Adam SHOWtysek od lat budują aktywną społeczność wokół sportu, dobrej energii i miejsc, do których chce się wracać. Profesjonalnie, osobiście i z charakterem.",
     aboutCta: "Poznaj SHOWteam",
+    partnersEyebrow: "Partnerstwa",
+    partnersTitle: "Razem robimy więcej.",
+    partnersBody: "Współpracujemy ze specjalistami, którzy uzupełniają aktywne projekty SHOWteam.",
+    droneTitle: "Filmowanie dronem · Tomek",
+    droneBody: "Ujęcia z powietrza dla sportu, wyjazdów, wydarzeń i marek. Szczegóły współpracy ustalamy indywidualnie.",
+    droneCta: "Zapytaj o filmowanie",
     galleryEyebrow: "Prosto z akcji",
     galleryTitle: "#showteam.eu",
     galleryCta: "Otwórz całą galerię",
@@ -44,7 +50,7 @@ export const pageContentDefaults = {
     adamName: "Adam SHOWtysek",
     adamPhone: "+48 512 280 555",
     email: "biuro@showteam.eu",
-    locationName: "Wake & Surf Village",
+    locationName: "WAKE & SURF Village",
     address: "Poręba, ul. Nad Zaporą 21",
     mapUrl: "https://www.google.com/maps/place/SHOWteam+WAKE+%26+SURF+Village/@49.97635,18.8755667,17z/",
     instagramUrl: "https://www.instagram.com/showteam.eu/",
@@ -53,7 +59,7 @@ export const pageContentDefaults = {
     aboutEyebrow: "O nas",
     aboutTitle: "Asia, Adam i SHOWteam.",
     aboutBody1: "SHOWteam tworzą Joanna i Adam SHOWtysek. Od lat łączą ludzi wokół sportów wodnych, zimowych wyjazdów i aktywnego czasu spędzanego razem.",
-    aboutBody2: "Naszą bazą jest Wake & Surf Village nad Jeziorem Łąckim w Porębie. Stąd ruszamy na wodę, szkolenia, obozy i wyjazdy w góry — osobiście prowadzimy każdy projekt i pozostajemy w bezpośrednim kontakcie z uczestnikami.",
+    aboutBody2: "Naszą bazą jest WAKE & SURF Village nad Jeziorem Łąckim w Porębie. Stąd ruszamy na wodę, szkolenia, obozy i wyjazdy w góry — osobiście prowadzimy każdy projekt i pozostajemy w bezpośrednim kontakcie z uczestnikami.",
   },
   gallery: {
     eyebrow: "Bez stocków. Prosto z akcji.",
@@ -61,7 +67,7 @@ export const pageContentDefaults = {
     description: "Jezioro Łąckie, Dolomity i Andorra — obozy, wyjazdy i codzienność SHOWteam uchwycone w akcji.",
   },
   reservations: {
-    eyebrow: "Wake & Surf Village · Poręba",
+    eyebrow: "WAKE & SURF Village · Poręba",
     title: "Wybierz aktywność.\nZarezerwuj termin.",
     description: "Wybierz aktywność i wolny termin. Asia potwierdzi rezerwację, a jeśli potrzebujesz — zapewnimy instruktora.",
   },

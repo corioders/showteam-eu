@@ -15,7 +15,7 @@ const equipment = [
   ["Łódź wiosłowa", "lodz-wioslowa", "Spokojne pływanie łodzią wiosłową po Jeziorze Łąckim.", "Woda"],
   ["SUP z osadnią", "sup-z-osadnia", "Stabilny SUP z osadnią dla wygodnego pływania po jeziorze.", "Woda"],
   ["Motocykl", "motocykl", "Jazda motocyklem — wymagania i szczegóły potwierdza obsługa.", "Ląd"],
-  ["Skuter elektryczny szosowy", "skuter-elektryczny-szosowy", "Elektryczny skuter szosowy na wycieczki po okolicy.", "Ląd"],
+  ["Skutery elektryczne szosowe", "skuter-elektryczny-szosowy", "Elektryczne skutery szosowe na wycieczki po okolicy.", "Ląd"],
   ["Tenis", "tenis", "Rezerwacja wspólnego kortu do tenisa w WAKE & SURF Village.", "Ląd"],
   ["Sauna fińska", "sauna-finska", "Prywatna sauna fińska dla maksymalnie czterech osób.", "Inne"],
 ] as const;
