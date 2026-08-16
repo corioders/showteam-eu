@@ -1,8 +1,7 @@
 import { getPayload } from "payload";
-import config, { database, googleCalendarEnv } from "@payload-config";
+import config, { database } from "@payload-config";
 import { tvCookie, tvCookieName, verifyTvToken } from "@/lib/tv-auth";
 import { ensureOperationalTables } from "@/lib/operational-tables";
-import { syncGoogleCalendar } from "@/lib/google-calendar";
 
 function cookieValue(cookieHeader: string | null, name: string): string | undefined {
   return cookieHeader?.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${name}=`))?.slice(name.length + 1);
@@ -15,9 +14,6 @@ export async function GET(request: Request) {
   const tvToken = cookieValue(request.headers.get("cookie"), tvCookieName);
   const tvAuthorized = await verifyTvToken(database, tvToken);
   if (!user && !tvAuthorized) return Response.json({ error: "Brak dostępu." }, { status: 401 });
-
-  try { await syncGoogleCalendar(database, googleCalendarEnv); }
-  catch (error) { payload.logger.error({ err: error, msg: "Google Calendar background sync failed" }); }
 
   const url = new URL(request.url);
   const start = (url.searchParams.get("start") || "0000-01-01").slice(0, 10);
@@ -41,9 +37,6 @@ export async function GET(request: Request) {
     WHERE availability_hours.rule_type = 'date' AND availability_hours.booking_date >= ? AND availability_hours.booking_date < ?
     ORDER BY availability_hours.booking_date, availability_hours.start_time`)
     .bind(start, end).all<{ id: string; booking_date: string; start_time: string; end_time: string; name: string | null; equipment_name: string | null }>();
-  const googleEvents = await database.prepare(`SELECT id, summary, description, location, start_value, end_value, all_day, html_link
-    FROM google_calendar_events WHERE substr(start_value, 1, 10) < ? AND substr(end_value, 1, 10) >= ? ORDER BY start_value`)
-    .bind(end, start).all<{ id: string; summary: string; description: string | null; location: string | null; start_value: string; end_value: string; all_day: number; html_link: string | null }>();
   const bookingEvents = result.docs.map((booking) => {
     const equipment = typeof booking.equipment === "object" ? booking.equipment : null;
     return {
@@ -74,18 +67,7 @@ export async function GET(request: Request) {
     textColor: "#ffffff",
     extendedProps: { kind: "availability", reference: "GODZINY BAZY", phone: "", email: "", status: "availability", notes: exception.name || "Wyjątkowe godziny wynajmu w tym dniu." },
   }));
-  const externalEvents = googleEvents.results.map((event) => ({
-    id: `google:${event.id}`,
-    title: `PLAN BAZY · ${event.summary}`,
-    start: event.start_value,
-    end: event.end_value,
-    allDay: Boolean(event.all_day),
-    backgroundColor: "#7c3aed",
-    borderColor: "#a78bfa",
-    textColor: "#ffffff",
-    extendedProps: { kind: "google", reference: "GOOGLE CALENDAR", phone: "", email: "", status: "planned", notes: [event.location, event.description].filter(Boolean).join("\n"), url: event.html_link || "" },
-  }));
-  const response = Response.json([...bookingEvents, ...blockEvents, ...exceptionEvents, ...externalEvents], { headers: { "Cache-Control": "no-store" } });
+  const response = Response.json([...bookingEvents, ...blockEvents, ...exceptionEvents], { headers: { "Cache-Control": "no-store" } });
   if (tvAuthorized && tvToken) response.headers.append("Set-Cookie", tvCookie(tvToken));
   return response;
 }

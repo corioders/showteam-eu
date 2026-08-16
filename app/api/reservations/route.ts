@@ -1,9 +1,8 @@
 import { getPayload } from "payload";
-import config, { database, googleCalendarEnv } from "@payload-config";
+import config, { database } from "@payload-config";
 import { bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone, resolveBookingHours, todayInPoland, type AvailabilityHoursRule } from "@/lib/reservations";
 import { ensureOperationalTables } from "@/lib/operational-tables";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { syncGoogleCalendar } from "@/lib/google-calendar";
 
 type ReservationInput = {
   equipmentId?: unknown;
@@ -102,7 +101,5 @@ export async function POST(request: Request) {
     payload.logger.error({ err: error, msg: "Reservation creation failed" });
     return Response.json({ error: "Nie udało się zapisać rezerwacji. Spróbuj ponownie." }, { status: 500 });
   }
-  try { await syncGoogleCalendar(database, googleCalendarEnv, true); }
-  catch (error) { payload.logger.error({ err: error, msg: "Reservation saved but Google Calendar sync failed" }); }
   return Response.json({ reference, equipment: equipment.name, date, time, endTime: reservationEnd }, { status: 201 });
 }

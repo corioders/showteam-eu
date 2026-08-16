@@ -20,6 +20,7 @@ import * as migration_20260815_010000_wind_thresholds from './20260815_010000_wi
 import * as migration_20260815_230000_structured_offer_dates from './20260815_230000_structured_offer_dates';
 import * as migration_20260816_100000_page_content from './20260816_100000_page_content';
 import * as migration_20260816_130000_offer_editor_fields from './20260816_130000_offer_editor_fields';
+import * as migration_20260816_180000_remove_google_and_news from './20260816_180000_remove_google_and_news';
 
 export const migrations = [
   {
@@ -131,5 +132,10 @@ export const migrations = [
     up: migration_20260816_130000_offer_editor_fields.up,
     down: migration_20260816_130000_offer_editor_fields.down,
     name: '20260816_130000_offer_editor_fields'
+  },
+  {
+    up: migration_20260816_180000_remove_google_and_news.up,
+    down: migration_20260816_180000_remove_google_and_news.down,
+    name: '20260816_180000_remove_google_and_news'
   },
 ];

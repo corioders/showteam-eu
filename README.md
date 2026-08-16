@@ -40,21 +40,4 @@ PLAYWRIGHT_BASE_URL=https://showteam-eu.corioders.workers.dev pnpm test:e2e
 pnpm deploy
 ```
 
-## Google Calendar
-
-Create a Google OAuth web client with Calendar API enabled and this redirect URI:
-
-```text
-https://showteam-eu.corioders.workers.dev/api/admin/google-calendar/callback
-```
-
-Store the credentials only as Worker secrets:
-
-```sh
-pnpm wrangler secret put GOOGLE_CALENDAR_CLIENT_ID
-pnpm wrangler secret put GOOGLE_CALENDAR_CLIENT_SECRET
-```
-
-`GOOGLE_CALENDAR_TOKEN_KEY` is already generated in production. After setting the OAuth credentials, open `Panel → Kalendarz bazy → Synchronizacja` and connect the shared SHOWteam Google account once.
-
 Infrastructure ownership and import instructions are in [`infra/README.md`](infra/README.md).

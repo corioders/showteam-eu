@@ -2,9 +2,8 @@ import type { SQLiteSchemaHook } from "@payloadcms/db-d1-sqlite";
 import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
-// Retired CMS collections remain as inaccessible archive tables. Keeping their
-// schema prevents SQLite foreign keys in Payload's lock table from becoming
-// invalid while preserving a reversible data-removal decision.
+// The retired public events collection remains temporarily until its table is
+// replaced by the staff calendar event model.
 const legacyMediaReference = sqliteTable("media", { id: integer("id").primaryKey() });
 const legacyEvents = sqliteTable("events", {
   id: integer("id").primaryKey().notNull(),
@@ -20,19 +19,6 @@ const legacyEvents = sqliteTable("events", {
   updatedAt: text("updated_at").default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`).notNull(),
   createdAt: text("created_at").default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`).notNull(),
 }, (table) => [index("events_image_idx").on(table.imageId), index("events_updated_at_idx").on(table.updatedAt), index("events_created_at_idx").on(table.createdAt)]);
-
-const legacyNews = sqliteTable("news", {
-  id: integer("id").primaryKey().notNull(),
-  title: text("title").notNull(),
-  publicationDate: text("publication_date").notNull(),
-  summary: text("summary").notNull(),
-  content: text("content").notNull(),
-  imageId: integer("image_id").notNull().references(() => legacyMediaReference.id, { onDelete: "set null" }),
-  category: text("category").default("Baza").notNull(),
-  published: integer("published", { mode: "boolean" }).default(true),
-  updatedAt: text("updated_at").default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`).notNull(),
-  createdAt: text("created_at").default(sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`).notNull(),
-}, (table) => [index("news_image_idx").on(table.imageId), index("news_updated_at_idx").on(table.updatedAt), index("news_created_at_idx").on(table.createdAt)]);
 
 const bookingSlots = sqliteTable("booking_slots", {
   equipmentId: integer("equipment_id").notNull(),
@@ -66,42 +52,6 @@ const rateLimits = sqliteTable("rate_limits", {
   expiresAt: integer("expires_at").notNull(),
 });
 
-const googleCalendarConnections = sqliteTable("google_calendar_connections", {
-  id: text("id").primaryKey().notNull(),
-  calendarId: text("calendar_id").notNull(),
-  calendarName: text("calendar_name").notNull(),
-  accountEmail: text("account_email").notNull(),
-  encryptedRefreshToken: text("encrypted_refresh_token").notNull(),
-  syncToken: text("sync_token"),
-  lastSyncedAt: integer("last_synced_at"),
-  syncStartedAt: integer("sync_started_at"),
-  createdAt: integer("created_at").notNull(),
-  updatedAt: integer("updated_at").notNull(),
-});
-
-const googleCalendarEvents = sqliteTable("google_calendar_events", {
-  id: text("id").primaryKey().notNull(),
-  summary: text("summary").notNull(),
-  description: text("description"),
-  location: text("location"),
-  startValue: text("start_value").notNull(),
-  endValue: text("end_value").notNull(),
-  allDay: integer("all_day").default(0).notNull(),
-  htmlLink: text("html_link"),
-  updatedAt: text("updated_at").notNull(),
-});
-
-const googleCalendarBookings = sqliteTable("google_calendar_bookings", {
-  reservationId: text("reservation_id").primaryKey().notNull(),
-  googleEventId: text("google_event_id").notNull(),
-  bookingUpdatedAt: text("booking_updated_at").notNull(),
-}, (table) => [uniqueIndex("google_calendar_bookings_event_idx").on(table.googleEventId)]);
-
-const googleCalendarOauthStates = sqliteTable("google_calendar_oauth_states", {
-  stateHash: text("state_hash").primaryKey().notNull(),
-  expiresAt: integer("expires_at").notNull(),
-});
-
 const availabilityBlocks = sqliteTable("availability_blocks", {
   id: text("id").primaryKey().notNull(),
   equipmentId: integer("equipment_id"),
@@ -126,15 +76,10 @@ const availabilityHours = sqliteTable("availability_hours", {
 
 export const preserveOperationalTables: SQLiteSchemaHook = ({ schema }) => {
   schema.tables.events = legacyEvents;
-  schema.tables.news = legacyNews;
   schema.tables.booking_slots = bookingSlots;
   schema.tables.tv_pairings = tvPairings;
   schema.tables.tv_devices = tvDevices;
   schema.tables.rate_limits = rateLimits;
-  schema.tables.google_calendar_connections = googleCalendarConnections;
-  schema.tables.google_calendar_events = googleCalendarEvents;
-  schema.tables.google_calendar_bookings = googleCalendarBookings;
-  schema.tables.google_calendar_oauth_states = googleCalendarOauthStates;
   schema.tables.availability_blocks = availabilityBlocks;
   schema.tables.availability_hours = availabilityHours;
   return schema;

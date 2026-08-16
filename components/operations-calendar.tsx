@@ -7,10 +7,10 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
 import plLocale from "@fullcalendar/core/locales/pl";
 import type { EventSourceFuncArg } from "@fullcalendar/core";
-import { Ban, CalendarDays, Clock3, ExternalLink, Mail, Phone, X } from "lucide-react";
+import { Ban, Clock3, Mail, Phone, X } from "lucide-react";
 import styles from "@/components/calendar.module.css";
 
-type CalendarEvent = { id: string; title: string; start: string; end: string; allDay?: boolean; extendedProps: { kind: "booking" | "block" | "availability" | "google"; reference: string; phone: string; email: string; status: string; notes: string; url?: string } };
+type CalendarEvent = { id: string; title: string; start: string; end: string; allDay?: boolean; extendedProps: { kind: "booking" | "block" | "availability"; reference: string; phone: string; email: string; status: string; notes: string } };
 
 export function OperationsCalendar({ tv = false }: { tv?: boolean }) {
   const calendarRef = useRef<FullCalendar>(null);
@@ -55,13 +55,12 @@ export function OperationsCalendar({ tv = false }: { tv?: boolean }) {
       {selected && <div className={styles.overlay} onClick={() => setSelected(null)}>
         <div role="dialog" aria-modal="true" aria-label="Szczegóły rezerwacji" className={styles.dialog} onClick={(event) => event.stopPropagation()}>
           <button className={styles.close} onClick={() => setSelected(null)} aria-label="Zamknij"><X /></button>
-          <p className={styles.reference}>{selected.extendedProps.kind === "block" ? <><Ban size={14} /> Blokada terminu</> : selected.extendedProps.kind === "google" ? <><CalendarDays size={14} /> Plan bazy</> : selected.extendedProps.reference}</p>
+          <p className={styles.reference}>{selected.extendedProps.kind === "block" ? <><Ban size={14} /> Blokada terminu</> : selected.extendedProps.reference}</p>
           <h2 className={styles.eventTitle}>{selected.title}</h2>
           <p className={styles.detail}><Clock3 size={16} />{selected.start.slice(0, 10)}{selected.allDay ? " · cały dzień" : ` · ${selected.start.slice(11, 16)}–${selected.end.slice(11, 16)}`}</p>
           {selected.extendedProps.phone && <a href={`tel:${selected.extendedProps.phone}`} className={styles.phone}><Phone size={16} />{selected.extendedProps.phone}</a>}
           {selected.extendedProps.email && <a href={`mailto:${selected.extendedProps.email}`} className={styles.phone}><Mail size={16} />{selected.extendedProps.email}</a>}
           {selected.extendedProps.notes && <p className={styles.notes}>{selected.extendedProps.notes}</p>}
-          {selected.extendedProps.url && <a className={styles.external} href={selected.extendedProps.url} target="_blank" rel="noreferrer">Otwórz w Google Calendar <ExternalLink size={16} /></a>}
         </div>
       </div>}
     </div>

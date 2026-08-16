@@ -5,7 +5,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 ## W toku
 
 - [ ] Przebudowa WAKE & SURF Village — zakres roboczy w `USTALENIA-WAKE-SURF.md`:
-  - [ ] Usunąć Aktualności oraz integrację i testowe dane Google Calendar.
+  - [x] Usunąć Aktualności oraz integrację i testowe dane Google Calendar.
   - [ ] Zastąpić publiczny model sprzętu katalogiem aktywności bez cen.
   - [ ] Dodać globalne godziny bazy, wyjątki kalendarzowe i zakaz weekendowy per aktywność.
   - [ ] Zastąpić blokady wewnętrznymi wydarzeniami, także całodniowymi i cyklicznymi.
@@ -48,17 +48,6 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 - [x] Galeria: usunąć natywne kontrolki wideo z kafli; kafel ma otwierać czytelny player w lightboxie z jednym przyciskiem odtwarzania.
 
 - [x] Uporządkować formularz „Jedziesz z nami”: pokazywać tylko pytania mające sens dla wybranej kategorii; przy Szkoleniach nie pytać o dyscyplinę ani poziom.
-
-- [ ] Google Calendar zamiast iCal:
-  - [x] Usunąć prywatne feedy ICS i ich ekran.
-  - [x] Połączyć jedno konto Google przez OAuth z zaszyfrowanym tokenem.
-  - [x] Wysyłać rezerwacje do Google Calendar bez duplikatów.
-  - [x] Pobierać ręczne wpisy Google do kalendarza bazy i TV.
-  - [x] Pokazać blokady wynajmu, wyjątki godzin i plany Google różnymi kolorami.
-  - [x] W Google Cloud włączyć Calendar API i utworzyć klienta OAuth z callbackiem `https://showteam-eu.corioders.workers.dev/api/admin/google-calendar/callback`.
-  - [x] Dodać sekrety Workera `GOOGLE_CALENDAR_CLIENT_ID` i `GOOGLE_CALENDAR_CLIENT_SECRET`; `GOOGLE_CALENDAR_TOKEN_KEY` jest już ustawiony.
-  - [ ] W panelu podłączyć wspólne konto SHOWteam i udostępnić jego kalendarz obsłudze na telefonach.
-  - [ ] Test końcowy: rezerwacja strona → Google oraz ręczny wpis Google → panel i TV.
 
 - [x] Ułatwić publiczne zgłoszenia uczestników:
   - [x] Pracować w osobnym worktree na branchu `feat/application-form-visibility`.

@@ -213,11 +213,11 @@ test("reservation API requires an email address", async ({ request }) => {
   expect((await response.json()).error).toContain("e-mail");
 });
 
-test("Google Calendar management stays private and ICS is removed", async ({ request }) => {
-  expect((await request.get("/api/admin/google-calendar/status")).status()).toBe(401);
-  expect((await request.post("/api/admin/google-calendar/sync")).status()).toBe(401);
+test("retired calendar integrations stay removed", async ({ request }) => {
+  expect((await request.get("/api/admin/google-calendar/status")).status()).toBe(404);
+  expect((await request.post("/api/admin/google-calendar/sync")).status()).toBe(404);
   expect((await request.get("/api/calendar/subscriptions")).status()).toBe(404);
-  expect((await request.get("/api/admin/google-calendar/connect", { maxRedirects: 0 })).headers().location).toMatch(/\/admin\/login$/);
+  expect((await request.get("/api/admin/google-calendar/connect")).status()).toBe(404);
 });
 
 test("CMS is the single installable staff dashboard", async ({ page }) => {
