@@ -4,6 +4,7 @@ import { getPayload } from "payload";
 import config from "@payload-config";
 import { validSameOrigin } from "@/lib/admin-auth";
 import { pageContentDefaults, parsePageContent } from "@/lib/page-content-schema";
+import { revalidatePageContent } from "@/lib/revalidate-public";
 
 const fields = { heroVideoUrl: "video", heroPosterUrl: "image", legacyImageUrl: "image", aboutImageUrl: "image" } as const;
 const imageTypes = new Set(["image/webp", "image/jpeg", "image/png", "image/avif"]);
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
     if (!parsed.data) throw new Error(parsed.errors?.[0]);
     if (existing.docs[0]) await payload.update({ collection: "page-content", id: existing.docs[0].id, data: { content: parsed.data }, overrideAccess: false, user });
     else await payload.create({ collection: "page-content", data: { page: "home", content: parsed.data }, overrideAccess: false, user });
+    revalidatePageContent("home");
     return NextResponse.json({ url: media.url, message: "Plik jest już widoczny na stronie." });
   } catch (error) {
     if (mediaId) await payload.delete({ collection: "media", id: mediaId, overrideAccess: true }).catch(() => undefined);
