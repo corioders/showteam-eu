@@ -4,7 +4,18 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## W toku
 
-- [ ] Naprawić produkcyjny błąd 500 podczas bezpośredniego zapisu treści strony i potwierdzić zapis z przeglądarki.
+- [x] Naprawić produkcyjny błąd 500 podczas bezpośredniego zapisu treści strony i potwierdzić zapis z przeglądarki.
+
+- [x] Audyt panelu administratora na produkcji — 2026-08-17:
+  - [x] Sprawdzić na telefonie kalendarz, zgłoszenia, imprezy i spływy, noclegi, statystyki, telewizory, galerię, rezerwacje oraz tryb zaawansowany.
+  - [x] Sprawdzić na desktopie stronę w trybie edycji, kalendarz i kolekcje Payload.
+  - [x] Naprawić wycofywanie zapisów CMS przez błędne blokady dokumentów Payload na D1.
+  - [x] Naprawić mobilne rozszerzanie edytora poza szerokość ekranu.
+  - [x] Unieważniać publiczny cache także po zmianach sprzętu i treści wykonanych w Payload.
+  - [x] Potwierdzić zapisy ofert, treści strony, aktywności, galerii i ustawień imprez bezpośrednio na produkcji.
+  - [ ] Włączyć powiadomienia PWA na co najmniej jednym telefonie obsługi; obecnie baza nie ma żadnej subskrypcji push.
+  - [ ] Po akceptacji usunąć z Workera nieużywane sekrety starej integracji Google Calendar.
+  - [ ] Rozważyć dodanie Imprez, Noclegów, Statystyk i Telewizorów bezpośrednio do dolnego menu „Narzędzia”.
 
 - [ ] Przebudowa WAKE & SURF Village — zakres roboczy w `USTALENIA-WAKE-SURF.md`:
   - [x] Usunąć Aktualności oraz integrację i testowe dane Google Calendar.
