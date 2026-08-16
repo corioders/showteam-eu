@@ -11,6 +11,7 @@ import { Analytics } from "@/collections/Analytics";
 import { Applications } from "@/collections/Applications";
 import { createBookingsCollection } from "@/collections/Bookings";
 import { Equipment } from "@/collections/Equipment";
+import { EventInquiries } from "@/collections/EventInquiries";
 import type { GetPlatformProxyOptions } from "wrangler";
 import { Media } from "@/collections/Media";
 import { Gallery } from "@/collections/Gallery";
@@ -21,6 +22,7 @@ import { seedOffers } from "@/lib/seed-offers";
 import { seedGallery } from "@/lib/seed-gallery";
 import { seedEquipment } from "@/lib/seed-equipment";
 import { preserveOperationalTables } from "@/lib/operational-schema";
+import { EventSettings } from "@/globals/EventSettings";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -80,7 +82,8 @@ export default buildConfig({
       },
     },
   },
-  collections: [Offers, Gallery, PageContent, Equipment, createBookingsCollection(database), Applications, Analytics, Media, Users],
+  collections: [Offers, Gallery, PageContent, Equipment, createBookingsCollection(database), Applications, EventInquiries, Analytics, Media, Users],
+  globals: [EventSettings],
   i18n: { supportedLanguages: { pl: showteamPolish }, fallbackLanguage: "pl" },
   telemetry: false,
   graphQL: { disable: true },

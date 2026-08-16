@@ -3,7 +3,7 @@ import Link from "next/link";
 const groups = [
   { title: "Strona", links: [{ href: "/admin/collections/offers", label: "Oferty" }, { href: "/admin/collections/gallery", label: "Galeria" }] },
   { title: "Rezerwacje", links: [{ href: "/admin/collections/equipment", label: "Sprzęt" }, { href: "/admin/collections/bookings", label: "Rezerwacje klientów" }] },
-  { title: "Uczestnicy", links: [{ href: "/admin/collections/applications", label: "Wszystkie zgłoszenia" }] },
+  { title: "Uczestnicy", links: [{ href: "/admin/collections/applications", label: "Wszystkie zgłoszenia" }, { href: "/admin/collections/event-inquiries", label: "Imprezy i spływy" }] },
 ] as const;
 
 export function AdvancedAdminView() {

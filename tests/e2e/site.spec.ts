@@ -178,7 +178,7 @@ test("visual editor session stays private", async ({ page, request }) => {
 });
 
 test("operator workspaces require an admin login", async ({ request }) => {
-  for (const path of ["/a/kalendarz", "/a/zgloszenia", "/a/statystyki", "/a/telewizory"]) {
+  for (const path of ["/a/kalendarz", "/a/zgloszenia", "/a/imprezy", "/a/statystyki", "/a/telewizory"]) {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status()).toBe(307);
     expect(response.headers().location).toContain("/admin/login?redirect=");
@@ -188,6 +188,22 @@ test("operator workspaces require an admin login", async ({ request }) => {
 test("application administration and export stay private", async ({ request }) => {
   expect((await request.get("/api/admin/applications")).status()).toBe(401);
   expect((await request.get("/api/admin/applications/export")).status()).toBe(401);
+});
+
+test("party and canoe inquiry administration stays private", async ({ request }) => {
+  expect((await request.get("/api/admin/event-inquiries")).status()).toBe(401);
+  expect((await request.patch("/api/admin/event-inquiries", { data: {} })).status()).toBe(401);
+});
+
+test("party inquiry form exposes flexible dates and editable proposals", async ({ page }) => {
+  await page.goto("/zorganizuj-impreze");
+  await expect(page.getByRole("heading", { name: "Zorganizuj imprezę." })).toBeVisible();
+  await expect(page.getByLabel("Impreza")).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: "Spływ", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Dodaj kolejny możliwy termin" }).click();
+  await expect(page.getByLabel("Termin 2 — od")).toBeVisible();
+  await expect(page.getByLabel("Grill")).toBeVisible();
+  await expect(page.getByLabel("Kulig kajakowy")).toBeVisible();
 });
 
 test("staff event management stays private and old availability screens are removed", async ({ request }) => {
@@ -265,8 +281,9 @@ test.describe("mobile", () => {
     await page.goto("/");
     await page.getByRole("button", { name: "Otwórz menu" }).click();
     const menu = page.getByRole("navigation", { name: "Menu mobilne" });
-    await expect(menu.getByRole("link")).toHaveCount(9);
-    await expect(menu.getByRole("link", { name: /Zgłoszenie/ })).toBeVisible();
+    await expect(menu.getByRole("link")).toHaveCount(10);
+    await expect(menu.getByRole("link", { name: /Jedź z nami/ })).toBeVisible();
+    await expect(menu.getByRole("link", { name: /Zorganizuj imprezę/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /Galeria/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /Kontakt i o nas/ })).toBeVisible();
     await expect(page.getByRole("link", { name: "+48 500 128 090" })).toBeVisible();
@@ -286,7 +303,7 @@ test.describe("mobile", () => {
   test("reservation navigation keeps the public navbar", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Otwórz menu" }).click();
-    await page.getByRole("navigation", { name: "Menu mobilne" }).getByRole("link", { name: /Rezerwacje/ }).click();
+    await page.getByRole("navigation", { name: "Menu mobilne" }).getByRole("link", { name: /Aktywności/ }).click();
     await expect(page).toHaveURL(/\/rezerwacje$/);
     await expect(page.locator("header")).toBeVisible();
     await expect(page.locator('header a[href="/rezerwacje"][aria-current="page"]')).toHaveCount(1);

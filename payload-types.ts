@@ -73,6 +73,7 @@ export interface Config {
     equipment: Equipment;
     bookings: Booking;
     applications: Application;
+    'event-inquiries': EventInquiry;
     analytics: Analytics;
     media: Media;
     users: User;
@@ -89,6 +90,7 @@ export interface Config {
     equipment: EquipmentSelect<false> | EquipmentSelect<true>;
     bookings: BookingsSelect<false> | BookingsSelect<true>;
     applications: ApplicationsSelect<false> | ApplicationsSelect<true>;
+    'event-inquiries': EventInquiriesSelect<false> | EventInquiriesSelect<true>;
     analytics: AnalyticsSelect<false> | AnalyticsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -101,8 +103,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'event-settings': EventSetting;
+  };
+  globalsSelect: {
+    'event-settings': EventSettingsSelect<false> | EventSettingsSelect<true>;
+  };
   locale: null;
   widgets: {
     collections: CollectionsWidget;
@@ -397,6 +403,45 @@ export interface Application {
   createdAt: string;
 }
 /**
+ * Niezobowiązujące zapytania ze strony. Najwygodniej obsługiwać je w ekranie Imprezy.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-inquiries".
+ */
+export interface EventInquiry {
+  id: number;
+  status: 'new' | 'callback' | 'contacted' | 'offer_sent' | 'confirmed' | 'cancelled';
+  staffNotes?: string | null;
+  nextContactAt?: string | null;
+  calendarEventId?: string | null;
+  reference: string;
+  eventTypes: ('party' | 'canoe')[];
+  dateOptions: {
+    startDate: string;
+    endDate?: string | null;
+    id?: string | null;
+  }[];
+  startTime: string;
+  endTime: string;
+  adults: number;
+  children: number;
+  childrenAgeRange?: string | null;
+  activities?: (number | Equipment)[] | null;
+  specialActivities?: string[] | null;
+  cateringOptions?: string[] | null;
+  cateringNotes?: string | null;
+  attractionOptions?: string[] | null;
+  attractionNotes?: string | null;
+  wishes?: string | null;
+  contactName: string;
+  company?: string | null;
+  phone: string;
+  email: string;
+  privacyConsent: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Liczba wizyt w ostatnich 30 dniach. Bez cookies, adresów IP i danych osobowych. Starsze sumy są automatycznie usuwane.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -483,6 +528,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'applications';
         value: number | Application;
+      } | null)
+    | ({
+        relationTo: 'event-inquiries';
+        value: number | EventInquiry;
       } | null)
     | ({
         relationTo: 'analytics';
@@ -695,6 +744,44 @@ export interface ApplicationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-inquiries_select".
+ */
+export interface EventInquiriesSelect<T extends boolean = true> {
+  status?: T;
+  staffNotes?: T;
+  nextContactAt?: T;
+  calendarEventId?: T;
+  reference?: T;
+  eventTypes?: T;
+  dateOptions?:
+    | T
+    | {
+        startDate?: T;
+        endDate?: T;
+        id?: T;
+      };
+  startTime?: T;
+  endTime?: T;
+  adults?: T;
+  children?: T;
+  childrenAgeRange?: T;
+  activities?: T;
+  specialActivities?: T;
+  cateringOptions?: T;
+  cateringNotes?: T;
+  attractionOptions?: T;
+  attractionNotes?: T;
+  wishes?: T;
+  contactName?: T;
+  company?: T;
+  phone?: T;
+  email?: T;
+  privacyConsent?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "analytics_select".
  */
 export interface AnalyticsSelect<T extends boolean = true> {
@@ -782,6 +869,46 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * Propozycje widoczne w formularzu Zorganizuj imprezę.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-settings".
+ */
+export interface EventSetting {
+  id: number;
+  cateringOptions: {
+    label: string;
+    id?: string | null;
+  }[];
+  attractionOptions: {
+    label: string;
+    id?: string | null;
+  }[];
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-settings_select".
+ */
+export interface EventSettingsSelect<T extends boolean = true> {
+  cateringOptions?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  attractionOptions?:
+    | T
+    | {
+        label?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

@@ -14,9 +14,10 @@ export function SiteFooter() {
           <a href={`mailto:${contact.email}`} className="hover:text-orange-400">{contact.email}</a>
           <a href={contact.instagram} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-orange-400 md:justify-end"><Instagram className="size-4" /> Instagram <ArrowUpRight className="size-3" /></a>
           <a href={contact.tiktok} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-orange-400 md:justify-end"><Music2 className="size-4" /> TikTok <ArrowUpRight className="size-3" /></a>
-          <Link href="/zgloszenie" className="hover:text-orange-400">Zgłoszenie</Link>
+          <Link href="/zgloszenie" className="hover:text-orange-400">Jedź z nami</Link>
+          <Link href="/zorganizuj-impreze" className="hover:text-orange-400">Zorganizuj imprezę</Link>
           <Link href="/oferta/noclegi-nad-woda" className="hover:text-orange-400">Noclegi nad wodą</Link>
-          <Link href="/rezerwacje" className="hover:text-orange-400">Rezerwacje</Link>
+          <Link href="/rezerwacje" className="hover:text-orange-400">Rezerwuj aktywność</Link>
           <Link href="/galeria" className="hover:text-orange-400">Galeria</Link>
           <Link href="/kontakt" className="hover:text-orange-400">Kontakt i o nas</Link>
         </div>

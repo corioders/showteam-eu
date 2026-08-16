@@ -12,12 +12,13 @@ const links = [
   { href: "/oferta/lato", label: "Lato" },
   { href: "/oferta/zima", label: "Zima" },
   { href: "/oferta/szkolenia", label: "Szkolenia" },
+  { href: "/rezerwacje", label: "Aktywności" },
+  { href: "/zorganizuj-impreze", label: "Zorganizuj imprezę" },
   { href: "/oferta/noclegi-nad-woda", label: "Noclegi" },
-  { href: "/rezerwacje", label: "Rezerwacje" },
   { href: "/galeria", label: "Galeria" },
   { href: "/kontakt", label: "Kontakt i o nas" },
 ];
-const applicationLink = { href: "/zgloszenie", label: "Zgłoszenie" };
+const applicationLink = { href: "/zgloszenie", label: "Jedź z nami" };
 
 export function SiteHeader() {
   const pathname = usePathname();
