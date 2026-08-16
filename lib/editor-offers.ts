@@ -9,6 +9,11 @@ export type EditableOffer = {
   season: string;
   dates: OfferDate[];
   highlights: string[];
+  sections: { title: string; body: string }[];
+  slug: string;
+  mapUrl: string;
+  ctaTitle: string;
+  sortOrder: number;
   published: boolean;
 };
 
@@ -24,6 +29,11 @@ export function parseEditableOffer(input: unknown): { data?: EditableOffer; erro
   const season = text(value.season);
   const dates = dateList(value.dates);
   const highlights = textList(value.highlights, 12);
+  const sections = sectionList(value.sections);
+  const slug = text(value.slug);
+  const mapUrl = text(value.mapUrl);
+  const ctaTitle = text(value.ctaTitle);
+  const sortOrder = Number(value.sortOrder);
   const errors: string[] = [];
 
   if (title.length < 2 || title.length > 120) errors.push("Nazwa oferty musi mieć od 2 do 120 znaków.");
@@ -33,9 +43,14 @@ export function parseEditableOffer(input: unknown): { data?: EditableOffer; erro
   if (season.length < 2 || season.length > 80) errors.push("Wpisz nazwę sezonu.");
   errors.push(...dates.errors);
   if (highlights === null) errors.push("Możesz dodać najwyżej 12 punktów po 180 znaków.");
-  if (errors.length || !category || !dates.data || !highlights) return { errors };
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) errors.push("Adres strony może zawierać tylko małe litery, cyfry i myślniki.");
+  if (!safeUrl(mapUrl)) errors.push("Wklej pełny link do mapy zaczynający się od https://.");
+  if (ctaTitle.length < 2 || ctaTitle.length > 120) errors.push("Hasło nad zgłoszeniem musi mieć od 2 do 120 znaków.");
+  if (!Number.isInteger(sortOrder) || sortOrder < 0 || sortOrder > 999) errors.push("Kolejność musi być liczbą od 0 do 999.");
+  if (!sections) errors.push("Możesz dodać najwyżej 20 sekcji. Każda potrzebuje krótkiego nagłówka i treści.");
+  if (errors.length || !category || !dates.data || !highlights || !sections) return { errors };
 
-  return { data: { title, category, location, summary, season, dates: dates.data, highlights, published: value.published !== false } };
+  return { data: { title, category, location, summary, season, dates: dates.data, highlights, sections, slug, mapUrl, ctaTitle, sortOrder, published: value.published !== false } };
 }
 
 function text(value: unknown) {
@@ -46,6 +61,26 @@ function textList(value: unknown, limit: number) {
   if (!Array.isArray(value) || value.length > limit) return null;
   const result = value.map(text).filter(Boolean);
   return result.some((entry) => entry.length > 180) ? null : result;
+}
+
+function sectionList(value: unknown) {
+  if (!Array.isArray(value) || value.length > 20) return null;
+  const result = value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const row = item as Record<string, unknown>;
+    const title = text(row.title);
+    const body = text(row.body);
+    return title.length >= 2 && title.length <= 120 && body.length >= 2 && body.length <= 2000 ? [{ title, body }] : [];
+  });
+  return result.length === value.length ? result : null;
+}
+
+function safeUrl(value: string) {
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 function dateList(value: unknown): { data?: OfferDate[]; errors: string[] } {

@@ -9,11 +9,16 @@ export type OfferDraft = {
   season: string;
   dates: OfferDate[];
   highlights: string[];
+  sections: { title: string; body: string }[];
+  slug: string;
+  mapUrl: string;
+  ctaTitle: string;
+  sortOrder: number;
   published: boolean;
 };
 
 export function toOfferDraft(offer: Offer): OfferDraft {
-  return { title: offer.title, category: offer.category, location: offer.location, summary: offer.summary, season: offer.season, dates: offer.dates, highlights: offer.highlights, published: true };
+  return { title: offer.title, category: offer.category, location: offer.location, summary: offer.summary, season: offer.season, dates: offer.dates, highlights: offer.highlights, sections: offer.sections, slug: offer.slug, mapUrl: offer.mapUrl, ctaTitle: offer.ctaTitle, sortOrder: offer.sortOrder, published: offer.published };
 }
 
 export function restoreOfferDraft(saved: string, fallback: OfferDraft): OfferDraft | null {
@@ -28,11 +33,25 @@ export function restoreOfferDraft(saved: string, fallback: OfferDraft): OfferDra
       season: text(parsed.season, fallback.season),
       dates: dates(parsed.dates, fallback.dates),
       highlights: textList(parsed.highlights, fallback.highlights),
+      sections: sections(parsed.sections, fallback.sections),
+      slug: text(parsed.slug, fallback.slug),
+      mapUrl: text(parsed.mapUrl, fallback.mapUrl),
+      ctaTitle: text(parsed.ctaTitle, fallback.ctaTitle),
+      sortOrder: typeof parsed.sortOrder === "number" ? parsed.sortOrder : fallback.sortOrder,
       published: typeof parsed.published === "boolean" ? parsed.published : fallback.published,
     };
   } catch {
     return null;
   }
+}
+
+function sections(value: unknown, fallback: OfferDraft["sections"]) {
+  if (!Array.isArray(value)) return fallback;
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const row = item as Record<string, unknown>;
+    return typeof row.title === "string" && typeof row.body === "string" ? [{ title: row.title, body: row.body }] : [];
+  });
 }
 
 function text(value: unknown, fallback: string) {

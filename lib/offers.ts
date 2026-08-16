@@ -1,5 +1,7 @@
 import type { OfferDate } from "@/lib/offer-dates";
 
+const baseMap = "https://www.google.com/maps/place/SHOWteam+WAKE+%26+SURF+Village/@49.97635,18.8755667,17z/data=!4m15!1m8!3m7!1s0x4716b016d42ca55b:0xc4af35ca30fb79f!2sNad+Zapor%C4%85+21,+43-200+Por%C4%99ba!3b1!8m2!3d49.97635!4d18.8781416!16s%2Fg%2F11hbqp7wq2!3m5!1s0x4716b016d3bd39e5:0x758abd7d20fca32b!8m2!3d49.97635!4d18.8781416!16s%2Fg%2F11g8v1zps5?entry=ttu&g_ep=EgoyMDI2MDgxMi4wIKXMDSoASAFQAw%3D%3D";
+
 export type OfferCategory = "Lato" | "Zima" | "Szkolenia" | "Noclegi";
 
 export type Offer = {
@@ -15,7 +17,12 @@ export type Offer = {
   imageAlt: string;
   href: string;
   contactHref: string;
-  sections?: { title: string; body: string }[];
+  slug: string;
+  mapUrl: string;
+  ctaTitle: string;
+  sortOrder: number;
+  published: boolean;
+  sections: { title: string; body: string }[];
 };
 
 export const offers: Offer[] = [
@@ -37,6 +44,7 @@ export const offers: Offer[] = [
     imageAlt: "Wakeboarding z lotu ptaka na Jeziorze Łąckim",
     href: "/oferta/lato",
     contactHref: "mailto:biuro@showteam.eu?subject=SHOWlato%202026",
+    slug: "lato", mapUrl: baseMap, ctaTitle: "Wskakujesz do wody?", sortOrder: 10, published: true, sections: [],
   },
   {
     category: "Zima",
@@ -61,6 +69,7 @@ export const offers: Offer[] = [
     imageAlt: "Zimowe atrakcje SHOWteam w Trentino",
     href: "/oferta/zima",
     contactHref: "mailto:biuro@showteam.eu?subject=SHOWzima%202026",
+    slug: "zima", mapUrl: "https://www.google.com/maps/search/?api=1&query=Trentino+Dolomites+Italy", ctaTitle: "Jedziesz z nami?", sortOrder: 20, published: true, sections: [],
   },
   {
     category: "Szkolenia",
@@ -74,6 +83,7 @@ export const offers: Offer[] = [
     imageAlt: "Szkolenie żeglarskie SHOWteam z lotu ptaka",
     href: "/oferta/szkolenia",
     contactHref: "mailto:biuro@showteam.eu?subject=Szkolenia%20SHOWteam",
+    slug: "szkolenia", mapUrl: baseMap, ctaTitle: "Zaczynamy trening?", sortOrder: 30, published: true, sections: [],
   },
   {
     category: "Noclegi",
@@ -87,6 +97,7 @@ export const offers: Offer[] = [
     imageAlt: "Sprzęt wodny przy bazie SHOWteam nad Jeziorem Łąckim",
     href: "/oferta/noclegi-nad-woda",
     contactHref: "mailto:biuro@showteam.eu?subject=Noclegi%20nad%20wod%C4%85",
+    slug: "noclegi-nad-woda", mapUrl: baseMap, ctaTitle: "Rezerwujesz pobyt?", sortOrder: 40, published: true, sections: [],
   },
 ];
 
@@ -97,5 +108,5 @@ export const contact = {
   instagram: "https://www.instagram.com/showteam.eu/",
   facebook: "https://www.facebook.com/SHOW.SHOWteam/",
   tiktok: "https://www.tiktok.com/@showteam1969",
-  map: "https://www.google.com/maps/place/SHOWteam+WAKE+%26+SURF+Village/@49.97635,18.8755667,17z/data=!4m15!1m8!3m7!1s0x4716b016d42ca55b:0xc4af35ca30fb79f!2sNad+Zapor%C4%85+21,+43-200+Por%C4%99ba!3b1!8m2!3d49.97635!4d18.8781416!16s%2Fg%2F11hbqp7wq2!3m5!1s0x4716b016d3bd39e5:0x758abd7d20fca32b!8m2!3d49.97635!4d18.8781416!16s%2Fg%2F11g8v1zps5?entry=ttu&g_ep=EgoyMDI2MDgxMi4wIKXMDSoASAFQAw%3D%3D",
+  map: baseMap,
 };

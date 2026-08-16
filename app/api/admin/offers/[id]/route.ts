@@ -24,6 +24,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         ...data,
         dates: data.dates,
         highlights: data.highlights.map((text) => ({ text })),
+        sections: data.sections,
       },
       overrideAccess: false,
       user,

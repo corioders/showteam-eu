@@ -19,6 +19,7 @@ import * as migration_20260814_220000_equipment_conditions from './20260814_2200
 import * as migration_20260815_010000_wind_thresholds from './20260815_010000_wind_thresholds';
 import * as migration_20260815_230000_structured_offer_dates from './20260815_230000_structured_offer_dates';
 import * as migration_20260816_100000_page_content from './20260816_100000_page_content';
+import * as migration_20260816_130000_offer_editor_fields from './20260816_130000_offer_editor_fields';
 
 export const migrations = [
   {
@@ -125,5 +126,10 @@ export const migrations = [
     up: migration_20260816_100000_page_content.up,
     down: migration_20260816_100000_page_content.down,
     name: '20260816_100000_page_content'
+  },
+  {
+    up: migration_20260816_130000_offer_editor_fields.up,
+    down: migration_20260816_130000_offer_editor_fields.down,
+    name: '20260816_130000_offer_editor_fields'
   },
 ];

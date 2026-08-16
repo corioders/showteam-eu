@@ -151,6 +151,11 @@ export interface Offer {
    */
   season: string;
   /**
+   * Pełny link do właściwego miejsca w Google Maps.
+   */
+  mapUrl: string;
+  ctaTitle: string;
+  /**
    * Każdy termin musi mieć nazwę oraz dokładną datę rozpoczęcia i zakończenia.
    */
   dates?:
@@ -528,6 +533,8 @@ export interface OffersSelect<T extends boolean = true> {
   location?: T;
   summary?: T;
   season?: T;
+  mapUrl?: T;
+  ctaTitle?: T;
   dates?:
     | T
     | {

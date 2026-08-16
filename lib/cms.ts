@@ -36,6 +36,11 @@ function toOffer(document: Record<string, unknown>): Offer {
     imageAlt: typeof cover === "object" && cover?.alt ? cover.alt : `${category} z SHOWteam`,
     href: `/oferta/${slug}`,
     contactHref: `mailto:biuro@showteam.eu?subject=${encodeURIComponent(String(document.title))}`,
+    slug,
+    mapUrl: String(document.mapUrl || archivedOffer?.mapUrl || ""),
+    ctaTitle: String(document.ctaTitle || archivedOffer?.ctaTitle || "Zapytaj o szczegóły"),
+    sortOrder: Number(document.sortOrder ?? archivedOffer?.sortOrder ?? 10),
+    published: document.published !== false,
     sections,
   };
 }
