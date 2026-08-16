@@ -38,6 +38,8 @@ jobs:
           NODE_ENV: production
           PAYLOAD_SECRET: showteam-ci-only-secret-not-used-in-production
           SEED_CMS: "true"
+          E2E_ADMIN_EMAIL: e2e-admin@showteam.invalid
+          E2E_ADMIN_PASSWORD: showteam-e2e-password-2026
       - name: Build from a clean Next.js cache
         run: |
           rm -rf .next
@@ -46,3 +48,5 @@ jobs:
       - run: pnpm test:e2e
         env:
           PAYLOAD_SECRET: showteam-ci-only-secret-not-used-in-production
+          E2E_ADMIN_EMAIL: e2e-admin@showteam.invalid
+          E2E_ADMIN_PASSWORD: showteam-e2e-password-2026
