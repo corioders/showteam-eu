@@ -42,7 +42,7 @@ jobs:
         run: |
           rm -rf .next
           pnpm build
-      - run: pnpm exec playwright install chromium
+      - run: pnpm exec playwright install chromium webkit
       - run: pnpm test:e2e
         env:
           PAYLOAD_SECRET: showteam-ci-only-secret-not-used-in-production
