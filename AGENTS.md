@@ -11,6 +11,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 # Project workflow
 
 - Read `TODO.md` before starting work, keep its statuses current, and use it to resume unfinished work after context loss.
+- After finishing a TODO item, continue with the next actionable item without waiting for another prompt. Stop only for a real blocker, a required user decision, or an authorization boundary.
 - Keep commits small and focused: one working, reversible change per commit.
 - After verifying each change, commit it with a descriptive message and push it to the remote repository so rollback stays simple.
 - Do not combine unrelated features or fixes in one commit.
