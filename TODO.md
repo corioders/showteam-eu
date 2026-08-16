@@ -11,8 +11,9 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
   - [x] Zastąpić blokady wewnętrznymi wydarzeniami, także całodniowymi i cyklicznymi.
   - [x] Dodać formularz oraz obsługę imprez i spływów.
   - [x] Dodać statusy rezerwacji, instruktora, fakturę i wymagane przepływy zgłoszeń.
-  - [ ] Dodać powiadomienia PWA, przypomnienia SMS i eskalację do Asi.
-  - [ ] Zbudować osobny przepływ rezerwacji noclegów.
+  - [x] Dodać powiadomienia PWA, przypomnienia SMS i eskalację do Asi.
+    - [ ] Aktywować wysyłkę SMS po otrzymaniu tokenu OAuth i zatwierdzonego pola nadawcy SMSAPI.
+  - [x] Zbudować osobny przepływ rezerwacji noclegów.
   - [ ] Zaktualizować branding, oferty, szkolenia, partnerstwa i treści strony.
 
 - [x] Rozszerzyć bezpośrednią edycję strony — zakres zatwierdzony 2026-08-16:

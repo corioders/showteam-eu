@@ -14,7 +14,7 @@ const links = [
   { href: "/oferta/szkolenia", label: "Szkolenia" },
   { href: "/rezerwacje", label: "Aktywności" },
   { href: "/zorganizuj-impreze", label: "Zorganizuj imprezę" },
-  { href: "/oferta/noclegi-nad-woda", label: "Noclegi" },
+  { href: "/noclegi", label: "Noclegi" },
   { href: "/galeria", label: "Galeria" },
   { href: "/kontakt", label: "Kontakt i o nas" },
 ];

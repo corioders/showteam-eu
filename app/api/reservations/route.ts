@@ -4,6 +4,7 @@ import { BASE_CLOSE_TIME, BASE_OPEN_TIME, bookingReference, createTimeSlots, end
 import { ensureOperationalTables } from "@/lib/operational-tables";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { staffEventBlocksRange, staffEventFromDatabaseRow, type StaffEventDatabaseRow } from "@/lib/staff-events";
+import { notifyStaff } from "@/lib/push-notifications";
 
 type ReservationInput = {
   equipmentId?: unknown;
@@ -106,5 +107,6 @@ export async function POST(request: Request) {
     payload.logger.error({ err: error, msg: "Reservation creation failed" });
     return Response.json({ error: "Nie udało się zapisać rezerwacji. Spróbuj ponownie." }, { status: 500 });
   }
+  await notifyStaff(database, { title: "Nowa rezerwacja", body: `${equipment.name} · ${date} ${time} · ${name}`, url: "/admin/collections/bookings" });
   return Response.json({ reference, equipment: equipment.name, date, time, endTime: reservationEnd, status: "pending" }, { status: 201 });
 }

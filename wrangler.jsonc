@@ -4,10 +4,14 @@
   "name": "showteam-eu",
   "compatibility_date": "2025-08-15",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "vars": {
+    "PUBLIC_SITE_URL": "https://www.showteam.eu",
+    "VAPID_PUBLIC_KEY": "BDlvHyOIFUaED8IieFcgE_3Vek2R1sJ_Jt2pi-QLkzGk_Mw0ZAUuQSOPKXloLnjgur-YuC6iE4Ob_a46vopDg_k"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS",
-    "run_worker_first": ["/", "/a/*", "/admin*", "/api/*", "/dodaj*", "/tv*", "/kalendarz*", "/polacz-tv*", "/rezerwacje*", "/oferta/*", "/kontakt"]
+    "run_worker_first": ["/", "/a/*", "/admin*", "/api/*", "/dodaj*", "/tv*", "/kalendarz*", "/polacz-tv*", "/rezerwacje*", "/noclegi", "/r/*", "/zorganizuj-impreze", "/oferta/*", "/kontakt"]
   },
   "d1_databases": [
     {

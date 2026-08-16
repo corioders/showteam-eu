@@ -4,7 +4,7 @@ import path from "node:path";
 test("main navigation reaches every public section", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator('header img[src="/media/showteam-logo.svg"]')).toBeVisible();
-  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/oferta/noclegi-nad-woda", "/rezerwacje", "/galeria", "/kontakt", "/zgloszenie"]) {
+  for (const path of ["/oferta/lato", "/oferta/zima", "/oferta/szkolenia", "/noclegi", "/rezerwacje", "/zorganizuj-impreze", "/galeria", "/kontakt", "/zgloszenie"]) {
     await expect(page.locator(`header a[href="${path}"]`)).toHaveCount(1);
   }
   const locations = page.getByRole("navigation", { name: "Lokalizacje SHOWteam" }).getByRole("link");
@@ -178,7 +178,7 @@ test("visual editor session stays private", async ({ page, request }) => {
 });
 
 test("operator workspaces require an admin login", async ({ request }) => {
-  for (const path of ["/a/kalendarz", "/a/zgloszenia", "/a/imprezy", "/a/statystyki", "/a/telewizory"]) {
+  for (const path of ["/a/kalendarz", "/a/zgloszenia", "/a/imprezy", "/a/noclegi", "/a/statystyki", "/a/telewizory"]) {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status()).toBe(307);
     expect(response.headers().location).toContain("/admin/login?redirect=");
@@ -193,6 +193,31 @@ test("application administration and export stay private", async ({ request }) =
 test("party and canoe inquiry administration stays private", async ({ request }) => {
   expect((await request.get("/api/admin/event-inquiries")).status()).toBe(401);
   expect((await request.patch("/api/admin/event-inquiries", { data: {} })).status()).toBe(401);
+});
+
+test("notification subscriptions and reminder jobs stay private", async ({ request }) => {
+  expect((await request.get("/api/admin/push-subscriptions")).status()).toBe(401);
+  expect((await request.post("/api/internal/reminders")).status()).toBe(401);
+});
+
+test("stay booking administration stays private", async ({ request }) => {
+  expect((await request.get("/api/admin/stay-bookings")).status()).toBe(401);
+  expect((await request.patch("/api/admin/stay-bookings", { data: {} })).status()).toBe(401);
+});
+
+test("stays use a separate date-range booking flow", async ({ page }) => {
+  await page.goto("/noclegi");
+  await expect(page.getByRole("heading", { name: "Noclegi nad wodą." })).toBeVisible();
+  await expect(page.getByLabel("Kontener mieszkalny")).toBeVisible();
+  await expect(page.getByLabel("Domek holenderski")).toBeVisible();
+  await expect(page.getByLabel("Przyjazd")).toBeVisible();
+  await expect(page.getByLabel("Wyjazd")).toBeVisible();
+});
+
+test("SMS links require a deliberate confirmation", async ({ page }) => {
+  await page.goto("/r/1234567890123456789012/tak");
+  await expect(page.getByRole("heading", { name: "Potwierdzasz przyjazd?" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Tak, potwierdzam" })).toBeVisible();
 });
 
 test("party inquiry form exposes flexible dates and editable proposals", async ({ page }) => {

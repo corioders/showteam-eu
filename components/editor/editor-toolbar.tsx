@@ -6,6 +6,7 @@ import { CalendarDays, Eye, EyeOff, Images, LogOut, Settings2, UsersRound } from
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useEditor } from "@/components/editor/editor-provider";
+import { PushNotificationControl } from "@/components/push-notification-control";
 
 const tools = [
   { href: "/a/kalendarz", label: "Kalendarz", icon: CalendarDays },
@@ -47,6 +48,7 @@ export function EditorToolbar() {
             <nav className="mt-7 grid gap-2" aria-label="Narzędzia administratora">
               {tools.map(({ href, label, icon: Icon }) => <Link key={href} href={href} className={`flex min-h-14 items-center gap-3 border px-4 font-semibold transition-colors hover:border-orange-500 hover:bg-orange-500 hover:text-black ${pathname === href ? "border-orange-500 bg-orange-500 text-black" : "border-white/15"}`}><Icon className="size-5" />{label}</Link>)}
             </nav>
+            <PushNotificationControl />
             <div className="mt-auto border-t border-white/10 pt-5">
               <p className="truncate text-xs text-white/45">Zalogowano: {user?.name || user?.email}</p>
               <Button type="button" variant="outline" className="mt-3 w-full" onClick={logout}><LogOut className="size-4" /> Wyloguj się</Button>

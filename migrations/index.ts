@@ -25,6 +25,8 @@ import * as migration_20260816_190000_activities from './20260816_190000_activit
 import * as migration_20260816_200000_staff_events from './20260816_200000_staff_events';
 import * as migration_20260816_210000_event_inquiries from './20260816_210000_event_inquiries';
 import * as migration_20260816_220000_application_workflow from './20260816_220000_application_workflow';
+import * as migration_20260816_230000_notifications from './20260816_230000_notifications';
+import * as migration_20260816_240000_stay_bookings from './20260816_240000_stay_bookings';
 
 export const migrations = [
   {
@@ -161,5 +163,15 @@ export const migrations = [
     up: migration_20260816_220000_application_workflow.up,
     down: migration_20260816_220000_application_workflow.down,
     name: '20260816_220000_application_workflow'
+  },
+  {
+    up: migration_20260816_230000_notifications.up,
+    down: migration_20260816_230000_notifications.down,
+    name: '20260816_230000_notifications'
+  },
+  {
+    up: migration_20260816_240000_stay_bookings.up,
+    down: migration_20260816_240000_stay_bookings.down,
+    name: '20260816_240000_stay_bookings'
   },
 ];

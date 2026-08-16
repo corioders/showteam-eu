@@ -58,6 +58,13 @@ export function createBookingsCollection(database: D1Database): CollectionConfig
       ] },
       { name: "customerNotes", label: "Uwagi klienta", type: "textarea", maxLength: 500, admin: { readOnly: true } },
       { name: "instructorRequired", label: "Potrzebuje instruktora", type: "checkbox", defaultValue: false, admin: { readOnly: true } },
+      { name: "reminderSentAt", label: "SMS przypominający wysłano", type: "date", admin: { readOnly: true, date: { pickerAppearance: "dayAndTime", displayFormat: "dd.MM.yyyy HH:mm" } } },
+      { name: "reminderResponse", label: "Odpowiedź na przypomnienie", type: "select", options: [
+        { label: "Potwierdził/a", value: "confirmed" }, { label: "Anulował/a", value: "cancelled" },
+      ], admin: { readOnly: true } },
+      { name: "reminderRespondedAt", label: "Odpowiedź otrzymano", type: "date", admin: { readOnly: true } },
+      { name: "reminderEscalatedAt", label: "Przekazano Asi do telefonu", type: "date", admin: { readOnly: true } },
+      { name: "reminderTokenHash", label: "Token przypomnienia", type: "text", admin: { hidden: true, readOnly: true } },
       { name: "source", label: "Źródło", type: "select", required: true, defaultValue: "website", options: [{ label: "Strona", value: "website" }, { label: "Obsługa", value: "staff" }], admin: { readOnly: true } },
       ] },
     ],

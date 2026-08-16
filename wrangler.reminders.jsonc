@@ -1,0 +1,7 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "showteam-reminders",
+  "main": "workers/reminders.ts",
+  "compatibility_date": "2025-08-15",
+  "triggers": { "crons": ["0 * * * *"] }
+}

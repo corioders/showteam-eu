@@ -72,6 +72,7 @@ export interface Config {
     'page-content': PageContent;
     equipment: Equipment;
     bookings: Booking;
+    'stay-bookings': StayBooking;
     applications: Application;
     'event-inquiries': EventInquiry;
     analytics: Analytics;
@@ -89,6 +90,7 @@ export interface Config {
     'page-content': PageContentSelect<false> | PageContentSelect<true>;
     equipment: EquipmentSelect<false> | EquipmentSelect<true>;
     bookings: BookingsSelect<false> | BookingsSelect<true>;
+    'stay-bookings': StayBookingsSelect<false> | StayBookingsSelect<true>;
     applications: ApplicationsSelect<false> | ApplicationsSelect<true>;
     'event-inquiries': EventInquiriesSelect<false> | EventInquiriesSelect<true>;
     analytics: AnalyticsSelect<false> | AnalyticsSelect<true>;
@@ -367,7 +369,35 @@ export interface Booking {
   email?: string | null;
   customerNotes?: string | null;
   instructorRequired?: boolean | null;
+  reminderSentAt?: string | null;
+  reminderResponse?: ('confirmed' | 'cancelled') | null;
+  reminderRespondedAt?: string | null;
+  reminderEscalatedAt?: string | null;
+  reminderTokenHash?: string | null;
   source: 'website' | 'staff';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Osobne rezerwacje pobytów nad wodą.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stay-bookings".
+ */
+export interface StayBooking {
+  id: number;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  staffNotes?: string | null;
+  reference: string;
+  accommodationTypes: ('Kontener mieszkalny' | 'Domek holenderski')[];
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  customerName: string;
+  phone: string;
+  email: string;
+  customerNotes?: string | null;
+  privacyConsent: boolean;
   updatedAt: string;
   createdAt: string;
 }
@@ -468,6 +498,10 @@ export interface Analytics {
 export interface User {
   id: number;
   name?: string | null;
+  /**
+   * Ta osoba dostaje powiadomienia o nowych rezerwacjach i zgłoszeniach na urządzeniach, na których je włączyła.
+   */
+  receivesNotifications?: boolean | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -530,6 +564,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'bookings';
         value: number | Booking;
+      } | null)
+    | ({
+        relationTo: 'stay-bookings';
+        value: number | StayBooking;
       } | null)
     | ({
         relationTo: 'applications';
@@ -716,7 +754,32 @@ export interface BookingsSelect<T extends boolean = true> {
   email?: T;
   customerNotes?: T;
   instructorRequired?: T;
+  reminderSentAt?: T;
+  reminderResponse?: T;
+  reminderRespondedAt?: T;
+  reminderEscalatedAt?: T;
+  reminderTokenHash?: T;
   source?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stay-bookings_select".
+ */
+export interface StayBookingsSelect<T extends boolean = true> {
+  status?: T;
+  staffNotes?: T;
+  reference?: T;
+  accommodationTypes?: T;
+  checkIn?: T;
+  checkOut?: T;
+  guests?: T;
+  customerName?: T;
+  phone?: T;
+  email?: T;
+  customerNotes?: T;
+  privacyConsent?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -825,6 +888,7 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  receivesNotifications?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

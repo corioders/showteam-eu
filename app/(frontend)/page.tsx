@@ -95,7 +95,7 @@ export default async function Home() {
               </div>
               <p className="relative font-display max-w-2xl text-5xl font-black uppercase leading-[0.88] tracking-[-0.04em] sm:text-7xl"><EditableText field="planTitle" multiline /></p>
               <nav className="relative grid border-l border-t border-black/25 sm:grid-cols-4" aria-label="Skróty do oferty">
-                {[{ href: "/oferta/lato", label: "Woda" }, { href: "/oferta/zima", label: "Śnieg" }, { href: "/oferta/szkolenia", label: "Szkolenia" }, { href: "/oferta/noclegi-nad-woda", label: "Noclegi" }].map((item, index) => (
+                {[{ href: "/oferta/lato", label: "Woda" }, { href: "/oferta/zima", label: "Śnieg" }, { href: "/oferta/szkolenia", label: "Szkolenia" }, { href: "/noclegi", label: "Noclegi" }].map((item, index) => (
                   <Link key={item.href} href={item.href} className="flex items-center justify-between border-b border-r border-black/25 p-4 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:bg-black hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black">
                     <span>0{index + 1} {item.label}</span><ArrowUpRight className="size-4" />
                   </Link>

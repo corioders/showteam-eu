@@ -51,11 +51,22 @@ const staffEvents = sqliteTable("staff_events", {
   updatedAt: integer("updated_at").notNull(),
 }, (table) => [index("staff_events_dates_idx").on(table.startDate, table.recurrenceUntil)]);
 
+const pushSubscriptions = sqliteTable("push_subscriptions", {
+  id: text("id").primaryKey().notNull(),
+  userId: integer("user_id").notNull(),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+}, (table) => [uniqueIndex("push_subscriptions_endpoint_idx").on(table.endpoint), index("push_subscriptions_user_idx").on(table.userId)]);
+
 export const preserveOperationalTables: SQLiteSchemaHook = ({ schema }) => {
   schema.tables.booking_slots = bookingSlots;
   schema.tables.tv_pairings = tvPairings;
   schema.tables.tv_devices = tvDevices;
   schema.tables.rate_limits = rateLimits;
   schema.tables.staff_events = staffEvents;
+  schema.tables.push_subscriptions = pushSubscriptions;
   return schema;
 };

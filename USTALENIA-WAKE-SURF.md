@@ -121,7 +121,7 @@ Dokument roboczy z rozmowy. Bez implementacji do czasu wyraźnego polecenia uży
 - SMS ma zawierać dwa linki: „Potwierdzam” i „Anuluję”, prowadzące do bezpiecznej strony wykonującej wybraną operację.
 - Rezerwację złożoną mniej niż 24 godziny wcześniej traktować jako aktualną bez wcześniejszego przypomnienia.
 - SMS-y dla wyjazdów i imprez/spływów wymagają decyzji Asi; prawdopodobnie nie będą potrzebne, bo Asia pozostaje z klientami w kontakcie.
-- Dostawcę SMS trzeba dopiero wybrać i skonfigurować.
+- Wybrany dostawca: SMSAPI. Integracja korzysta z OAuth Bearer i bezpiecznego endpointu HTTPS; do aktywacji potrzebne są token API oraz zatwierdzone pole nadawcy z konta SHOWteam.
 - Przypomnienie wysyłać dzień przed rezerwacją o 09:00.
 - Jeżeli klient nie kliknie żadnego linku przez 6 godzin, Asia dostaje powiadomienie, aby zadzwonić.
 - SMS-y wysyłać na pewno dla rezerwacji szkoleń. Decyzja o wyjazdach i imprezach pozostaje do dopisania.

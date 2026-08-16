@@ -12,6 +12,7 @@ import { Applications } from "@/collections/Applications";
 import { createBookingsCollection } from "@/collections/Bookings";
 import { Equipment } from "@/collections/Equipment";
 import { EventInquiries } from "@/collections/EventInquiries";
+import { StayBookings } from "@/collections/StayBookings";
 import type { GetPlatformProxyOptions } from "wrangler";
 import { Media } from "@/collections/Media";
 import { Gallery } from "@/collections/Gallery";
@@ -82,7 +83,7 @@ export default buildConfig({
       },
     },
   },
-  collections: [Offers, Gallery, PageContent, Equipment, createBookingsCollection(database), Applications, EventInquiries, Analytics, Media, Users],
+  collections: [Offers, Gallery, PageContent, Equipment, createBookingsCollection(database), StayBookings, Applications, EventInquiries, Analytics, Media, Users],
   globals: [EventSettings],
   i18n: { supportedLanguages: { pl: showteamPolish }, fallbackLanguage: "pl" },
   telemetry: false,

@@ -8,6 +8,9 @@ export const Users: CollectionConfig = {
     cookies: { sameSite: "Strict", secure: process.env.NODE_ENV === "production" },
     removeTokenFromResponses: true,
   },
-  fields: [{ name: "name", label: "Imię", type: "text" }],
+  fields: [
+    { name: "name", label: "Imię", type: "text" },
+    { name: "receivesNotifications", label: "Otrzymuje powiadomienia", type: "checkbox", defaultValue: true, admin: { description: "Ta osoba dostaje powiadomienia o nowych rezerwacjach i zgłoszeniach na urządzeniach, na których je włączyła." } },
+  ],
   versions: false,
 };

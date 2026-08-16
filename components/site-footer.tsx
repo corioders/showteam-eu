@@ -16,7 +16,7 @@ export function SiteFooter() {
           <a href={contact.tiktok} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 hover:text-orange-400 md:justify-end"><Music2 className="size-4" /> TikTok <ArrowUpRight className="size-3" /></a>
           <Link href="/zgloszenie" className="hover:text-orange-400">Jedź z nami</Link>
           <Link href="/zorganizuj-impreze" className="hover:text-orange-400">Zorganizuj imprezę</Link>
-          <Link href="/oferta/noclegi-nad-woda" className="hover:text-orange-400">Noclegi nad wodą</Link>
+          <Link href="/noclegi" className="hover:text-orange-400">Noclegi nad wodą</Link>
           <Link href="/rezerwacje" className="hover:text-orange-400">Rezerwuj aktywność</Link>
           <Link href="/galeria" className="hover:text-orange-400">Galeria</Link>
           <Link href="/kontakt" className="hover:text-orange-400">Kontakt i o nas</Link>

@@ -3,6 +3,7 @@ import config, { database } from "@payload-config";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { eventInquiryReference } from "@/lib/event-inquiries";
 import { isBookingDate, normalizePhone, todayInPoland } from "@/lib/reservations";
+import { notifyStaff } from "@/lib/push-notifications";
 
 type DateOption = { startDate?: unknown; endDate?: unknown };
 type InquiryInput = {
@@ -67,6 +68,7 @@ export async function POST(request: Request) {
       attractionNotes: longText(input.attractionNotes), wishes: longText(input.wishes),
       contactName, company: company || undefined, phone, email, privacyConsent: true,
     } });
+    await notifyStaff(database, { title: "Nowe zapytanie o imprezę", body: `${contactName} · ${eventTypes.includes("canoe") ? "spływ" : "impreza"}`, url: "/a/imprezy" });
   } catch (error) {
     payload.logger.error({ err: error, msg: "Event inquiry creation failed" });
     return Response.json({ error: "Nie udało się zapisać zapytania. Spróbuj ponownie lub zadzwoń do nas." }, { status: 500 });

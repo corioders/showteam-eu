@@ -18,12 +18,14 @@
     "generate:types:payload": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "gallery:variants:static": "node scripts/generate-gallery-variants.mjs",
     "gallery:variants:remote": "cross-env NODE_ENV=production CLOUDFLARE_REMOTE_BINDINGS=true PAYLOAD_SECRET=ignore payload run scripts/migrate-gallery-variants.ts",
-    "deploy": "pnpm run deploy:database && pnpm run deploy:app",
+    "deploy": "pnpm run deploy:database && pnpm run deploy:app && pnpm run deploy:reminders",
     "deploy:app": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "deploy:database": "cross-env NODE_ENV=production CLOUDFLARE_REMOTE_BINDINGS=true PAYLOAD_SECRET=ignore payload migrate && wrangler d1 execute D1 --command 'PRAGMA optimize' --remote",
+    "deploy:reminders": "wrangler deploy --config wrangler.reminders.jsonc",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview"
   },
   "dependencies": {
+    "@block65/webcrypto-web-push": "^1.0.2",
     "@fullcalendar/core": "^6.1.21",
     "@fullcalendar/daygrid": "^6.1.21",
     "@fullcalendar/interaction": "^6.1.21",

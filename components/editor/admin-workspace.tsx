@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, CalendarDays, ExternalLink, Monitor, PartyPopper, UsersRound } from "lucide-react";
+import { BarChart3, BedDouble, CalendarDays, ExternalLink, Monitor, PartyPopper, UsersRound } from "lucide-react";
 import { EditorProvider } from "@/components/editor/editor-provider";
 import { EditorToolbar } from "@/components/editor/editor-toolbar";
 import { SiteHeader } from "@/components/site-header";
@@ -8,6 +8,7 @@ const tools = [
   { href: "/a/kalendarz", label: "Kalendarz", icon: CalendarDays },
   { href: "/a/zgloszenia", label: "Zgłoszenia", icon: UsersRound },
   { href: "/a/imprezy", label: "Imprezy", icon: PartyPopper },
+  { href: "/a/noclegi", label: "Noclegi", icon: BedDouble },
   { href: "/a/statystyki", label: "Statystyki", icon: BarChart3 },
   { href: "/a/telewizory", label: "Telewizory", icon: Monitor },
 ] as const;

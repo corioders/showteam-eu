@@ -3,6 +3,7 @@ import config, { database } from "@payload-config";
 import { applicationDisciplinesForCategory, applicationHasSportDetails, applicationLevels, applicationReference, applicationTransport, normalizeEmail, participantIdentity } from "@/lib/applications";
 import { applicationCategories, type ApplicationCategory } from "@/lib/application-options";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { notifyStaff } from "@/lib/push-notifications";
 
 type ApplicationInput = Record<string, unknown>;
 const string = (input: ApplicationInput, key: string, max: number) => String(input[key] || "").trim().slice(0, max);
@@ -81,6 +82,7 @@ export async function POST(request: Request) {
       privacyConsent: true, accuracyConfirmed: true, newsletterConsent,
       newsletterConsentedAt: newsletterConsent ? new Date().toISOString() : undefined,
     } });
+    await notifyStaff(database, { title: "Nowe zgłoszenie", body: `${participantName} · ${offer}`, url: "/a/zgloszenia" });
     // E-mail confirmation is intentionally deferred until the mail provider is configured.
     return Response.json({ reference }, { status: 201 });
   } catch (error) {

@@ -30,6 +30,6 @@ export default async function OfferPage({ params }: Props) {
     <OfferLocationLink />
     <OfferListsSection offer={offer} />
     <CmsDetails offer={offer} />
-    <ContactCta title={<OfferCtaTitle />} applicationOffer={offer.title} />
+    <ContactCta title={<OfferCtaTitle />} applicationOffer={offer.category === "Noclegi" ? undefined : offer.title} directHref={offer.category === "Noclegi" ? "/noclegi" : undefined} directLabel="Zarezerwuj pobyt" />
   </OfferInlineEditor>;
 }
