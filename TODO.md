@@ -17,6 +17,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
   - [ ] Zaktualizować branding, oferty, szkolenia, partnerstwa i treści strony.
     - [x] Ustawić sezony 2026/2027, kierunki, Pireneje 14–25.03.2027, szkolenia, partnerstwo Tomka i Facebook.
     - [ ] Po otrzymaniu materiałów podpiąć zdjęcie SUP-a z osadnią oraz dostarczony, licencjonowany plik fontu Maszyna Plus.
+  - [ ] Przepiąć DNS `showteam.eu` z dhosting.pl na wdrożony Worker; obecna domena nadal serwuje starą stronę z hostingu LiteSpeed.
 
 - [x] Rozszerzyć bezpośrednią edycję strony — zakres zatwierdzony 2026-08-16:
   - [x] Strona główna: pozycje 1.1–1.12; bez edycji kafelków ofert bezpośrednio na stronie głównej (1.13).
