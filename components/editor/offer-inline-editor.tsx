@@ -30,6 +30,10 @@ type OfferEditing = {
 
 const OfferEditingContext = createContext<OfferEditing | null>(null);
 
+export function useOfferEditor() {
+  return useContext(OfferEditingContext);
+}
+
 export function OfferInlineEditor({ offer, children }: { offer: Offer; children: React.ReactNode }) {
   const { enabled, visible } = useEditor();
   const router = useRouter();
@@ -324,6 +328,34 @@ export function OfferCover({ offer }: { offer: Offer }) {
     <Image src={preview} alt={offer.imageAlt} fill priority unoptimized={preview.startsWith("blob:")} className="object-cover" sizes="100vw" />
     {editor?.editing ? <div className="absolute right-4 top-24 z-20 max-w-[min(20rem,calc(100%-2rem))]"><label className="flex min-h-12 cursor-pointer items-center justify-center bg-orange-500 px-4 text-sm font-black uppercase text-black shadow-xl"><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" disabled={uploading} onChange={(event) => void upload(event.target.files?.[0])} />{uploading ? "Przygotowuję zdjęcie…" : "Zmień zdjęcie okładkowe"}</label>{error ? <p role="alert" className="mt-2 bg-red-950 p-3 text-sm text-red-100">{error}</p> : null}</div> : null}
   </>;
+}
+
+export function OfferMediaUpload({ offer, field, label = "Zmień zdjęcie" }: { offer: Offer; field: string; label?: string }) {
+  const editor = useContext(OfferEditingContext);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  if (!editor?.editing || !offer.cmsId) return null;
+
+  async function upload(file: File | undefined) {
+    if (!file || !offer.cmsId || uploading) return;
+    setUploading(true);
+    setError("");
+    try {
+      const body = new FormData();
+      body.set("field", field);
+      body.set("file", (await createPhotoVariants(file)).large);
+      const response = await fetch(`/api/admin/offers/${offer.cmsId}/media`, { method: "POST", body });
+      const result = await response.json() as { url?: string; message?: string };
+      if (!response.ok || !result.url) throw new Error(result.message || "Nie udało się zmienić zdjęcia.");
+      editor?.updatePageContent(field, result.url);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Nie udało się zmienić zdjęcia.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return <div className="absolute right-3 top-3 z-20 max-w-[calc(100%-1.5rem)]"><label className="flex min-h-10 cursor-pointer items-center bg-orange-500 px-3 text-xs font-black uppercase text-black shadow-xl"><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" disabled={uploading} onChange={(event) => void upload(event.target.files?.[0])} />{uploading ? "Wysyłam…" : label}</label>{error ? <p role="alert" className="mt-2 bg-red-950 p-2 text-xs text-red-100">{error}</p> : null}</div>;
 }
 
 export function OfferListsSection({ offer }: { offer: Offer }) {

@@ -6,8 +6,8 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 - [ ] Rozszerzyć bezpośrednią edycję strony — zakres zatwierdzony 2026-08-16:
   - [x] Strona główna: pozycje 1.1–1.12; bez edycji kafelków ofert bezpośrednio na stronie głównej (1.13).
-  - [ ] Wspólne elementy ofert: cały punkt 2 — okładka, publikacja, tworzenie/usuwanie/kolejność/URL, mapy, CTA i sekcje szczegółowe.
-  - [ ] Podstrony Lato, Zima, Szkolenia i Noclegi: całe punkty 3–6.
+  - [x] Wspólne elementy ofert: cały punkt 2 — okładka, publikacja, tworzenie/usuwanie/kolejność/URL, mapy, CTA i sekcje szczegółowe.
+  - [x] Podstrony Lato, Zima, Szkolenia i Noclegi: całe punkty 3–6.
   - [x] Rezerwacje: cały punkt 7 — copy, zdjęcia i kolejność sprzętu, usuwanie oraz dostępność przy sprzęcie.
   - [x] Galeria: cały punkt 8 — copy, kolejność i wymiana istniejących plików.
   - [ ] Galeria: zastąpić niedziałające suwaki kadru gotowym mobilnym edytorem open source; wdrożyć po głównym zakresie 1–9.
@@ -20,7 +20,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
   - [ ] Kontekstowe edytowanie treści ofert bez opuszczania strony.
     - [x] Nazwa, kategoria, sezon, lokalizacja, opis, terminy, wyróżniki i publikacja.
     - [x] Pola podstawowej oferty edytowane bezpośrednio w miejscu ich wyświetlania, z natychmiastowym podglądem.
-    - [ ] Zdjęcie okładkowe i pozostałe teksty specyficzne dla podstron Lato, Zima i Szkolenia.
+    - [x] Zdjęcie okładkowe i pozostałe teksty specyficzne dla podstron Lato, Zima i Szkolenia.
   - [x] Kontekstowe dodawanie i edytowanie sprzętu na stronie Rezerwacje.
   - [x] Kontekstowe dodawanie i edytowanie mediów w Galerii.
   - [x] Kalendarz, zgłoszenia, statystyki i telewizory w spójnym interfejsie strony.
