@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ExternalLink, FilePlus2, LoaderCircle, MapPin, Plus, RotateCcw, Save, Settings2, Trash2 } from "lucide-react";
@@ -39,6 +39,7 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
   const router = useRouter();
   const initial = useMemo(() => toOfferDraft(offer), [offer]);
   const [value, setValue] = useState(initial);
+  const valueRef = useRef(initial);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
@@ -52,13 +53,16 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
     if (!saved) return;
     const restored = restoreOfferDraft(saved, initial);
     if (restored) {
+      valueRef.current = restored;
       queueMicrotask(() => setValue(restored));
     } else {
       localStorage.removeItem(draftKey);
     }
   }, [draftKey, editing, initial]);
 
-  function persist(next: OfferDraft) {
+  function persist(change: (current: OfferDraft) => OfferDraft) {
+    const next = change(valueRef.current);
+    valueRef.current = next;
     setValue(next);
     localStorage.setItem(draftKey, JSON.stringify(next));
     setMessage(null);
@@ -66,53 +70,52 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
   }
 
   function update<K extends keyof OfferDraft>(field: K, nextValue: OfferDraft[K]) {
-    persist({ ...value, [field]: nextValue });
+    persist((current) => ({ ...current, [field]: nextValue }));
   }
 
   function updateDate(index: number, field: keyof OfferDate, nextValue: string) {
-    const dates = value.dates.map((date, itemIndex) => itemIndex === index ? { ...date, [field]: nextValue } : date);
-    persist({ ...value, dates });
+    persist((current) => ({ ...current, dates: current.dates.map((date, itemIndex) => itemIndex === index ? { ...date, [field]: nextValue } : date) }));
   }
 
   function addDate() {
-    persist({ ...value, dates: [...value.dates, { label: "", startDate: "", endDate: "" }] });
+    persist((current) => ({ ...current, dates: [...current.dates, { label: "", startDate: "", endDate: "" }] }));
   }
 
   function removeDate(index: number) {
-    persist({ ...value, dates: value.dates.filter((_, itemIndex) => itemIndex !== index) });
+    persist((current) => ({ ...current, dates: current.dates.filter((_, itemIndex) => itemIndex !== index) }));
   }
 
   function updateHighlight(index: number, nextValue: string) {
-    const highlights = value.highlights.map((highlight, itemIndex) => itemIndex === index ? nextValue : highlight);
-    persist({ ...value, highlights });
+    persist((current) => ({ ...current, highlights: current.highlights.map((highlight, itemIndex) => itemIndex === index ? nextValue : highlight) }));
   }
 
   function addHighlight() {
-    persist({ ...value, highlights: [...value.highlights, ""] });
+    persist((current) => ({ ...current, highlights: [...current.highlights, ""] }));
   }
 
   function removeHighlight(index: number) {
-    persist({ ...value, highlights: value.highlights.filter((_, itemIndex) => itemIndex !== index) });
+    persist((current) => ({ ...current, highlights: current.highlights.filter((_, itemIndex) => itemIndex !== index) }));
   }
 
   function updateSection(index: number, field: "title" | "body", nextValue: string) {
-    persist({ ...value, sections: value.sections.map((section, itemIndex) => itemIndex === index ? { ...section, [field]: nextValue } : section) });
+    persist((current) => ({ ...current, sections: current.sections.map((section, itemIndex) => itemIndex === index ? { ...section, [field]: nextValue } : section) }));
   }
 
   function addSection() {
-    persist({ ...value, sections: [...value.sections, { title: "", body: "" }] });
+    persist((current) => ({ ...current, sections: [...current.sections, { title: "", body: "" }] }));
   }
 
   function removeSection(index: number) {
-    persist({ ...value, sections: value.sections.filter((_, itemIndex) => itemIndex !== index) });
+    persist((current) => ({ ...current, sections: current.sections.filter((_, itemIndex) => itemIndex !== index) }));
   }
 
   function updatePageContent(field: string, nextValue: string) {
-    persist({ ...value, pageContent: { ...value.pageContent, [field]: nextValue } });
+    persist((current) => ({ ...current, pageContent: { ...current.pageContent, [field]: nextValue } }));
   }
 
   function clear() {
     localStorage.removeItem(draftKey);
+    valueRef.current = initial;
     setValue(initial);
     setMessage(null);
     setErrors([]);
@@ -126,7 +129,7 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
     const response = await fetch(`/api/admin/offers/${offer.cmsId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(value),
+      body: JSON.stringify(valueRef.current),
     });
     const result = await response.json() as { message?: string; errors?: string[] };
     setSaving(false);
@@ -233,7 +236,7 @@ export function OfferDateList({ offer, variant = "generic" }: { offer: Offer; va
         const rowClass = editing ? "flex items-start gap-3 border-b border-r border-white/15 p-4" : variant === "summer" ? "grid grid-cols-[3rem_1fr_auto] items-center gap-4 border-b border-white/10 px-5 py-6 last:border-0 sm:grid-cols-[4rem_1fr_auto] sm:px-8" : variant === "winter" ? "flex min-h-24 items-center gap-4 border-b border-r border-white/15 p-5" : "flex items-center gap-3 border-b border-white/10 p-4 last:border-0";
         return <div key={index} className={rowClass}>
           {!editing && variant !== "generic" && <span className="font-display text-3xl font-black text-orange-500">{String(index + 1).padStart(2, "0")}</span>}
-          {editing ? <><div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2"><label className="sm:col-span-2"><span className="mb-1 block text-xs font-bold uppercase tracking-wide text-white/55">Nazwa terminu</span><input className="inline-editor-list-input" value={date.label} maxLength={80} placeholder="np. Turnus I" onChange={(event) => editor?.updateDate(index, "label", event.target.value)} /></label><label><span className="mb-1 block text-xs font-bold uppercase tracking-wide text-white/55">Od</span><input type="date" className="inline-editor-list-input" value={date.startDate} onChange={(event) => editor?.updateDate(index, "startDate", event.target.value)} /></label><label><span className="mb-1 block text-xs font-bold uppercase tracking-wide text-white/55">Do</span><input type="date" min={date.startDate || undefined} className="inline-editor-list-input" value={date.endDate} onChange={(event) => editor?.updateDate(index, "endDate", event.target.value)} /></label></div><button type="button" className="inline-editor-remove mt-5" onClick={() => editor?.removeDate(index)} aria-label={`Usuń termin ${index + 1}`}><Trash2 className="size-4" /></button></> : <><span className="font-semibold">{date.label}</span><span className={variant === "summer" ? "text-right text-sm text-white/50" : "ml-auto text-right text-sm text-white/55"}>{formatOfferDateRange(date)}</span></>}
+          {editing ? <><div className="grid min-w-0 flex-1 gap-3 sm:grid-cols-2"><label className="sm:col-span-2"><span className="mb-1 block text-xs font-bold uppercase tracking-wide text-white/55">Nazwa terminu</span><input className="inline-editor-list-input" value={date.label} maxLength={80} placeholder="np. Turnus I" onChange={(event) => editor?.updateDate(index, "label", event.target.value)} /></label><label><span className="mb-1 block text-xs font-bold uppercase tracking-wide text-white/55">Od</span><input type="date" className="inline-editor-list-input" value={date.startDate} onInput={(event) => editor?.updateDate(index, "startDate", event.currentTarget.value)} /></label><label><span className="mb-1 block text-xs font-bold uppercase tracking-wide text-white/55">Do</span><input type="date" min={date.startDate || undefined} className="inline-editor-list-input" value={date.endDate} onInput={(event) => editor?.updateDate(index, "endDate", event.currentTarget.value)} /></label></div><button type="button" className="inline-editor-remove mt-5" onClick={() => editor?.removeDate(index)} aria-label={`Usuń termin ${index + 1}`}><Trash2 className="size-4" /></button></> : <><span className="font-semibold">{date.label}</span><span className={variant === "summer" ? "text-right text-sm text-white/50" : "ml-auto text-right text-sm text-white/55"}>{formatOfferDateRange(date)}</span></>}
         </div>;
       })}
       {editing && <button type="button" className="inline-editor-add" onClick={() => editor?.addDate()}><Plus className="size-4" /> Dodaj termin</button>}

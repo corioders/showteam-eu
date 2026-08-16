@@ -333,8 +333,8 @@ test.describe("mobile", () => {
     await expect(title).toHaveValue("SHOWzima bez formularza");
     await page.getByRole("button", { name: "Dodaj termin" }).click();
     await page.getByLabel("Nazwa terminu").last().fill("Nowy Rok");
-    await page.getByLabel("Od").last().fill("2027-01-02");
-    await page.getByLabel("Do").last().fill("2027-01-09");
+    await page.getByLabel("Od", { exact: true }).last().fill("2027-01-02");
+    await page.getByLabel("Do", { exact: true }).last().fill("2027-01-09");
     await expect(page.getByText("Podgląd", { exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Zapisz zmiany" }).click();
     await expect.poll(() => savedTitle).toBe("SHOWzima bez formularza");
