@@ -78,7 +78,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## Do weryfikacji po deployu
 
-- [ ] Safari/iPhone: `/admin/kalendarz` zawsze startuje jako lista; brak widoku tygodnia i zagnieżdżonego scrolla.
+- [ ] Safari/iPhone: `/a/kalendarz` zawsze startuje jako lista; brak widoku tygodnia i zagnieżdżonego scrolla.
 - [ ] Safari/iPhone: CMS header nie nachodzi na tytuł formularza.
 - [ ] Blokady wynajmu: cały dzień domyślnie, opcjonalne własne godziny, wszystkie albo jeden sprzęt.
 - [x] Statystyki używają etykiety „Odwiedziny strony”.

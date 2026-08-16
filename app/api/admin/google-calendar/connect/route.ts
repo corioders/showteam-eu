@@ -6,7 +6,7 @@ import { googleCalendarConfig, sha256 } from "@/lib/google-calendar";
 export async function GET(request: Request) {
   if (!await isAdmin(request)) return Response.redirect(new URL("/admin/login", request.url));
   const config = googleCalendarConfig(googleCalendarEnv);
-  if (!config) return Response.redirect(new URL("/admin/kalendarz?google=not-configured", request.url));
+  if (!config) return Response.redirect(new URL("/a/kalendarz?google=not-configured", request.url));
   await ensureOperationalTables(database);
   const state = Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString("base64url");
   await database.prepare("DELETE FROM google_calendar_oauth_states WHERE expires_at < ?").bind(Date.now()).run();

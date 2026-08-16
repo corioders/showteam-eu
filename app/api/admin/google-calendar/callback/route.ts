@@ -6,7 +6,7 @@ type TokenResponse = { access_token?: string; refresh_token?: string; error_desc
 type CalendarResponse = { id?: string; summary?: string };
 
 export async function GET(request: Request) {
-  const resultUrl = new URL("/admin/kalendarz", request.url);
+  const resultUrl = new URL("/a/kalendarz", request.url);
   const config = googleCalendarConfig(googleCalendarEnv);
   if (!config) { resultUrl.searchParams.set("google", "not-configured"); return Response.redirect(resultUrl); }
   const url = new URL(request.url);

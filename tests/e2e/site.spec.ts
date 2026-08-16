@@ -217,6 +217,7 @@ test("Google Calendar management stays private and ICS is removed", async ({ req
   expect((await request.get("/api/admin/google-calendar/status")).status()).toBe(401);
   expect((await request.post("/api/admin/google-calendar/sync")).status()).toBe(401);
   expect((await request.get("/api/calendar/subscriptions")).status()).toBe(404);
+  expect((await request.get("/api/admin/google-calendar/connect", { maxRedirects: 0 })).headers().location).toMatch(/\/admin\/login$/);
 });
 
 test("CMS is the single installable staff dashboard", async ({ page }) => {
