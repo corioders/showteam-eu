@@ -8,6 +8,8 @@ const initialOffers = [
     season: "Sezon 2026",
     sortOrder: 10,
     location: "Wake & Surf Village · Poręba",
+    mapUrl: "https://www.google.com/maps/place/SHOWteam+WAKE+%26+SURF+Village/@49.97635,18.8755667,17z/",
+    ctaTitle: "Wskakujesz do wody?",
     summary: "Kameralna baza nad Jeziorem Łąckim. Woda, wiatr, ruch i wakacje bez trybu oszczędzania energii.",
     staticImage: "lake",
     dates: [
@@ -22,6 +24,7 @@ const initialOffers = [
       { title: "Sprzęt i instruktorzy", body: "Wakeboard, windsurfing, katamarany, SUP-y, kajaki, łodzie żaglowe, narty wodne i sprzęt motorowodny." },
       { title: "Wake & Surf Village", body: "Prywatne molo, piaszczysta plaża, strefa chill, miejsce grillowe, sauna, boisko oraz zaplecze sanitarne." },
     ],
+    pageContent: {},
     published: true,
   },
   {
@@ -31,6 +34,8 @@ const initialOffers = [
     season: "Sezon 2026",
     sortOrder: 20,
     location: "Trentino · Dolomity",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=Trentino+Dolomites+Italy",
+    ctaTitle: "Jedziesz z nami?",
     summary: "Rodzinne tygodnie na stoku: szkolenie, sport, włoskie jedzenie i après-ski w wydaniu SHOWteam.",
     staticImage: "snow",
     dates: [
@@ -50,6 +55,7 @@ const initialOffers = [
       { title: "Szkolenie", body: "Codzienna jazda dla dzieci, młodzieży i dorosłych — od podstaw po doskonalenie techniki." },
       { title: "Après-ski", body: "Garda, trekking, lokalne smaki, integracja i niespodzianki przygotowane przez SHOWteam." },
     ],
+    pageContent: {},
     published: true,
   },
   {
@@ -59,6 +65,8 @@ const initialOffers = [
     season: "Od 14. roku życia",
     sortOrder: 30,
     location: "Poręba · Jezioro Łąckie",
+    mapUrl: "https://www.google.com/maps/place/SHOWteam+WAKE+%26+SURF+Village/@49.97635,18.8755667,17z/",
+    ctaTitle: "Zaczynamy trening?",
     summary: "Kurs sternika motorowodnego, żeglarstwo i autorskie programy FizjoSPORT prowadzone przez praktyków.",
     staticImage: "training",
     dates: [],
@@ -67,6 +75,7 @@ const initialOffers = [
       { title: "Od jakiego wieku?", body: "Kurs sternika motorowodnego i żeglarza jachtowego jest dostępny od 14. roku życia." },
       { title: "Jak wygląda praktyka?", body: "Szkolenie odbywa się na wodzie, na sprzęcie używanym w realnych warunkach." },
     ],
+    pageContent: {},
     published: true,
   },
   {
@@ -76,11 +85,14 @@ const initialOffers = [
     season: "Pobyt nad wodą",
     sortOrder: 40,
     location: "Wake & Surf Village · Poręba",
+    mapUrl: "https://www.google.com/maps/place/SHOWteam+WAKE+%26+SURF+Village/@49.97635,18.8755667,17z/",
+    ctaTitle: "Rezerwujesz pobyt?",
     summary: "Wynajem kontenerów mieszkalnych i domków holenderskich przy bazie SHOWteam nad Jeziorem Łąckim. O dostępność i warunki pobytu zapytaj bezpośrednio.",
     staticImage: "stay",
     dates: [],
     highlights: [{ text: "Kontenery mieszkalne" }, { text: "Domki holenderskie" }, { text: "Lokalizacja nad wodą" }],
     sections: [],
+    pageContent: {},
     published: true,
   },
 ];
