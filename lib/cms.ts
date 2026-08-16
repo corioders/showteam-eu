@@ -56,7 +56,16 @@ export async function getOffers(): Promise<Offer[]> {
   }
 }
 
-export async function getOffer(slug: string) {
+export async function getOffer(slug: string, includeUnpublished = false) {
+  if (includeUnpublished) {
+    try {
+      const payload = await getPayload({ config });
+      const result = await payload.find({ collection: "offers", where: { slug: { equals: slug } }, limit: 1, depth: 1, overrideAccess: true });
+      if (result.docs[0]) return toOffer(result.docs[0] as unknown as Record<string, unknown>);
+    } catch {
+      return undefined;
+    }
+  }
   const cmsOffers = await getOffers();
   return cmsOffers.find((offer) => offer.href === `/oferta/${slug}`) ?? fallbackOffers.find((offer) => offer.href === `/oferta/${slug}`);
 }

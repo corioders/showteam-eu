@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { ExternalLink, LoaderCircle, MapPin, Plus, RotateCcw, Save, Settings2, Trash2 } from "lucide-react";
+import { ExternalLink, FilePlus2, LoaderCircle, MapPin, Plus, RotateCcw, Save, Settings2, Trash2 } from "lucide-react";
 import { useEditor } from "@/components/editor/editor-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
+  const [changingPage, setChangingPage] = useState(false);
   const editing = enabled && visible && Boolean(offer.cmsId);
   const draftKey = `showteam:visual-offer:${offer.cmsId}`;
 
@@ -133,6 +134,33 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
     }
   }
 
+  async function createOffer() {
+    setChangingPage(true);
+    const response = await fetch("/api/admin/offers", { method: "POST" });
+    const result = await response.json() as { href?: string; message?: string };
+    setChangingPage(false);
+    if (!response.ok || !result.href) {
+      setErrors([result.message || "Nie udało się utworzyć nowej oferty."]);
+      return;
+    }
+    router.push(result.href);
+  }
+
+  async function deleteOffer() {
+    if (!offer.cmsId || !window.confirm(`Usunąć stronę „${value.title}”? Tej operacji nie można cofnąć.`)) return;
+    setChangingPage(true);
+    const response = await fetch(`/api/admin/offers/${offer.cmsId}`, { method: "DELETE" });
+    const result = await response.json() as { message?: string };
+    setChangingPage(false);
+    if (!response.ok) {
+      setErrors([result.message || "Nie udało się usunąć oferty."]);
+      return;
+    }
+    localStorage.removeItem(draftKey);
+    router.push("/");
+    router.refresh();
+  }
+
   const context: OfferEditing = { editing, value, update, updateDate, addDate, removeDate, updateHighlight, addHighlight, removeHighlight, updateSection, addSection, removeSection, updatePageContent };
 
   return (
@@ -152,6 +180,7 @@ export function OfferInlineEditor({ offer, children }: { offer: Offer; children:
                 <label><span>Kolejność</span><input type="number" min="0" max="999" className="inline-editor-list-input" value={value.sortOrder} onChange={(event) => update("sortOrder", Number(event.target.value))} /></label>
                 <label className="flex min-h-12 items-center gap-3 pt-5"><input type="checkbox" checked={value.published} onChange={(event) => update("published", event.target.checked)} /><span>{value.published ? "Oferta widoczna" : "Oferta ukryta"}</span></label>
               </div>
+              <div className="flex flex-wrap gap-2 border-t border-white/10 pt-3"><Button type="button" variant="outline" size="sm" disabled={changingPage} onClick={() => void createOffer()}><FilePlus2 className="size-4" /> Dodaj nową ofertę</Button><Button type="button" variant="ghost" size="sm" disabled={changingPage} className="text-red-300 hover:bg-red-950 hover:text-red-100" onClick={() => void deleteOffer()}><Trash2 className="size-4" /> Usuń tę ofertę</Button></div>
             </details>
           </div>
         </aside>

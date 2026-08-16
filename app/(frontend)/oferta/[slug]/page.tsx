@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { getPayload } from "payload";
+import config from "@payload-config";
 import { ContactCta } from "@/components/contact-cta";
 import { CmsDetails } from "@/components/cms-details";
 import { OfferCtaTitle, OfferInlineEditor, OfferListsSection, OfferLocationLink } from "@/components/editor/offer-inline-editor";
@@ -24,7 +27,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function OfferPage({ params }: Props) {
   const { slug } = await params;
-  const offer = await getOffer(slug);
+  const payload = await getPayload({ config });
+  const { user } = await payload.auth({ headers: await headers() });
+  const offer = await getOffer(slug, Boolean(user));
   if (!offer) notFound();
 
   return <OfferInlineEditor key={offer.cmsId ?? offer.href} offer={offer}>
