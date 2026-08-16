@@ -12,6 +12,7 @@ export type EditableGalleryItem = {
   sourceUrl: string;
   focalX: number;
   focalY: number;
+  sortOrder: number;
 };
 
 const seasons = ["Lato", "Zima", "Szkolenia"] as const;
@@ -32,6 +33,7 @@ export function parseEditableGalleryItem(input: unknown): { data?: EditableGalle
   const sourceUrl = text(value.sourceUrl);
   const focalX = coordinate(value.focalX);
   const focalY = coordinate(value.focalY);
+  const sortOrder = Number(value.sortOrder);
   const errors: string[] = [];
   if (caption.length < 2 || caption.length > 100) errors.push("Podpis musi mieć od 2 do 100 znaków.");
   if (alt.length > 180) errors.push("Opis zdjęcia może mieć najwyżej 180 znaków.");
@@ -39,8 +41,9 @@ export function parseEditableGalleryItem(input: unknown): { data?: EditableGalle
   if (!layout || !mobileLayout || !fit || !mobilePosition) errors.push("Wybierz sposób wyświetlania materiału.");
   if (sourceUrl && !/^https:\/\//i.test(sourceUrl)) errors.push("Link źródłowy musi zaczynać się od https://.");
   if (focalX === null || focalY === null) errors.push("Ustaw najważniejszy punkt zdjęcia między 0 a 100.");
+  if (!Number.isSafeInteger(sortOrder) || sortOrder < 0) errors.push("Nie udało się ustawić kolejności materiału.");
   if (errors.length || !season || !layout || !mobileLayout || !fit || !mobilePosition || focalX === null || focalY === null) return { errors };
-  return { data: { caption, alt, season, published: value.published !== false, layout, mobileLayout, fit, mobilePosition, sourceUrl, focalX, focalY } };
+  return { data: { caption, alt, season, published: value.published !== false, layout, mobileLayout, fit, mobilePosition, sourceUrl, focalX, focalY, sortOrder } };
 }
 
 function text(value: unknown) { return typeof value === "string" ? value.trim() : ""; }

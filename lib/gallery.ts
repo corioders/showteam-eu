@@ -20,6 +20,7 @@ export type GalleryPhoto = {
   season: "Lato" | "Zima" | "Szkolenia";
   type: "image" | "video";
   editable: boolean;
+  sortOrder: number;
 };
 
 export type GalleryPage = {
@@ -29,7 +30,7 @@ export type GalleryPage = {
 };
 
 function staticPhotos(): GalleryPhoto[] {
-  return galleryAssets.map((asset) => ({ id: asset.value, src: staticVariant(asset.path, 2560), smallSrc: staticVariant(asset.path, 640), mediumSrc: staticVariant(asset.path, 1280), alt: asset.alt, caption: asset.label, layout: asset.layout, fit: asset.fit, objectPosition: asset.position, mobilePosition: asset.position, mobileLayout: defaultMobileLayout(asset.layout), season: asset.season, type: "image", editable: false, sourceUrl: asset.value.startsWith("instagram-") ? "https://www.instagram.com/showteam.eu/" : undefined }));
+  return galleryAssets.map((asset, index) => ({ id: asset.value, src: staticVariant(asset.path, 2560), smallSrc: staticVariant(asset.path, 640), mediumSrc: staticVariant(asset.path, 1280), alt: asset.alt, caption: asset.label, layout: asset.layout, fit: asset.fit, objectPosition: asset.position, mobilePosition: asset.position, mobileLayout: defaultMobileLayout(asset.layout), season: asset.season, type: "image", editable: false, sortOrder: galleryAssets.length - index, sourceUrl: asset.value.startsWith("instagram-") ? "https://www.instagram.com/showteam.eu/" : undefined }));
 }
 
 function staticVariant(source: string, width: 640 | 1280 | 2560) {
@@ -68,6 +69,7 @@ function toPhoto(document: Record<string, unknown>): GalleryPhoto | null {
     season: (document.season as GalleryPhoto["season"]) || fallback?.season || "Lato",
     type: typeof media === "object" && media?.mimeType?.startsWith("video/") ? "video" : "image",
     editable: true,
+    sortOrder: Number(document.sortOrder ?? 0),
   };
 }
 
@@ -84,7 +86,7 @@ export async function getGalleryPage({ page = 1, limit = 24, season }: { page?: 
           ...(season ? [{ season: { equals: season } }] : []),
         ],
       },
-      sort: "-createdAt",
+      sort: ["-sortOrder", "-createdAt"],
       depth: 1,
       page: safePage,
       limit: safeLimit,

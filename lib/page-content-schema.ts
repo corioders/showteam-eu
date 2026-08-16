@@ -53,7 +53,7 @@ export const pageContentDefaults = {
   },
   gallery: {
     eyebrow: "Bez stocków. Prosto z akcji.",
-    title: "Galeria SHOWteam.",
+    title: "Galeria\nSHOWteam.",
     description: "Jezioro Łąckie, Dolomity i Andorra — obozy, wyjazdy i codzienność SHOWteam uchwycone w akcji.",
   },
   reservations: {
