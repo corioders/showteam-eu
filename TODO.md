@@ -17,7 +17,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 - [ ] Nowy panel bezpośrednio na stronie (`codex/new-admin`):
   - [x] `/admin` służy do logowania, a po zalogowaniu otwiera stronę w trybie edycji.
   - [x] Wspólny pasek administratora oraz możliwość ukrycia przycisków edycji.
-  - [ ] Kontekstowe edytowanie treści ofert bez opuszczania strony.
+  - [x] Kontekstowe edytowanie treści ofert bez opuszczania strony.
     - [x] Nazwa, kategoria, sezon, lokalizacja, opis, terminy, wyróżniki i publikacja.
     - [x] Pola podstawowej oferty edytowane bezpośrednio w miejscu ich wyświetlania, z natychmiastowym podglądem.
     - [x] Zdjęcie okładkowe i pozostałe teksty specyficzne dla podstron Lato, Zima i Szkolenia.
@@ -26,6 +26,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
   - [x] Kalendarz, zgłoszenia, statystyki i telewizory w spójnym interfejsie strony.
   - [x] Pełny Payload wyłącznie jako drugorzędny tryb „Zaawansowane”.
   - [x] Zapis oferty natychmiast odświeża edytowaną podstronę i stronę główną.
+  - [x] Publiczne dane CMS są pobierane przy pierwszym żądaniu, cache’owane bez timera i natychmiast unieważniane po zapisie.
   - [x] Terminy ofert są strukturalne: obowiązkowa nazwa, data rozpoczęcia i data zakończenia; bez dowolnego tekstu zamiast daty.
 
 - [x] Przejrzeć folder `media od asi`, skatalogować oficjalne logotypy i materiały oraz wykorzystać właściwe źródła w serwisie.
