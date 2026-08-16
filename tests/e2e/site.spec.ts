@@ -190,19 +190,12 @@ test("application administration and export stay private", async ({ request }) =
   expect((await request.get("/api/admin/applications/export")).status()).toBe(401);
 });
 
-test("availability block management stays private", async ({ request }) => {
-  expect((await request.get("/api/admin/availability-blocks")).status()).toBe(401);
-  expect((await request.post("/api/admin/availability-blocks", { data: {} })).status()).toBe(401);
-});
-
-test("rental hours management stays private", async ({ request }) => {
-  expect((await request.get("/api/admin/availability-hours")).status()).toBe(401);
-  expect((await request.post("/api/admin/availability-hours", { data: {} })).status()).toBe(401);
-});
-
-test("weather recommendation management stays private", async ({ request }) => {
-  expect((await request.get("/api/admin/recommendations")).status()).toBe(401);
-  expect((await request.put("/api/admin/recommendations", { data: {} })).status()).toBe(401);
+test("staff event management stays private and old availability screens are removed", async ({ request }) => {
+  expect((await request.get("/api/admin/staff-events")).status()).toBe(401);
+  expect((await request.post("/api/admin/staff-events", { data: {} })).status()).toBe(401);
+  expect((await request.get("/api/admin/availability-blocks")).status()).toBe(404);
+  expect((await request.get("/api/admin/availability-hours")).status()).toBe(404);
+  expect((await request.get("/api/admin/recommendations")).status()).toBe(404);
 });
 
 test("reservation API requires an email address", async ({ request }) => {

@@ -7,8 +7,8 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 - [ ] Przebudowa WAKE & SURF Village — zakres roboczy w `USTALENIA-WAKE-SURF.md`:
   - [x] Usunąć Aktualności oraz integrację i testowe dane Google Calendar.
   - [x] Zastąpić publiczny model sprzętu katalogiem aktywności bez cen.
-  - [ ] Dodać globalne godziny bazy, wyjątki kalendarzowe i zakaz weekendowy per aktywność.
-  - [ ] Zastąpić blokady wewnętrznymi wydarzeniami, także całodniowymi i cyklicznymi.
+  - [x] Dodać globalne godziny bazy, wyjątki kalendarzowe i zakaz weekendowy per aktywność.
+  - [x] Zastąpić blokady wewnętrznymi wydarzeniami, także całodniowymi i cyklicznymi.
   - [ ] Dodać formularz oraz obsługę imprez i spływów.
   - [ ] Dodać statusy rezerwacji, instruktora, fakturę i wymagane przepływy zgłoszeń.
   - [ ] Dodać powiadomienia PWA, przypomnienia SMS i eskalację do Asi.

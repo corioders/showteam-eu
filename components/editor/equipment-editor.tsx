@@ -3,8 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
-import { CalendarClock, LoaderCircle, Pencil, Plus, RefreshCw, RotateCcw, Save, Trash2 } from "lucide-react";
+import { LoaderCircle, Pencil, Plus, RefreshCw, RotateCcw, Save, Trash2 } from "lucide-react";
 import { useEditor } from "@/components/editor/editor-provider";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -143,7 +142,7 @@ export function EquipmentEditor({ equipment, compact = false, className }: { equ
         </EditorSection>
 
         <div className="border border-white/15 bg-white/[0.04] p-5" aria-label="Podgląd aktywności"><span className="eyebrow">Podgląd</span><p className="mt-4 font-display text-4xl font-black uppercase leading-none">{value.name || "Nazwa aktywności"}</p><p className="mt-3 text-sm leading-6 text-white/60">{value.description || "Opis pojawi się tutaj."}</p><p className="mt-4 text-xs font-bold uppercase text-sky-300">{value.durationMinutes} min · {weatherProfileLabel(value.weatherProfile)}</p></div>
-        {equipment ? <div className="mt-5 flex flex-wrap gap-3"><Button asChild type="button" variant="outline"><Link href={`/a/kalendarz?tab=dostepnosc&equipment=${equipment.id}`}><CalendarClock className="size-4" /> Ustaw dostępność</Link></Button><Button type="button" variant="outline" className="border-red-500/40 text-red-200 hover:bg-red-500 hover:text-white" onClick={() => void remove()} disabled={saving}><Trash2 className="size-4" /> Usuń aktywność</Button></div> : null}
+        {equipment ? <div className="mt-5"><Button type="button" variant="outline" className="border-red-500/40 text-red-200 hover:bg-red-500 hover:text-white" onClick={() => void remove()} disabled={saving}><Trash2 className="size-4" /> Usuń aktywność</Button></div> : null}
         {(message || errors.length > 0) && <div className={`mt-6 border p-4 text-sm ${errors.length || message?.startsWith("Nie udało") ? "border-red-400/50 bg-red-950/50 text-red-100" : "border-emerald-400/40 bg-emerald-950/40 text-emerald-100"}`} role="status"><p className="font-bold">{message}</p>{errors.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5">{errors.map((error) => <li key={error}>{error}</li>)}</ul>}</div>}
         <div className="fixed inset-x-0 bottom-0 z-10 flex gap-2 border-t border-white/15 bg-neutral-950/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:left-auto sm:w-[min(42rem,100vw)] sm:px-8"><Button type="button" variant="outline" onClick={clear}><RotateCcw className="size-4" /> Wyczyść</Button><Button type="submit" className="flex-1" disabled={saving}>{saving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}{saving ? "Zapisuję…" : equipment ? "Zapisz zmiany" : "Dodaj aktywność"}</Button></div>
       </form>

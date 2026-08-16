@@ -7,10 +7,8 @@ export function ensureOperationalTables(database: D1Database): Promise<unknown> 
     database.prepare("CREATE TABLE IF NOT EXISTS tv_pairings (id text PRIMARY KEY NOT NULL, secret_hash text NOT NULL, user_code text NOT NULL, expires_at integer NOT NULL, approved integer DEFAULT 0 NOT NULL)"),
     database.prepare("CREATE TABLE IF NOT EXISTS tv_devices (id text PRIMARY KEY NOT NULL, token_hash text NOT NULL, name text NOT NULL, created_at integer NOT NULL)"),
     database.prepare("CREATE TABLE IF NOT EXISTS rate_limits (key text PRIMARY KEY NOT NULL, count integer NOT NULL, expires_at integer NOT NULL)"),
-    database.prepare("CREATE TABLE IF NOT EXISTS availability_blocks (id text PRIMARY KEY NOT NULL, equipment_id integer, booking_date text NOT NULL, start_time text NOT NULL, end_time text NOT NULL, reason text, created_at integer NOT NULL)"),
-    database.prepare("CREATE INDEX IF NOT EXISTS availability_blocks_date_equipment_idx ON availability_blocks (booking_date, equipment_id)"),
-    database.prepare("CREATE TABLE IF NOT EXISTS availability_hours (id text PRIMARY KEY NOT NULL, equipment_id integer, rule_type text NOT NULL, booking_date text, weekdays text, start_time text NOT NULL, end_time text NOT NULL, name text, created_at integer NOT NULL)"),
-    database.prepare("CREATE INDEX IF NOT EXISTS availability_hours_equipment_type_idx ON availability_hours (equipment_id, rule_type)"),
+    database.prepare("CREATE TABLE IF NOT EXISTS staff_events (id text PRIMARY KEY NOT NULL, title text NOT NULL, start_date text NOT NULL, end_date text, start_time text, end_time text, all_day integer DEFAULT 0 NOT NULL, blocks_base integer DEFAULT 1 NOT NULL, notes text, recurrence text DEFAULT 'none' NOT NULL, recurrence_until text, created_at integer NOT NULL, updated_at integer NOT NULL)"),
+    database.prepare("CREATE INDEX IF NOT EXISTS staff_events_dates_idx ON staff_events (start_date, recurrence_until)"),
   ]).catch((error) => {
     initialization = undefined;
     throw error;

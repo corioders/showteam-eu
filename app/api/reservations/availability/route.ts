@@ -1,8 +1,9 @@
 import { getPayload } from "payload";
 import config, { database } from "@payload-config";
-import { BASE_CLOSE_TIME, BASE_OPEN_TIME, createTimeSlots, endTime, isActivityOpenDate, isBookingDate, resolveBookingHours, timeRangesOverlap, todayInPoland, type AvailabilityHoursRule } from "@/lib/reservations";
+import { BASE_CLOSE_TIME, BASE_OPEN_TIME, createTimeSlots, endTime, isActivityOpenDate, isBookingDate, todayInPoland } from "@/lib/reservations";
 import { ensureOperationalTables } from "@/lib/operational-tables";
 import { getWindForecast, recommendationWindows, recommendSlot } from "@/lib/wind-recommendations";
+import { staffEventBlocksRange, staffEventFromDatabaseRow, type StaffEventDatabaseRow } from "@/lib/staff-events";
 
 export async function GET(request: Request) {
   await ensureOperationalTables(database);
@@ -26,28 +27,23 @@ export async function GET(request: Request) {
   }
   const resourceKey = equipment.sharedResourceKey || `activity:${equipmentId}`;
 
-  const [hoursRules, reserved, blocked, wind] = await Promise.all([
-    database.prepare(`SELECT equipment_id, rule_type, booking_date, weekdays, start_time, end_time, created_at
-      FROM availability_hours WHERE (equipment_id IS NULL OR equipment_id = ?) AND (rule_type = 'weekly' OR booking_date = ?)`)
-      .bind(equipmentId, date).all<{ equipment_id: number | null; rule_type: "date" | "weekly"; booking_date: string | null; weekdays: string | null; start_time: string; end_time: string; created_at: number }>(),
+  const [reserved, staffEvents, wind] = await Promise.all([
     database.prepare("SELECT start_time, COUNT(*) AS reserved FROM booking_slots WHERE resource_key = ? AND booking_date = ? GROUP BY start_time")
       .bind(resourceKey, date).all<{ start_time: string; reserved: number }>(),
-    database.prepare("SELECT start_time, end_time FROM availability_blocks WHERE booking_date = ? AND (equipment_id IS NULL OR equipment_id = ?)")
-      .bind(date, equipmentId).all<{ start_time: string; end_time: string }>(),
+    database.prepare(`SELECT id, title, start_date, end_date, start_time, end_time, all_day, blocks_base, notes, recurrence, recurrence_until
+      FROM staff_events WHERE blocks_base = true AND start_date <= ? AND COALESCE(recurrence_until, end_date, start_date) >= ?`)
+      .bind(date, date).all<StaffEventDatabaseRow>(),
     getWindForecast(date),
   ]);
-  const hours = resolveBookingHours(BASE_OPEN_TIME, BASE_CLOSE_TIME, equipmentId, date, hoursRules.results.map((rule): AvailabilityHoursRule => ({
-    equipmentId: rule.equipment_id, ruleType: rule.rule_type, bookingDate: rule.booking_date, weekdays: rule.weekdays,
-    startTime: rule.start_time, endTime: rule.end_time, createdAt: rule.created_at,
-  })));
+  const blockingEvents = staffEvents.results.map(staffEventFromDatabaseRow);
 
   const counts = new Map(reserved.results.map((row) => [row.start_time, Number(row.reserved)]));
   const forecastByHour = new Map(wind.hours.map((hour) => [hour.time.slice(11, 13), hour]));
   const windows = recommendationWindows(equipment);
   const currentTime = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Warsaw", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date());
-  const slots = createTimeSlots(hours.openTime, hours.closeTime, equipment.durationMinutes)
+  const slots = createTimeSlots(BASE_OPEN_TIME, BASE_CLOSE_TIME, equipment.durationMinutes)
     .filter((time) => date !== todayInPoland() || time > currentTime)
-    .filter((time) => !blocked.results.some((block) => timeRangesOverlap(time, endTime(time, equipment.durationMinutes), block.start_time, block.end_time)))
+    .filter((time) => !blockingEvents.some((event) => staffEventBlocksRange(event, date, time, endTime(time, equipment.durationMinutes))))
     .map((time) => ({
       time,
       available: Math.max(0, equipment.quantity - (counts.get(time) || 0)),
@@ -67,5 +63,5 @@ export async function GET(request: Request) {
       }),
     }))
     .filter((slot) => slot.available > 0);
-  return Response.json({ slots, durationMinutes: equipment.durationMinutes, openTime: hours.openTime, closeTime: hours.closeTime, windStatus: wind.status, recommendationNote: equipment.recommendationNote || null }, { headers: { "Cache-Control": "no-store" } });
+  return Response.json({ slots, durationMinutes: equipment.durationMinutes, openTime: BASE_OPEN_TIME, closeTime: BASE_CLOSE_TIME, windStatus: wind.status, recommendationNote: equipment.recommendationNote || null }, { headers: { "Cache-Control": "no-store" } });
 }

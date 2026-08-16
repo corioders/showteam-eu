@@ -79,12 +79,9 @@
 .calendar-admin-heading span { color: #e85200; font-size: .7rem; font-weight: 800; letter-spacing: .18em; }
 .calendar-admin-heading h1 { font-size: clamp(2rem,5vw,4rem); line-height: 1; margin: .4rem 0; text-transform: uppercase; }
 .calendar-admin-heading p { color: var(--theme-elevation-600); margin: 0; }
-.calendar-admin-tabs { border-bottom: 1px solid var(--theme-elevation-200); display: flex; gap: .25rem; margin-bottom: 1rem; overflow-x: auto; }
-.calendar-admin-tabs button { background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--theme-elevation-650); cursor: pointer; font-size: .9rem; font-weight: 700; min-height: 3rem; padding: .7rem 1rem; white-space: nowrap; }
-.calendar-admin-tabs button[aria-current="page"] { border-bottom-color: #e85200; color: var(--theme-text); }
-.calendar-admin-tabs button:focus-visible { outline: 2px solid #e85200; outline-offset: -2px; }
+.calendar-admin-heading > button { align-items: center; background: #e85200; border: 0; color: white; cursor: pointer; display: flex; font-weight: 800; gap: .5rem; justify-content: center; min-height: 3rem; padding: .75rem 1rem; white-space: nowrap; }
+.calendar-admin-heading > button svg { height: 1rem; width: 1rem; }
 .calendar-admin-calendar { background: #080a0b; color: white; min-width: 0; padding: 1rem; }
-.calendar-admin-settings { display: grid; gap: 1rem; }
 @media (max-width: 600px) { .calendar-admin-view { padding: 1rem; } .calendar-admin-heading { align-items: stretch; flex-direction: column; } .calendar-admin-calendar { margin-inline: -1rem; padding: 1rem; } }
 
 .equipment-recommendations { margin: 0 auto; max-width: 72rem; }

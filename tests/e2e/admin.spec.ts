@@ -41,35 +41,26 @@ test.describe("mobile admin", () => {
     expect(layout).toEqual({ noOverlap: true, noHorizontalOverflow: true, nestedScroll: false });
   });
 
-  test("blocking defaults to a full day and supports custom hours for one item", async ({ page }) => {
+  test("staff event defaults to a full day and blocks the whole base", async ({ page }) => {
     await login(page);
-    const submitted: Record<string, string>[] = [];
-    await page.route("**/api/admin/availability-blocks", async (route) => {
+    const submitted: Record<string, unknown>[] = [];
+    await page.route("**/api/calendar/events?*", (route) => route.fulfill({ json: [] }));
+    await page.route("**/api/admin/staff-events", async (route) => {
       if (route.request().method() === "GET") {
-        return route.fulfill({ json: { equipment: [{ id: 7, name: "SUP" }], blocks: [] } });
+        return route.fulfill({ json: { events: [] } });
       }
-      const input = route.request().postDataJSON() as Record<string, string>;
+      const input = route.request().postDataJSON() as Record<string, unknown>;
       submitted.push(input);
-      return route.fulfill({ status: 201, json: {
-        id: crypto.randomUUID(), equipment_id: input.equipmentId === "all" ? null : Number(input.equipmentId),
-        equipment_name: input.equipmentId === "all" ? "Wszystkie sprzęty" : "SUP", booking_date: input.bookingDate,
-        start_time: input.startTime, end_time: input.endTime, reason: input.reason || null, created_at: Date.now(),
-      } });
+      return route.fulfill({ status: 201, json: { event: { ...input, id: crypto.randomUUID() }, conflictingBookings: 0 } });
     });
-    await page.goto("/a/kalendarz?tab=dostepnosc");
+    await page.goto("/a/kalendarz");
 
+    await page.getByRole("button", { name: "Dodaj wydarzenie" }).click();
     await expect(page.getByLabel("Cały dzień")).toBeChecked();
-    await expect(page.getByLabel("Co blokujesz?")).toHaveValue("all");
-    await page.getByRole("button", { name: "Zablokuj termin" }).click();
+    await expect(page.getByLabel("Blokuje rezerwacje całej bazy")).toBeChecked();
+    await page.getByLabel("Nazwa wydarzenia").fill("Baza nieczynna");
+    await page.getByRole("button", { name: "Zapisz wydarzenie" }).click();
     await expect.poll(() => submitted.length).toBe(1);
-    expect(submitted[0]).toMatchObject({ equipmentId: "all", startTime: "00:00", endTime: "23:59" });
-
-    await page.getByLabel("Cały dzień").uncheck();
-    await page.getByLabel("Co blokujesz?").selectOption("7");
-    await page.getByLabel("Od", { exact: true }).first().fill("10:30");
-    await page.getByLabel("Do", { exact: true }).first().fill("13:00");
-    await page.getByRole("button", { name: "Zablokuj termin" }).click();
-    await expect.poll(() => submitted.length).toBe(2);
-    expect(submitted[1]).toMatchObject({ equipmentId: "7", startTime: "10:30", endTime: "13:00" });
+    expect(submitted[0]).toMatchObject({ title: "Baza nieczynna", allDay: true, blocksBase: true, recurrence: "none" });
   });
 });

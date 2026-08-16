@@ -1,8 +1,9 @@
 import { getPayload } from "payload";
 import config, { database } from "@payload-config";
-import { BASE_CLOSE_TIME, BASE_OPEN_TIME, bookingReference, createTimeSlots, endTime, isActivityOpenDate, isBookingDate, isUniqueConstraintError, normalizePhone, resolveBookingHours, todayInPoland, type AvailabilityHoursRule } from "@/lib/reservations";
+import { BASE_CLOSE_TIME, BASE_OPEN_TIME, bookingReference, createTimeSlots, endTime, isActivityOpenDate, isBookingDate, isUniqueConstraintError, normalizePhone, todayInPoland } from "@/lib/reservations";
 import { ensureOperationalTables } from "@/lib/operational-tables";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { staffEventBlocksRange, staffEventFromDatabaseRow, type StaffEventDatabaseRow } from "@/lib/staff-events";
 
 type ReservationInput = {
   equipmentId?: unknown;
@@ -52,14 +53,7 @@ export async function POST(request: Request) {
   if (!isActivityOpenDate(date, Boolean(equipment.unavailableWeekends))) {
     return Response.json({ error: equipment.unavailableWeekends && [0, 6].includes(new Date(`${date}T12:00:00Z`).getUTCDay()) ? "Ta aktywność jest niedostępna w weekendy." : "WAKE & SURF Village działa od maja do końca października." }, { status: 409 });
   }
-  const hoursRules = await database.prepare(`SELECT equipment_id, rule_type, booking_date, weekdays, start_time, end_time, created_at
-    FROM availability_hours WHERE (equipment_id IS NULL OR equipment_id = ?) AND (rule_type = 'weekly' OR booking_date = ?)`)
-    .bind(equipmentId, date).all<{ equipment_id: number | null; rule_type: "date" | "weekly"; booking_date: string | null; weekdays: string | null; start_time: string; end_time: string; created_at: number }>();
-  const hours = resolveBookingHours(BASE_OPEN_TIME, BASE_CLOSE_TIME, equipmentId, date, hoursRules.results.map((rule): AvailabilityHoursRule => ({
-    equipmentId: rule.equipment_id, ruleType: rule.rule_type, bookingDate: rule.booking_date, weekdays: rule.weekdays,
-    startTime: rule.start_time, endTime: rule.end_time, createdAt: rule.created_at,
-  })));
-  if (!equipment.active || !createTimeSlots(hours.openTime, hours.closeTime, equipment.durationMinutes).includes(time)) {
+  if (!equipment.active || !createTimeSlots(BASE_OPEN_TIME, BASE_CLOSE_TIME, equipment.durationMinutes).includes(time)) {
     return Response.json({ error: "Wybrany termin jest niedostępny." }, { status: 409 });
   }
 
@@ -73,13 +67,18 @@ export async function POST(request: Request) {
   const reservationId = crypto.randomUUID();
   const reservationEnd = endTime(time, equipment.durationMinutes);
   const resourceKey = equipment.sharedResourceKey || `activity:${equipmentId}`;
+  const staffEvents = await database.prepare(`SELECT id, title, start_date, end_date, start_time, end_time, all_day, blocks_base, notes, recurrence, recurrence_until
+    FROM staff_events WHERE blocks_base = true AND start_date <= ? AND COALESCE(recurrence_until, end_date, start_date) >= ?`)
+    .bind(date, date).all<StaffEventDatabaseRow>();
+  if (staffEvents.results.map(staffEventFromDatabaseRow).some((event) => staffEventBlocksRange(event, date, time, reservationEnd))) {
+    return Response.json({ error: "Termin niedostępny." }, { status: 409 });
+  }
   let allocatedUnit: number | null = null;
   for (let unit = 1; unit <= equipment.quantity; unit += 1) {
     try {
       const allocation = await database.prepare(`INSERT INTO booking_slots (equipment_id, booking_date, start_time, unit_number, reservation_id, resource_key)
-        SELECT ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (
-          SELECT 1 FROM availability_blocks WHERE booking_date = ? AND (equipment_id IS NULL OR equipment_id = ?) AND start_time < ? AND end_time > ?
-        )`).bind(equipmentId, date, time, unit, reservationId, resourceKey, date, equipmentId, reservationEnd, time).run();
+        VALUES (?, ?, ?, ?, ?, ?)`)
+        .bind(equipmentId, date, time, unit, reservationId, resourceKey).run();
       if (!allocation.meta.changes) break;
       allocatedUnit = unit;
       break;

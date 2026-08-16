@@ -22,6 +22,7 @@ import * as migration_20260816_100000_page_content from './20260816_100000_page_
 import * as migration_20260816_130000_offer_editor_fields from './20260816_130000_offer_editor_fields';
 import * as migration_20260816_180000_remove_google_and_news from './20260816_180000_remove_google_and_news';
 import * as migration_20260816_190000_activities from './20260816_190000_activities';
+import * as migration_20260816_200000_staff_events from './20260816_200000_staff_events';
 
 export const migrations = [
   {
@@ -143,5 +144,10 @@ export const migrations = [
     up: migration_20260816_190000_activities.up,
     down: migration_20260816_190000_activities.down,
     name: '20260816_190000_activities'
+  },
+  {
+    up: migration_20260816_200000_staff_events.up,
+    down: migration_20260816_200000_staff_events.down,
+    name: '20260816_200000_staff_events'
   },
 ];

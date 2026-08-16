@@ -2,30 +2,21 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
-import { AvailabilityBlocks } from "@/components/payload/availability-blocks";
-import { AvailabilityHours } from "@/components/payload/availability-hours";
-import { EquipmentRecommendations } from "@/components/payload/equipment-recommendations";
+import { Plus } from "lucide-react";
+import { StaffEventEditor } from "@/components/payload/staff-event-editor";
 
 const OperationsCalendar = dynamic(() => import("@/components/operations-calendar").then((module) => module.OperationsCalendar), { ssr: false });
 
 export function CalendarAdminView() {
-  const [section, setSection] = useState<"calendar" | "availability" | "recommendations">(() =>
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab") === "dostepnosc" ? "availability" : "calendar",
-  );
-  const selectedEquipmentId = typeof window === "undefined" ? undefined : Number(new URLSearchParams(window.location.search).get("equipment")) || undefined;
   const [calendarVersion, setCalendarVersion] = useState(0);
+  const [editor, setEditor] = useState<{ date: string; id?: string } | null>(null);
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Warsaw" }).format(new Date());
   const changed = () => setCalendarVersion((version) => version + 1);
   return (
     <div className="calendar-admin-view">
-      <div className="calendar-admin-heading"><div><span>REZERWACJE</span><h1>Kalendarz bazy</h1><p>Rezerwacje, godziny wynajmu i blokady w jednym miejscu.</p></div></div>
-      <nav className="calendar-admin-tabs" aria-label="Sekcje kalendarza">
-        <button type="button" aria-current={section === "calendar" ? "page" : undefined} onClick={() => setSection("calendar")}>Kalendarz</button>
-        <button type="button" aria-current={section === "availability" ? "page" : undefined} onClick={() => setSection("availability")}>Zablokuj wynajem</button>
-        <button type="button" aria-current={section === "recommendations" ? "page" : undefined} onClick={() => setSection("recommendations")}>Polecane godziny</button>
-      </nav>
-      {section === "calendar" ? <div key={calendarVersion} className="calendar-admin-calendar"><OperationsCalendar /></div> : null}
-      {section === "availability" ? <div className="calendar-admin-settings"><AvailabilityBlocks onChange={changed} selectedEquipmentId={selectedEquipmentId} /><AvailabilityHours onChange={changed} selectedEquipmentId={selectedEquipmentId} /></div> : null}
-      {section === "recommendations" ? <EquipmentRecommendations /> : null}
+      <div className="calendar-admin-heading"><div><span>REZERWACJE I PLAN BAZY</span><h1>Kalendarz bazy</h1><p>Kliknij dzień w kalendarzu, aby dodać wydarzenie. Czerwone wydarzenia blokują rezerwacje.</p></div><button type="button" onClick={() => setEditor({ date: today })}><Plus aria-hidden="true" /> Dodaj wydarzenie</button></div>
+      <div key={calendarVersion} className="calendar-admin-calendar"><OperationsCalendar onDateSelect={(date) => setEditor({ date })} onEditStaffEvent={(id) => setEditor({ date: today, id })} /></div>
+      {editor ? <StaffEventEditor key={`${editor.id || "new"}-${editor.date}`} open selectedDate={editor.date} eventId={editor.id} onClose={() => setEditor(null)} onSaved={changed} /> : null}
     </div>
   );
 }
