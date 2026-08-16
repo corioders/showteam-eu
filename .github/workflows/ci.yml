@@ -45,7 +45,14 @@ jobs:
           rm -rf .next
           pnpm build
       - run: pnpm exec playwright install chromium webkit
-      - run: pnpm test:e2e
+      - name: Run WebKit E2E on a fresh server
+        run: pnpm exec playwright test --project=webkit
+        env:
+          PAYLOAD_SECRET: showteam-ci-only-secret-not-used-in-production
+          E2E_ADMIN_EMAIL: e2e-admin@showteam.invalid
+          E2E_ADMIN_PASSWORD: showteam-e2e-password-2026
+      - name: Run Chromium E2E on a fresh server
+        run: pnpm exec playwright test --project=chromium
         env:
           PAYLOAD_SECRET: showteam-ci-only-secret-not-used-in-production
           E2E_ADMIN_EMAIL: e2e-admin@showteam.invalid
