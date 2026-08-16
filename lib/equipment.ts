@@ -1,8 +1,9 @@
 import { getPayload } from "payload";
 import config from "@payload-config";
+import { unstable_cache } from "next/cache";
 import type { BookableEquipment } from "@/lib/reservations";
 
-export async function getBookableEquipment(): Promise<BookableEquipment[]> {
+const getCachedBookableEquipment = unstable_cache(async (): Promise<BookableEquipment[]> => {
   const payload = await getPayload({ config });
   const result = await payload.find({
     collection: "equipment",
@@ -36,4 +37,8 @@ export async function getBookableEquipment(): Promise<BookableEquipment[]> {
     image: document.image || null,
     sortOrder: document.sortOrder,
   }));
+}, ["showteam-equipment"], { tags: ["equipment"] });
+
+export function getBookableEquipment() {
+  return getCachedBookableEquipment();
 }

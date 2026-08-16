@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getPayload } from "payload";
 import config from "@payload-config";
 import { validSameOrigin } from "@/lib/admin-auth";
+import { revalidateEquipment } from "@/lib/revalidate-public";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!validSameOrigin(request)) return NextResponse.json({ message: "Ta operacja została zablokowana. Odśwież stronę i spróbuj ponownie." }, { status: 403 });
@@ -20,6 +21,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     createdId = Number(media.id);
     await payload.update({ collection: "equipment", id, data: { image: media.id }, overrideAccess: false, user });
     if (typeof equipment.image === "number" && equipment.image !== createdId) await payload.delete({ collection: "media", id: equipment.image, overrideAccess: true }).catch(() => undefined);
+    revalidateEquipment();
     return NextResponse.json({ message: "Zdjęcie sprzętu jest już widoczne." });
   } catch (error) {
     if (createdId) await payload.delete({ collection: "media", id: createdId, overrideAccess: true }).catch(() => undefined);

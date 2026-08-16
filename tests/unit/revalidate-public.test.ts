@@ -1,17 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { revalidatePath } = vi.hoisted(() => ({ revalidatePath: vi.fn() }));
+const { revalidatePath, revalidateTag } = vi.hoisted(() => ({ revalidatePath: vi.fn(), revalidateTag: vi.fn() }));
 
-vi.mock("next/cache", () => ({ revalidatePath }));
+vi.mock("next/cache", () => ({ revalidatePath, revalidateTag }));
 
 import { revalidateOffers } from "../../lib/revalidate-public";
 
 describe("public offer revalidation", () => {
-  beforeEach(() => revalidatePath.mockClear());
+  beforeEach(() => {
+    revalidatePath.mockClear();
+    revalidateTag.mockClear();
+  });
 
   it("invalidates the homepage and the edited offer immediately", () => {
     revalidateOffers("showzima-2026", "Zima");
 
+    expect(revalidateTag).toHaveBeenCalledWith("offers", { expire: 0 });
     expect(revalidatePath).toHaveBeenNthCalledWith(1, "/");
     expect(revalidatePath).toHaveBeenNthCalledWith(2, "/oferta/showzima-2026");
     expect(revalidatePath).toHaveBeenNthCalledWith(3, "/oferta/zima");

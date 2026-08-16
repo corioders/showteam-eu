@@ -7,16 +7,9 @@ import { ContactCta } from "@/components/contact-cta";
 import { CmsDetails } from "@/components/cms-details";
 import { OfferCtaTitle, OfferInlineEditor, OfferListsSection, OfferLocationLink } from "@/components/editor/offer-inline-editor";
 import { PageHero } from "@/components/page-hero";
-import { getOffer, getOffers } from "@/lib/cms";
-
-export const revalidate = false;
+import { getOffer } from "@/lib/cms";
 
 type Props = { params: Promise<{ slug: string }> };
-
-export async function generateStaticParams() {
-  const offers = await getOffers();
-  return offers.map((offer) => ({ slug: offer.href.split("/").at(-1)! }));
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;

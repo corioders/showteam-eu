@@ -1,6 +1,8 @@
 import { getPayload } from "payload";
 import config from "@payload-config";
-import { findGalleryAsset, galleryAssets } from "@/lib/gallery-assets";
+import { unstable_cache } from "next/cache";
+import { connection } from "next/server";
+import { findGalleryAsset } from "@/lib/gallery-assets";
 import { defaultMobileLayout, type DesktopGalleryLayout, type MobileGalleryLayout } from "@/lib/gallery-layout";
 export { defaultMobileLayout, galleryLayoutClass, galleryMobileClass } from "@/lib/gallery-layout";
 
@@ -28,15 +30,6 @@ export type GalleryPage = {
   page: number;
   totalPages: number;
 };
-
-function staticPhotos(): GalleryPhoto[] {
-  return galleryAssets.map((asset, index) => ({ id: asset.value, src: staticVariant(asset.path, 2560), smallSrc: staticVariant(asset.path, 640), mediumSrc: staticVariant(asset.path, 1280), alt: asset.alt, caption: asset.label, layout: asset.layout, fit: asset.fit, objectPosition: asset.position, mobilePosition: asset.position, mobileLayout: defaultMobileLayout(asset.layout), season: asset.season, type: "image", editable: false, sortOrder: galleryAssets.length - index, sourceUrl: asset.value.startsWith("instagram-") ? "https://www.instagram.com/showteam.eu/" : undefined }));
-}
-
-function staticVariant(source: string, width: 640 | 1280 | 2560) {
-  const filename = source.split("/").at(-1)?.replace(/\.[^.]+$/, "");
-  return `/media/responsive/${filename}-${width}.webp`;
-}
 
 function toPhoto(document: Record<string, unknown>): GalleryPhoto | null {
   const media = document.image as { url?: string; alt?: string; focalX?: number; focalY?: number; mimeType?: string } | number | null | undefined;
@@ -73,36 +66,33 @@ function toPhoto(document: Record<string, unknown>): GalleryPhoto | null {
   };
 }
 
+const getCachedGalleryPage = unstable_cache(async (safePage: number, safeLimit: number, season?: GalleryPhoto["season"]): Promise<GalleryPage> => {
+  const payload = await getPayload({ config });
+  const result = await payload.find({
+    collection: "gallery",
+    where: {
+      and: [
+        { published: { equals: true } },
+        ...(season ? [{ season: { equals: season } }] : []),
+      ],
+    },
+    sort: ["-sortOrder", "-createdAt"],
+    depth: 1,
+    page: safePage,
+    limit: safeLimit,
+  });
+  const photos = result.docs.flatMap((document) => {
+    const photo = toPhoto(document as unknown as Record<string, unknown>);
+    return photo ? [photo] : [];
+  });
+  return { photos, page: result.page ?? safePage, totalPages: result.totalPages };
+}, ["showteam-gallery"], { tags: ["gallery"] });
+
 export async function getGalleryPage({ page = 1, limit = 24, season }: { page?: number; limit?: number; season?: GalleryPhoto["season"] } = {}): Promise<GalleryPage> {
   const safePage = Math.max(1, Math.floor(page));
   const safeLimit = Math.min(48, Math.max(1, Math.floor(limit)));
-  try {
-    const payload = await getPayload({ config });
-    const result = await payload.find({
-      collection: "gallery",
-      where: {
-        and: [
-          { published: { equals: true } },
-          ...(season ? [{ season: { equals: season } }] : []),
-        ],
-      },
-      sort: ["-sortOrder", "-createdAt"],
-      depth: 1,
-      page: safePage,
-      limit: safeLimit,
-    });
-    const photos = result.docs.flatMap((document) => {
-      const photo = toPhoto(document as unknown as Record<string, unknown>);
-      return photo ? [photo] : [];
-    });
-    if (photos.length || result.totalDocs > 0) return { photos, page: result.page ?? safePage, totalPages: result.totalPages };
-  } catch {
-    // The static archive keeps the site useful when the CMS is temporarily unavailable.
-  }
-
-  const matching = staticPhotos().filter((photo) => !season || photo.season === season);
-  const start = (safePage - 1) * safeLimit;
-  return { photos: matching.slice(start, start + safeLimit), page: safePage, totalPages: Math.max(1, Math.ceil(matching.length / safeLimit)) };
+  await connection();
+  return getCachedGalleryPage(safePage, safeLimit, season);
 }
 
 export async function getGallery(limit = 24): Promise<GalleryPhoto[]> {

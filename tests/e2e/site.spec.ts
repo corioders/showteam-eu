@@ -29,7 +29,7 @@ test("offer pages lead directly to a preselected application", async ({ page }) 
 test("offer pages open their locations in Google Maps", async ({ page }) => {
   for (const [path, count] of [["/oferta/lato", 1], ["/oferta/szkolenia", 1], ["/oferta/zima", 2]] as const) {
     await page.goto(path);
-    const mapLinks = page.locator('section[aria-label="Dojazd"] a[target="_blank"]');
+    const mapLinks = page.locator('section[aria-label*="dojazd" i] a[target="_blank"]');
     await expect(mapLinks).toHaveCount(count);
     await expect(mapLinks.first()).toHaveAttribute("href", /maps/);
   }

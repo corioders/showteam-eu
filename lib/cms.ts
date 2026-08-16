@@ -1,4 +1,6 @@
 import { getPayload } from "payload";
+import { unstable_cache } from "next/cache";
+import { connection } from "next/server";
 import config from "@payload-config";
 import { offers as fallbackOffers, type Offer } from "@/lib/offers";
 import { isIsoDate, type OfferDate } from "@/lib/offer-dates";
@@ -46,14 +48,15 @@ function toOffer(document: Record<string, unknown>): Offer {
   };
 }
 
+const getCachedOffers = unstable_cache(async (): Promise<Offer[]> => {
+  const payload = await getPayload({ config });
+  const result = await payload.find({ collection: "offers", where: { published: { equals: true } }, sort: "sortOrder", depth: 1, limit: 100 });
+  return result.docs.map((document) => toOffer(document as unknown as Record<string, unknown>));
+}, ["showteam-offers"], { tags: ["offers"] });
+
 export async function getOffers(): Promise<Offer[]> {
-  try {
-    const payload = await getPayload({ config });
-    const result = await payload.find({ collection: "offers", where: { published: { equals: true } }, sort: "sortOrder", depth: 1, limit: 10 });
-    return result.docs.length ? result.docs.map((document) => toOffer(document as unknown as Record<string, unknown>)) : fallbackOffers;
-  } catch {
-    return fallbackOffers;
-  }
+  await connection();
+  return getCachedOffers();
 }
 
 export async function getOffer(slug: string, includeUnpublished = false) {
@@ -67,10 +70,10 @@ export async function getOffer(slug: string, includeUnpublished = false) {
     }
   }
   const cmsOffers = await getOffers();
-  return cmsOffers.find((offer) => offer.href === `/oferta/${slug}`) ?? fallbackOffers.find((offer) => offer.href === `/oferta/${slug}`);
+  return cmsOffers.find((offer) => offer.href === `/oferta/${slug}`);
 }
 
 export async function getOfferByCategory(category: Offer["category"]) {
   const cmsOffers = await getOffers();
-  return cmsOffers.find((offer) => offer.category === category) ?? fallbackOffers.find((offer) => offer.category === category);
+  return cmsOffers.find((offer) => offer.category === category);
 }
