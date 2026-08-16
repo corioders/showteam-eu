@@ -1,6 +1,7 @@
 import { APIError, ValidationError, type CollectionConfig } from "payload";
 import { slugFromName } from "@/lib/slug";
 import { MINIMUM_RESERVATION_MINUTES, timeToMinutes, todayInPoland } from "@/lib/reservations";
+import { revalidateEquipment } from "@/lib/revalidate-public";
 
 const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
@@ -17,6 +18,8 @@ export const Equipment: CollectionConfig = {
     preview: () => "/rezerwacje",
   },
   hooks: {
+    afterChange: [({ doc, req }) => { if (req.user) revalidateEquipment(); return doc; }],
+    afterDelete: [({ doc, req }) => { if (req.user) revalidateEquipment(); return doc; }],
     beforeValidate: [async ({ data, originalDoc, req }) => {
       if (!data) return data;
       if (originalDoc?.slug) data.slug = originalDoc.slug;

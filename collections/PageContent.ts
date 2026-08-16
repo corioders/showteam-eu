@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { revalidatePath } from "next/cache";
+import { revalidatePageContent } from "@/lib/revalidate-public";
 
 const pagePaths = { home: "/", contact: "/kontakt", gallery: "/galeria", reservations: "/rezerwacje" } as const;
 const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
@@ -12,8 +12,8 @@ export const PageContent: CollectionConfig = {
   access: { read: () => true, create: isLoggedIn, update: isLoggedIn, delete: () => false },
   hooks: {
     afterChange: [({ doc }) => {
-      const path = pagePaths[doc.page as keyof typeof pagePaths];
-      if (path) revalidatePath(path);
+      const page = doc.page as keyof typeof pagePaths;
+      if (page in pagePaths) revalidatePageContent(page);
       return doc;
     }],
   },
