@@ -11,7 +11,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
   - [ ] Rezerwacje: cały punkt 7 — copy, zdjęcia i kolejność sprzętu, usuwanie oraz dostępność przy sprzęcie.
   - [ ] Galeria: cały punkt 8 — copy, kolejność i wymiana istniejących plików.
   - [ ] Galeria: zastąpić niedziałające suwaki kadru gotowym mobilnym edytorem open source; wdrożyć po głównym zakresie 1–9.
-  - [ ] Kontakt i o nas: cały punkt 9 — dane kontaktowe, social media, mapa i treść.
+  - [x] Kontakt i o nas: cały punkt 9 — dane kontaktowe, social media, mapa i treść.
   - [ ] Poza zakresem: formularz zgłoszeniowy (10) i elementy globalne (11).
 
 - [ ] Nowy panel bezpośrednio na stronie (`codex/new-admin`):

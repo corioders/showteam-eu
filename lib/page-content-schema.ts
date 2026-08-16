@@ -33,7 +33,7 @@ export const pageContentDefaults = {
   },
   contact: {
     eyebrow: "Porozmawiajmy",
-    title: "Say hello!",
+    title: "Say\nhello!",
     intro: "Najlepszy plan zaczyna się od krótkiej rozmowy. Powiedz, co chcesz robić — dobierzemy miejsce, termin i poziom aktywności.",
     joannaName: "Joanna SHOWtysek",
     joannaPhone: "+48 500 128 090",
