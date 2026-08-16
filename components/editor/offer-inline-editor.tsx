@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { ExternalLink, LoaderCircle, MapPin, Plus, RotateCcw, Save, Settings2, Trash2 } from "lucide-react";
 import { useEditor } from "@/components/editor/editor-provider";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { formatOfferDateRange, type OfferDate } from "@/lib/offer-dates";
 import { restoreOfferDraft, toOfferDraft, type OfferDraft } from "@/lib/offer-draft";
 import type { Offer, OfferCategory } from "@/lib/offers";
+import { createPhotoVariants } from "@/lib/client-image-variants";
 
 type OfferEditing = {
   editing: boolean;
@@ -251,6 +253,41 @@ export function OfferCtaTitle() {
   if (!editor) return null;
   if (!editor.editing) return <>{editor.value.ctaTitle}</>;
   return <textarea rows={2} className="inline-page-content" value={editor.value.ctaTitle} onChange={(event) => editor.update("ctaTitle", event.target.value)} aria-label="Hasło nad przyciskiem zgłoszenia" />;
+}
+
+export function OfferCover({ offer }: { offer: Offer }) {
+  const editor = useContext(OfferEditingContext);
+  const [preview, setPreview] = useState(offer.image);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function upload(file: File | undefined) {
+    if (!file || !offer.cmsId || uploading) return;
+    setUploading(true);
+    setError("");
+    const localPreview = URL.createObjectURL(file);
+    setPreview(localPreview);
+    try {
+      const variants = await createPhotoVariants(file);
+      const body = new FormData();
+      body.set("file", variants.large);
+      const response = await fetch(`/api/admin/offers/${offer.cmsId}/cover`, { method: "POST", body });
+      const result = await response.json() as { url?: string; message?: string };
+      if (!response.ok || !result.url) throw new Error(result.message || "Nie udało się zmienić zdjęcia.");
+      setPreview(result.url);
+    } catch (caught) {
+      setPreview(offer.image);
+      setError(caught instanceof Error ? caught.message : "Nie udało się zmienić zdjęcia.");
+    } finally {
+      URL.revokeObjectURL(localPreview);
+      setUploading(false);
+    }
+  }
+
+  return <>
+    <Image src={preview} alt={offer.imageAlt} fill priority unoptimized={preview.startsWith("blob:")} className="object-cover" sizes="100vw" />
+    {editor?.editing ? <div className="absolute right-4 top-24 z-20 max-w-[min(20rem,calc(100%-2rem))]"><label className="flex min-h-12 cursor-pointer items-center justify-center bg-orange-500 px-4 text-sm font-black uppercase text-black shadow-xl"><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" disabled={uploading} onChange={(event) => void upload(event.target.files?.[0])} />{uploading ? "Przygotowuję zdjęcie…" : "Zmień zdjęcie okładkowe"}</label>{error ? <p role="alert" className="mt-2 bg-red-950 p-3 text-sm text-red-100">{error}</p> : null}</div> : null}
+  </>;
 }
 
 export function OfferListsSection({ offer }: { offer: Offer }) {

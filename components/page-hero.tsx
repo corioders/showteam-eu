@@ -3,13 +3,13 @@ import Link from "next/link";
 import { ArrowLeft, ArrowDownRight, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { OfferHeroFields } from "@/components/editor/offer-inline-editor";
+import { OfferCover, OfferHeroFields } from "@/components/editor/offer-inline-editor";
 import type { Offer } from "@/lib/offers";
 
 export function PageHero({ eyebrow, title, description, location, image, imageAlt, offer }: { eyebrow: string; title: string; description: string; location: string; image: string; imageAlt: string; offer?: Offer }) {
   return (
     <section className="grain relative min-h-[82vh] overflow-hidden pt-20">
-      <Image src={image} alt={imageAlt} fill priority className="object-cover" sizes="100vw" />
+      {offer ? <OfferCover offer={offer} /> : <Image src={image} alt={imageAlt} fill priority className="object-cover" sizes="100vw" />}
       <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/10" />
       <div className="site-container relative flex min-h-[calc(82vh-5rem)] items-end py-12 md:py-20">
         <div className="max-w-4xl">
