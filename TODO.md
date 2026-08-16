@@ -76,16 +76,10 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 - [x] Uploader galerii: przed wysłaniem tworzyć warianty WebP dla różnych ekranów, zachować wariant wysokiej jakości do lightboxa i zablokować surowy upload poza prostym uploaderem.
 - [x] Przetworzyć istniejącą galerię tym samym pipeline'em wariantów WebP i podłączyć poprawne `srcset`/`sizes`.
 
-## Do weryfikacji po deployu
-
-- [ ] Safari/iPhone: `/a/kalendarz` zawsze startuje jako lista; brak widoku tygodnia i zagnieżdżonego scrolla.
-- [ ] Safari/iPhone: CMS header nie nachodzi na tytuł formularza.
-- [ ] Blokady wynajmu: cały dzień domyślnie, opcjonalne własne godziny, wszystkie albo jeden sprzęt.
-- [x] Statystyki używają etykiety „Odwiedziny strony”.
-- [x] Oficjalny TikTok prowadzi do `https://www.tiktok.com/@showteam1969`.
-
 ## Ukończone
 
+- [x] Statystyki używają etykiety „Odwiedziny strony”.
+- [x] Oficjalny TikTok prowadzi do `https://www.tiktok.com/@showteam1969`.
 - [x] Rezerwacje: spójny stan navbara, Padel oraz profile sprzętu: skuter/Padel — każdy warun; Wingfoil/windsurfing/Hobie Cat/łódź żaglowa — wiatr; SUP/kajak — spokojna woda.
 - [x] Każda wolna godzina ma jawny poziom: najlepszy, średni, słaby albo profesjonalny; bardzo mocny wiatr jest oznaczony jako warun tylko dla doświadczonych.
 - [x] Oferty Lato, Zima i Szkolenia mają klikalne pinezki Google Maps; Szkolenia używają lokalizacji bazy z oferty Lato.
