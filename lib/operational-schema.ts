@@ -26,9 +26,11 @@ const bookingSlots = sqliteTable("booking_slots", {
   startTime: text("start_time").notNull(),
   unitNumber: integer("unit_number").notNull(),
   reservationId: text("reservation_id").notNull(),
+  resourceKey: text("resource_key").notNull(),
 }, (table) => [
   primaryKey({ columns: [table.equipmentId, table.bookingDate, table.startTime, table.unitNumber] }),
   uniqueIndex("booking_slots_reservation_id_idx").on(table.reservationId),
+  uniqueIndex("booking_slots_resource_idx").on(table.resourceKey, table.bookingDate, table.startTime, table.unitNumber),
 ]);
 
 const tvPairings = sqliteTable("tv_pairings", {

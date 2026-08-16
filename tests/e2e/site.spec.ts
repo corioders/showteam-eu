@@ -73,7 +73,7 @@ test("customer can reserve an available equipment slot", async ({ page }) => {
   ], durationMinutes: 60, windStatus: "forecast" } }));
   await page.route("**/api/reservations", (route) => route.fulfill({ status: 201, json: { reference: "SHOW-TEST1234", equipment: "SUP", date: "2026-08-27", time: "09:00", endTime: "10:00" } }));
   await page.goto("/rezerwacje", { waitUntil: "networkidle" });
-  await expect(page.getByRole("heading", { name: /Sprzęt czeka/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Wybierz aktywność/i })).toBeVisible();
   await expect(page.getByRole("button", { name: /Padel/ })).toBeVisible();
   await expect(page.getByText(/Najlepszy warun|Dobry w każdy warun/).first()).toBeVisible();
   await expect(page.getByText("Średni warun").last()).toBeVisible();
@@ -92,7 +92,7 @@ test("customer can reserve an available equipment slot", async ({ page }) => {
   await page.getByLabel("Telefon").fill("500 128 090");
   await page.getByLabel("E-mail").fill("test@example.com");
   await page.getByRole("button", { name: "Rezerwuję termin" }).click();
-  await expect(page.getByText("Rezerwacja zapisana")).toBeVisible();
+  await expect(page.getByText("Oczekuje na potwierdzenie Asi")).toBeVisible();
   await expect(page.getByText(/^SHOW-/)).toBeVisible();
 });
 

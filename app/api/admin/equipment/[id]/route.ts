@@ -18,10 +18,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const { id } = await params;
     await payload.update({ collection: "equipment", id, data: equipmentMutationData(parsed.data), overrideAccess: false, user });
     revalidateEquipment();
-    return NextResponse.json({ message: "Zmiany sprzętu zostały opublikowane." });
+    return NextResponse.json({ message: "Zmiany aktywności zostały opublikowane." });
   } catch (error) {
     payload.logger.error({ err: error, msg: "Visual equipment update failed" });
-    const message = error instanceof Error && error.message.includes("przyszłe potwierdzone rezerwacje") ? error.message : "Nie udało się zapisać sprzętu. Twoje dane nadal są w formularzu.";
+    const message = error instanceof Error && error.message.includes("przyszłe rezerwacje") ? error.message : "Nie udało się zapisać aktywności. Twoje dane nadal są w formularzu.";
     return NextResponse.json({ message }, { status: 500 });
   }
 }
@@ -33,13 +33,13 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (!user) return NextResponse.json({ message: "Sesja wygasła. Zaloguj się ponownie w /admin." }, { status: 401 });
   try {
     const { id } = await params;
-    const futureBookings = await payload.count({ collection: "bookings", where: { and: [{ equipment: { equals: id } }, { bookingDate: { greater_than_equal: todayInPoland() } }, { status: { equals: "confirmed" } }] }, overrideAccess: true });
-    if (futureBookings.totalDocs) return NextResponse.json({ message: "Najpierw anuluj przyszłe rezerwacje tego sprzętu. Potem będzie można go usunąć." }, { status: 409 });
+    const futureBookings = await payload.count({ collection: "bookings", where: { and: [{ equipment: { equals: id } }, { bookingDate: { greater_than_equal: todayInPoland() } }, { status: { in: ["pending", "confirmed"] } }] }, overrideAccess: true });
+    if (futureBookings.totalDocs) return NextResponse.json({ message: "Najpierw anuluj przyszłe rezerwacje tej aktywności. Potem będzie można ją usunąć." }, { status: 409 });
     await payload.delete({ collection: "equipment", id, overrideAccess: false, user });
     revalidateEquipment();
-    return NextResponse.json({ message: "Sprzęt został usunięty." });
+    return NextResponse.json({ message: "Aktywność została usunięta." });
   } catch (error) {
     payload.logger.error({ err: error, msg: "Inline equipment deletion failed" });
-    return NextResponse.json({ message: "Nie udało się usunąć sprzętu." }, { status: 500 });
+    return NextResponse.json({ message: "Nie udało się usunąć aktywności." }, { status: 500 });
   }
 }

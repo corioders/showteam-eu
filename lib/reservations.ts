@@ -7,6 +7,8 @@ export type BookableEquipment = {
   durationMinutes: number;
   openTime: string;
   closeTime: string;
+  unavailableWeekends: boolean;
+  sharedResourceKey?: string;
   notice?: string;
   weatherProfile: WeatherProfile;
   recommendedStart1?: string;
@@ -24,6 +26,10 @@ export type BookableEquipment = {
 };
 
 export type WeatherProfile = "any" | "calm" | "wind";
+
+export const BASE_OPEN_TIME = "10:00";
+export const BASE_CLOSE_TIME = "20:00";
+export const MINIMUM_RESERVATION_MINUTES = 60;
 
 export type AvailabilityHoursRule = {
   equipmentId: number | null;
@@ -69,10 +75,26 @@ export function minutesToTime(minutes: number): string {
 export function createTimeSlots(openTime: string, closeTime: string, durationMinutes: number): string[] {
   const start = timeToMinutes(openTime);
   const end = timeToMinutes(closeTime);
-  if (!Number.isFinite(start) || !Number.isFinite(end) || durationMinutes < 15 || start >= end) return [];
+  if (!Number.isFinite(start) || !Number.isFinite(end) || durationMinutes < MINIMUM_RESERVATION_MINUTES || start >= end) return [];
   const slots: string[] = [];
   for (let cursor = start; cursor + durationMinutes <= end; cursor += durationMinutes) slots.push(minutesToTime(cursor));
   return slots;
+}
+
+export function isBaseOpenDate(value: string): boolean {
+  if (!isBookingDate(value)) return false;
+  const monthAndDay = value.slice(5);
+  return monthAndDay >= "05-01" && monthAndDay <= "10-31";
+}
+
+export function isWeekendDate(value: string): boolean {
+  if (!isBookingDate(value)) return false;
+  const weekday = new Date(`${value}T12:00:00Z`).getUTCDay();
+  return weekday === 0 || weekday === 6;
+}
+
+export function isActivityOpenDate(value: string, unavailableWeekends: boolean): boolean {
+  return isBaseOpenDate(value) && (!unavailableWeekends || !isWeekendDate(value));
 }
 
 export function endTime(startTime: string, durationMinutes: number): string {

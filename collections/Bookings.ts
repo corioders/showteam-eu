@@ -35,7 +35,8 @@ export function createBookingsCollection(database: D1Database): CollectionConfig
       afterDelete: [async ({ doc }) => { await releaseSlots(doc.reservationId); }],
     },
     fields: [
-      { name: "status", label: "Co dzieje się z rezerwacją?", type: "select", required: true, defaultValue: "confirmed", options: [
+      { name: "status", label: "Co dzieje się z rezerwacją?", type: "select", required: true, defaultValue: "pending", options: [
+        { label: "Oczekuje na potwierdzenie Asi — termin zajęty", value: "pending" },
         { label: "Potwierdzona — termin zajęty", value: "confirmed" },
         { label: "Zrealizowana — klient skorzystał", value: "completed" },
         { label: "Anulowana — termin zostanie zwolniony", value: "cancelled" },
@@ -44,7 +45,7 @@ export function createBookingsCollection(database: D1Database): CollectionConfig
       { type: "collapsible", label: "Dane rezerwacji i klienta", admin: { initCollapsed: false, description: "Te dane pochodzą ze strony i są tylko do odczytu." }, fields: [
       { name: "reference", label: "Numer rezerwacji", type: "text", required: true, unique: true, admin: { readOnly: true } },
       { name: "reservationId", label: "Identyfikator techniczny", type: "text", required: true, unique: true, admin: { hidden: true } },
-      { name: "equipment", label: "Sprzęt", type: "relationship", relationTo: "equipment", required: true, admin: { readOnly: true } },
+      { name: "equipment", label: "Aktywność", type: "relationship", relationTo: "equipment", required: true, admin: { readOnly: true } },
       { type: "row", fields: [
         { name: "bookingDate", label: "Data", type: "text", required: true, admin: { readOnly: true } },
         { name: "startTime", label: "Od", type: "text", required: true, admin: { readOnly: true } },
@@ -56,6 +57,7 @@ export function createBookingsCollection(database: D1Database): CollectionConfig
         { name: "email", label: "E-mail", type: "email", admin: { readOnly: true } },
       ] },
       { name: "customerNotes", label: "Uwagi klienta", type: "textarea", maxLength: 500, admin: { readOnly: true } },
+      { name: "instructorRequired", label: "Potrzebuje instruktora", type: "checkbox", defaultValue: false, admin: { readOnly: true } },
       { name: "source", label: "Źródło", type: "select", required: true, defaultValue: "website", options: [{ label: "Strona", value: "website" }, { label: "Obsługa", value: "staff" }], admin: { readOnly: true } },
       ] },
     ],

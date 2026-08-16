@@ -1,19 +1,19 @@
 import { APIError, ValidationError, type CollectionConfig } from "payload";
 import { slugFromName } from "@/lib/slug";
-import { timeToMinutes, todayInPoland } from "@/lib/reservations";
+import { MINIMUM_RESERVATION_MINUTES, timeToMinutes, todayInPoland } from "@/lib/reservations";
 
 const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
 export const Equipment: CollectionConfig = {
   slug: "equipment",
-  labels: { singular: "Sprzęt do wynajęcia", plural: "Sprzęt i godziny wynajmu" },
+  labels: { singular: "Aktywność", plural: "Aktywności" },
   admin: {
     components: { edit: { beforeDocumentControls: ["@/components/payload/form-draft-persistence#FormDraftPersistence"] } },
     hideAPIURL: true,
     useAsTitle: "name",
     group: "Rezerwacje",
     defaultColumns: ["name", "quantity", "active"],
-    description: "Jedyne miejsce zarządzania wynajmem. To, co ustawisz tutaj, automatycznie pojawi się na stronie Rezerwacje, w dostępności i kalendarzu.",
+    description: "Aktywności dostępne dla klientów. Zmiany automatycznie pojawiają się na stronie rezerwacji i w kalendarzu.",
     preview: () => "/rezerwacje",
   },
   hooks: {
@@ -21,18 +21,16 @@ export const Equipment: CollectionConfig = {
       if (!data) return data;
       if (originalDoc?.slug) data.slug = originalDoc.slug;
       else {
-        const base = slugFromName(String(data.name || "")) || "sprzet";
+        const base = slugFromName(String(data.name || "")) || "aktywnosc";
         let candidate = base;
         let suffix = 2;
         while ((await req.payload.count({ collection: "equipment", where: { slug: { equals: candidate } }, overrideAccess: true })).totalDocs) candidate = `${base}-${suffix++}`;
         data.slug = candidate;
       }
-      const open = timeToMinutes(String(data.openTime || ""));
-      const close = timeToMinutes(String(data.closeTime || ""));
       const duration = Number(data.durationMinutes);
       const errors = [];
-      if (Number.isFinite(open) && Number.isFinite(close) && close <= open) errors.push({ path: "closeTime", label: "Godzina zakończenia", message: "Godzina zakończenia musi być późniejsza niż rozpoczęcia." });
-      if (Number.isFinite(open) && Number.isFinite(close) && Number.isFinite(duration) && duration > close - open) errors.push({ path: "durationMinutes", label: "Długość jednej rezerwacji", message: "Rezerwacja nie może być dłuższa niż cały ustawiony dzień dostępności." });
+      if (!Number.isFinite(duration) || duration < MINIMUM_RESERVATION_MINUTES) errors.push({ path: "durationMinutes", label: "Długość jednej rezerwacji", message: "Rezerwacja musi trwać co najmniej 60 minut." });
+      if ((data.sharedResourceKey ?? originalDoc?.sharedResourceKey) && duration !== 60) errors.push({ path: "durationMinutes", label: "Długość jednej rezerwacji", message: "Ten sam kort obsługuje tenis i padel, dlatego rezerwacja musi trwać 60 minut." });
       for (const number of [1, 2] as const) {
         const startField = `recommendedStart${number}` as const;
         const endField = `recommendedEnd${number}` as const;
@@ -65,7 +63,7 @@ export const Equipment: CollectionConfig = {
     }],
     beforeChange: [async ({ data, originalDoc, operation, req }) => {
       if (operation !== "update" || !originalDoc) return data;
-      const scheduleFields = ["quantity", "durationMinutes", "openTime", "closeTime"] as const;
+      const scheduleFields = ["quantity", "durationMinutes"] as const;
       const scheduleChanged = scheduleFields.some((field) => String(data[field] ?? originalDoc[field]) !== String(originalDoc[field]));
       if (!scheduleChanged) return data;
       const futureBookings = await req.payload.count({
@@ -73,12 +71,12 @@ export const Equipment: CollectionConfig = {
         where: { and: [
           { equipment: { equals: originalDoc.id } },
           { bookingDate: { greater_than_equal: todayInPoland() } },
-          { status: { equals: "confirmed" } },
+          { status: { in: ["pending", "confirmed"] } },
         ] },
         overrideAccess: true,
       });
       if (futureBookings.totalDocs > 0) {
-        throw new APIError("Nie można zmienić liczby sztuk ani godzin, dopóki istnieją przyszłe potwierdzone rezerwacje tego sprzętu. Najpierw je anuluj.", 409, null, true);
+        throw new APIError("Nie można zmienić liczby miejsc ani czasu, dopóki istnieją przyszłe rezerwacje tej aktywności. Najpierw je anuluj.", 409, null, true);
       }
       return data;
     }],
@@ -92,23 +90,22 @@ export const Equipment: CollectionConfig = {
   defaultSort: "sortOrder",
   fields: [
     { type: "tabs", tabs: [
-      { label: "1. Sprzęt", description: "To zobaczy klient podczas rezerwacji.", fields: [
-        { name: "name", label: "Nazwa sprzętu", type: "text", required: true, admin: { placeholder: "np. SUP jednoosobowy" } },
-        { name: "description", label: "Krótki opis", type: "textarea", required: true, maxLength: 300, admin: { description: "Napisz krótko, dla kogo jest sprzęt i co warto wiedzieć." } },
+      { label: "1. Aktywność", description: "To zobaczy klient podczas rezerwacji.", fields: [
+        { name: "name", label: "Nazwa aktywności", type: "text", required: true, admin: { placeholder: "np. SUP jednoosobowy" } },
+        { name: "description", label: "Krótki opis", type: "textarea", required: true, maxLength: 300, admin: { description: "Napisz krótko, dla kogo jest aktywność i co warto wiedzieć." } },
         { name: "image", label: "Zdjęcie", type: "upload", relationTo: "media" },
         { type: "row", fields: [
           { name: "category", label: "Kategoria", type: "select", required: true, defaultValue: "Woda", options: ["Woda", "Ląd", "Szkolenie", "Inne"] },
-          { name: "quantity", label: "Ile sztuk jest dostępnych?", type: "number", required: true, defaultValue: 1, min: 1, max: 99 },
+          { name: "quantity", label: "Ile miejsc lub sztuk jest dostępnych?", type: "number", required: true, defaultValue: 1, min: 1, max: 99 },
         ] },
         { name: "notice", label: "Ważna informacja dla klienta", type: "textarea", maxLength: 220, admin: { description: "Opcjonalnie, np. „Wymagane uprawnienia”." } },
+        { name: "unavailableWeekends", label: "Ta aktywność jest niedostępna w weekendy", type: "checkbox", defaultValue: false, admin: { description: "Zaznacz dla aktywności silnikowych objętych weekendowym zakazem pływania." } },
       ] },
-      { label: "2. Godziny rezerwacji", description: "Ustaw długość rezerwacji i godziny pracy.", fields: [
-        { name: "durationMinutes", label: "Ile minut trwa jedna rezerwacja?", type: "number", required: true, defaultValue: 60, min: 15, max: 720, admin: { description: "Np. 60 = jedna godzina." } },
-        { type: "row", fields: [
-          { name: "openTime", label: "Pierwsza możliwa godzina", type: "text", required: true, defaultValue: "09:00", validate: (value: unknown) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value)) || "Wpisz godzinę jako HH:MM." },
-          { name: "closeTime", label: "Koniec rezerwacji", type: "text", required: true, defaultValue: "19:00", validate: (value: unknown) => /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value)) || "Wpisz godzinę jako HH:MM." },
-        ] },
-        { name: "active", label: "Klienci mogą teraz rezerwować ten sprzęt", type: "checkbox", defaultValue: true },
+      { label: "2. Rezerwacja", description: "Aktywności korzystają ze wspólnych godzin bazy 10:00–20:00.", fields: [
+        { name: "durationMinutes", label: "Ile minut trwa jedna rezerwacja?", type: "number", required: true, defaultValue: 60, min: 60, max: 720, admin: { description: "Minimum 60 minut." } },
+        { name: "openTime", type: "text", required: true, defaultValue: "10:00", admin: { hidden: true } },
+        { name: "closeTime", type: "text", required: true, defaultValue: "20:00", admin: { hidden: true } },
+        { name: "active", label: "Klienci mogą teraz rezerwować tę aktywność", type: "checkbox", defaultValue: true },
       ] },
       { label: "3. Polecane warunki", description: "Podpowiedzi pogodowe widoczne podczas rezerwacji.", fields: [
         { name: "weatherProfile", label: "Jakie warunki są najlepsze?", type: "select", required: true, defaultValue: "any", options: [
@@ -132,11 +129,12 @@ export const Equipment: CollectionConfig = {
           { name: "windBestMinKmh", label: "Najlepszy warun — od km/h", type: "number", required: true, defaultValue: 0, min: 0, max: 100 },
           { name: "windBestMaxKmh", label: "Najlepszy warun — do km/h", type: "number", required: true, defaultValue: 10, min: 0, max: 100 },
         ] },
-        { name: "professionalWindMinKmh", label: "Warun profesjonalny — od km/h", type: "number", min: 0, max: 100, admin: { description: "Opcjonalne. Działa tylko dla sprzętu, który wymaga wiatru. Zostaw puste, aby wyłączyć.", condition: (_, siblingData) => siblingData.weatherProfile === "wind" } },
+        { name: "professionalWindMinKmh", label: "Warun profesjonalny — od km/h", type: "number", min: 0, max: 100, admin: { description: "Opcjonalne. Działa tylko dla aktywności, która wymaga wiatru. Zostaw puste, aby wyłączyć.", condition: (_, siblingData) => siblingData.weatherProfile === "wind" } },
         { name: "recommendationNote", label: "Dodatkowa podpowiedź dla klienta", type: "textarea", maxLength: 220 },
       ] },
     ] },
     { name: "slug", label: "Identyfikator", type: "text", required: true, unique: true, admin: { hidden: true } },
+    { name: "sharedResourceKey", type: "text", admin: { hidden: true } },
     { name: "sortOrder", label: "Kolejność", type: "number", required: true, defaultValue: 100, admin: { hidden: true } },
   ],
 };

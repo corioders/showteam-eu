@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDaysToBookingDate, bookingDateChoices, bookingReference, createTimeSlots, endTime, isBookingDate, isUniqueConstraintError, normalizePhone, resolveBookingHours, timeRangesOverlap, timeToMinutes, todayInPoland, type AvailabilityHoursRule } from "../../lib/reservations";
+import { addDaysToBookingDate, bookingDateChoices, bookingReference, createTimeSlots, endTime, isActivityOpenDate, isBaseOpenDate, isBookingDate, isUniqueConstraintError, normalizePhone, resolveBookingHours, timeRangesOverlap, timeToMinutes, todayInPoland, type AvailabilityHoursRule } from "../../lib/reservations";
 
 describe("reservation rules", () => {
   it("builds date strips across month boundaries", () => {
@@ -21,6 +21,15 @@ describe("reservation rules", () => {
     expect(normalizePhone("48 500 128 090")).toBe("+48500128090");
     expect(normalizePhone("+48 (500) 128-090")).toBe("+48500128090");
     expect(normalizePhone("123")).toBeNull();
+  });
+
+  it("opens the base from May through October and respects weekend bans", () => {
+    expect(isBaseOpenDate("2027-05-01")).toBe(true);
+    expect(isBaseOpenDate("2027-10-31")).toBe(true);
+    expect(isBaseOpenDate("2027-11-01")).toBe(false);
+    expect(isActivityOpenDate("2027-05-03", true)).toBe(true);
+    expect(isActivityOpenDate("2027-05-08", true)).toBe(false);
+    expect(isActivityOpenDate("2027-05-08", false)).toBe(true);
   });
 
   it("distinguishes a booked slot from a database outage", () => {

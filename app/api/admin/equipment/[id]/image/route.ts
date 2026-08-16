@@ -22,7 +22,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     await payload.update({ collection: "equipment", id, data: { image: media.id }, overrideAccess: false, user });
     if (typeof equipment.image === "number" && equipment.image !== createdId) await payload.delete({ collection: "media", id: equipment.image, overrideAccess: true }).catch(() => undefined);
     revalidateEquipment();
-    return NextResponse.json({ message: "Zdjęcie sprzętu jest już widoczne." });
+    return NextResponse.json({ message: "Zdjęcie aktywności jest już widoczne." });
   } catch (error) {
     if (createdId) await payload.delete({ collection: "media", id: createdId, overrideAccess: true }).catch(() => undefined);
     payload.logger.error({ err: error, msg: "Inline equipment image upload failed" });

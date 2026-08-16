@@ -287,7 +287,7 @@ export interface PageContent {
     | null;
 }
 /**
- * Jedyne miejsce zarządzania wynajmem. To, co ustawisz tutaj, automatycznie pojawi się na stronie Rezerwacje, w dostępności i kalendarzu.
+ * Aktywności dostępne dla klientów. Zmiany automatycznie pojawiają się na stronie rezerwacji i w kalendarzu.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "equipment".
@@ -296,7 +296,7 @@ export interface Equipment {
   id: number;
   name: string;
   /**
-   * Napisz krótko, dla kogo jest sprzęt i co warto wiedzieć.
+   * Napisz krótko, dla kogo jest aktywność i co warto wiedzieć.
    */
   description: string;
   image?: (number | null) | Media;
@@ -307,7 +307,11 @@ export interface Equipment {
    */
   notice?: string | null;
   /**
-   * Np. 60 = jedna godzina.
+   * Zaznacz dla aktywności silnikowych objętych weekendowym zakazem pływania.
+   */
+  unavailableWeekends?: boolean | null;
+  /**
+   * Minimum 60 minut.
    */
   durationMinutes: number;
   openTime: string;
@@ -323,11 +327,12 @@ export interface Equipment {
   windBestMinKmh: number;
   windBestMaxKmh: number;
   /**
-   * Opcjonalne. Działa tylko dla sprzętu, który wymaga wiatru. Zostaw puste, aby wyłączyć.
+   * Opcjonalne. Działa tylko dla aktywności, która wymaga wiatru. Zostaw puste, aby wyłączyć.
    */
   professionalWindMinKmh?: number | null;
   recommendationNote?: string | null;
   slug: string;
+  sharedResourceKey?: string | null;
   sortOrder: number;
   updatedAt: string;
   createdAt: string;
@@ -343,7 +348,7 @@ export interface Booking {
   /**
    * Uwaga: anulowania nie można cofnąć. W razie pomyłki utwórz nową rezerwację.
    */
-  status: 'confirmed' | 'completed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
   staffNotes?: string | null;
   reference: string;
   reservationId: string;
@@ -355,6 +360,7 @@ export interface Booking {
   phone: string;
   email?: string | null;
   customerNotes?: string | null;
+  instructorRequired?: boolean | null;
   source: 'website' | 'staff';
   updatedAt: string;
   createdAt: string;
@@ -615,6 +621,7 @@ export interface EquipmentSelect<T extends boolean = true> {
   category?: T;
   quantity?: T;
   notice?: T;
+  unavailableWeekends?: T;
   durationMinutes?: T;
   openTime?: T;
   closeTime?: T;
@@ -631,6 +638,7 @@ export interface EquipmentSelect<T extends boolean = true> {
   professionalWindMinKmh?: T;
   recommendationNote?: T;
   slug?: T;
+  sharedResourceKey?: T;
   sortOrder?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -652,6 +660,7 @@ export interface BookingsSelect<T extends boolean = true> {
   phone?: T;
   email?: T;
   customerNotes?: T;
+  instructorRequired?: T;
   source?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -21,6 +21,7 @@ import * as migration_20260815_230000_structured_offer_dates from './20260815_23
 import * as migration_20260816_100000_page_content from './20260816_100000_page_content';
 import * as migration_20260816_130000_offer_editor_fields from './20260816_130000_offer_editor_fields';
 import * as migration_20260816_180000_remove_google_and_news from './20260816_180000_remove_google_and_news';
+import * as migration_20260816_190000_activities from './20260816_190000_activities';
 
 export const migrations = [
   {
@@ -137,5 +138,10 @@ export const migrations = [
     up: migration_20260816_180000_remove_google_and_news.up,
     down: migration_20260816_180000_remove_google_and_news.down,
     name: '20260816_180000_remove_google_and_news'
+  },
+  {
+    up: migration_20260816_190000_activities.up,
+    down: migration_20260816_190000_activities.down,
+    name: '20260816_190000_activities'
   },
 ];

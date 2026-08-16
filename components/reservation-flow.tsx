@@ -12,7 +12,7 @@ import { EquipmentEditor } from "@/components/editor/equipment-editor";
 
 type Slot = { time: string; available: number; recommendation?: { recommended: boolean; level: "best" | "medium" | "poor" | "professional"; basis: "forecast" | "typical" | "none"; label?: string; detail?: string; windKmh?: number; gustKmh?: number } };
 type WindStatus = "forecast" | "outside-range" | "unavailable";
-type Result = { reference: string; equipment: string; date: string; time: string; endTime: string };
+type Result = { reference: string; equipment: string; date: string; time: string; endTime: string; status: "pending" };
 
 const categoryIcon = { Woda: Waves, Ląd: Zap, Szkolenie: Sailboat, Inne: Sailboat } as const;
 
@@ -59,14 +59,14 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedId || !date || !time) return setError("Najpierw wybierz sprzęt, datę i godzinę.");
+    if (!selectedId || !date || !time) return setError("Najpierw wybierz aktywność, datę i godzinę.");
     setSubmitting(true);
     setError("");
     const form = new FormData(event.currentTarget);
     const response = await fetch("/api/reservations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ equipmentId: selectedId, date, time, name: form.get("name"), phone: form.get("phone"), email: form.get("email"), notes: form.get("notes"), website: form.get("website") }),
+      body: JSON.stringify({ equipmentId: selectedId, date, time, name: form.get("name"), phone: form.get("phone"), email: form.get("email"), notes: form.get("notes"), instructorRequired: form.get("instructorRequired") === "on", website: form.get("website") }),
     });
     const body = await response.json() as Result & { error?: string };
     setSubmitting(false);
@@ -81,7 +81,7 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
   if (!equipment.length) return (
     <Card className="border-white/10 bg-white/[0.04] p-8 text-center">
       <h2 className="font-display text-3xl font-black uppercase">Rezerwacja online jest teraz niedostępna</h2>
-      <p className="mt-3 text-white/60">Zadzwoń do nas — sprawdzimy dostępność sprzętu.</p>
+      <p className="mt-3 text-white/60">Zadzwoń do nas — sprawdzimy dostępne aktywności.</p>
       <Button asChild className="mt-6"><a href="tel:+48500128090"><Phone className="size-4" /> +48 500 128 090</a></Button>
     </Card>
   );
@@ -90,13 +90,13 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
     <Card className="mx-auto max-w-3xl overflow-hidden border-orange-500/30 bg-neutral-950 p-0">
       <div className="bg-orange-500 p-8 text-black sm:p-12">
         <div className="flex size-14 items-center justify-center rounded-full bg-black text-orange-500"><Check className="size-7" strokeWidth={3} /></div>
-        <p className="mt-8 text-xs font-black uppercase tracking-[.2em]">Rezerwacja zapisana</p>
+        <p className="mt-8 text-xs font-black uppercase tracking-[.2em]">Oczekuje na potwierdzenie Asi</p>
         <h2 className="mt-2 font-display text-5xl font-black uppercase sm:text-7xl">{result.reference}</h2>
       </div>
       <div className="grid gap-6 p-8 sm:grid-cols-2 sm:p-12">
-        <div><span className="eyebrow">Sprzęt</span><p className="mt-2 text-xl font-bold">{result.equipment}</p></div>
+        <div><span className="eyebrow">Aktywność</span><p className="mt-2 text-xl font-bold">{result.equipment}</p></div>
         <div><span className="eyebrow">Termin</span><p className="mt-2 text-xl font-bold">{result.date} · {result.time}–{result.endTime}</p></div>
-        <p className="text-sm leading-6 text-white/55 sm:col-span-2">Zapisz numer rezerwacji. Jeśli warunki nie będą pasować do wybranego sprzętu, ekipa zaproponuje najlepszą dostępną alternatywę.</p>
+        <p className="text-sm leading-6 text-white/55 sm:col-span-2">Zapisz numer rezerwacji. Asia potwierdzi termin. Jeśli warunki nie będą pasować, ekipa zaproponuje najlepszą dostępną alternatywę.</p>
         <div className="flex flex-wrap gap-3 sm:col-span-2">
           <Button onClick={() => { setResult(null); setDate(today); setVisibleStart(today); setTime(""); setLoadingSlots(true); }}><ArrowLeft className="size-4" /> Nowa rezerwacja</Button>
           <Button asChild variant="outline"><a href="tel:+48500128090"><Phone className="size-4" /> Zadzwoń</a></Button>
@@ -109,7 +109,7 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
     <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(25rem,.95fr)] lg:items-start">
       <section aria-labelledby="equipment-heading" className="min-w-0">
         <div className="mb-5 flex items-end justify-between gap-4">
-          <div><span className="eyebrow">01 / Sprzęt</span><h2 id="equipment-heading" className="mt-2 font-display text-4xl font-black uppercase">Co bierzesz?</h2></div>
+          <div><span className="eyebrow">01 / Aktywności</span><h2 id="equipment-heading" className="mt-2 font-display text-4xl font-black uppercase">Co chcesz robić?</h2></div>
           <div className="flex items-center gap-3"><span className="hidden text-sm text-white/40 sm:block">{equipment.length} pozycji</span><EquipmentEditor /></div>
         </div>
         <div className="flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-3 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0">
@@ -139,7 +139,7 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
       <Card className="min-w-0 border-white/10 bg-neutral-950 p-5 sm:p-7 lg:sticky lg:top-24">
         <span className="eyebrow">02 / Termin i kontakt</span>
         <div className="mt-3 flex items-center justify-between gap-4 border-b border-white/10 pb-5">
-          <h2 className="font-display text-4xl font-black uppercase">{selected?.name || "Wybierz sprzęt"}</h2>
+          <h2 className="font-display text-4xl font-black uppercase">{selected?.name || "Wybierz aktywność"}</h2>
           {selected && <Badge className="border border-white/15 bg-transparent text-white">{selected.durationMinutes} min</Badge>}
         </div>
         <form onSubmit={submit} className="mt-6 space-y-6">
@@ -175,11 +175,12 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
           </fieldset>
           {recommendationNote ? <div className="border-l-2 border-sky-400 pl-4 text-sm leading-6 text-white/55">{recommendationNote}</div> : null}
           {selected?.notice && <div className="border-l-2 border-orange-500 pl-4 text-sm leading-6 text-white/55">{selected.notice}</div>}
-          <div className="border border-white/10 bg-white/[.035] p-4 text-sm leading-6 text-white/60"><strong className="text-white">Warun może się zmienić — to nie problem.</strong> Jeśli SUP, katamaran albo wake nie będą najlepszą opcją, ekipa powie, co w danym momencie działa najlepiej, i zaproponuje inny dostępny sprzęt.</div>
+          <div className="border border-white/10 bg-white/[.035] p-4 text-sm leading-6 text-white/60"><strong className="text-white">Warun może się zmienić — to nie problem.</strong> Jeśli wybrana aktywność nie będzie najlepszą opcją, ekipa powie, co w danym momencie działa najlepiej, i zaproponuje alternatywę.</div>
           <div className="grid gap-4 border-t border-white/10 pt-6 sm:grid-cols-2">
             <label className="sm:col-span-2"><span className="mb-2 block text-sm font-bold">Imię i nazwisko</span><input required name="name" autoComplete="name" minLength={2} maxLength={120} className="h-12 w-full border border-white/15 bg-white/[0.04] px-4 outline-none focus:border-orange-500" /></label>
             <label><span className="mb-2 block text-sm font-bold">Telefon</span><input required name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="500 000 000" className="h-12 w-full border border-white/15 bg-white/[0.04] px-4 outline-none focus:border-orange-500" /></label>
             <label><span className="mb-2 block text-sm font-bold">E-mail</span><input required name="email" type="email" autoComplete="email" placeholder="adres@email.pl" className="h-12 w-full border border-white/15 bg-white/[0.04] px-4 outline-none focus:border-orange-500" /></label>
+            <label className="sm:col-span-2 flex min-h-14 items-center gap-3 border border-white/15 bg-white/[0.04] p-4 font-bold"><input name="instructorRequired" type="checkbox" className="size-5 accent-orange-500" /> Potrzebuję instruktora</label>
             <label className="sm:col-span-2"><span className="mb-2 block text-sm font-bold">Uwagi <span className="font-normal text-white/35">(opcjonalnie)</span></span><textarea name="notes" rows={3} maxLength={500} className="w-full resize-y border border-white/15 bg-white/[0.04] p-4 outline-none focus:border-orange-500" /></label>
             <label className="absolute -left-[10000px]" aria-hidden="true">Strona<input name="website" tabIndex={-1} autoComplete="off" /></label>
           </div>

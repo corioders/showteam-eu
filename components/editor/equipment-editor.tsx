@@ -97,41 +97,38 @@ export function EquipmentEditor({ equipment, compact = false, className }: { equ
     const result = await response.json() as { message?: string };
     setSaving(false);
     if (!response.ok) {
-      setErrors([result.message || "Nie udało się usunąć sprzętu."]);
+      setErrors([result.message || "Nie udało się usunąć aktywności."]);
       return;
     }
     localStorage.removeItem(draftKey);
     router.refresh();
   }
 
-  const label = equipment ? `Edytuj ${equipment.name}` : "Dodaj sprzęt";
+  const label = equipment ? `Edytuj ${equipment.name}` : "Dodaj aktywność";
   return <Sheet onOpenChange={openChanged}>
     <SheetTrigger asChild><button type="button" className={cn("editor-action", compact && "min-h-10 px-3", className)}>{equipment ? <Pencil className="size-4" /> : <Plus className="size-4" />}{compact ? <span className="sr-only">{label}</span> : label}</button></SheetTrigger>
-    <SheetContent title={label} description="Zarządzaj sprzętem widocznym w rezerwacjach." className="overflow-y-auto sm:left-auto sm:w-[min(42rem,100vw)]">
+    <SheetContent title={label} description="Zarządzaj aktywnościami widocznymi w rezerwacjach." className="overflow-y-auto sm:left-auto sm:w-[min(42rem,100vw)]">
       <form onSubmit={save} className="min-h-full px-5 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(4.5rem+env(safe-area-inset-top))] sm:px-8">
         <span className="eyebrow">Rezerwacje</span>
         <h2 className="mt-3 font-display text-4xl font-black uppercase leading-none">{label}</h2>
-        <p className="mt-3 text-sm leading-6 text-white/55">To, co zapiszesz tutaj, od razu trafi do wyboru sprzętu i dostępnych godzin.</p>
-        {equipment ? <div className="mt-6 grid gap-3 sm:grid-cols-2">{typeof equipment.image === "object" && equipment.image?.url ? <div className="relative aspect-video overflow-hidden bg-neutral-900"><Image src={equipment.image.url} alt={equipment.image.alt || equipment.name} fill unoptimized className="object-cover" /></div> : <div className="grid aspect-video place-items-center border border-dashed border-white/15 text-sm text-white/35">Brak zdjęcia</div>}<label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 border border-orange-500/60 px-4 text-center text-sm font-bold"><RefreshCw className="size-4" /><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" disabled={saving} onChange={(event) => void replaceImage(event.target.files?.[0])} />Zmień zdjęcie sprzętu</label></div> : null}
+        <p className="mt-3 text-sm leading-6 text-white/55">To, co zapiszesz tutaj, od razu trafi do wyboru aktywności i dostępnych godzin.</p>
+        {equipment ? <div className="mt-6 grid gap-3 sm:grid-cols-2">{typeof equipment.image === "object" && equipment.image?.url ? <div className="relative aspect-video overflow-hidden bg-neutral-900"><Image src={equipment.image.url} alt={equipment.image.alt || equipment.name} fill unoptimized className="object-cover" /></div> : <div className="grid aspect-video place-items-center border border-dashed border-white/15 text-sm text-white/35">Brak zdjęcia</div>}<label className="flex min-h-12 cursor-pointer items-center justify-center gap-2 border border-orange-500/60 px-4 text-center text-sm font-bold"><RefreshCw className="size-4" /><input type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" disabled={saving} onChange={(event) => void replaceImage(event.target.files?.[0])} />Zmień zdjęcie aktywności</label></div> : null}
 
-        <EditorSection title="1. Sprzęt" description="Informacje widoczne dla klienta.">
-          <Field label="Nazwa sprzętu"><input required maxLength={120} value={value.name} onChange={(event) => update("name", event.target.value)} /></Field>
+        <EditorSection title="1. Aktywność" description="Informacje widoczne dla klienta.">
+          <Field label="Nazwa aktywności"><input required maxLength={120} value={value.name} onChange={(event) => update("name", event.target.value)} /></Field>
           <Field label="Krótki opis"><textarea required minLength={10} maxLength={300} rows={4} value={value.description} onChange={(event) => update("description", event.target.value)} /><small>{value.description.length}/300</small></Field>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Kategoria"><select value={value.category} onChange={(event) => update("category", event.target.value)}>{["Woda", "Ląd", "Szkolenie", "Inne"].map((category) => <option key={category}>{category}</option>)}</select></Field>
-            <Field label="Liczba dostępnych sztuk"><input required type="number" min={1} max={99} value={value.quantity} onChange={(event) => update("quantity", event.target.valueAsNumber)} /></Field>
+            <Field label="Liczba miejsc lub sztuk"><input required type="number" min={1} max={99} value={value.quantity} onChange={(event) => update("quantity", event.target.valueAsNumber)} /></Field>
           </div>
           <Field label="Ważna informacja" hint="Opcjonalnie, np. wymagane uprawnienia."><textarea maxLength={220} rows={3} value={value.notice ?? ""} onChange={(event) => update("notice", event.target.value)} /></Field>
-          <label className="flex min-h-12 items-center gap-3 border border-white/15 p-3 font-semibold"><input type="checkbox" checked={value.active} onChange={(event) => update("active", event.target.checked)} className="size-5 accent-orange-500" /> Klienci mogą rezerwować ten sprzęt</label>
+          <label className="flex min-h-12 items-center gap-3 border border-white/15 p-3 font-semibold"><input type="checkbox" checked={value.active} onChange={(event) => update("active", event.target.checked)} className="size-5 accent-orange-500" /> Klienci mogą rezerwować tę aktywność</label>
+          <label className="flex min-h-12 items-center gap-3 border border-white/15 p-3 font-semibold"><input type="checkbox" checked={value.unavailableWeekends} onChange={(event) => update("unavailableWeekends", event.target.checked)} className="size-5 accent-orange-500" /> Niedostępna w soboty i niedziele</label>
           <div className="grid grid-cols-2 gap-3"><Button type="button" variant="outline" onClick={() => update("sortOrder", 0)}>Przenieś na początek</Button><Button type="button" variant="outline" onClick={() => update("sortOrder", Date.now())}>Przenieś na koniec</Button></div>
         </EditorSection>
 
-        <EditorSection title="2. Godziny" description="Podstawowe godziny i długość jednej rezerwacji.">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Pierwsza godzina"><input required type="time" value={value.openTime} onChange={(event) => update("openTime", event.target.value)} /></Field>
-            <Field label="Koniec rezerwacji"><input required type="time" value={value.closeTime} onChange={(event) => update("closeTime", event.target.value)} /></Field>
-          </div>
-          <Field label="Długość rezerwacji w minutach"><input required type="number" min={15} max={720} step={15} value={value.durationMinutes} onChange={(event) => update("durationMinutes", event.target.valueAsNumber)} /></Field>
+        <EditorSection title="2. Rezerwacja" description="Wspólne godziny bazy: 10:00–20:00, od maja do końca października.">
+          <Field label="Długość rezerwacji w minutach"><input required type="number" min={60} max={720} step={15} value={value.durationMinutes} onChange={(event) => update("durationMinutes", event.target.valueAsNumber)} /></Field>
         </EditorSection>
 
         <EditorSection title="3. Polecane warunki" description="Podpowiedzi pogodowe pokazywane przy godzinach.">
@@ -145,10 +142,10 @@ export function EquipmentEditor({ equipment, compact = false, className }: { equ
           <Field label="Dodatkowa podpowiedź" hint="Opcjonalnie."><textarea maxLength={220} rows={3} value={value.recommendationNote ?? ""} onChange={(event) => update("recommendationNote", event.target.value)} /></Field>
         </EditorSection>
 
-        <div className="border border-white/15 bg-white/[0.04] p-5" aria-label="Podgląd sprzętu"><span className="eyebrow">Podgląd</span><p className="mt-4 font-display text-4xl font-black uppercase leading-none">{value.name || "Nazwa sprzętu"}</p><p className="mt-3 text-sm leading-6 text-white/60">{value.description || "Opis pojawi się tutaj."}</p><p className="mt-4 text-xs font-bold uppercase text-sky-300">{value.durationMinutes} min · {weatherProfileLabel(value.weatherProfile)}</p></div>
-        {equipment ? <div className="mt-5 flex flex-wrap gap-3"><Button asChild type="button" variant="outline"><Link href={`/a/kalendarz?tab=dostepnosc&equipment=${equipment.id}`}><CalendarClock className="size-4" /> Ustaw dostępność i blokady</Link></Button><Button type="button" variant="outline" className="border-red-500/40 text-red-200 hover:bg-red-500 hover:text-white" onClick={() => void remove()} disabled={saving}><Trash2 className="size-4" /> Usuń sprzęt</Button></div> : null}
+        <div className="border border-white/15 bg-white/[0.04] p-5" aria-label="Podgląd aktywności"><span className="eyebrow">Podgląd</span><p className="mt-4 font-display text-4xl font-black uppercase leading-none">{value.name || "Nazwa aktywności"}</p><p className="mt-3 text-sm leading-6 text-white/60">{value.description || "Opis pojawi się tutaj."}</p><p className="mt-4 text-xs font-bold uppercase text-sky-300">{value.durationMinutes} min · {weatherProfileLabel(value.weatherProfile)}</p></div>
+        {equipment ? <div className="mt-5 flex flex-wrap gap-3"><Button asChild type="button" variant="outline"><Link href={`/a/kalendarz?tab=dostepnosc&equipment=${equipment.id}`}><CalendarClock className="size-4" /> Ustaw dostępność</Link></Button><Button type="button" variant="outline" className="border-red-500/40 text-red-200 hover:bg-red-500 hover:text-white" onClick={() => void remove()} disabled={saving}><Trash2 className="size-4" /> Usuń aktywność</Button></div> : null}
         {(message || errors.length > 0) && <div className={`mt-6 border p-4 text-sm ${errors.length || message?.startsWith("Nie udało") ? "border-red-400/50 bg-red-950/50 text-red-100" : "border-emerald-400/40 bg-emerald-950/40 text-emerald-100"}`} role="status"><p className="font-bold">{message}</p>{errors.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5">{errors.map((error) => <li key={error}>{error}</li>)}</ul>}</div>}
-        <div className="fixed inset-x-0 bottom-0 z-10 flex gap-2 border-t border-white/15 bg-neutral-950/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:left-auto sm:w-[min(42rem,100vw)] sm:px-8"><Button type="button" variant="outline" onClick={clear}><RotateCcw className="size-4" /> Wyczyść</Button><Button type="submit" className="flex-1" disabled={saving}>{saving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}{saving ? "Zapisuję…" : equipment ? "Zapisz zmiany" : "Dodaj sprzęt"}</Button></div>
+        <div className="fixed inset-x-0 bottom-0 z-10 flex gap-2 border-t border-white/15 bg-neutral-950/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:left-auto sm:w-[min(42rem,100vw)] sm:px-8"><Button type="button" variant="outline" onClick={clear}><RotateCcw className="size-4" /> Wyczyść</Button><Button type="submit" className="flex-1" disabled={saving}>{saving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}{saving ? "Zapisuję…" : equipment ? "Zapisz zmiany" : "Dodaj aktywność"}</Button></div>
       </form>
     </SheetContent>
   </Sheet>;
@@ -162,5 +159,5 @@ function toForm(item: BookableEquipment): EquipmentForm {
 }
 
 function emptyForm(): EquipmentForm {
-  return { name: "", description: "", category: "Woda", quantity: 1, durationMinutes: 60, openTime: "09:00", closeTime: "19:00", notice: "", active: true, weatherProfile: "any", recommendedStart1: "", recommendedEnd1: "", recommendedStart2: "", recommendedEnd2: "", windMediumMinKmh: 0, windMediumMaxKmh: 100, windBestMinKmh: 0, windBestMaxKmh: 100, professionalWindMinKmh: "", recommendationNote: "", sortOrder: Date.now() };
+  return { name: "", description: "", category: "Woda", quantity: 1, durationMinutes: 60, openTime: "10:00", closeTime: "20:00", unavailableWeekends: false, notice: "", active: true, weatherProfile: "any", recommendedStart1: "", recommendedEnd1: "", recommendedStart2: "", recommendedEnd2: "", windMediumMinKmh: 0, windMediumMaxKmh: 100, windBestMinKmh: 0, windBestMaxKmh: 100, professionalWindMinKmh: "", recommendationNote: "", sortOrder: Date.now() };
 }

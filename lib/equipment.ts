@@ -22,6 +22,8 @@ const getCachedBookableEquipment = unstable_cache(async (): Promise<BookableEqui
     durationMinutes: document.durationMinutes,
     openTime: document.openTime,
     closeTime: document.closeTime,
+    unavailableWeekends: Boolean(document.unavailableWeekends),
+    sharedResourceKey: document.sharedResourceKey || undefined,
     notice: document.notice || undefined,
     weatherProfile: document.weatherProfile,
     recommendedStart1: document.recommendedStart1 || undefined,

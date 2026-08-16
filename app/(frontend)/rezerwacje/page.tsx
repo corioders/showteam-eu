@@ -6,8 +6,8 @@ import { getPageContent } from "@/lib/page-content";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
-  title: "Rezerwacje sprzętu",
-  description: "Zarezerwuj online SUP, kajak, sprzęt żeglarski, wodny lub rower w bazie SHOWteam nad Jeziorem Łąckim.",
+  title: "Rezerwuj aktywność",
+  description: "Zarezerwuj aktywność w WAKE & SURF Village nad Jeziorem Łąckim.",
   alternates: { canonical: "/rezerwacje" },
 };
 

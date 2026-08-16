@@ -14,11 +14,11 @@ export async function POST(request: Request) {
   const parsed = parseEditableEquipment(await request.json().catch(() => null));
   if (!parsed.data) return NextResponse.json({ message: "Sprawdź zaznaczone informacje.", errors: parsed.errors }, { status: 400 });
   try {
-    await payload.create({ collection: "equipment", data: { ...equipmentMutationData(parsed.data), slug: "sprzet", sortOrder: await nextEquipmentSortOrder(payload) }, overrideAccess: false, user });
+    await payload.create({ collection: "equipment", data: { ...equipmentMutationData(parsed.data), slug: "aktywnosc", sortOrder: await nextEquipmentSortOrder(payload) }, overrideAccess: false, user });
     revalidateEquipment();
-    return NextResponse.json({ message: "Sprzęt został dodany i opublikowany." }, { status: 201 });
+    return NextResponse.json({ message: "Aktywność została dodana i opublikowana." }, { status: 201 });
   } catch (error) {
     payload.logger.error({ err: error, msg: "Visual equipment create failed" });
-    return NextResponse.json({ message: "Nie udało się dodać sprzętu. Twoje dane nadal są w formularzu." }, { status: 500 });
+    return NextResponse.json({ message: "Nie udało się dodać aktywności. Twoje dane nadal są w formularzu." }, { status: 500 });
   }
 }
