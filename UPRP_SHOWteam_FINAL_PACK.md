@@ -1,57 +1,110 @@
-# UPRP — SHOWteam (PL): pakiet końcowy do zebrania danych
+# UPRP — SHOWteam (PL): gotowy szkic formularza + brakujące dane
 
-## Stan prac
-- Zebrane:  
-  - zakres klas przygotowany: **25, 39, 41, 43, 44**
-  - wariant podstawowy: słowny `SHOWteam`
-  - wariant zapasowy: `SHOWteam + logo` (do decyzji)
-- Do domknięcia: dane właściciela, dane podpisującego, potwierdzenie wpisów per klasa.
+Cel: rejestracja nazwy **SHOWteam** w UPRP (Polska), wariant podstawowy słowny.
 
-## Brakujące dane (przesyłamy właścicielowi)
+## Co już jest ustalone i wpisane
 
-### Właściciel
-- Pełna nazwa:
-- Forma prawna:
-- NIP:
-- REGON:
-- KRS / CEIDG:
-- Adres siedziby:
-- Adres korespondencyjny (jeśli inny):
-- Telefon:
-- E-mail:
+- Znak: `SHOWteam`
+- Rodzaj znaku: **słowny**
+- Terytorium: **Rzeczpospolita Polska**
+- Zakres klas: **25, 39, 41, 43, 44**
+- Czas ochrony: **10 lat** (odnawialnie)
+- Wariant dodatkowy: **pokrycie zapasowe `SHOWteam + logo`** (do potwierdzenia)
+- Planowane finansowo: **2000 PLN** (jak uzgodnione)
 
-### Osoba uprawniona do podpisu
-- Imię i nazwisko:
-- Stanowisko:
-- PESEL (jeśli wymagany):
-- Telefon:
-- E-mail:
+## Szkic formularza UPRP — gotowy „na ile się da”
 
-### Klasy i usługi (potwierdzić)
-- **25**:  
-- **39**:  
-- **41**:  
-- **43**:  
-- **44**:  
+Wypełnij tylko pola oznaczone jako `(...)` po otrzymaniu danych od właściciela.
 
-### Decyzje
-- Fizjoterapia / masaże (44):  
-- Czy znak jest już używany? (tak/nie, od kiedy):  
-- Czy równolegle zgłoszenie `SHOWteam + logo`? (tak/nie):  
-- Dane do faktury/opłaty:  
+1) **Typ zgłoszenia**
+- Znak towarowy – zgłoszenie nazwy marki
+- Terytorium: Polska
+- Rodzaj znaku: Słowny
+- Wniosek składany: elektronicznie
 
-## Gotowy tekst do wysłania
+2) **Właściciel znaku (wnioskodawca)**
+- Nazwa podmiotu: `(...)`
+- Forma prawna: `(...)`
+- KRS lub CEIDG: `(...)`
+- NIP: `(...)`
+- REGON: `(...)`
+- Adres siedziby: `(...)`
+- Adres do korespondencji: `(...)` (jeśli inny)
+- Telefon/e-mail kontaktowy: `(...)`
 
-Hej, potrzebuję danych do UPRP na znak `SHOWteam`:
+3) **Osoba uprawniona do złożenia podpisu**
+- Imię i nazwisko: `(...)`
+- Funkcja/stanowisko: `(...)`
+- PESEL: `(...)` (jeśli wymagany przez urząd)
+- Telefon/e-mail kontaktowy: `(...)`
 
-1) Właściciel (nazwa, forma prawna, NIP, REGON, KRS/CEIDG, adresy, telefon, e-mail)  
-2) Osoba do podpisu (imię i nazwisko, stanowisko, PESEL jeśli trzeba, telefon, e-mail)  
-3) Potwierdzenie klas/usług:
-- 25:
-- 39:
-- 41:
-- 43:
-- 44:
-4) Czy fizjoterapia i masaże pozostają w 44 (TAK/NIE), czy też `SHOWteam + logo` (TAK/NIE), czy faktura (TAK/NIE + dane)
+4) **Zakres klas i usług**  
 
-Po otrzymaniu tych danych oddam Ci finalny, gotowy do wysłania formularz w wersji 0% luk.
+- **Klasa 25**  
+  `odzież i obuwie sportowe, akcesoria sportowe` (do potwierdzenia)
+
+- **Klasa 39**  
+  `usługi transportu i przewozu na rzecz klientów/uczestników` (do potwierdzenia)
+
+- **Klasa 41**  
+  `szkolenia sportowe, działalność rekreacyjna, rozrywkowa, organizacja i prowadzenie obozów/szkoleń` (do potwierdzenia)
+
+- **Klasa 43**  
+  `usługi noclegowe i gastronomiczne` (do potwierdzenia)
+
+- **Klasa 44**  
+  `fizjoterapia i masaże` *(oznaczyć TAK/NIE zgodnie ze stanem faktycznym)*  
+  *(jeżeli nie wykonujecie fizjoterapii/masaży — nie zgłaszamy tej klasy; wtedy zamiast „fizjoterapia/masaże” zaznaczcie `nie dotyczy`)*
+
+5) **Dane formalne**
+- Czy znak jest już używany? `(...)` (data rozpoczęcia: `(...)`)
+- Wariant dodatkowy `SHOWteam + logo` jako backup: `(...)`
+- Dane do faktury/opłaty: `(...)`  
+
+## Jakie dane jeszcze potrzebujemy (właściciel odsyła 1 wiadomością)
+
+- Dane firmy:
+  - pełna nazwa
+  - forma prawna
+  - NIP / REGON
+  - KRS **lub** CEIDG
+  - adres siedziby + ewentualny osobny adres korespondencyjny
+  - telefon, e-mail
+
+- Dane osoby podpisującej:
+  - imię i nazwisko
+  - stanowisko
+  - PESEL (jeśli będzie potrzebny)
+  - telefon, e-mail
+
+- Finalne brzmienie usług:
+  - klasa 25
+  - klasa 39
+  - klasa 41
+  - klasa 43
+  - klasa 44
+
+- Decyzje:
+  - fizjoterapia i masaże: TAK/NIE
+  - zgłaszamy teraz wariant zapasowy `SHOWteam + logo`: TAK/NIE
+  - czy znak jest już używany: TAK/NIE + data
+  - dane do faktury: TAK/NIE + kto wystawiający
+
+## Tekst do skopiowania do właściciela (krótki i „bez urzędniczego bełkotu”)
+
+Cześć, potrzebuję dopisać brakujące dane do wniosku UPRP na `SHOWteam`:
+
+1) Właściciel:
+`Pełna nazwa, forma prawna, NIP, REGON, KRS/CEIDG, adres siedziby, adres korespondencyjny, telefon, e-mail`
+
+2) Osoba do podpisu:
+`Imię nazwisko, stanowisko, PESEL (jeśli trzeba), telefon, e-mail`
+
+3) Klasy/usługi:
+`25, 39, 41, 43, 44` + konkretne opisy per klasa
+
+4) Decyzje:
+`fizjoterapia i masaże w 44: TAK/NIE`,  
+`czy pokazujemy też wariant SHOWteam + logo: TAK/NIE`,  
+`czy znak już jest używany + od kiedy`,  
+`dane do faktury/opłaty`

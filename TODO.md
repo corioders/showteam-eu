@@ -5,6 +5,7 @@ Aktualizuj ten plik po każdym ukończonym kroku. Usuwaj ukończone zadania. Nie
 ## W toku
 
 - [ ] Ochrona znaku towarowego `SHOWteam`:
+  - [x] Przygotować gotowy szkic zgłoszenia UPRP + listę brakujących danych (wypisane w repo).
   - [ ] Otrzymać pełne dane właściciela znaku i osoby uprawnionej do podpisu.
   - [ ] Potwierdzić ostateczny wykaz towarów i usług w klasach 25, 39, 41, 43 i 44, zwłaszcza transport, noclegi, gastronomię, odzież, fizjoterapię i masaże.
   - [ ] Uzupełnić, podpisać i wysłać elektroniczne zgłoszenie znaku słownego do UPRP oraz wnieść opłatę zgłoszeniową.
