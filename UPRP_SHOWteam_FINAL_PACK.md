@@ -11,6 +11,7 @@ Cel: rejestracja nazwy **SHOWteam** w UPRP (Polska), wariant podstawowy słowny.
 - Czas ochrony: **10 lat** (odnawialnie)
 - Wariant dodatkowy: **pokrycie zapasowe `SHOWteam + logo`** (do potwierdzenia)
 - Planowane finansowo: **2000 PLN** (jak uzgodnione)
+- Do szybkiej weryfikacji wizualnej mamy też szkic PDF formularza: `output/pdf/showteam-zgloszenie-uprp-szkic.pdf` *(w folderze `output/pdf`, nie jest jeszcze złożony do UPRP)*.
 
 ### Dane kontaktowe znane z publicznego zaplecza SHOWteam (do potwierdzenia czy to te same do formalnego zgłoszenia)
 
@@ -70,6 +71,9 @@ Wypełnij tylko pola oznaczone jako `(...)` po otrzymaniu danych od właściciel
   *(jeżeli nie wykonujecie fizjoterapii/masaży — nie zgłaszamy tej klasy; wtedy zamiast „fizjoterapia/masaże” zaznaczcie `nie dotyczy`)*
 
 5) **Dane formalne**
+- Brak wcześniejszego zgłoszenia tego samego znaku poza Polską: `(...)` (TAK/NIE)
+- Brak pierwszeństwa z wystawy/konkursu: `(...)` (TAK/NIE)
+- Adres do e-doręczeń/BAE (jeśli dotyczy): `(...)`
 - Czy znak jest już używany? `(...)` (data rozpoczęcia: `(...)`)
 - Wariant dodatkowy `SHOWteam + logo` jako backup: `(...)`
 - Dane do faktury/opłaty: `(...)`  
@@ -100,6 +104,8 @@ Wypełnij tylko pola oznaczone jako `(...)` po otrzymaniu danych od właściciel
 - Decyzje:
   - fizjoterapia i masaże: TAK/NIE
   - zgłaszamy teraz wariant zapasowy `SHOWteam + logo`: TAK/NIE
+  - brak wcześniejszego zgłoszenia: TAK/NIE
+  - brak pierwszeństwa z wystawy: TAK/NIE
   - czy znak jest już używany: TAK/NIE + data
   - dane do faktury: TAK/NIE + kto wystawiający
 
