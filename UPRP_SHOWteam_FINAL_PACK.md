@@ -12,6 +12,13 @@ Cel: rejestracja nazwy **SHOWteam** w UPRP (Polska), wariant podstawowy słowny.
 - Wariant dodatkowy: **pokrycie zapasowe `SHOWteam + logo`** (do potwierdzenia)
 - Planowane finansowo: **2000 PLN** (jak uzgodnione)
 
+### Dane kontaktowe znane z publicznego zaplecza SHOWteam (do potwierdzenia czy to te same do formalnego zgłoszenia)
+
+- Kontakt na stronie: `biuro@showteam.eu`
+- Telefon: `+48 500 128 090` (Joanna) i `+48 512 280 555` (Adam)
+- Lokalizacja: `Poręba, ul. Nad Zaporą 21`
+- Osoby wskazywane publicznie: `Joanna SHOWtysek`, `Adam SHOWtysek`
+
 ## Szkic formularza UPRP — gotowy „na ile się da”
 
 Wypełnij tylko pola oznaczone jako `(...)` po otrzymaniu danych od właściciela.
@@ -31,6 +38,12 @@ Wypełnij tylko pola oznaczone jako `(...)` po otrzymaniu danych od właściciel
 - Adres siedziby: `(...)`
 - Adres do korespondencji: `(...)` (jeśli inny)
 - Telefon/e-mail kontaktowy: `(...)`
+
+- Jeżeli te dane zgadzają się z firmowym profilem, wpisz je tu jako dane właściciela:
+  - osoba kontaktowa: `Joanna SHOWtysek` / `Adam SHOWtysek`
+  - telefon: `+48 500 128 090` / `+48 512 280 555`
+  - e-mail: `biuro@showteam.eu`
+  - adres: `Poręba, ul. Nad Zaporą 21`
 
 3) **Osoba uprawniona do złożenia podpisu**
 - Imię i nazwisko: `(...)`
