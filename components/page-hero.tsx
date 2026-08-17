@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { OfferCover, OfferHeroFields } from "@/components/editor/offer-inline-editor";
 import type { Offer } from "@/lib/offers";
 
-export function PageHero({ eyebrow, title, description, location, image, imageAlt, offer }: { eyebrow: string; title: string; description: string; location: string; image: string; imageAlt: string; offer?: Offer }) {
+export function PageHero({ eyebrow, title, description, location, image, imageAlt, offer, applicationHref, applicationLabel }: { eyebrow: string; title: string; description: string; location: string; image: string; imageAlt: string; offer?: Offer; applicationHref?: string; applicationLabel?: string }) {
   return (
     <section className="grain relative min-h-[82vh] overflow-hidden pt-20">
       {offer ? <OfferCover offer={offer} /> : <Image src={image} alt={imageAlt} fill priority className="object-cover" sizes="100vw" />}
@@ -17,6 +17,7 @@ export function PageHero({ eyebrow, title, description, location, image, imageAl
             <Link href="/"><ArrowLeft className="size-4" /> Wróć</Link>
           </Button>
           {offer ? <OfferHeroFields offer={offer} /> : <><Badge>{eyebrow}</Badge><h1 className="font-display mt-6 text-[clamp(4.2rem,13vw,10rem)] font-black uppercase leading-[0.79] tracking-[-0.055em]">{title}</h1><div className="mt-8 grid max-w-3xl gap-5 border-l-2 border-orange-500 pl-5 sm:grid-cols-[1fr_auto] sm:items-end"><p className="text-base leading-7 text-white/70 sm:text-lg">{description}</p><p className="flex items-center gap-2 whitespace-nowrap text-sm font-semibold"><MapPin className="size-4 text-orange-400" /> {location}</p></div></>}
+          {applicationHref ? <Button asChild size="lg" className="mt-8 bg-orange-500 text-black hover:bg-orange-400"><Link href={applicationHref}>{applicationLabel || "Wyślij zgłoszenie"}</Link></Button> : null}
           <ArrowDownRight className="mt-10 size-9 text-orange-500" />
         </div>
       </div>

@@ -26,6 +26,11 @@ test("offer pages lead directly to a preselected application", async ({ page }) 
   }
 });
 
+test("Patent i progres links to the application form from its hero", async ({ page }) => {
+  await page.goto("/oferta/szkolenia");
+  await expect(page.getByRole("link", { name: "Zgłoś się na szkolenie" })).toHaveAttribute("href", `/zgloszenie?oferta=${encodeURIComponent("Patent i progres")}`);
+});
+
 test("offer pages open their locations in Google Maps", async ({ page }) => {
   for (const [path, count] of [["/oferta/lato", 1], ["/oferta/szkolenia", 1], ["/oferta/zima", 2]] as const) {
     await page.goto(path);

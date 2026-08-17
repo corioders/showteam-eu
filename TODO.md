@@ -4,6 +4,8 @@ Aktualizuj ten plik po każdym ukończonym kroku. Nie zamykaj zadania bez testu,
 
 ## W toku
 
+- [x] Patent i progres: dodać czytelny, bezpośredni odnośnik do formularza zgłoszeniowego.
+
 - [x] Naprawić produkcyjny błąd 500 podczas bezpośredniego zapisu treści strony i potwierdzić zapis z przeglądarki.
 
 - [x] Audyt panelu administratora na produkcji — 2026-08-17:
