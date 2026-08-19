@@ -1,0 +1,11 @@
+{
+	"extends": ["//"],
+	"tasks": {
+		"build": {
+			"outputs": ["build/**"]
+		},
+		"build-cloudflare": {
+			"outputs": ["build/**"]
+		}
+	}
+}
