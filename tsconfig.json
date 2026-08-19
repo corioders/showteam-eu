@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		"declaration": true,
+		"declarationMap": true,
+		"incremental": true,
+		"jsx": "preserve",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"outDir": "build",
+		"paths": {
+			"@/*": ["./src/*"]
+		},
+		"rootDir": "src",
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strict": true,
+		"target": "esnext",
+		"tsBuildInfoFile": "./build/tsconfig.tsbuildinfo",
+		"typeRoots": ["./node_modules/@types"]
+	},
+	"exclude": ["node_modules", "build"],
+	"include": ["**/*.ts", "**/*.tsx", "**/*.mts"]
+}

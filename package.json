@@ -1,0 +1,48 @@
+{
+	"dependencies": {
+		"cacheable": "^1.10.3",
+		"cstd-ts": "workspace:*",
+		"http-status-codes": "^2.3.0",
+		"memoize": "^10.1.0",
+		"p-limit": "^6.2.0",
+		"react-markdown": "^10.1.0",
+		"remark-gfm": "^4.0.1",
+		"server-only": "^0.0.1",
+		"sharp": "^0.34.3",
+		"svgo": "^4.0.0",
+		"undici": "^7.13.0",
+		"unstorage": "^1.16.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.14",
+		"@magda/tree-kill": "^1.2.3",
+		"concurrently": "^9.2.0",
+		"tsc-alias": "^1.8.16",
+		"typescript": "^5.9.2"
+	},
+	"exports": {
+		"./*": "./build/*"
+	},
+	"name": "cstd-next",
+	"packageManager": "pnpm@9.10.0+sha512.73a29afa36a0d092ece5271de5177ecbf8318d454ecd701343131b8ebc0c1a91c487da46ab77c8e596d6acf1461e3594ced4becedf8921b074fbd8653ed7051c",
+	"peerDependencies": {
+		"@types/react": "*",
+		"@types/react-dom": "*",
+		"firebase": "*",
+		"googleapis": "*",
+		"next": "*",
+		"react": "*",
+		"react-dom": "*",
+		"webpack": "*"
+	},
+	"scripts": {
+		"build": "tsc && tsc-alias",
+		"build-cloudflare": "pnpm run build",
+		"check": "pnpm check-biome && pnpm check-types",
+		"check-biome": "biome check --error-on-warnings --staged --no-errors-on-unmatched",
+		"check-types": "tsc --noEmit",
+		"clean": "rm -rf build",
+		"dev": "concurrently \"tsc --watch --preserveWatchOutput\" \"tsc-alias --watch\""
+	},
+	"version": "0.0.0"
+}
