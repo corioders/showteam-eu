@@ -1,7 +1,7 @@
 import path from "node:path";
 
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
-import { nextConfig as cstdNextConfig } from "cstd-next/config/next.config.js";
+import { nextConfig as cstdNextConfig } from "cstd-next/config/next.config.mjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
