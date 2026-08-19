@@ -1,0 +1,185 @@
+# Deploys template.cfworkers to Cloudflare Workers.
+# The 'deploy' branch publishes production; every other branch uploads an isolated
+# preview version and deploys the latest build to a shared Worker with observable logs.
+#
+# Required setup:
+# 1. Create a Cloudflare API token at https://dash.cloudflare.com/profile/api-tokens
+#    ("Edit Cloudflare Workers" template, or a custom token with:
+#     Account - Workers Scripts - Edit, Workers R2 Storage - Edit, D1 - Edit,
+#     Zone - Workers Routes - Edit if you use a custom domain).
+# 2. Repository Settings > Environments: create 'preview' and 'production'.
+#    Add CLOUDFLARE_API_TOKEN as a secret to both.
+#    Add CLOUDFLARE_WORKERS_DEV_SUBDOMAIN as a variable to 'preview'.
+# 3. Create the R2 buckets and D1 databases referenced by apps/web/wrangler.jsonc
+#    and paste the D1 database ids into that file.
+#
+# Runs on Blacksmith runners (~2x faster builds, 4x faster cache).
+# Swap `runs-on` for `ubuntu-latest` if Blacksmith is not enabled for this org.
+
+name: Deploy
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    environment: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
+    concurrency:
+      group: ${{ github.ref_name == 'deploy' && format('deploy-production-{0}', github.run_id) || 'deploy-shared-preview' }}
+      cancel-in-progress: ${{ github.ref_name != 'deploy' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          sparse-checkout: |
+            template.cfworkers
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Setup pnpm
+        run: corepack enable
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        working-directory: template.cfworkers
+        run: echo "STORE_PATH=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore pnpm cache
+        id: restore-pnpm
+        uses: actions/cache/restore@v5
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Restore Turborepo cache
+        id: restore-turbo
+        uses: actions/cache/restore@v5
+        with:
+          path: template.cfworkers/.turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Restore Next.js cache
+        id: restore-next
+        uses: actions/cache/restore@v5
+        with:
+          path: template.cfworkers/apps/web/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ github.ref_name }}-${{ hashFiles('template.cfworkers/pnpm-lock.yaml') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ github.ref_name }}-${{ hashFiles('template.cfworkers/pnpm-lock.yaml') }}-${{ github.sha }}-
+            ${{ runner.os }}-nextjs-${{ github.ref_name }}-${{ hashFiles('template.cfworkers/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-nextjs-${{ github.ref_name }}-
+            ${{ runner.os }}-nextjs-
+
+      - name: Install dependencies
+        run: pnpm install
+        working-directory: template.cfworkers
+
+      - name: Upload preview
+        if: github.ref_name != 'deploy'
+        id: deploy
+        run: |
+          set -o pipefail
+          pnpm run upload --env preview --preview-alias "${{ github.ref_name }}" 2>&1 | tee deploy-output.log
+
+          VERSION_ID=$(grep -oP 'Worker Version ID: \K[0-9a-f-]+' deploy-output.log | tail -n 1)
+          if [[ -z "$VERSION_ID" ]]; then
+            echo "Unable to extract the Worker version ID from the upload output." >&2
+            exit 1
+          fi
+          if [[ -z "${{ vars.CLOUDFLARE_WORKERS_DEV_SUBDOMAIN }}" ]]; then
+            echo "CLOUDFLARE_WORKERS_DEV_SUBDOMAIN is not configured for the preview environment." >&2
+            exit 1
+          fi
+
+          VERSION_PREFIX=${VERSION_ID%%-*}
+          PREVIEW_HOST="template-cfworkers-web-preview.${{ vars.CLOUDFLARE_WORKERS_DEV_SUBDOMAIN }}.workers.dev"
+          {
+            echo "preview_url=https://${VERSION_PREFIX}-${PREVIEW_HOST}"
+            echo "alias_url=https://${{ github.ref_name }}-${PREVIEW_HOST}"
+            echo "shared_url=https://${PREVIEW_HOST}"
+          } >> "$GITHUB_OUTPUT"
+        working-directory: template.cfworkers/apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          RANDOM_VALUE_TO_ENSURE_APPS_WEB_IS_REBUILD_ON_GH_ACTIONS: ${{ github.run_id }}
+          NEXT_PUBLIC_IS_DEPLOY: false
+          NEXT_PUBLIC_GIT_BRANCH: ${{ github.ref_name }}
+
+      - name: Deploy shared loggable preview
+        if: github.ref_name != 'deploy'
+        run: pnpm exec wrangler deploy --env preview
+        working-directory: template.cfworkers/apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Deploy production
+        if: github.ref_name == 'deploy'
+        run: pnpm run deploy
+        working-directory: template.cfworkers/apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          RANDOM_VALUE_TO_ENSURE_APPS_WEB_IS_REBUILD_ON_GH_ACTIONS: ${{ github.run_id }}
+          NEXT_PUBLIC_IS_DEPLOY: true
+          NEXT_PUBLIC_GIT_BRANCH: ${{ github.ref_name }}
+
+      - name: Display preview URLs
+        if: success() && github.ref_name != 'deploy'
+        run: |
+          {
+            echo "## Preview Deployment"
+            echo ""
+            echo "- **Shared loggable Worker:** ${{ steps.deploy.outputs.shared_url }}"
+            echo "- **Version Preview URL (isolated, no logs):** ${{ steps.deploy.outputs.preview_url }}"
+            echo "- **Branch Alias URL (isolated, no logs):** ${{ steps.deploy.outputs.alias_url }}"
+            echo ""
+            echo "Reproduce server errors on the shared Worker, then run:"
+            echo ""
+            echo '```sh'
+            echo "pnpm --dir template.cfworkers/apps/web logs:preview"
+            echo '```'
+            echo ""
+            echo "---"
+            echo "_Branch:_ \`${{ github.ref_name }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Display production deployment
+        if: success() && github.ref_name == 'deploy'
+        run: |
+          {
+            echo "## Production Deployment"
+            echo ""
+            echo "Published \`${{ github.sha }}\` from the \`deploy\` branch."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save pnpm cache
+        uses: actions/cache/save@v5
+        if: always() && steps.restore-pnpm.outputs.cache-hit != 'true'
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: Save Turborepo cache
+        uses: actions/cache/save@v5
+        if: always() && steps.restore-turbo.outputs.cache-hit != 'true'
+        with:
+          path: template.cfworkers/.turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+
+      - name: Save Next.js cache
+        uses: actions/cache/save@v5
+        if: success()
+        with:
+          path: template.cfworkers/apps/web/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ github.ref_name }}-${{ hashFiles('template.cfworkers/pnpm-lock.yaml') }}-${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}

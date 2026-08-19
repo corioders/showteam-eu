@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"allowImportingTsExtensions": true,
+		"lib": ["dom", "dom.iterable", "esnext"],
+		"noEmit": true,
+		"paths": {
+			"@/*": ["./src/*"]
+		},
+		"plugins": [
+			{
+				"name": "next"
+			}
+		]
+	},
+	"exclude": ["node_modules", "corioders-lib/**", ".next", ".vercel"],
+	"extends": "./../../packages/corioders-lib/cstd-ts/config/tsconfig.json",
+	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"]
+}

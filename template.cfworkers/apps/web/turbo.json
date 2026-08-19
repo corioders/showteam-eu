@@ -1,0 +1,10 @@
+{
+	"extends": ["//"],
+	"tasks": {
+		"build": {
+			"cache": false,
+			"outputs": [".next/**", "!.next/cache/**"],
+			"env": ["IS_PREVIEW", "IS_CLOUDFLARE", "CORIODERS_SKIP_IMAGE_OPTIMIZATION", "RANDOM_VALUE_TO_ENSURE_APPS_WEB_IS_REBUILD_ON_GH_ACTIONS", "NEXT_PUBLIC_IS_DEPLOY", "NEXT_PUBLIC_GIT_BRANCH"]
+		}
+	}
+}

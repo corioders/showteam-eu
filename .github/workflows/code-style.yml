@@ -1,0 +1,31 @@
+name: Check code style
+
+on: push
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Setup pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install
+        working-directory: template.cfworkers
+
+      - name: Check code style
+        run: pnpm check-biome
+        working-directory: template.cfworkers
+
+      - name: Check types
+        run: pnpm check-types
+        working-directory: template.cfworkers
