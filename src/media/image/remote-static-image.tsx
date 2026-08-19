@@ -84,7 +84,7 @@ if (ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE === undefined) {
 			}),
 		});
 	} else {
-		ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE = createStorage({ driver: lruCacheDriver(undefined) });
+		ourGlobalThis.__CSTD_NEXT_IMAGES_CACHE = createStorage({ driver: lruCacheDriver({}) });
 	}
 }
 
