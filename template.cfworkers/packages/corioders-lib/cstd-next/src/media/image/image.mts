@@ -13,10 +13,8 @@ export const IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES: ImgHTMLAttributes<HTMLImageE
 
 export const TARGET_IMAGE_FORMATS: ImageType[] = ["avif", "webp"];
 
-// biome-ignore lint/nursery/noMagicNumbers: These are image sizes, that are selected by the developers
 export const TARGET_IMAGE_SIZES = [640, 750, 828, 1080, 1200, 1920, 2048];
 
 export function getListOfScaledWidths(originalSize: number) {
-	// biome-ignore lint/nursery/noMagicNumbers: These multiplayer are used to account for different pixel densities
 	return [originalSize, originalSize * 2, originalSize * 3];
 }

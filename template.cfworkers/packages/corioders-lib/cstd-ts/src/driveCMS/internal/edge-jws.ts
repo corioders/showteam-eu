@@ -2,6 +2,8 @@
 /** biome-ignore-all lint/performance/useTopLevelRegex: This code is vibe-generated with GPT */
 /** biome-ignore-all lint/style/useBlockStatements: This code is vibe-generated with GPT */
 
+import { type ErrorReturn, type ErrorReturnPromise, safePromise } from "@/error/index.js";
+
 type JWSHeader = Record<string, unknown>;
 type Payload = Record<string, unknown> | string | Uint8Array;
 
@@ -22,12 +24,12 @@ type RsaPrivateJwk = {
 
 type SecretInput = unknown; // CryptoKey-like | RsaPrivateJwk | PKCS#8 PEM string
 
-function getSubtle(): any {
+function getSubtle(): ErrorReturn<any> {
 	const subtle = (globalThis as any)?.crypto?.subtle;
 	if (!subtle) {
-		throw new Error("WebCrypto SubtleCrypto is not available. In Node, use:\nimport { webcrypto } from 'node:crypto';\nglobalThis.crypto = webcrypto as any;");
+		return [null, new Error("WebCrypto SubtleCrypto is not available. In Node, use:\nimport { webcrypto } from 'node:crypto';\nglobalThis.crypto = webcrypto as any;")];
 	}
-	return subtle;
+	return [subtle, null];
 }
 
 function utf8(input: string): Uint8Array {
@@ -85,49 +87,55 @@ function isRsaPrivateJwk(v: unknown): v is RsaPrivateJwk {
 	return o && typeof o === "object" && o.kty === "RSA" && typeof o.d === "string";
 }
 
-async function importPrivateKeyRS256(secret: SecretInput): Promise<any> {
-	const subtle = getSubtle();
+async function importPrivateKeyRS256(secret: SecretInput): ErrorReturnPromise<any> {
+	const [subtle, subtleError] = getSubtle();
+	if (subtleError) {
+		return [null, subtleError];
+	}
 
 	// 1) CryptoKey-like
 	if (isCryptoKeyLike(secret)) {
 		if (!secret.usages?.includes("sign")) {
-			throw new Error("Provided CryptoKey does not have 'sign' usage.");
+			return [null, new Error("Provided CryptoKey does not have 'sign' usage.")];
 		}
-		return secret;
+		return [secret, null];
 	}
 
 	// 2) JWK (private)
 	if (isRsaPrivateJwk(secret)) {
-		return subtle.importKey("jwk", secret, { hash: "SHA-256", name: "RSASSA-PKCS1-v1_5" }, false, ["sign"]);
+		return safePromise(() => subtle.importKey("jwk", secret, { hash: "SHA-256", name: "RSASSA-PKCS1-v1_5" }, false, ["sign"]));
 	}
 
 	// 3) PEM (PKCS#8)
 	if (typeof secret === "string" && isPemPrivateKey(secret)) {
 		if (/BEGIN RSA PRIVATE KEY/.test(secret)) {
 			// This is PKCS#1. WebCrypto expects PKCS#8.
-			throw new Error(
-				"PKCS#1 detected (BEGIN RSA PRIVATE KEY). Convert to PKCS#8, e.g.:\n" +
-					"openssl pkcs8 -topk8 -inform PEM -outform PEM " +
-					"-in rsa_pkcs1.pem -out private_pkcs8.pem -nocrypt",
-			);
+			return [
+				null,
+				new Error(
+					"PKCS#1 detected (BEGIN RSA PRIVATE KEY). Convert to PKCS#8, e.g.:\n" +
+						"openssl pkcs8 -topk8 -inform PEM -outform PEM " +
+						"-in rsa_pkcs1.pem -out private_pkcs8.pem -nocrypt",
+				),
+			];
 		}
 		const der = fromBase64(extractPemBase64(secret));
-		return subtle.importKey("pkcs8", der, { hash: "SHA-256", name: "RSASSA-PKCS1-v1_5" }, false, ["sign"]);
+		return safePromise(() => subtle.importKey("pkcs8", der, { hash: "SHA-256", name: "RSASSA-PKCS1-v1_5" }, false, ["sign"]));
 	}
 
-	throw new Error("Unsupported secret format. Use a CryptoKey, an RSA private JWK (with 'd'), or a PKCS#8 PEM private key.");
+	return [null, new Error("Unsupported secret format. Use a CryptoKey, an RSA private JWK (with 'd'), or a PKCS#8 PEM private key.")];
 }
 
-function encodeHeader(header?: JWSHeader): string {
+function encodeHeader(header?: JWSHeader): ErrorReturn<string> {
 	const h: JWSHeader = {
 		alg: "RS256",
 		typ: "JWT",
 		...(header || {}),
 	};
 	if (h["alg"] !== "RS256") {
-		throw new Error('Only RS256 is supported (header.alg must be "RS256").');
+		return [null, new Error('Only RS256 is supported (header.alg must be "RS256").')];
 	}
-	return base64UrlFromString(JSON.stringify(h));
+	return [base64UrlFromString(JSON.stringify(h)), null];
 }
 
 function encodePayload(payload: Payload): string {
@@ -140,18 +148,30 @@ function encodePayload(payload: Payload): string {
  * Sign a JWT using RS256 (RSASSA-PKCS1-v1_5 + SHA-256) via WebCrypto SubtleCrypto.
  * No external libraries required.
  */
-export async function sign({ header, payload, secret }: { header?: JWSHeader; payload: Payload; secret: SecretInput }): Promise<string> {
-	const subtle = getSubtle();
-	const cryptoKey = await importPrivateKeyRS256(secret);
+export async function sign({ header, payload, secret }: { header?: JWSHeader; payload: Payload; secret: SecretInput }): ErrorReturnPromise<string> {
+	const [subtle, subtleError] = getSubtle();
+	if (subtleError) {
+		return [null, subtleError];
+	}
+	const [cryptoKey, cryptoKeyError] = await importPrivateKeyRS256(secret);
+	if (cryptoKeyError) {
+		return [null, cryptoKeyError];
+	}
 
-	const encodedHeader = encodeHeader(header);
+	const [encodedHeader, encodedHeaderError] = encodeHeader(header);
+	if (encodedHeaderError) {
+		return [null, encodedHeaderError];
+	}
 	const encodedPayload = encodePayload(payload);
 	const signingInput = `${encodedHeader}.${encodedPayload}`;
 
-	const signature = await subtle.sign({ name: "RSASSA-PKCS1-v1_5" }, cryptoKey, utf8(signingInput));
+	const [signature, signatureError] = await safePromise<ArrayBuffer>(() => subtle.sign({ name: "RSASSA-PKCS1-v1_5" }, cryptoKey, utf8(signingInput)));
+	if (signatureError) {
+		return [null, signatureError];
+	}
 
 	const sigB64u = toBase64Url(new Uint8Array(signature));
-	return `${signingInput}.${sigB64u}`;
+	return [`${signingInput}.${sigB64u}`, null];
 }
 
 // ==================================================

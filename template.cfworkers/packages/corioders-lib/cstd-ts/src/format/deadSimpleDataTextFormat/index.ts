@@ -126,7 +126,7 @@ export function parseDSDTF(dsdtfRaw: string): ErrorReturn<ParsedDSDTF> {
 				}
 
 				// Remove tailing NEW_LINE character. The outer loop has no way of knowing that this token is a key.
-				currentValue = currentValue.substring(0, currentValue.length - 1);
+				currentValue = currentValue.slice(0, currentValue.length - 1);
 
 				if (currentKey !== null) {
 					const error = addKeyValuePairToMapping(currentKey, currentValue);
@@ -184,7 +184,7 @@ function stripKeySuffix(key: string): string {
 		stripDelta++;
 	}
 
-	return key.substring(0, key.length - KEY_SUFFIX.length - stripDelta);
+	return key.slice(0, key.length - KEY_SUFFIX.length - stripDelta);
 }
 
 function isKeyACommentKey(key: string): boolean {

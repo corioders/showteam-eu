@@ -3,16 +3,21 @@ import { type ErrorReturnPromise, safePromise } from "@/error/index.js";
 import { edgeGoogleAuthToken } from "../internal/edge-google-auth.js";
 import type { GoogleDriveAuthorizedUploadURL, SimpleUploadFileMetadata } from "./index.js";
 
-const CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY = process.env["CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY"] as string;
-if (typeof CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY !== "string") {
-	const errorMessage = `Unable to initialize, missing the 'CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY' environment variable. See https://medium.com/@matheodaly.md/using-google-drive-api-with-python-and-a-service-account-d6ae1f6456c2`;
-	throw new Error(errorMessage);
-}
+const CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY = process.env["CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY"];
 
 // ADAPTED FROM: https://github.com/aynh/cloudflare-gdrive/blob/main/src/gdrive.ts
 export async function internalEdgeSimpleFileUploadGetAuthorizedUploadURL(
 	uploadFileMetadata: SimpleUploadFileMetadata,
 ): ErrorReturnPromise<GoogleDriveAuthorizedUploadURL> {
+	if (typeof CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY !== "string") {
+		return [
+			null,
+			new Error(
+				"Unable to initialize, missing the 'CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY' environment variable. See https://medium.com/@matheodaly.md/using-google-drive-api-with-python-and-a-service-account-d6ae1f6456c2",
+			),
+		];
+	}
+
 	const [authToken, authTokenError] = await edgeGoogleAuthToken(CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY, ["https://www.googleapis.com/auth/drive"]);
 	if (authTokenError) {
 		return [null, authTokenError];

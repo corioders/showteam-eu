@@ -1,6 +1,21 @@
 {
 	"$schema": "https://turbo.build/schema.json",
 	"globalDependencies": ["**/.env.*local"],
+	"globalEnv": [
+		"CORIODERS_DRIVE_CMS_KEY",
+		"CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY",
+		"CORIODERS_INVALIDATE_PERSISTENT_CACHE",
+		"CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER",
+		"CF_PAGES_BRANCH",
+		"IS_PREVIEW",
+		"NEXT_IS_EXPORT_WORKER",
+		"NEXT_PUBLIC_IS_PREVIEW",
+		"REGENERATE_BRANCH_NAME",
+		"REGENERATE_BUILD_TIMEOUT",
+		"REGENERATE_BUILD_TRIGGER_URL",
+		"REGENERATE_ENABLE",
+		"REGENERATE_OUTPUT_FOLDER_TO_CREATE"
+	],
 	"tasks": {
 		"build": {
 			"dependsOn": ["^build"],

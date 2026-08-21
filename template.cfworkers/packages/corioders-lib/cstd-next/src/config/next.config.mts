@@ -3,8 +3,9 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
-import { runOnceOnNextStartup } from "cstd-ts/next/import-next-config.mjs";
 import { fileURLToPath } from "node:url";
+
+import { runOnceOnNextStartup } from "cstd-ts/next/import-next-config.mjs";
 import type { NextConfig } from "next";
 import { regexLikeCss } from "next/dist/build/webpack/config/blocks/css/index.js";
 import { nextImageLoaderRegex } from "next/dist/build/webpack-config.js";
@@ -55,6 +56,7 @@ export const nextConfig: NextConfig = {
 
 		config.resolve.plugins.push({
 			apply: (resolver) => {
+				// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Webpack resolver must handle these mutually exclusive request forms.
 				resolver.hooks.resolve.tap({ name: "jsToJsxResolver", stage: 100 }, (resolveRequest) => {
 					const originalRequest = resolveRequest.request;
 					if (!originalRequest) {

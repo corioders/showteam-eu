@@ -1,7 +1,6 @@
 import { IS_PREVIEW } from "@/const.js";
 import { defineTypeFunctionPromise } from "@/dataSchema/index.js";
 import type { Spreadsheet } from "@/driveCMS/spreadsheet.js";
-import { safePromise } from "@/error/index.js";
 import { parseAgendaCoriodersFormat } from "@/format/conference/agenda/corioders.js";
 import type { Agenda } from "@/format/conference/agenda/index.js";
 
@@ -23,7 +22,7 @@ export const UNSTABLE_typeCoriodersAgendaParserFromGoogleSpreadsheet = defineTyp
 			languageIndex = 1;
 		}
 
-		const [parsedAgenda, parserError] = await safePromise(() => parseAgendaCoriodersFormat(agendaSpreadsheet.workbook, IS_PREVIEW, languageIndex));
+		const [parsedAgenda, parserError] = await parseAgendaCoriodersFormat(agendaSpreadsheet.workbook, IS_PREVIEW, languageIndex);
 
 		if (parserError) {
 			return [null, parserError];

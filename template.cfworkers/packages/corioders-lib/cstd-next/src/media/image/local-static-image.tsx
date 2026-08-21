@@ -7,6 +7,8 @@ import "./../../../src/media/image/picture-display-style.css";
 
 import type { DetailedHTMLProps, ImgHTMLAttributes, JSX } from "react";
 
+import { CstdError } from "@/error/cstd-error.jsx";
+
 import { memoizeImages } from "./cache.js";
 import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from "./image.mjs";
 import { validateSizesProperty } from "./internal-client.mjs";
@@ -62,7 +64,7 @@ export const LocalStaticImage = memoizeImages(function LocalStaticImage(props: L
 	}
 
 	if (!src.s) {
-		throw new Error("Either src.g OR src.s is required");
+		return <CstdError error={new Error("Either src.g OR src.s is required")} />;
 	}
 
 	imageOptimizationAttributes.sizes = validateSizesProperty(props.sizes, src.z, src.filename);

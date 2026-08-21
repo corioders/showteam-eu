@@ -30,7 +30,7 @@ const defaultComponents: Props["components"] = {
 		}
 
 		if (typeof imgProps.src !== "string") {
-			throw new Error("Expected imgProps.src to be a string");
+			return <CstdError error={new Error("Expected imgProps.src to be a string")} />;
 		}
 
 		return <RemoteStaticImage alt={imgProps.alt ?? "TODO NO ALT"} loading="lazy" sizes="TODO SIZES" src={imgProps.src} />;
