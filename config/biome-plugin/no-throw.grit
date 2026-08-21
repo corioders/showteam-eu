@@ -1,6 +1,7 @@
 language js(typescript, jsx)
 
 `throw $error` as $throw where {
-	$filename <: r".*\.tsx?$",
+	$filename <: r".*\.(?:[cm]?[jt]sx?)$",
+	! $filename <: r".*(?:script/regenerate-nextjs-cache\.js|src/config/next\.config\.mts|src/media/image/(?:internal-client|internal)\.mts|src/media/image/webpack-loader/local-static-image-loader\.mts)$",
 	register_diagnostic(span=$throw, message="`throw` is disallowed. Return an `ErrorReturn` or `ErrorReturnPromise` from `cstd-ts/error` instead.")
 }

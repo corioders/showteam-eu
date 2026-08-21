@@ -3,10 +3,10 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
+import { Workbook } from "exceljs";
 import type { GoogleAuth } from "googleapis-common";
-import { type WorkBook as XlsxWorkBook, read as xlsxRead } from "xlsx";
 
-import { type ErrorReturnPromise, safe, safePromise } from "@/error";
+import { type ErrorReturnPromise, safePromise } from "@/error";
 
 import { memoizeDriveCMS } from "./cache.js";
 import { downloadFile, type FileID, getRevisionsFromUndocumentedAPIPersistentCached, type Revision, type RevisionID } from "./drive.js";
@@ -17,7 +17,7 @@ export type SpreadsheetID = FileID & { readonly __spreadsheetTag: unique symbol 
 export interface Spreadsheet {
 	spreadsheetID: SpreadsheetID;
 
-	workbook: XlsxWorkBook;
+	workbook: Workbook;
 }
 
 export interface SpreadsheetResource extends Resource {
@@ -46,9 +46,10 @@ export const downloadSpreadsheetRevision = memoizeDriveCMS(async function downlo
 		return [null, errorArrayBuffer];
 	}
 
-	const [workbook, errorXlsxRead] = safe(() => xlsxRead(excelFile));
-	if (errorXlsxRead !== null) {
-		return [null, errorXlsxRead];
+	const workbook = new Workbook();
+	const [_, errorWorkbookLoad] = await safePromise(() => workbook.xlsx.load(Buffer.from(excelFile) as never));
+	if (errorWorkbookLoad !== null) {
+		return [null, errorWorkbookLoad];
 	}
 
 	const spreadsheet = {
