@@ -34,7 +34,6 @@ const MEGABYTE = MULTIPLAYER * KILOBYTE;
 
 const MAX_STRING_LENGTH = KILOBYTE;
 
-// biome-ignore lint/nursery/noMagicNumbers: 100 megabytes
 const MAX_FILE_LENGTH = 100 * MEGABYTE;
 
 export async function POST(req: Request) {

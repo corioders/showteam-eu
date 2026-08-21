@@ -42,7 +42,7 @@ function memoizeImagesCacheKey(functionArguments: readonly unknown[]) {
 			continue;
 		}
 
-		throw new Error(`Unsupported memorize argument type: ${argumentType}, ${argument}`);
+		key += `${argumentType}:${String(argument)}`;
 	}
 
 	return key;

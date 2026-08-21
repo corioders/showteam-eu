@@ -7,7 +7,6 @@ import { useEffect } from "react";
 export function useLoggedInRedirect(firebaseApp: FirebaseApp, loginPath: string, loggedInPath: string): void {
 	const currentPath = usePathname();
 	useEffect(() => {
-		// biome-ignore lint/nursery/noFloatingPromises: This is intentional
 		(async () => {
 			const loggedIn = await isLoggedIn(firebaseApp);
 			if (!loggedIn && currentPath !== loginPath) {

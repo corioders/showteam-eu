@@ -24,6 +24,7 @@ import type UnstorageFsDriverType from "unstorage/drivers/fs-lite";
 import lruCacheDriver from "unstorage/drivers/lru-cache";
 
 import { CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER } from "@/const.js";
+import { CstdError } from "@/error/cstd-error.jsx";
 
 import { memoizeImages } from "./cache.js";
 import { IMAGE_DEFAULT_OPTIMIZATION_ATTRIBUTES } from "./image.mjs";
@@ -180,7 +181,7 @@ const RemoteStaticImageMemorized = memoizeImages(async function RemoteStaticImag
 	const [fetchedImage, fetchError] = await fetchRemoteImage(imageURL, props.fetchRequestInit);
 	if (fetchError !== null) {
 		console.log(`Unable to fetch: ${fetchError}`);
-		throw fetchError;
+		return <CstdError error={fetchError} />;
 	}
 
 	const imageBuffer = fetchedImage.imageBuffer;
@@ -251,7 +252,7 @@ const RemoteStaticImageMemorized = memoizeImages(async function RemoteStaticImag
 	}
 
 	if (!calculatedSize) {
-		throw new Error("calculatedSize should be defined at this point");
+		return <CstdError error={new Error("calculatedSize should be defined at this point")} />;
 	}
 
 	imageOptimizationAttributes.sizes = validateSizesProperty(props.sizes, calculatedSize.inferredSizes, imageFilename);
