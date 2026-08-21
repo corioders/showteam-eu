@@ -10,8 +10,8 @@
 # 2. Repository Settings > Environments: create 'preview' and 'production'.
 #    Add CLOUDFLARE_API_TOKEN as a secret to both.
 #    Add CLOUDFLARE_WORKERS_DEV_SUBDOMAIN as a variable to 'preview'.
-# 3. Create the R2 buckets and D1 databases referenced by apps/web/wrangler.jsonc
-#    and paste the D1 database ids into that file.
+# 3. Provision cache R2/D1 resources with OpenTofu in template.cfworkers/infra,
+#    then paste its D1 output ids into apps/web/wrangler.jsonc.
 #
 # Runs on Blacksmith runners (~2x faster builds, 4x faster cache).
 # Swap `runs-on` for `ubuntu-latest` if Blacksmith is not enabled for this org.

@@ -33,6 +33,6 @@ find . -name '*.bak' -not -path './node_modules/*' -delete
 
 echo "Renamed to $NAME.cfworkers."
 echo "Still to do:"
-echo "  - create the R2 buckets and D1 databases, paste the ids into $NAME.cfworkers/apps/web/wrangler.jsonc"
+echo "  - provision R2/D1 with OpenTofu in $NAME.cfworkers/infra, paste the D1 ids into $NAME.cfworkers/apps/web/wrangler.jsonc"
 echo "  - set the app title in $NAME.cfworkers/apps/web/src/app/layout.tsx"
 rm -- "$0"

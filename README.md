@@ -30,15 +30,19 @@ only that subdirectory.
 ./rename-project.sh myproject
 ```
 
-Then create the Cloudflare resources the app expects and paste the D1 ids into
-`myproject.cfworkers/apps/web/wrangler.jsonc`:
+Then provision the Cloudflare cache resources with OpenTofu and paste the D1
+output ids into `myproject.cfworkers/apps/web/wrangler.jsonc`:
 
 ```bash
-pnpm dlx wrangler r2 bucket create myproject-cfworkers-next-inc-cache-r2-bucket
-pnpm dlx wrangler r2 bucket create myproject-cfworkers-preview-next-inc-cache-r2-bucket
-pnpm dlx wrangler d1 create myproject-cfworkers-next-tag-cache-d1
-pnpm dlx wrangler d1 create myproject-cfworkers-preview-next-tag-cache-d1
+export CLOUDFLARE_API_TOKEN=...
+tofu -chdir=myproject.cfworkers/infra init
+tofu -chdir=myproject.cfworkers/infra apply \
+  -var cloudflare_account_id=... \
+  -var project_name=myproject
 ```
+
+See `myproject.cfworkers/infra/README.md` for the outputs, permissions and
+adopting manually-created resources.
 
 Install and start:
 

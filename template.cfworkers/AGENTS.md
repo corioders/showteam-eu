@@ -30,6 +30,6 @@ return [session, null];
 
 # Workflow
 
-- Read `TODO.md` before starting work, keep its statuses current, and use it to resume after context loss.
+- Read `TODO.md` before starting work, keep its statuses current, remove old already finished tasks, and use it to resume after context loss.
 - Keep commits small and focused: one working, reversible change per commit. Do not combine unrelated features or fixes.
 - Do not implement fallbacks for problems that should surface as errors.
