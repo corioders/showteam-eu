@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: workspace/cstd-next
+
+      - uses: actions/checkout@v5
+        with:
+          repository: corioders/cstd-ts
+          path: workspace/cstd-ts
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - run: corepack enable
+
+      - name: Create shared workspace
+        working-directory: workspace
+        run: |
+          printf 'packages:\n  - "cstd-next"\n  - "cstd-ts"\n' > pnpm-workspace.yaml
+
+      - name: Install dependencies
+        working-directory: workspace
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Verify cstd-ts
+        working-directory: workspace
+        run: pnpm --dir cstd-ts check && pnpm --dir cstd-ts build
+
+      - name: Verify cstd-next
+        working-directory: workspace
+        run: pnpm --dir cstd-next check && pnpm --dir cstd-next build
