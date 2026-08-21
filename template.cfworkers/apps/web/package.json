@@ -18,6 +18,7 @@
 		"check": "pnpm check-biome && pnpm check-types",
 		"check-types": "tsc --noEmit",
 		"check-biome": "biome check --error-on-warnings",
+		"check-biome-staged": "biome check --error-on-warnings --staged --no-errors-on-unmatched",
 		"check-biome-fix": "biome check --error-on-warnings --fix",
 		"postinstall": "next telemetry disable"
 	},

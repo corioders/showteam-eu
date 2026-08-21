@@ -4,4 +4,4 @@ pre-commit:
     check-biome:
       root: "template.cfworkers/"
       glob: "**/*.{js,jsx,ts,tsx,json,jsonc,css}"
-      run: pnpm run check-biome
+      run: pnpm run check-biome-staged

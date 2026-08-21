@@ -1,6 +1,6 @@
 // biome-ignore-all assist/source/useSortedKeys: I want this file to be in the order presented on biome website
 {
-	"$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
 	"extends": ["./packages/corioders-lib/cstd-ts/config/biome.jsonc"],
 	"plugins": ["packages/corioders-lib/cstd-ts/config/biome-plugin/no-throw.grit"],
 	"formatter": {

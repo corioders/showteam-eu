@@ -9,6 +9,7 @@
 		"check": "turbo run check",
 		"check-types": "turbo run check-types",
 		"check-biome": "turbo run check-biome",
+		"check-biome-staged": "turbo run check-biome-staged",
 		"check-biome-fix": "turbo run check-biome-fix",
 		"clean": "turbo run clean && rm -rf .turbo"
 	},

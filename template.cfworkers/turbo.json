@@ -13,6 +13,9 @@
 		"check-biome": {
 			"dependsOn": ["^check-biome"]
 		},
+		"check-biome-staged": {
+			"dependsOn": ["^check-biome-staged"]
+		},
 		"check-biome-fix": {
 			"dependsOn": ["^check-biome-fix"]
 		},
