@@ -32,7 +32,7 @@ export type TypeFunction<US, pFPR, FPR, RA, _TakesAggregateObject, _ProducesAggr
 type NoopFunction = FetchParserFunction<any, any> & { readonly __noopFunctionTag: unique symbol };
 
 export const typeNoopFunction = function noopTypeFunction() {
-	throw new Error(unreachableErrorMessage("Noop type function called. The logic inside fetchAndParseInternal handles noop type function"));
+	return [null, new Error(unreachableErrorMessage("Noop type function called. The logic inside fetchAndParseInternal handles noop type function"))];
 } as unknown as NoopFunction;
 
 export function defineTypeFunction<US, pFPR, FPR, RA = EmptyObject>(
@@ -313,7 +313,8 @@ async function fetchAndParseInternal(
 			continue;
 		}
 		if (Object.keys(nextPipe).length === 0) {
-			throw new Error(`Logical DSD error. This error is not caused by bad data. The pipe object cannot be empty ${entryDebugPath}`);
+			resultEntry["result"] = [null, new Error(`Logical DSD error. This error is not caused by bad data. The pipe object cannot be empty ${entryDebugPath}`)];
+			continue;
 		}
 
 		if (fetchParser.produceAggregateObjet) {
@@ -321,9 +322,11 @@ async function fetchAndParseInternal(
 			resultEntry["aggregate"] = aggregate;
 			if (fetchParserReturn) {
 				if (!Array.isArray(fetchParserReturn)) {
-					throw new Error(
-						`Logical DSD error. This error is not caused by bad data. Fetch parser did not return an array but it is an aggregate function. ${entryDebugPath}`,
-					);
+					resultEntry["result"] = [
+						null,
+						new Error(`Logical DSD error. This error is not caused by bad data. Fetch parser did not return an array but it is an aggregate function. ${entryDebugPath}`),
+					];
+					continue;
 				}
 
 				const fetchAndParseInternalExecutorPromises: Promise<void>[] = [];
@@ -380,40 +383,46 @@ export function cutoffDataSchemaDefinition<
 	const T extends DataSchemaDefinition<T, any>,
 	const CutPoint extends ExtractAllDataSchemaNodes<T>,
 	const CutPoints extends readonly CutPoint[],
->(originalDSD: T, cutPointNodes: CutPoints): RemovePipeAtCutPoints<T, CutPoints[number]> {
+>(originalDSD: T, cutPointNodes: CutPoints): ErrorReturn<RemovePipeAtCutPoints<T, CutPoints[number]>> {
 	// TODO: Figure out if this deep clone is deep enough... We had problems with errorBoundary
 	const clonedDSD = deepClone(originalDSD);
 
 	const cutPoints = cutPointNodes as unknown as Record<string, unknown>[];
 	for (const cutPoint of cutPoints) {
-		modifyDSD(originalDSD, clonedDSD, cutPoint as Record<string, unknown>);
+		const modifyError = modifyDSD(originalDSD, clonedDSD, cutPoint as Record<string, unknown>);
+		if (modifyError) {
+			return [null, modifyError];
+		}
 	}
 
 	for (const cutPoint of cutPoints) {
 		if (!cutPoint[CUT_POINT_DONE_KEY]) {
-			throw new Error(
-				`Logical error. Error you provided more cut points than necessary. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`,
-			);
+			return [
+				null,
+				new Error(
+					`Logical error. Error you provided more cut points than necessary. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`,
+				),
+			];
 		}
 
 		delete cutPoint[CUT_POINT_DONE_KEY];
 	}
 
 	const shallowDSD = clonedDSD as unknown as RemovePipeAtCutPoints<T, CutPoints[number]>;
-	return shallowDSD;
+	return [shallowDSD, null];
 }
 
 function modifyDSD(
 	originalDSD: Record<string, Record<string, unknown>>,
 	clonedDSD: Record<string, Record<string, unknown>> | undefined,
 	cutPoint: Record<string, unknown>,
-): void {
+): Error | null {
 	if (cutPoint[CUT_POINT_DONE_KEY]) {
-		return;
+		return null;
 	}
 
 	if (!clonedDSD) {
-		throw new Error(`Error you provided cut points where one is their parent. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`);
+		return new Error(`Error you provided cut points where one is their parent. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`);
 	}
 
 	const pipeKeys = Object.keys(originalDSD);
@@ -423,7 +432,7 @@ function modifyDSD(
 
 		if (original === cutPoint) {
 			if (original[CUT_POINT_DONE_KEY]) {
-				throw new Error(`Error you provided more cut points than necessary. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`);
+				return new Error(`Error you provided more cut points than necessary. We errored when trying to process this cut point:\n${JSON.stringify(cutPoint, null, 2)}`);
 			}
 
 			cutPoint[CUT_POINT_DONE_KEY] = true;
@@ -439,8 +448,13 @@ function modifyDSD(
 			continue;
 		}
 
-		modifyDSD(original["pipe"] as Record<string, Record<string, unknown>>, cloned["pipe"] as Record<string, Record<string, unknown>>, cutPoint);
+		const modifyError = modifyDSD(original["pipe"] as Record<string, Record<string, unknown>>, cloned["pipe"] as Record<string, Record<string, unknown>>, cutPoint);
+		if (modifyError) {
+			return modifyError;
+		}
 	}
+
+	return null;
 }
 
 export type DataSchemaErrorBounded<T extends DataSchemaDefinition<T, any>> = {

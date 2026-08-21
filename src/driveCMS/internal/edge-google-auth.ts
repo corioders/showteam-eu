@@ -30,11 +30,14 @@ async function requestToken(iss: string, scope: string, key: string): ErrorRetur
 		scope: scope,
 	};
 
-	const signedJWT = await sign({
+	const [signedJWT, signedJWTError] = await sign({
 		header: { alg: "RS256" },
 		payload,
 		secret: key,
 	});
+	if (signedJWTError) {
+		return [null, signedJWTError];
+	}
 
 	const body = new URLSearchParams({
 		grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",

@@ -53,7 +53,7 @@ export function MergeResourcePrefixParser<ResourcePrefixParsers extends Resource
 
 				for (const [metadataKey, metadataValue] of Object.entries(parserReturn.metadata)) {
 					if (mergedMetadata[metadataKey]) {
-						throw new Error("Someone used the same key on the metadata object. Metadata object MUST use unique keys!");
+						return false;
 					}
 
 					mergedMetadata[metadataKey] = metadataValue;

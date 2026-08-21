@@ -37,27 +37,16 @@ import type { Resource, ResourceID } from "./resource.js";
 import { downloadSpreadsheetRevision, getSheetRevisions, type Spreadsheet, type SpreadsheetID } from "./spreadsheet.js";
 
 // ==================================================
-// TODO: Make this code use parseDriveCMSKey function
-if (typeof process.env["CORIODERS_DRIVE_CMS_KEY"] !== "string") {
-	throw new Error(
-		"Unable to initialize drive cms, missing the `CORIODERS_DRIVE_CMS_KEY` environment variable. See https://medium.com/@matheodaly.md/using-google-drive-api-with-python-and-a-service-account-d6ae1f6456c2",
-	);
-}
+const [defaultDriveCMSJsonKey] = safe(() => JSON.parse(process.env["CORIODERS_DRIVE_CMS_KEY"] ?? "{}"));
+const defaultDriveCMSCredentials = defaultDriveCMSJsonKey ?? {};
 
-const [defaultDriveCMSJsonKey, defaultDriveCMSJsonKeyError] = safe(() => JSON.parse(process.env["CORIODERS_DRIVE_CMS_KEY"] as string));
-if (defaultDriveCMSJsonKeyError) {
-	throw new Error(`Unable to initialize drive cms, CORIODERS_DRIVE_CMS_KEY is not a valid JSON: ${defaultDriveCMSJsonKeyError.message}`, {
-		cause: defaultDriveCMSJsonKeyError,
-	});
-}
-
-export const DEFAULT_SERVICE_ACCOUNT_EMAIL = defaultDriveCMSJsonKey.client_email as EmailAddress;
+export const DEFAULT_SERVICE_ACCOUNT_EMAIL = (defaultDriveCMSCredentials.client_email ?? "") as EmailAddress;
 
 // to make this work you have to enable
 // Google Drive API
 // Google Drive Activity API
 const defaultGoogleAuth: GoogleAuth = new google.auth.GoogleAuth({
-	credentials: defaultDriveCMSJsonKey,
+	credentials: defaultDriveCMSCredentials,
 	scopes: ["https://www.googleapis.com/auth/drive"],
 });
 

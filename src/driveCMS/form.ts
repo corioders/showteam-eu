@@ -600,7 +600,7 @@ async function getRealQuestionSubmitIDFromUndocumentedAPI(responseURI: string): 
 		return [null, new Error(unreachableErrorMessage("FB_PUBLIC_LOAD_DATA_ split failed. Google changed something."))];
 	}
 
-	data = data.substring(0, data.indexOf(FORM_RESPONSE_TEXT_END));
+	data = data.slice(0, data.indexOf(FORM_RESPONSE_TEXT_END));
 	const [parsedData, jsonParseError] = safe(() => JSON.parse(data) as unknown[]);
 	if (jsonParseError) {
 		return [null, new CSE(jsonParseError)];

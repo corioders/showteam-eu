@@ -4,7 +4,7 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, June 2025
 
 import { newTypedSymbol } from "@/dataStructure/index.js";
-import { type ErrorReturn, unreachableErrorMessage } from "@/error/index.js";
+import type { ErrorReturn } from "@/error/index.js";
 import { isASCII } from "@/string/index.js";
 
 import type { Child, ChildMetadata } from "./index.js";
@@ -104,24 +104,17 @@ export interface ChildWithName {
 }
 
 export function getOrderedChildren(children: ChildWithName[]): ErrorReturn<ChildWithName[]> {
+	const orders = new Map<ChildWithName, number>();
 	for (const childWithName of children) {
 		const order = childWithName.child.metadata.getEntry(ORDER_METADATA_KEY);
-		if (order === undefined) {
-			throw new Error(`Order is undefined for child with name: ${childWithName.child.resource.name}`);
+		if (order === null) {
+			return [null, new Error(`Order is undefined for child with name: ${childWithName.child.resource.name}`)];
 		}
+		orders.set(childWithName, order);
 	}
 
 	const orderedChildren = children.slice();
-	orderedChildren.sort((a, b) => {
-		const aOrder = a.child.metadata.getEntry(ORDER_METADATA_KEY);
-		const bOrder = b.child.metadata.getEntry(ORDER_METADATA_KEY);
-
-		if (aOrder === null || bOrder === null) {
-			throw new Error(unreachableErrorMessage("Order is undefined"));
-		}
-
-		return aOrder - bOrder;
-	});
+	orderedChildren.sort((a, b) => (orders.get(a) as number) - (orders.get(b) as number));
 
 	return [orderedChildren, null];
 }
