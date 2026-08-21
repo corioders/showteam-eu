@@ -1,4 +1,5 @@
 /** biome-ignore-all lint/style/noCommonJs: I want this script to be versatile */
+/** biome-ignore-all plugin: A CLI must throw to terminate on invalid configuration or a failed child-process boundary. */
 
 const { spawn } = require("node:child_process");
 const fs = require("node:fs");

@@ -8,7 +8,7 @@
 		"react-markdown": "^10.1.0",
 		"remark-gfm": "^4.0.1",
 		"server-only": "^0.0.1",
-		"sharp": "^0.34.3",
+		"sharp": "^0.35.3",
 		"svgo": "^4.0.0",
 		"undici": "^7.13.0",
 		"unstorage": "^1.16.1"

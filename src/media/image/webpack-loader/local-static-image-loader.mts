@@ -3,6 +3,8 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
+/** biome-ignore-all plugin: Webpack loaders signal malformed input and I/O failures by throwing. */
+
 import { createHash } from "node:crypto";
 import path, { join } from "node:path";
 

@@ -1,3 +1,5 @@
+/** biome-ignore-all plugin: Invalid image component props must fail rendering; this public synchronous API cannot return an ErrorReturn. */
+
 // This function works this way because of the calculateImageSizeFromUserSpecified. Look at the rules above.
 export function validateSizesProperty(userProvidedSizes: string | undefined, inferredSizes: string | undefined, imageNameToReport: string): string {
 	if (userProvidedSizes && inferredSizes) {

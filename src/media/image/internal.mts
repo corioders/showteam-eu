@@ -4,6 +4,7 @@
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
 /** biome-ignore-all lint/style/useNamingConvention: This file does a lot of internal work. Some weird names are required */
+/** biome-ignore-all plugin: Invalid image props and Sharp invariants must abort this synchronous image pipeline. */
 
 import type { BinaryLike, createHash as createHashType } from "node:crypto";
 
