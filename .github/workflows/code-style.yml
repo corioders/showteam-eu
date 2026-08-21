@@ -19,13 +19,9 @@ jobs:
         run: corepack enable
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
         working-directory: template.cfworkers
 
-      - name: Check code style
-        run: pnpm check-biome
-        working-directory: template.cfworkers
-
-      - name: Check types
-        run: pnpm check-types
+      - name: Verify code and build
+        run: pnpm check && pnpm build
         working-directory: template.cfworkers

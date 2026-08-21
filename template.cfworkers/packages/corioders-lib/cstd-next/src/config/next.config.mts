@@ -3,6 +3,8 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
+/** biome-ignore-all plugin: Next's synchronous webpack hook must throw to reject an invalid webpack configuration. */
+
 import { fileURLToPath } from "node:url";
 
 import { runOnceOnNextStartup } from "cstd-ts/next/import-next-config.mjs";

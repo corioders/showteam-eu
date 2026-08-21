@@ -4,6 +4,9 @@ This is the source of truth for repositories that must receive template and
 shared-subtree migrations. Add a project when it is created from this template;
 remove it only after archival.
 
+`rename-project.sh` deletes this file from the generated project and prints the
+exact reminder to add that project to this source registry.
+
 | Repository | App directory | Known state |
 | --- | --- | --- |
 | `corioders/corioders.com` | `corioders.cfworkers/apps/web` | Uses `cstd-next/config/next.config.js`; requires the `.mjs` migration. |

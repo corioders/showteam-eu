@@ -3,8 +3,8 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, October 2024
 
+import type { Workbook, Worksheet } from "exceljs";
 import { DateTime } from "luxon";
-import { type CellAddress, type WorkSheet, type WorkBook as XlsxWorkBook, utils as xlsxUtils } from "xlsx";
 
 import type { ErrorReturn, ErrorReturnPromise } from "@/error/index.js";
 import { getAsArray, type ParsedDSDTF, parseDSDTF } from "@/format/deadSimpleDataTextFormat";
@@ -41,6 +41,12 @@ Example: https://docs.google.com/spreadsheets/d/1aEkg5CM9NZWF0cYPkziqlmfIJxruunV
 const UNDERSCORE = "_";
 const DAY_SHEET_PREFIX = "public_day_";
 const DATE_FORMAT = "dd.MM.yyyy";
+const EXCEL_CELL_ADDRESS_REGEX = /^([A-Z]+)(\d+)$/;
+
+interface CellAddress {
+	c: number;
+	r: number;
+}
 
 const TIME_TITLE_CELL: CellAddress = { c: 0, r: 0 };
 const TIME_TITLE_CELL_TEXT = "Time";
@@ -49,16 +55,71 @@ const TIME_TIME_DELTA_MINUTES = 5;
 
 const FIRST_STAGE_TITLE_ROW_CELL: CellAddress = { c: 1, r: 0 };
 
+interface CellMerge {
+	e: CellAddress;
+	s: CellAddress;
+}
+
+function getWorksheetMerges(worksheet: Worksheet): ErrorReturn<CellMerge[]> {
+	const merges = worksheet.model.merges;
+	if (merges === undefined) {
+		return [null, new Error(`Worksheet ${worksheet.name} has no merge metadata`)];
+	}
+
+	const parsedMerges: CellMerge[] = [];
+	for (const merge of merges) {
+		const [start, end] = merge.split(":");
+		if (start === undefined || end === undefined) {
+			return [null, new Error(`Invalid worksheet merge ${merge}`)];
+		}
+
+		const startAddress = parseExcelCellAddress(start);
+		const endAddress = parseExcelCellAddress(end);
+		if (startAddress === undefined || endAddress === undefined) {
+			return [null, new Error(`Invalid worksheet merge ${merge}`)];
+		}
+
+		parsedMerges.push({ e: endAddress, s: startAddress });
+	}
+
+	return [parsedMerges, null];
+}
+
+function parseExcelCellAddress(address: string): CellAddress | undefined {
+	const match = EXCEL_CELL_ADDRESS_REGEX.exec(address);
+	if (match === null) {
+		return undefined;
+	}
+
+	const [, columnLetters, rowText] = match;
+	if (columnLetters === undefined || rowText === undefined) {
+		return undefined;
+	}
+
+	let column = 0;
+	for (const letter of columnLetters) {
+		column = column * 26 + letter.charCodeAt(0) - 64;
+	}
+
+	const row = Number(rowText);
+	if (row < 1) {
+		return undefined;
+	}
+
+	return { c: column - 1, r: row - 1 };
+}
+
 // TODO: refactor....
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: TODO
-export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPreview: boolean, languageIndex: number = 0): ErrorReturnPromise<Agenda> {
+export async function parseAgendaCoriodersFormat(workbook: Workbook, _isPreview: boolean, languageIndex: number = 0): ErrorReturnPromise<Agenda> {
 	const agenda: Agenda = {
 		days: [],
 	};
 	const daysSheetNames: string[] = [];
 
 	let expectedDayNumber = 1;
-	for (const sheetName of workbook.SheetNames) {
+	for (const worksheet of workbook.worksheets) {
+		const sheetName = worksheet.name;
 		if (sheetName.startsWith(DAY_SHEET_PREFIX) === false) {
 			continue;
 		}
@@ -96,24 +157,14 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 	for (let i = 0; i < agenda.days.length; i++) {
 		const agendaDay = agenda.days[i];
 		const daySheetName = daysSheetNames[i] as string;
-		const daySheet = workbook.Sheets[daySheetName] as WorkSheet;
-
-		if (daySheet["!ref"] === undefined) {
-			return [null, new Error("daySheet['!ref'] === undefined")];
+		const existingDaySheet = workbook.getWorksheet(daySheetName);
+		if (existingDaySheet === undefined) {
+			return [null, new Error(`Worksheet ${daySheetName} is missing`)];
 		}
-
-		if (daySheet["!merges"] === undefined) {
-			return [null, new Error('daySheet["!merges"] === undefined')];
-		}
-		// const { r: daySheetMaxRow, c: daySheetMaxColumn } = xlsxUtils.decode_cell(daySheet["!ref"]);
+		const daySheet: Worksheet = existingDaySheet;
 
 		function getCellFormattedText(cellAddress: CellAddress): string | undefined {
-			const cell = daySheet[xlsxUtils.encode_cell(cellAddress)];
-			if (cell === undefined) {
-				return undefined;
-			}
-
-			return cell.w;
+			return daySheet.getCell(cellAddress.r + 1, cellAddress.c + 1).text || undefined;
 		}
 
 		// Validate the day sheet. According to the specification.
@@ -174,9 +225,14 @@ export async function parseAgendaCoriodersFormat(workbook: XlsxWorkBook, _isPrev
 		// TODO: Add multiple stage support.
 		const stageColumnIndex = FIRST_STAGE_TITLE_ROW_CELL.c;
 
-		// Sort merges according to their row starting position, as the !merges property stores them in their creation order.
-		daySheet["!merges"].sort((a, b) => a.s.r - b.s.r);
-		for (const merge of daySheet["!merges"]) {
+		const [merges, mergeError] = getWorksheetMerges(daySheet);
+		if (mergeError !== null) {
+			return [null, mergeError];
+		}
+
+		// Sort merges according to their row starting position, as the worksheet stores them in creation order.
+		merges.sort((a, b) => a.s.r - b.s.r);
+		for (const merge of merges) {
 			if (merge.s.c !== merge.e.c) {
 				return [null, new Error("merge.s.c !== merge.e.c")];
 			}

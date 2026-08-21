@@ -32,7 +32,10 @@ grep -rlZ --binary-files=without-match -e 'template\.cfworkers' -e 'template-cfw
 find . -name '*.bak' -not -path './node_modules/*' -delete
 
 echo "Renamed to $NAME.cfworkers."
+rm -- "$NAME.cfworkers/CONSUMERS.md"
 echo "Still to do:"
+
+echo "  - add this repository and app directory to cstd-nextjs-template/template.cfworkers/CONSUMERS.md"
 echo "  - provision R2/D1 with OpenTofu in $NAME.cfworkers/infra, paste the D1 ids into $NAME.cfworkers/apps/web/wrangler.jsonc"
 echo "  - set the app title in $NAME.cfworkers/apps/web/src/app/layout.tsx"
 rm -- "$0"

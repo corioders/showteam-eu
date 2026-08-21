@@ -83,7 +83,11 @@ jobs:
             ${{ runner.os }}-nextjs-
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
+        working-directory: template.cfworkers
+
+      - name: Verify code and build
+        run: pnpm check && pnpm build
         working-directory: template.cfworkers
 
       - name: Upload preview
