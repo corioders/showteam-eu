@@ -16,6 +16,7 @@
 	"editor.codeActionsOnSave": {
 		"source.fixAll.biome": "explicit"
 	},
-	"javascript.preferences.importModuleSpecifierEnding": "js",
-	"typescript.preferences.importModuleSpecifierEnding": "js"
+	"opentofu.validation.enableEnhancedValidation": false,
+	"opentofu.experimentalFeatures.validateOnSave": true,
+	"js/ts.preferences.importModuleSpecifierEnding": "js"
 }
