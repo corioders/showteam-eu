@@ -1,7 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { revalidatePageContent } from "@/lib/revalidate-public";
 
-const pagePaths = { home: "/", contact: "/kontakt", gallery: "/galeria", reservations: "/rezerwacje" } as const;
+const pagePaths = { home: "/", contact: "/kontakt", gallery: "/galeria", reservations: "/rezerwacje", stays: "/noclegi", application: "/zgloszenie", eventInquiry: "/zorganizuj-impreze" } as const;
 const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);
 
 export const PageContent: CollectionConfig = {

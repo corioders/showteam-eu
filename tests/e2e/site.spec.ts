@@ -369,6 +369,16 @@ test.describe("mobile", () => {
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });
 
+  test("remaining public workflow pages expose inline content editing", async ({ page }) => {
+    await page.route("**/api/admin/session", (route) => route.fulfill({ json: { user: { email: "asia@showteam.eu", name: "Asia" } } }));
+    for (const path of ["/noclegi", "/zgloszenie", "/zorganizuj-impreze"]) {
+      await page.goto(path);
+      await expect(page.getByLabel("Edytuj: eyebrow")).toBeVisible();
+    }
+    await page.goto("/rezerwacje");
+    await expect(page.locator('input[type="file"][accept*="image/jpeg"]')).toBeVisible();
+  });
+
   test("offer content is edited directly on the page", async ({ page }) => {
     await page.route("**/api/admin/session", (route) => route.fulfill({ json: { user: { email: "asia@showteam.eu", name: "Asia" } } }));
     let savedTitle = "";

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getBookableEquipment } from "@/lib/equipment";
 import { ReservationFlow } from "@/components/reservation-flow";
-import { EditableText, PageContentEditor } from "@/components/editor/page-content-editor";
+import { EditableImage, EditableText, PageContentEditor } from "@/components/editor/page-content-editor";
 import { getPageContent } from "@/lib/page-content";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,8 @@ export default async function ReservationsPage() {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Warsaw", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   return (
     <PageContentEditor page="reservations" initial={pageContent.values}>
-      <section className="relative overflow-hidden border-b border-white/10 bg-[url('/media/legacy-light-trails-bottom.jpg')] bg-cover bg-center pt-32 pb-16 sm:pt-40 sm:pb-24">
+      <section className="relative overflow-hidden border-b border-white/10 pt-32 pb-16 sm:pt-40 sm:pb-24">
+        <EditableImage field="heroImageUrl" alt="Aktywności SHOWteam" sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-black/75" />
         <div className="site-container relative">
           <p className="eyebrow"><EditableText field="eyebrow" /></p>

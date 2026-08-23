@@ -281,7 +281,7 @@ export interface Gallery {
  */
 export interface PageContent {
   id: number;
-  page: 'home' | 'contact' | 'gallery' | 'reservations';
+  page: 'home' | 'contact' | 'gallery' | 'reservations' | 'stays' | 'application' | 'eventInquiry';
   content:
     | {
         [k: string]: unknown;

@@ -4,7 +4,7 @@ const { revalidatePath, revalidateTag } = vi.hoisted(() => ({ revalidatePath: vi
 
 vi.mock("next/cache", () => ({ revalidatePath, revalidateTag }));
 
-import { revalidateOffers } from "../../lib/revalidate-public";
+import { revalidateOffers, revalidatePageContent } from "../../lib/revalidate-public";
 
 describe("public offer revalidation", () => {
   beforeEach(() => {
@@ -19,5 +19,12 @@ describe("public offer revalidation", () => {
     expect(revalidatePath).toHaveBeenNthCalledWith(1, "/");
     expect(revalidatePath).toHaveBeenNthCalledWith(2, "/oferta/showzima-2026");
     expect(revalidatePath).toHaveBeenNthCalledWith(3, "/oferta/zima");
+  });
+
+  it("invalidates newly editable public pages", () => {
+    revalidatePageContent("eventInquiry");
+
+    expect(revalidateTag).toHaveBeenCalledWith("page-content", { expire: 0 });
+    expect(revalidatePath).toHaveBeenCalledWith("/zorganizuj-impreze");
   });
 });

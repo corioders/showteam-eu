@@ -19,4 +19,10 @@ describe("page content", () => {
     expect(result.data).toBeUndefined();
     expect(result.errors).toContain("Link musi zaczynać się od https:// lub http://.");
   });
+
+  it("validates content added to every public workflow page", () => {
+    expect(parsePageContent("stays", pageContentDefaults.stays).data?.heroImageUrl).toBe("/media/base-life.jpg");
+    expect(parsePageContent("application", pageContentDefaults.application).data?.titleAccent).toBe("z nami?");
+    expect(parsePageContent("eventInquiry", pageContentDefaults.eventInquiry).data?.heroImageUrl).toBe("/media/summer-wake-aerial.jpg");
+  });
 });

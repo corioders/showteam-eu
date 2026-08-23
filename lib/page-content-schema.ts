@@ -70,6 +70,25 @@ export const pageContentDefaults = {
     eyebrow: "WAKE & SURF Village · Poręba",
     title: "Wybierz aktywność.\nZarezerwuj termin.",
     description: "Wybierz aktywność i wolny termin. Asia potwierdzi rezerwację, a jeśli potrzebujesz — zapewnimy instruktora.",
+    heroImageUrl: "/media/legacy-light-trails-bottom.jpg",
+  },
+  stays: {
+    eyebrow: "WAKE & SURF Village · Poręba",
+    title: "Noclegi nad wodą.",
+    description: "Wybierz termin pobytu. Asia sprawdzi dostępność kontenera lub domku i potwierdzi rezerwację.",
+    heroImageUrl: "/media/base-life.jpg",
+  },
+  application: {
+    eyebrow: "Zgłoszenia",
+    titleTop: "Jedziesz",
+    titleAccent: "z nami?",
+    description: "Wypełnij formularz, a SHOWteam skontaktuje się z Tobą w sprawie szczegółów i dostępności.",
+  },
+  eventInquiry: {
+    eyebrow: "WAKE & SURF Village · Poręba",
+    title: "Zorganizuj imprezę.",
+    description: "Impreza, spływ albo jedno i drugie. Podaj kilka możliwych terminów i pomysł — Asia zadzwoni, żeby wspólnie ustalić szczegóły.",
+    heroImageUrl: "/media/summer-wake-aerial.jpg",
   },
 } as const;
 

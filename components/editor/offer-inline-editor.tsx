@@ -367,5 +367,5 @@ export function OfferListsSection({ offer }: { offer: Offer }) {
   const editing = editor?.editing ?? false;
   if (!editing && offer.dates.length === 0 && offer.highlights.length === 0) return null;
 
-  return <section className="py-20 md:py-28"><div className="site-container grid gap-12 lg:grid-cols-2"><div><span className="eyebrow">Terminy</span><div className="mt-5"><OfferDateList offer={offer} /></div></div><div><span className="eyebrow">Najważniejsze</span><div className="mt-5"><OfferHighlightList offer={offer} /></div></div></div></section>;
+  return <section className="py-20 md:py-28"><div className="site-container grid gap-12 lg:grid-cols-2"><div><span className="eyebrow"><OfferText field="genericDatesEyebrow" fallback="Terminy" /></span><div className="mt-5"><OfferDateList offer={offer} /></div></div><div><span className="eyebrow"><OfferText field="genericHighlightsEyebrow" fallback="Najważniejsze" /></span><div className="mt-5"><OfferHighlightList offer={offer} /></div></div></div></section>;
 }

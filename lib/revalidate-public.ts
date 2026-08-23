@@ -26,6 +26,9 @@ const pageContentPaths: Record<PageContentName, string[]> = {
   contact: ["/kontakt"],
   gallery: ["/", "/galeria"],
   reservations: ["/rezerwacje"],
+  stays: ["/noclegi"],
+  application: ["/zgloszenie"],
+  eventInquiry: ["/zorganizuj-impreze"],
 };
 
 export function revalidatePageContent(page: PageContentName) {

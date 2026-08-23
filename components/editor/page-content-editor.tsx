@@ -10,7 +10,7 @@ import type { PageContentName } from "@/lib/page-content-schema";
 import { createPhotoVariants } from "@/lib/client-image-variants";
 
 type ContentValues = Record<string, string>;
-type PageContentContextValue = { editing: boolean; values: ContentValues; update: (field: string, value: string) => void };
+type PageContentContextValue = { editing: boolean; page: PageContentName; values: ContentValues; update: (field: string, value: string) => void };
 const PageContentContext = createContext<PageContentContextValue | null>(null);
 
 export function PageContentEditor({ page, initial, children }: { page: PageContentName; initial: ContentValues; children: React.ReactNode }) {
@@ -59,7 +59,7 @@ export function PageContentEditor({ page, initial, children }: { page: PageConte
     }
   }
 
-  const context = { editing, values, update };
+  const context = { editing, page, values, update };
   return <PageContentContext.Provider value={context}>
     {editing ? <aside className="sticky top-20 z-[60] border-y border-orange-500/40 bg-neutral-950/95 px-3 py-2 shadow-2xl backdrop-blur" aria-label="Zapisywanie treści strony"><div className="site-container flex flex-wrap items-center gap-2"><p className="mr-auto text-xs font-bold uppercase tracking-[.14em] text-orange-300">Edytujesz tę stronę</p>{(message || errors.length) ? <p role="status" className={`w-full text-sm sm:w-auto ${errors.length ? "text-red-300" : "text-emerald-300"}`}>{errors[0] ?? message}</p> : null}<Button type="button" variant="ghost" size="sm" onClick={clear}><RotateCcw className="size-4" /> Cofnij zmiany</Button><Button type="button" size="sm" onClick={() => void save()} disabled={saving}>{saving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}{saving ? "Zapisuję…" : "Zapisz zmiany"}</Button></div></aside> : null}
     {children}
@@ -108,7 +108,7 @@ export function EditableMediaUpload({ field, accept, label, positionClassName = 
       const body = new FormData();
       body.set("field", field);
       body.set("file", accept === "image" ? (await createPhotoVariants(file)).large : file);
-      const response = await fetch("/api/admin/page-content/home/media", { method: "POST", body });
+      const response = await fetch(`/api/admin/page-content/${content.page}/media`, { method: "POST", body });
       const result = await response.json() as { url?: string; message?: string };
       if (!response.ok || !result.url) throw new Error(result.message || "Nie udało się wysłać pliku.");
       content.update(field, result.url);
