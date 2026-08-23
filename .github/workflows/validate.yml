@@ -1,0 +1,51 @@
+name: Validate template
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          sparse-checkout: |
+            template.cfworkers
+
+      - name: Setup Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Setup pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: template.cfworkers
+
+      - name: Check code
+        run: pnpm check
+        working-directory: template.cfworkers
+
+      - name: Build application
+        run: pnpm build
+        working-directory: template.cfworkers
+
+      - name: Run unit tests
+        run: pnpm test:unit
+        working-directory: template.cfworkers
+
+      - name: Install Playwright browsers
+        run: pnpm --dir apps/web exec playwright install --with-deps chromium webkit
+        working-directory: template.cfworkers
+
+      - name: Run browser tests
+        run: pnpm test:e2e
+        working-directory: template.cfworkers

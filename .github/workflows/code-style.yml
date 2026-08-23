@@ -1,27 +1,14 @@
-name: Check code style
+name: Validate pull request
 
-on: push
+on: pull_request
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 24
-          package-manager-cache: false
-
-      - name: Setup pnpm
-        run: corepack enable
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        working-directory: template.cfworkers
-
-      - name: Verify code and build
-        run: pnpm check && pnpm build
-        working-directory: template.cfworkers
+  validate:
+    uses: ./.github/workflows/validate.yml
