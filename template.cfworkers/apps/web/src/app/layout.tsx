@@ -6,13 +6,15 @@ import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { ReactNode } from "react";
 
+import { env } from "@/env";
+
 const geist = Geist({
 	subsets: ["latin-ext"],
 	variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
-	title: "Template",
+	title: env.APP_ENV === "production" ? "Template" : `Template (${env.APP_ENV})`,
 };
 
 export const viewport: Viewport = {

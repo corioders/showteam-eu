@@ -2,6 +2,7 @@
 	"$schema": "https://turbo.build/schema.json",
 	"globalDependencies": ["**/.env.*local"],
 	"globalEnv": [
+		"APP_ENV",
 		"CORIODERS_DRIVE_CMS_KEY",
 		"CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY",
 		"CORIODERS_INVALIDATE_PERSISTENT_CACHE",
@@ -36,6 +37,14 @@
 		},
 		"check-types": {
 			"dependsOn": ["^check-types"]
+		},
+		"test:unit": {
+			"dependsOn": ["^test:unit"]
+		},
+		"test:e2e": {
+			"cache": false,
+			"env": ["PLAYWRIGHT_BASE_URL"],
+			"outputs": ["playwright-report/**", "test-results/**"]
 		},
 		"clean": {
 			"cache": false

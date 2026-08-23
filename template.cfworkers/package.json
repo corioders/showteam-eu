@@ -11,6 +11,9 @@
 		"check-biome": "turbo run check-biome",
 		"check-biome-staged": "turbo run check-biome-staged",
 		"check-biome-fix": "turbo run check-biome-fix",
+		"test": "pnpm test:unit && pnpm test:e2e",
+		"test:unit": "turbo run test:unit",
+		"test:e2e": "turbo run test:e2e",
 		"clean": "turbo run clean && rm -rf .turbo"
 	},
 	"devDependencies": {
