@@ -4,8 +4,6 @@ Aktualizuj ten plik po każdym ukończonym kroku. Usuwaj ukończone zadania. Nie
 
 ## W toku
 
-- [ ] Smoke-test the generic `runs-on: [self-hosted, win24-wsl]` runner and remove the temporary workflow afterward.
-
 
 - [ ] Ochrona znaku towarowego `SHOWteam`:
   - [x] Przygotować gotowy szkic zgłoszenia UPRP + listę brakujących danych (wypisane w repo).
