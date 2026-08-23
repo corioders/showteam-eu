@@ -6,6 +6,8 @@
 	"formatter": {
 		"includes": [
 			"**",
+			"!skills-lock.json",
+			"!**/.agents/skills/**",
 			"!**/node_modules/**",
 			"!**/cache/**",
 			"!**/dist/**",
