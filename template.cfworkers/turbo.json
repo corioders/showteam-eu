@@ -30,6 +30,7 @@
 			"dependsOn": ["^check-biome"]
 		},
 		"check-biome-staged": {
+			"cache": false,
 			"dependsOn": ["^check-biome-staged"]
 		},
 		"check-biome-fix": {
