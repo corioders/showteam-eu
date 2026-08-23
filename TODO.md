@@ -4,7 +4,6 @@ Aktualizuj ten plik po każdym ukończonym kroku. Usuwaj ukończone zadania. Nie
 
 ## W toku
 
-- [ ] Migrate CI from the dedicated macOS runner to the generic organization-scoped `macbook15` runner.
 
 - [ ] Ochrona znaku towarowego `SHOWteam`:
   - [x] Przygotować gotowy szkic zgłoszenia UPRP + listę brakujących danych (wypisane w repo).
