@@ -23,7 +23,7 @@ const applicationLink = { href: "/zgloszenie", label: "Jedź z nami" };
 export function SiteHeader() {
   const pathname = usePathname();
   return (
-    <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-neutral-950/75 backdrop-blur-xl">
+    <header className="site-header fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-neutral-950/75 backdrop-blur-xl">
       <div className="site-container flex h-20 items-center justify-between">
         <Link href="/" prefetch className="inline-flex min-h-11 items-center bg-orange-500 px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950" aria-label="SHOWteam — strona główna">
           <Image src="/media/showteam-logo.svg" alt="" width={1022} height={241} className="h-auto w-36 sm:w-40" priority />

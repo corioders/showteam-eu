@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { LoaderCircle, Pencil, Plus, RefreshCw, RotateCcw, Save, Trash2 } from "lucide-react";
@@ -18,15 +18,28 @@ export function EquipmentEditor({ equipment, compact = false, className }: { equ
   const { enabled, visible } = useEditor();
   const router = useRouter();
   const initial = equipment ? toForm(equipment) : emptyForm();
+  const [open, setOpen] = useState(false);
   const [value, setValue] = useState(initial);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const draftKey = `showteam:visual-equipment:${equipment?.id ?? "new"}`;
+
+  useEffect(() => {
+    if (!open) return;
+    const obscuringElements = [...document.querySelectorAll<HTMLElement>(".site-header, .page-content-savebar, .editor-toolbar, .editor-action")];
+    const previousVisibility = obscuringElements.map((element) => element.style.visibility);
+    obscuringElements.forEach((element) => { element.style.visibility = "hidden"; });
+    return () => obscuringElements.forEach((element, index) => {
+      element.style.visibility = previousVisibility[index];
+    });
+  }, [open]);
+
   if (!enabled || !visible) return null;
 
-  function openChanged(open: boolean) {
-    if (!open) return;
+  function openChanged(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (!nextOpen) return;
     const saved = localStorage.getItem(draftKey);
     if (!saved) return;
     try { setValue(JSON.parse(saved) as EquipmentForm); } catch { localStorage.removeItem(draftKey); }
@@ -106,7 +119,7 @@ export function EquipmentEditor({ equipment, compact = false, className }: { equ
   const label = equipment ? `Edytuj ${equipment.name}` : "Dodaj aktywność";
   return <Sheet onOpenChange={openChanged}>
     <SheetTrigger asChild><button type="button" className={cn("editor-action", compact && "min-h-10 px-3", className)}>{equipment ? <Pencil className="size-4" /> : <Plus className="size-4" />}{compact ? <span className="sr-only">{label}</span> : label}</button></SheetTrigger>
-    <SheetContent title={label} description="Zarządzaj aktywnościami widocznymi w rezerwacjach." className="overflow-y-auto sm:left-auto sm:w-[min(42rem,100vw)]">
+    <SheetContent title={label} description="Zarządzaj aktywnościami widocznymi w rezerwacjach." className="isolate overflow-y-auto overscroll-contain sm:left-auto sm:w-[min(42rem,100vw)]">
       <form onSubmit={save} className="min-h-full px-5 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-[calc(4.5rem+env(safe-area-inset-top))] sm:px-8">
         <span className="eyebrow">Rezerwacje</span>
         <h2 className="mt-3 font-display text-4xl font-black uppercase leading-none">{label}</h2>
@@ -141,10 +154,9 @@ export function EquipmentEditor({ equipment, compact = false, className }: { equ
           <Field label="Dodatkowa podpowiedź" hint="Opcjonalnie."><textarea maxLength={220} rows={3} value={value.recommendationNote ?? ""} onChange={(event) => update("recommendationNote", event.target.value)} /></Field>
         </EditorSection>
 
-        <div className="border border-white/15 bg-white/[0.04] p-5" aria-label="Podgląd aktywności"><span className="eyebrow">Podgląd</span><p className="mt-4 font-display text-4xl font-black uppercase leading-none">{value.name || "Nazwa aktywności"}</p><p className="mt-3 text-sm leading-6 text-white/60">{value.description || "Opis pojawi się tutaj."}</p><p className="mt-4 text-xs font-bold uppercase text-sky-300">{value.durationMinutes} min · {weatherProfileLabel(value.weatherProfile)}</p></div>
-        {equipment ? <div className="mt-5"><Button type="button" variant="outline" className="border-red-500/40 text-red-200 hover:bg-red-500 hover:text-white" onClick={() => void remove()} disabled={saving}><Trash2 className="size-4" /> Usuń aktywność</Button></div> : null}
+        {equipment ? <div className="mt-8 border-t border-white/15 pt-6"><Button type="button" variant="outline" className="w-full border-red-500/40 text-red-200 hover:bg-red-500 hover:text-white sm:w-auto" onClick={() => void remove()} disabled={saving}><Trash2 className="size-4" /> Usuń aktywność</Button></div> : null}
         {(message || errors.length > 0) && <div className={`mt-6 border p-4 text-sm ${errors.length || message?.startsWith("Nie udało") ? "border-red-400/50 bg-red-950/50 text-red-100" : "border-emerald-400/40 bg-emerald-950/40 text-emerald-100"}`} role="status"><p className="font-bold">{message}</p>{errors.length > 0 && <ul className="mt-2 list-disc space-y-1 pl-5">{errors.map((error) => <li key={error}>{error}</li>)}</ul>}</div>}
-        <div className="fixed inset-x-0 bottom-0 z-10 flex gap-2 border-t border-white/15 bg-neutral-950/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur sm:left-auto sm:w-[min(42rem,100vw)] sm:px-8"><Button type="button" variant="outline" onClick={clear}><RotateCcw className="size-4" /> Wyczyść</Button><Button type="submit" className="flex-1" disabled={saving}>{saving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}{saving ? "Zapisuję…" : equipment ? "Zapisz zmiany" : "Dodaj aktywność"}</Button></div>
+        <div className="fixed inset-x-0 bottom-0 z-20 flex gap-2 border-t border-white/15 bg-neutral-950 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-1rem_2rem_rgba(0,0,0,.45)] sm:left-auto sm:w-[min(42rem,100vw)] sm:px-8"><Button type="button" variant="outline" onClick={clear}><RotateCcw className="size-4" /> Cofnij</Button><Button type="submit" className="flex-1" disabled={saving}>{saving ? <LoaderCircle className="size-4 animate-spin" /> : <Save className="size-4" />}{saving ? "Zapisuję…" : equipment ? "Zapisz zmiany" : "Dodaj aktywność"}</Button></div>
       </form>
     </SheetContent>
   </Sheet>;
