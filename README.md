@@ -6,10 +6,10 @@ driven by pnpm, biome and lefthook, with `cstd-ts` / `cstd-next` vendored as git
 ## Layout
 
 ```
-.github/workflows/     code-style + deploy (sparse-checkouts the app directory)
+.github/workflows/     reusable validation + pull-request and deploy entrypoints
 .vscode/               editor settings (biome as formatter)
 lefthook.yml           pre-commit biome check
-rename-project.sh      one-shot rename of the template, deletes itself
+init_project.sh        one-shot project initialization, deletes itself
 template.cfworkers/    the monorepo
 ├── apps/web/          Next.js app, deployed as a Cloudflare Worker
 ├── packages/
@@ -27,11 +27,11 @@ only that subdirectory.
 ## First run
 
 ```bash
-./rename-project.sh myproject
+./init_project.sh myproject
 ```
 
-Then provision the Cloudflare cache resources with OpenTofu and paste the D1
-output ids into `myproject.cfworkers/apps/web/wrangler.jsonc`:
+Then provision the Cloudflare cache resources with OpenTofu and paste the two
+D1 output ids into `myproject.cfworkers/apps/web/wrangler.jsonc`:
 
 ```bash
 export CLOUDFLARE_API_TOKEN=...
@@ -60,17 +60,21 @@ Run from the `<project>.cfworkers/` directory.
 | `pnpm build` | production Next.js build |
 | `pnpm check` | biome + tsc across the workspace |
 | `pnpm check-biome-fix` | apply biome's safe fixes |
+| `pnpm test:unit` | run Vitest |
+| `pnpm test:e2e` | run Playwright against Chromium and WebKit |
 | `pnpm --dir apps/web preview` | build for Workers and serve locally through workerd |
 | `pnpm --dir apps/web deploy` | build and deploy production |
 | `pnpm --dir apps/web logs` | tail production Worker logs |
 
 ## Deployment
 
-CI deploys on every push. Pushing to `deploy` publishes production; any other branch
-uploads an isolated preview version and refreshes a shared preview Worker whose logs you
-can tail with `pnpm --dir <project>.cfworkers/apps/web logs:preview`. The preview URLs are
-printed in the workflow summary. See the header of `.github/workflows/deploy.yml` for the
-tokens, environments and variables it needs.
+Pull requests run full validation. Every push must pass Biome, typecheck, build,
+Vitest and Playwright on Chromium/WebKit before deployment starts. Pushing to
+`deploy` publishes production; any other branch uploads
+an isolated preview version and refreshes a shared preview Worker whose logs you can
+tail with `pnpm --dir <project>.cfworkers/apps/web logs:preview`. The preview URLs are
+printed in the workflow summary. See the header of `.github/workflows/deploy.yml` for
+the tokens, environments and variables it needs.
 
 ## Working on cstd-ts / cstd-next
 
