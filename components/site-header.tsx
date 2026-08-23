@@ -25,7 +25,7 @@ export function SiteHeader() {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-neutral-950/75 backdrop-blur-xl">
       <div className="site-container flex h-20 items-center justify-between">
-        <Link href="/" prefetch className="bg-orange-500 px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950" aria-label="SHOWteam — strona główna">
+        <Link href="/" prefetch className="inline-flex min-h-11 items-center bg-orange-500 px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950" aria-label="SHOWteam — strona główna">
           <Image src="/media/showteam-logo.svg" alt="" width={1022} height={241} className="h-auto w-36 sm:w-40" priority />
         </Link>
 
@@ -60,7 +60,7 @@ export function SiteHeader() {
                 {[...links, applicationLink].map((link, index) => (
                   <SheetClose asChild key={link.href}>
                     <Link href={link.href} prefetch aria-current={pathname === link.href ? "page" : undefined} className={`group flex min-h-20 flex-col justify-between border-b border-r border-white/10 p-3 font-display font-black uppercase transition-colors hover:bg-orange-500 hover:text-black focus-visible:bg-orange-500 focus-visible:text-black focus-visible:outline-none sm:min-h-24 ${pathname === link.href ? "bg-orange-500 text-black" : ""}`}>
-                      <span className="font-mono text-[.6rem] tracking-wider text-white/30 group-hover:text-black/55 group-focus-visible:text-black/55">0{index + 1}</span>
+                      <span className="font-mono text-[.6rem] tracking-wider text-white/30 group-hover:text-black/55 group-focus-visible:text-black/55">{String(index + 1).padStart(2, "0")}</span>
                       <span className="text-[1.35rem] leading-none tracking-[-.03em] sm:text-[1.65rem]">{link.label}</span>
                     </Link>
                   </SheetClose>

@@ -147,8 +147,8 @@ export function ReservationFlow({ equipment, today }: { equipment: BookableEquip
             <div className="mb-3 flex items-center justify-between gap-3">
               <span id="booking-date-label" className="flex items-center gap-2 text-sm font-bold"><CalendarDays className="size-4 text-orange-500" /> Data</span>
               <div className="flex items-center gap-1">
-                <button type="button" aria-label="Poprzedni tydzień" disabled={visibleStart === today} onClick={() => setVisibleStart(addDaysToBookingDate(visibleStart, -7) < today ? today : addDaysToBookingDate(visibleStart, -7))} className="grid size-10 place-items-center border border-white/15 transition hover:border-orange-500 disabled:cursor-not-allowed disabled:opacity-25"><ChevronLeft className="size-4" /></button>
-                <button type="button" aria-label="Następny tydzień" onClick={() => setVisibleStart(addDaysToBookingDate(visibleStart, 7))} className="grid size-10 place-items-center border border-white/15 transition hover:border-orange-500"><ChevronRight className="size-4" /></button>
+                <button type="button" aria-label="Poprzedni tydzień" disabled={visibleStart === today} onClick={() => setVisibleStart(addDaysToBookingDate(visibleStart, -7) < today ? today : addDaysToBookingDate(visibleStart, -7))} className="grid size-11 place-items-center border border-white/15 transition hover:border-orange-500 disabled:cursor-not-allowed disabled:opacity-25"><ChevronLeft className="size-4" /></button>
+                <button type="button" aria-label="Następny tydzień" onClick={() => setVisibleStart(addDaysToBookingDate(visibleStart, 7))} className="grid size-11 place-items-center border border-white/15 transition hover:border-orange-500"><ChevronRight className="size-4" /></button>
               </div>
             </div>
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-7" aria-label="Najbliższe daty">

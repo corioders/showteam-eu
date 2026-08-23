@@ -316,7 +316,10 @@ test.describe("mobile", () => {
     await expect(menu.getByRole("link", { name: /Zorganizuj imprezę/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /Galeria/ })).toBeVisible();
     await expect(menu.getByRole("link", { name: /Kontakt i o nas/ })).toBeVisible();
+    await expect(menu.getByRole("link").last().locator("span").first()).toHaveText("10");
     await expect(page.getByRole("link", { name: "+48 500 128 090" })).toBeVisible();
+    const primaryTargets = [page.locator('header a[aria-label="SHOWteam — strona główna"]'), page.locator('header a[href="/zgloszenie"]'), page.getByRole("button", { name: "Zamknij menu" })];
+    for (const target of primaryTargets) expect((await target.boundingBox())?.height).toBeGreaterThanOrEqual(44);
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });

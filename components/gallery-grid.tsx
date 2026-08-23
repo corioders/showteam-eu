@@ -75,7 +75,7 @@ export function GalleryGrid({ photos, filtersEnabled = false, initialPage = 1, i
   };
 
   return <>
-    {filtersEnabled ? <div className="mb-8 flex flex-wrap border-l border-t border-white/15" aria-label="Filtry galerii">{filters.map((item) => <button key={item} type="button" onClick={() => void selectFilter(item)} aria-pressed={filter === item} className="border-b border-r border-white/15 px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:bg-white hover:text-black aria-pressed:bg-orange-500 aria-pressed:text-black">{item}</button>)}</div> : null}
+    {filtersEnabled ? <div className="mb-8 flex flex-wrap border-l border-t border-white/15" aria-label="Filtry galerii">{filters.map((item) => <button key={item} type="button" onClick={() => void selectFilter(item)} aria-pressed={filter === item} className="min-h-11 border-b border-r border-white/15 px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:bg-white hover:text-black aria-pressed:bg-orange-500 aria-pressed:text-black">{item}</button>)}</div> : null}
     <div className={filtersEnabled ? "columns-1 gap-3 sm:columns-2 lg:columns-3 xl:columns-4" : "grid grid-cols-1 gap-3 sm:grid-cols-2 md:auto-rows-[22rem] md:grid-cols-4 md:gap-4"}>
       {visible.map((photo) => <GalleryTile key={photo.id} photo={photo} masonry={filtersEnabled} open={() => setSelectedId(photo.id)} />)}
     </div>
