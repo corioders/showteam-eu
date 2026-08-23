@@ -11,6 +11,9 @@
 		// see https://developers.cloudflare.com/workers/configuration/compatibility-flags/#global-fetch-strictly-public
 		"global_fetch_strictly_public"
 	],
+	"vars": {
+		"APP_ENV": "production"
+	},
 	"assets": {
 		"directory": ".open-next/assets",
 		"binding": "ASSETS"
@@ -20,7 +23,7 @@
 		"logs": {
 			"enabled": true,
 			"invocation_logs": true,
-			"head_sampling_rate": 1
+			"head_sampling_rate": 0.1
 		}
 	},
 	"services": [
@@ -51,6 +54,9 @@
 		"preview": {
 			"workers_dev": true,
 			"preview_urls": true,
+			"vars": {
+				"APP_ENV": "preview"
+			},
 			"observability": {
 				"enabled": true,
 				"logs": {

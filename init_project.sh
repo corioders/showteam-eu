@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Renames this template to a real project. Run once, from the repository root:
-#   ./rename-project.sh myproject
+# Initializes this template as a real project. Run once, from the repository root:
+#   ./init_project.sh myproject
 # Renames template.cfworkers/ -> myproject.cfworkers/ and rewrites every reference
 # (workflows, lefthook, package name, worker/bucket/database names), then deletes itself.
 set -euo pipefail
@@ -36,6 +36,6 @@ rm -- "$NAME.cfworkers/CONSUMERS.md"
 echo "Still to do:"
 
 echo "  - add this repository and app directory to cstd-nextjs-template/template.cfworkers/CONSUMERS.md"
-echo "  - provision R2/D1 with OpenTofu in $NAME.cfworkers/infra, paste the D1 ids into $NAME.cfworkers/apps/web/wrangler.jsonc"
+echo "  - provision R2/D1 with OpenTofu in $NAME.cfworkers/infra, paste its two D1 ids into $NAME.cfworkers/apps/web/wrangler.jsonc"
 echo "  - set the app title in $NAME.cfworkers/apps/web/src/app/layout.tsx"
 rm -- "$0"
