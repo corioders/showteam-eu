@@ -12,10 +12,10 @@ const SheetClose = DialogPrimitive.Close;
 function SheetContent({ className, children, title = "Panel", description = "", ...props }: React.ComponentProps<typeof DialogPrimitive.Content> & { title?: string; description?: string }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm data-[state=closed]:animate-out data-[state=open]:animate-in" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-80 bg-black/70 backdrop-blur-sm data-[state=closed]:animate-out data-[state=open]:animate-in" />
       <DialogPrimitive.Content
         className={cn(
-          "fixed inset-0 z-50 w-full bg-neutral-950 shadow-2xl focus:outline-none",
+          "fixed inset-0 z-80 w-full bg-neutral-950 shadow-2xl focus:outline-none",
           className,
         )}
         {...props}

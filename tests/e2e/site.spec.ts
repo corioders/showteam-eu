@@ -356,9 +356,15 @@ test.describe("mobile", () => {
     await page.route("**/api/admin/session", (route) => route.fulfill({ json: { user: { email: "asia@showteam.eu", name: "Asia" } } }));
     await page.goto("/rezerwacje");
     await expect(page.getByRole("complementary", { name: "Narzędzia administratora" })).toBeVisible();
-    await page.getByRole("button", { name: "Dodaj sprzęt" }).click();
-    await expect(page.getByRole("dialog", { name: "Dodaj sprzęt" })).toBeVisible();
-    await expect(page.getByLabel("Nazwa sprzętu")).toBeVisible();
+    await page.getByRole("button", { name: "Dodaj aktywność" }).click();
+    await expect(page.getByRole("dialog", { name: "Dodaj aktywność" })).toBeVisible();
+    await expect(page.getByLabel("Nazwa aktywności")).toBeVisible();
+    const toolbar = await page.locator(".editor-toolbar").boundingBox();
+    if (!toolbar) throw new Error("Pasek edycji nie jest widoczny");
+    expect(await page.evaluate(({ x, y }) => Boolean(document.elementFromPoint(x, y)?.closest('[role="dialog"]')), {
+      x: toolbar.x + toolbar.width / 2,
+      y: toolbar.y + toolbar.height / 2,
+    })).toBe(true);
     const dimensions = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth }));
     expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport);
   });
