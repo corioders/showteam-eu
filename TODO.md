@@ -4,8 +4,6 @@ Aktualizuj ten plik po każdym ukończonym kroku. Usuwaj ukończone zadania. Nie
 
 ## W toku
 
-- [ ] Tymczasowo zweryfikować automatyczny WoL dla joba `win24-wsl`, a potem usunąć workflow.
-
 - [ ] Ochrona znaku towarowego `SHOWteam`:
   - [x] Przygotować gotowy szkic zgłoszenia UPRP + listę brakujących danych (wypisane w repo).
   - [ ] Otrzymać pełne dane właściciela znaku i osoby uprawnionej do podpisu.
