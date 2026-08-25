@@ -14,4 +14,4 @@ jobs:
     uses: ./.github/workflows/validate.yml
     with:
       # Never run untrusted fork code on the self-hosted runner.
-      runner: ${{ github.event.pull_request.head.repo.full_name == github.repository && '["self-hosted","macbook15"]' || '"blacksmith-4vcpu-ubuntu-2404"' }}
+      runner: ${{ github.event.pull_request.head.repo.full_name == github.repository && '["self-hosted","win24-wsl"]' || '"blacksmith-4vcpu-ubuntu-2404"' }}

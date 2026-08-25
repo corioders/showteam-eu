@@ -7,7 +7,7 @@ on:
         description: JSON-encoded runner label or label array.
         required: false
         type: string
-        default: '["self-hosted","macbook15"]'
+        default: '["self-hosted","win24-wsl"]'
 
 permissions:
   contents: read
