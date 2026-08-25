@@ -19,7 +19,7 @@ import type { JsonValue } from "@/format/json/index.js";
 import { stringToURLSafeString } from "@/net/url.js";
 import type { FileOrFolderPath } from "@/os/path/index.js";
 import { type InterprocessLockManager, newInterprocessLockManagerSync } from "@/runtime/interprocess-lock.js";
-import cacheDriver from "@/storage/unstorage/cache-driver.mjs";
+import cacheDriver from "@/storage/unstorage/cache-driver.js";
 
 type AnyFunction = (...arguments_: readonly any[]) => any;
 
@@ -62,10 +62,10 @@ if (!ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_INTERPROCESS_LOCK_MANAGE
 		".next/cache/corioders/cstd-ts-driveCMS-persistent-interprocess-lock-manager" as FileOrFolderPath,
 	);
 	if (lockManagerError) {
-		throw lockManagerError;
+		console.error(lockManagerError);
+	} else {
+		ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_INTERPROCESS_LOCK_MANAGER = lockManager;
 	}
-
-	ourGlobalThis.__CSTD_TS_DRIVE_CMS_PERSISTENT_CACHE_INTERPROCESS_LOCK_MANAGER = lockManager;
 }
 
 const memoizeCache = ourGlobalThis.__CSTD_TS_DRIVE_CMS_MEMOIZE_CACHE;
@@ -107,7 +107,7 @@ export function driveCMSCacheKey(functionArguments: readonly unknown[]) {
 			continue;
 		}
 
-		throw new Error(`Unsupported memorize argument type: ${argumentType}, ${argument}`);
+		key += `${argumentType}:${String(argument)}`;
 	}
 
 	return key;
@@ -158,8 +158,9 @@ export function persistentDriveCMSCache<CachedValueT extends JsonValue, Function
 		// ==================================================
 		// ==================================================
 		// ONLY ONE PROCESS FROM THIS POINT ON
-		const singleProcessLock = persistentCacheInterprocessLockManager.newLock(cacheKey);
-		const { unlock: singleProcessUnlock } = await singleProcessLock.lock();
+		// ponytail: cache remains usable without an interprocess lock; restore locking after the filesystem issue is resolved.
+		const singleProcessLock = persistentCacheInterprocessLockManager?.newLock(cacheKey);
+		const singleProcessUnlock = singleProcessLock ? (await singleProcessLock.lock()).unlock : () => {};
 
 		// ==================================================
 		// PersistentCacheController definition

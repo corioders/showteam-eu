@@ -5,12 +5,6 @@
 
 import type { ValueOf } from "@/type/index.js";
 
-import type { DocResource } from "./docs.js";
-import type { FileResource, FolderResource } from "./drive.js";
-import type { FormResource } from "./form.js";
-import type { ImageResource } from "./image.js";
-import type { SpreadsheetResource } from "./spreadsheet.js";
-
 // https://developers.google.com/drive/api/guides/ref-export-formats
 export type MIMETypeT = typeof MIMEType;
 // MIMETypeTEnum
@@ -54,24 +48,3 @@ export interface Resource {
 	name: string;
 	mimeType: MIMETypeTE;
 }
-
-/**
- *  @deprecated
- * This is used only in resourceStructureParser
- */
-export type MIMETypeToResourceType<T extends MIMETypeTE> = MIMETypeToResourceTypeMapping[T];
-type MIMETypeToResourceTypeMapping = {
-	[MIMEType.csv]: FileResource;
-	[MIMEType.markdown]: FileResource;
-
-	[MIMEType.folder]: FolderResource;
-	[MIMEType.docs]: DocResource;
-	[MIMEType.form]: FormResource;
-	[MIMEType.shortcut]: FileResource;
-	[MIMEType.spreadsheet]: SpreadsheetResource;
-
-	[MIMEType.excel]: SpreadsheetResource;
-	[MIMEType.docx]: FileResource;
-
-	[MIMEType.image]: ImageResource;
-};

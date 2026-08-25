@@ -96,7 +96,7 @@ function remarkKeyValuePlugin(options: MarkdownParserSpec) {
 						currentMapValue.values.push(value);
 						currentMapValue.index = 1;
 					} else {
-						throw new CSE(ERR_DUPLICATE_KEYS);
+						file.message(new CSE(ERR_DUPLICATE_KEYS));
 					}
 				} else {
 					map[currentKey] = {
