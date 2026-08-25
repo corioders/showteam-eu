@@ -24,6 +24,9 @@ export function usePrerenderedImageResource(request: PrerenderedImageRequest): P
 
 	const image = getPrerenderedImageFromManifest(key);
 	if (!image) {
+		if (request.runtimeAsset !== undefined) {
+			return { image: request.runtimeAsset };
+		}
 		// biome-ignore lint/plugin/no-throw: Missing RSC image data is an unrecoverable build/runtime contract violation for this render.
 		throw new Error(`Prerendered image ${key} is missing from the current route RSC payload.`);
 	}
