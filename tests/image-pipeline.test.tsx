@@ -75,6 +75,15 @@ describe("image pipeline", () => {
 		expect(getPrerenderedImageRequestKey(firstRequest)).not.toBe(getPrerenderedImageRequestKey(secondRequest));
 	});
 
+	it("uses the immutable loader artifact when a production route renders dynamically", async () => {
+		vi.stubEnv("NODE_ENV", "production");
+		vi.stubEnv("NEXT_IS_EXPORT_WORKER", "false");
+		const runtimeAsset = { contentHash: "runtime", height: 1, img: { src: "/_cstd/image/asset/runtime/image.webp" }, width: 1 };
+		const { loadPrerenderedImage } = await import("../src/media/image/prerendered-image-runtime.js");
+
+		await expect(loadPrerenderedImage({ runtimeAsset, sizes: "100vw", src: "cstd-local://hash/image.png" })).resolves.toEqual(runtimeAsset);
+	});
+
 	it("optimizes only normal production builds", () => {
 		vi.stubEnv("NODE_ENV", "production");
 		vi.stubEnv("IS_PREVIEW", "false");
@@ -321,7 +330,9 @@ describe("image pipeline", () => {
 			const cachedSource = await fs.readFile(path.join(sourceDirectory, sourceFiles[0] ?? ""));
 			const transformedSource = JSON.parse(transformedModule.slice("export default ".length)) as StaticImageImport;
 			const developmentAssetPath = path.join(fixtureDirectory, "public", transformedSource.developmentAsset?.src.slice(1) ?? "");
+			const runtimeAssetPath = path.join(fixtureDirectory, "public", transformedSource.runtimeAsset?.img.src.slice(1) ?? "");
 			const developmentAssetMetadata = await sharp(await fs.readFile(developmentAssetPath), { animated: true }).metadata();
+			const runtimeAssetMetadata = await sharp(await fs.readFile(runtimeAssetPath), { animated: true }).metadata();
 
 			expect(transformedModule).toContain("export default");
 			expect(transformedSource.src).toBe(`cstd-local://${hash(ONE_PIXEL_PNG, createHash)}/static.png`);
@@ -331,6 +342,13 @@ describe("image pipeline", () => {
 				width: 1,
 			});
 			expect(developmentAssetMetadata.format).toBe("webp");
+			expect(transformedSource.runtimeAsset).toEqual({
+				contentHash: hash(ONE_PIXEL_PNG, createHash),
+				height: 1,
+				img: { src: `/_cstd/image/asset/runtime/${hash(ONE_PIXEL_PNG, createHash)}.webp` },
+				width: 1,
+			});
+			expect(runtimeAssetMetadata.format).toBe("webp");
 			expect(sourceFiles).toEqual([hash(ONE_PIXEL_PNG, createHash)]);
 			expect(cachedSource).toEqual(ONE_PIXEL_PNG);
 		} finally {

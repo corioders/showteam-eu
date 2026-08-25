@@ -1,8 +1,8 @@
 {
 	"extends": ["//"],
-	"globalEnv": ["CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER", "IS_PREVIEW", "NEXT_IS_EXPORT_WORKER", "NEXT_PUBLIC_IS_PREVIEW"],
 	"tasks": {
 		"build": {
+			"env": ["CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER", "IS_PREVIEW", "NEXT_IS_EXPORT_WORKER", "NEXT_PUBLIC_IS_PREVIEW"],
 			"outputs": ["build/**"]
 		},
 		"build-cloudflare": {
