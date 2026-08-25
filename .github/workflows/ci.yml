@@ -42,11 +42,7 @@ jobs:
       - name: Create shared workspace
         working-directory: workspace
         run: |
-<<<<<<< HEAD
-          printf 'packages:\n  - "cstd-next"\n  - "cstd-ts"\n' > pnpm-workspace.yaml
-=======
           printf 'packages:\n  - "cstd-next"\n  - "cstd-ts"\nminimumReleaseAgeExclude:\n  - next\n  - "@next/*"\n' > pnpm-workspace.yaml
->>>>>>> 51ab0fff750ce8c93c74e3c222df2654a1d15e8a
 
       - name: Install dependencies
         working-directory: workspace
