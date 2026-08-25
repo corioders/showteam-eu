@@ -1,3 +1,4 @@
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 export type FocalPoint = { x: number; y: number };
 
 const center: FocalPoint = { x: 50, y: 50 };

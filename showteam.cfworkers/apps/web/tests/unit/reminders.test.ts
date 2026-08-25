@@ -1,3 +1,4 @@
+// biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
 import { describe, expect, it } from "vitest";
 
 import { newReminderToken, polishDateParts, reminderTokenHash } from "../../src/lib/reminders";

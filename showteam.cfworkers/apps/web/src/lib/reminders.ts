@@ -1,3 +1,6 @@
+// biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
+// biome-ignore-all lint/suspicious/noUndeclaredEnvVars: Worker and test environment variables are runtime bindings.
 export async function reminderTokenHash(token: string): Promise<string> {
 	const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
 	return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");

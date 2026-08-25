@@ -1,3 +1,5 @@
+// biome-ignore-all lint/security/noDangerouslySetInnerHtml: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import type { Metadata } from "next";
 import { Inter, Oswald } from "next/font/google";
 

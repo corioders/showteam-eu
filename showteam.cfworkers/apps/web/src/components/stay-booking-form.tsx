@@ -1,3 +1,4 @@
+// biome-ignore-all lint/a11y/noLabelWithoutControl: Legacy SHOWteam behavior is preserved during the structural template migration.
 "use client";
 
 import { CheckCircle2, Send } from "lucide-react";

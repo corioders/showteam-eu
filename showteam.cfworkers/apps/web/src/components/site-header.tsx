@@ -1,12 +1,11 @@
 "use client";
 
-import { Menu, Phone } from "lucide-react";
 import { StaticImage } from "cstd-next/media/image/static-image.jsx";
+import { Menu, Phone } from "lucide-react";
 import Link from "next/link";
-
-import logo from "@/app/_assets/showteam-logo.svg";
 import { usePathname } from "next/navigation";
 
+import logo from "@/app/_assets/showteam-logo.svg";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 

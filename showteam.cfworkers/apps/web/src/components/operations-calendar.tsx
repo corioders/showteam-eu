@@ -1,3 +1,8 @@
+// biome-ignore-all lint/a11y/noStaticElementInteractions: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/a11y/useButtonType: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/a11y/useKeyWithClickEvents: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/style/noNonNullAssertion: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 "use client";
 
 import type { EventSourceFuncArg } from "@fullcalendar/core";

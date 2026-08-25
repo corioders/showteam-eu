@@ -5,7 +5,7 @@ import { withPayload } from "@payloadcms/next/withPayload";
 import { nextConfig as cstdNextConfig } from "cstd-next/config/next.config.js";
 import type { NextConfig } from "next";
 
-const scriptPolicy = process.env.NODE_ENV === "production" ? "script-src 'self' 'unsafe-inline'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
+const scriptPolicy = process.env.NODE_ENV === "production" ? "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
 const workspaceRoot = path.join(import.meta.dirname, "..", "..");
 
 const nextConfig: NextConfig = {
@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
 				headers: [
 					{
 						key: "Content-Security-Policy",
-						value: `default-src 'self'; ${scriptPolicy}; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests`,
+						value: `default-src 'self'; ${scriptPolicy}; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'`,
 					},
 					{ key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
 					{ key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },

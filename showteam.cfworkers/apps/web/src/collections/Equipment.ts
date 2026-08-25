@@ -1,3 +1,9 @@
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/style/useFilenamingConvention: Payload collection filenames are stable import contracts.
+// biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
+// biome-ignore-all lint/suspicious/noEvolvingTypes: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 import { APIError, type CollectionConfig, ValidationError } from "payload";
 
 import { MINIMUM_RESERVATION_MINUTES, timeToMinutes, todayInPoland } from "@/lib/reservations";

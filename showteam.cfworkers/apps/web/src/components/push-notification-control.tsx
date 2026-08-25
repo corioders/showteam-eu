@@ -1,3 +1,4 @@
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 "use client";
 
 import { Bell, BellOff, LoaderCircle } from "lucide-react";

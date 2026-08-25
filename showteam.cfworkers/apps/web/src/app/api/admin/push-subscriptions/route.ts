@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noUndeclaredEnvVars: Worker and test environment variables are runtime bindings.
 import config, { database } from "@payload-config";
 import { getPayload } from "payload";
 

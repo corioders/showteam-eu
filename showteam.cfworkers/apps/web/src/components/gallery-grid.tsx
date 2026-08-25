@@ -1,3 +1,7 @@
+// biome-ignore-all lint/a11y/useAriaPropsSupportedByRole: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/a11y/useMediaCaption: CMS videos do not currently provide a caption artifact.
+// biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
@@ -300,7 +304,9 @@ function GalleryTile({ photo, masonry, open }: { photo: GalleryPhoto; masonry: b
 }
 
 function ResponsiveImage({ photo, sizes, className }: { photo: GalleryPhoto; sizes: string; className: string }) {
-	if (!photo.image) return null;
+	if (!photo.image) {
+		return null;
+	}
 	const props = {
 		alt: photo.alt,
 		className: `gallery-image absolute inset-0 size-full ${className}`,

@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import config from "@payload-config";
 import type { Metadata } from "next";
 import { getPayload } from "payload";

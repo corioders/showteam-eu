@@ -1,3 +1,4 @@
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 let initialization: Promise<unknown> | undefined;
 
 export function ensureOperationalTables(database: D1Database): Promise<unknown> {

@@ -1,3 +1,5 @@
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/suspicious/noArrayIndexKey: Legacy SHOWteam behavior is preserved during the structural template migration.
 "use client";
 
 import { OptimizedImage } from "cstd-next/media/image/optimized-image.jsx";

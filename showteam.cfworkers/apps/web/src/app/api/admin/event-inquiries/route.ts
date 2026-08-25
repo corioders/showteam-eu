@@ -1,3 +1,6 @@
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/style/noNonNullAssertion: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 import config, { database } from "@payload-config";
 import { getPayload } from "payload";
 

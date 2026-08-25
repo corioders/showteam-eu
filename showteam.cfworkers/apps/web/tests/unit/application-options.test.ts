@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noNonNullAssertion: Legacy SHOWteam behavior is preserved during the structural template migration.
 import { describe, expect, it } from "vitest";
 
 import { applicationDateIsAvailable, getApplicationOfferGroups } from "../../src/lib/application-options";

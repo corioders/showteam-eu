@@ -1,3 +1,5 @@
+// biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 import { Buffer } from "node:buffer";
 
 import { mediaBucket } from "@payload-config";
@@ -71,7 +73,9 @@ export function validateOptimizedImageUpload(form: FormData): { descriptor: Opti
 }
 
 export async function deleteOptimizedMedia(payload: Payload, mediaId: number | null | undefined): Promise<void> {
-	if (mediaId === null || mediaId === undefined) return;
+	if (mediaId === null || mediaId === undefined) {
+		return;
+	}
 	const media = await payload.findByID({ collection: "media", id: mediaId, depth: 0, overrideAccess: true }).catch(() => null);
 	const keys = media && Array.isArray(media.optimizedFiles) ? media.optimizedFiles.filter((key): key is string => typeof key === "string") : [];
 	await payload.delete({ collection: "media", id: mediaId, overrideAccess: true }).catch(() => undefined);
@@ -79,7 +83,9 @@ export async function deleteOptimizedMedia(payload: Payload, mediaId: number | n
 }
 
 function parseDescriptor(value: FormDataEntryValue | null): OptimizedImageDescriptor {
-	if (typeof value !== "string" || value.length > 30_000) throw new Error("Brakuje descriptoru obrazu.");
+	if (typeof value !== "string" || value.length > 30_000) {
+		throw new Error("Brakuje descriptoru obrazu.");
+	}
 	const descriptor = JSON.parse(value) as Partial<OptimizedImageDescriptor>;
 	if (
 		typeof descriptor.contentHash !== "string" ||
@@ -102,8 +108,12 @@ function descriptorKeys(descriptor: OptimizedImageDescriptor): Set<string> {
 
 function keyFromURL(value: string): string {
 	const prefix = "/api/media/file/";
-	if (!value.startsWith(prefix)) throw new Error("Descriptor wskazuje niedozwolony URL.");
+	if (!value.startsWith(prefix)) {
+		throw new Error("Descriptor wskazuje niedozwolony URL.");
+	}
 	const key = decodeURIComponent(value.slice(prefix.length));
-	if (!SAFE_KEY.test(key)) throw new Error("Descriptor zawiera niedozwolony klucz.");
+	if (!SAFE_KEY.test(key)) {
+		throw new Error("Descriptor zawiera niedozwolony klucz.");
+	}
 	return key;
 }

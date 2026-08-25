@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/useFilenamingConvention: Payload collection filenames are stable import contracts.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 import { APIError, type CollectionConfig } from "payload";
 
 import { ensureOperationalTables } from "@/lib/operational-tables";

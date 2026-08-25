@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 "use client";
 
 import { Monitor, RefreshCw, Unplug } from "lucide-react";

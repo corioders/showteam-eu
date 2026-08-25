@@ -1,6 +1,6 @@
-import { ArrowUpRight, MapPin } from "lucide-react";
 import { OptimizedImage } from "cstd-next/media/image/optimized-image.jsx";
 import { StaticImage } from "cstd-next/media/image/static-image.jsx";
+import { ArrowUpRight, MapPin } from "lucide-react";
 import Link from "next/link";
 
 import { OfferEditor } from "@/components/editor/offer-editor";
@@ -12,7 +12,12 @@ import { cn } from "@/lib/utils";
 
 export function OfferCard({ offer, index, className }: { offer: Offer; index: number; className?: string }) {
 	const staticImage = offer.staticImage ?? resolveStaticImage(offer.image);
-	const imageProps = { alt: offer.imageAlt, className: "absolute inset-0 size-full object-cover transition duration-700 group-hover:scale-[1.035]", loading: "lazy" as const, sizes: "(min-width:1024px) 58vw, 100vw" };
+	const imageProps = {
+		alt: offer.imageAlt,
+		className: "absolute inset-0 size-full object-cover transition duration-700 group-hover:scale-[1.035]",
+		loading: "lazy" as const,
+		sizes: "(min-width:1024px) 58vw, 100vw",
+	};
 	return (
 		<Card className={cn("poster-cut group relative isolate min-h-[32rem] overflow-hidden rounded-none border-0", className)}>
 			{offer.imageDescriptor ? <OptimizedImage {...imageProps} src={offer.imageDescriptor} /> : staticImage ? <StaticImage {...imageProps} src={staticImage} /> : null}

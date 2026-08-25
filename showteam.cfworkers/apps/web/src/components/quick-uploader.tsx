@@ -1,3 +1,5 @@
+// biome-ignore-all lint/suspicious/useIterableCallbackReturn: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 "use client";
 
 import { Camera, CheckCircle2, Film, ImagePlus, LoaderCircle, Upload, X } from "lucide-react";

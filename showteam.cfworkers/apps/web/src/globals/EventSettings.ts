@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/useFilenamingConvention: Payload collection filenames are stable import contracts.
 import type { GlobalConfig } from "payload";
 
 const isLoggedIn = ({ req }: { req: { user?: unknown } }) => Boolean(req.user);

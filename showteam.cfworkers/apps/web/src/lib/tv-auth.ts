@@ -1,3 +1,5 @@
+// biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
 export const tvCookieName = "showteam_tv";
 export const tvCookieMaxAge = 400 * 24 * 60 * 60;
 

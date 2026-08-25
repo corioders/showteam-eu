@@ -1,8 +1,9 @@
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 "use client";
 
-import { LoaderCircle, RotateCcw, Save } from "lucide-react";
 import { OptimizedImage, type OptimizedImageDescriptor } from "cstd-next/media/image/optimized-image.jsx";
 import { StaticImage } from "cstd-next/media/image/static-image.jsx";
+import { LoaderCircle, RotateCcw, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, useState } from "react";
 
@@ -14,10 +15,27 @@ import { resolveStaticImage } from "@/lib/static-images";
 
 type ContentValues = Record<string, string>;
 type MediaReference = { mediaId: number; descriptor: OptimizedImageDescriptor };
-type PageContentContextValue = { editing: boolean; media: Record<string, MediaReference>; page: PageContentName; values: ContentValues; update: (field: string, value: string) => void; updateMedia: (field: string, value: MediaReference) => void };
+type PageContentContextValue = {
+	editing: boolean;
+	media: Record<string, MediaReference>;
+	page: PageContentName;
+	values: ContentValues;
+	update: (field: string, value: string) => void;
+	updateMedia: (field: string, value: MediaReference) => void;
+};
 const PageContentContext = createContext<PageContentContextValue | null>(null);
 
-export function PageContentEditor({ page, initial, initialMedia = {}, children }: { page: PageContentName; initial: ContentValues; initialMedia?: Record<string, MediaReference>; children: React.ReactNode }) {
+export function PageContentEditor({
+	page,
+	initial,
+	initialMedia = {},
+	children,
+}: {
+	page: PageContentName;
+	initial: ContentValues;
+	initialMedia?: Record<string, MediaReference>;
+	children: React.ReactNode;
+}) {
 	const { enabled, visible } = useEditor();
 	const router = useRouter();
 	const editing = enabled && visible;
@@ -66,7 +84,14 @@ export function PageContentEditor({ page, initial, initialMedia = {}, children }
 		}
 	}
 
-	const context = { editing, media, page, values, update, updateMedia: (field: string, value: MediaReference) => setMedia((current) => ({ ...current, [field]: value })) };
+	const context = {
+		editing,
+		media,
+		page,
+		values,
+		update,
+		updateMedia: (field: string, value: MediaReference) => setMedia((current) => ({ ...current, [field]: value })),
+	};
 	return (
 		<PageContentContext.Provider value={context}>
 			{editing ? (
@@ -170,15 +195,20 @@ export function EditableMediaUpload({
 		try {
 			const body = new FormData();
 			body.set("field", field);
-			if (accept === "image") await appendOptimizedImage(body, file, "100vw");
-			else body.set("file", file);
+			if (accept === "image") {
+				await appendOptimizedImage(body, file, "100vw");
+			} else {
+				body.set("file", file);
+			}
 			const response = await fetch(`/api/admin/page-content/${content.page}/media`, { method: "POST", body });
 			const result = (await response.json()) as { url?: string; message?: string; descriptor?: OptimizedImageDescriptor; mediaId?: number };
 			if (!response.ok || !result.url) {
 				throw new Error(result.message || "Nie udało się wysłać pliku.");
 			}
 			content.update(field, result.url);
-			if (result.descriptor && result.mediaId) content.updateMedia(field, { descriptor: result.descriptor, mediaId: result.mediaId });
+			if (result.descriptor && result.mediaId) {
+				content.updateMedia(field, { descriptor: result.descriptor, mediaId: result.mediaId });
+			}
 		} catch (caught) {
 			setError(caught instanceof Error ? caught.message : "Nie udało się wysłać pliku.");
 		} finally {

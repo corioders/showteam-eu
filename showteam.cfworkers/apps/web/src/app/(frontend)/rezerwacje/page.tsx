@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import type { Metadata } from "next";
 
 import { EditableImage, EditableText, PageContentEditor } from "@/components/editor/page-content-editor";

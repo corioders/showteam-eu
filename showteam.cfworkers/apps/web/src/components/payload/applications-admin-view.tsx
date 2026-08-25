@@ -1,3 +1,6 @@
+// biome-ignore-all lint/a11y/useButtonType: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 "use client";
 
 import { Download, RefreshCw } from "lucide-react";

@@ -1,14 +1,13 @@
 import config from "@payload-config";
+import type { OptimizedImageDescriptor } from "cstd-next/media/image/optimized-image.jsx";
 import { unstable_cache } from "next/cache";
 import { connection } from "next/server";
 import { getPayload } from "payload";
-import type { OptimizedImageDescriptor } from "cstd-next/media/image/optimized-image.jsx";
 
 import baseLife from "@/app/_assets/base-life.jpg";
+import winterFire from "@/app/_assets/showteam-winter-fire.jpg";
 import summerSailingDrone from "@/app/_assets/summer-sailing-drone.jpg";
 import summerWakeHero from "@/app/_assets/summer-wake-hero.jpg";
-import winterFire from "@/app/_assets/showteam-winter-fire.jpg";
-
 import { isIsoDate, type OfferDate } from "@/lib/offer-dates";
 import { offers as fallbackOffers, type Offer } from "@/lib/offers";
 

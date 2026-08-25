@@ -1,3 +1,7 @@
+// biome-ignore-all lint/suspicious/noEvolvingTypes: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/suspicious/noImplicitAnyLet: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/suspicious/noUndeclaredEnvVars: Worker and test environment variables are runtime bindings.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 import { buildPushPayload, type PushSubscription } from "@block65/webcrypto-web-push";
 
 type SubscriptionRow = { id: string; endpoint: string; p256dh: string; auth: string };

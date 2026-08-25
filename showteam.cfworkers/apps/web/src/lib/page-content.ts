@@ -1,10 +1,10 @@
 import "server-only";
 
 import config from "@payload-config";
+import type { OptimizedImageDescriptor } from "cstd-next/media/image/optimized-image.jsx";
 import { unstable_cache } from "next/cache";
 import { connection } from "next/server";
 import { getPayload } from "payload";
-import type { OptimizedImageDescriptor } from "cstd-next/media/image/optimized-image.jsx";
 
 import { type PageContentName, type PageContentValues, pageContentDefaults } from "./page-content-schema";
 

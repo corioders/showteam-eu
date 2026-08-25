@@ -1,3 +1,4 @@
+// biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
 import config from "@payload-config";
 import { getPayload } from "payload";
 

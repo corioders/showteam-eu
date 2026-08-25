@@ -1,7 +1,7 @@
 import config from "@payload-config";
+import type { OptimizedImageDescriptor } from "cstd-next/media/image/optimized-image.jsx";
 import { unstable_cache } from "next/cache";
 import { getPayload } from "payload";
-import type { OptimizedImageDescriptor } from "cstd-next/media/image/optimized-image.jsx";
 
 import type { BookableEquipment } from "@/lib/reservations";
 

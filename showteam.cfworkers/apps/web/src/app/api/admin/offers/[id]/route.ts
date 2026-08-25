@@ -4,6 +4,7 @@ import { getPayload } from "payload";
 
 import { validSameOrigin } from "@/lib/admin-auth";
 import { parseEditableOffer } from "@/lib/editor-offers";
+import { deleteOptimizedMedia } from "@/lib/optimized-media";
 import { revalidateOffers } from "@/lib/revalidate-public";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -57,6 +58,12 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 		const { id } = await params;
 		const offer = await payload.findByID({ collection: "offers", id, depth: 0, overrideAccess: false, user });
 		await payload.delete({ collection: "offers", id, overrideAccess: false, user });
+		const optimizedMedia = offer.optimizedMedia && typeof offer.optimizedMedia === "object" ? Object.values(offer.optimizedMedia) : [];
+		const mediaIds = [
+			typeof offer.cover === "number" ? offer.cover : null,
+			...optimizedMedia.map((entry) => (entry && typeof entry === "object" && "mediaId" in entry ? Number(entry.mediaId) : null)),
+		];
+		await Promise.allSettled(mediaIds.map((mediaId) => deleteOptimizedMedia(payload, mediaId)));
 		revalidateOffers(offer.slug, offer.category);
 		return NextResponse.json({ message: "Oferta została usunięta." });
 	} catch (error) {

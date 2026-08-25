@@ -1,3 +1,5 @@
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
 import type { DesktopGalleryLayout, MobileGalleryLayout } from "./gallery-layout";
 
 export type EditableGalleryItem = {

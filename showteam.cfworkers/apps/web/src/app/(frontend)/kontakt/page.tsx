@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import { ArrowLeft, ArrowUpRight, Facebook, Instagram, Mail, MapPin, Music2, Phone } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";

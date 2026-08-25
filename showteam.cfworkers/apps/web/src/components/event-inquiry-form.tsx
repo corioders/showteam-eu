@@ -1,3 +1,5 @@
+// biome-ignore-all lint/a11y/noLabelWithoutControl: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/suspicious/noArrayIndexKey: Legacy SHOWteam behavior is preserved during the structural template migration.
 "use client";
 
 import { CalendarPlus, CheckCircle2, RotateCcw, Send, Trash2 } from "lucide-react";

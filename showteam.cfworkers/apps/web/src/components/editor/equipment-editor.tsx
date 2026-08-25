@@ -1,7 +1,10 @@
+// biome-ignore-all lint/a11y/noLabelWithoutControl: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 "use client";
 
-import { LoaderCircle, Pencil, Plus, RefreshCw, RotateCcw, Save, Trash2 } from "lucide-react";
 import { OptimizedImage } from "cstd-next/media/image/optimized-image.jsx";
+import { LoaderCircle, Pencil, Plus, RefreshCw, RotateCcw, Save, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -159,7 +162,13 @@ export function EquipmentEditor({ equipment, compact = false, className }: { equ
 						<div className="mt-6 grid gap-3 sm:grid-cols-2">
 							{typeof equipment.image === "object" && equipment.image?.optimizedImage ? (
 								<div className="relative aspect-video overflow-hidden bg-neutral-900">
-									<OptimizedImage src={equipment.image.optimizedImage} alt={equipment.image.alt || equipment.name} loading="lazy" sizes="(min-width: 640px) 50vw, 100vw" className="absolute inset-0 size-full object-cover" />
+									<OptimizedImage
+										src={equipment.image.optimizedImage}
+										alt={equipment.image.alt || equipment.name}
+										loading="lazy"
+										sizes="(min-width: 640px) 50vw, 100vw"
+										className="absolute inset-0 size-full object-cover"
+									/>
 								</div>
 							) : (
 								<div className="grid aspect-video place-items-center border border-white/15 border-dashed text-sm text-white/35">Brak zdjęcia</div>

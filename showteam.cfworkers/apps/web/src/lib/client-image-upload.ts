@@ -1,3 +1,4 @@
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 "use client";
 
 import { optimizeImage } from "cstd-next/media/image/optimize-image.js";

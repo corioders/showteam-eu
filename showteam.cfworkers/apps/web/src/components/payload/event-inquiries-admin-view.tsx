@@ -1,3 +1,6 @@
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/suspicious/noArrayIndexKey: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 "use client";
 
 import { CalendarPlus, Check, LoaderCircle, Mail, Pencil, Phone, Plus, Trash2 } from "lucide-react";

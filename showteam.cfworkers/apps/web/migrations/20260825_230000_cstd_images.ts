@@ -26,24 +26,32 @@ export async function up({ db, payload }: MigrateUpArgs): Promise<void> {
 	for (const offer of offers.docs) {
 		const pageContent = offer.pageContent && typeof offer.pageContent === "object" && !Array.isArray(offer.pageContent) ? { ...offer.pageContent } : {};
 		for (const key of Object.keys(pageContent)) {
-			if (key.endsWith("ImageUrl") || key.endsWith("PosterUrl")) delete pageContent[key];
+			if (key.endsWith("ImageUrl") || key.endsWith("PosterUrl")) {
+				delete pageContent[key];
+			}
 		}
 		await db.run(sql`UPDATE offers SET cover_id = NULL, optimized_media = '{}', page_content = ${JSON.stringify(pageContent)} WHERE id = ${offer.id};`);
 	}
 
 	const equipment = await payload.find({ collection: "equipment", limit: 1000, depth: 0, overrideAccess: true });
-	for (const item of equipment.docs) await db.run(sql`UPDATE equipment SET image_id = NULL WHERE id = ${item.id};`);
+	for (const item of equipment.docs) {
+		await db.run(sql`UPDATE equipment SET image_id = NULL WHERE id = ${item.id};`);
+	}
 
 	const pages = await payload.find({ collection: "page-content", limit: 100, depth: 0, overrideAccess: true });
 	for (const page of pages.docs) {
 		const content = page.content && typeof page.content === "object" && !Array.isArray(page.content) ? { ...page.content } : {};
 		for (const key of Object.keys(content)) {
-			if (key.endsWith("ImageUrl") || key.endsWith("PosterUrl")) delete content[key];
+			if (key.endsWith("ImageUrl") || key.endsWith("PosterUrl")) {
+				delete content[key];
+			}
 		}
 		await db.run(sql`UPDATE page_content SET content = ${JSON.stringify(content)}, optimized_media = '{}' WHERE id = ${page.id};`);
 	}
 
-	for (const image of oldImages) await payload.delete({ collection: "media", id: image.id, overrideAccess: true });
+	for (const image of oldImages) {
+		await payload.delete({ collection: "media", id: image.id, overrideAccess: true });
+	}
 
 	await db.run(sql`DROP INDEX IF EXISTS gallery_responsive_small_idx;`);
 	await db.run(sql`DROP INDEX IF EXISTS gallery_responsive_medium_idx;`);
@@ -62,7 +70,9 @@ async function ignoreExisting(operation: () => Promise<unknown>): Promise<void> 
 			current = current.cause;
 		}
 		const message = messages.join(" ");
-		if (!(message.includes("duplicate column name") || message.includes("already exists"))) throw error;
+		if (!(message.includes("duplicate column name") || message.includes("already exists"))) {
+			throw error;
+		}
 	}
 }
 

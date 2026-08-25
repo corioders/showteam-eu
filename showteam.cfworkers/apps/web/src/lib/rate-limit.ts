@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noUndeclaredEnvVars: Worker and test environment variables are runtime bindings.
 type RateLimitResult = { allowed: boolean; retryAfterSeconds: number };
 
 export async function checkRateLimit(database: D1Database, request: Request, scope: string, limit: number, windowSeconds: number): Promise<RateLimitResult> {

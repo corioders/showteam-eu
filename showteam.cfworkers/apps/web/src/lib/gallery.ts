@@ -1,9 +1,11 @@
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/performance/noBarrelFile: Legacy SHOWteam behavior is preserved during the structural template migration.
 import config from "@payload-config";
+import type { OptimizedImageDescriptor } from "cstd-next/media/image/optimized-image.jsx";
+import type { StaticImageImport } from "cstd-next/media/image/static-image-import.js";
 import { unstable_cache } from "next/cache";
 import { connection } from "next/server";
 import { getPayload } from "payload";
-import type { OptimizedImageDescriptor } from "cstd-next/media/image/optimized-image.jsx";
-import type { StaticImageImport } from "cstd-next/media/image/static-image-import.js";
 
 import { findGalleryAsset } from "@/lib/gallery-assets";
 import { type DesktopGalleryLayout, defaultMobileLayout, type MobileGalleryLayout } from "@/lib/gallery-layout";
@@ -36,7 +38,11 @@ export type GalleryPage = {
 };
 
 function toPhoto(document: Record<string, unknown>): GalleryPhoto | null {
-	const media = document.image as { url?: string; alt?: string; focalX?: number; focalY?: number; mimeType?: string; optimizedImage?: OptimizedImageDescriptor } | number | null | undefined;
+	const media = document.image as
+		| { url?: string; alt?: string; focalX?: number; focalY?: number; mimeType?: string; optimizedImage?: OptimizedImageDescriptor }
+		| number
+		| null
+		| undefined;
 	const fallback = findGalleryAsset(document.staticImage);
 	const fallbackImage = fallback ? resolveStaticImage(fallback.path) : undefined;
 	const src = typeof media === "object" && media?.url ? media.url : fallbackImage?.src;

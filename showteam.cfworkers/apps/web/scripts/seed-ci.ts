@@ -1,10 +1,13 @@
-import config from "@payload-config";
+// biome-ignore-all lint/suspicious/noUndeclaredEnvVars: Worker and test environment variables are runtime bindings.
+import config, { database, disposeCloudflareContext } from "@payload-config";
 import { getPayload } from "payload";
 
+import { ensureOperationalTables } from "@/lib/operational-tables";
 import { seedEquipment } from "@/lib/seed-equipment";
 import { seedGallery } from "@/lib/seed-gallery";
 import { seedOffers } from "@/lib/seed-offers";
 
+await ensureOperationalTables(database);
 const payload = await getPayload({ config });
 await seedOffers(payload);
 await seedGallery(payload);
@@ -19,3 +22,4 @@ if (adminEmail && adminPassword) {
 	}
 }
 await payload.destroy();
+await disposeCloudflareContext?.();

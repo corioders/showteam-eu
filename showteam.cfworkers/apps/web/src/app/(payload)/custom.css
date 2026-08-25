@@ -1,3 +1,4 @@
+/* biome-ignore-all lint/style/noDescendingSpecificity: Legacy SHOWteam behavior is preserved during the structural template migration. */
 .showteam-admin-logo {
 	background: #f06414;
 	box-sizing: content-box;

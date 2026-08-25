@@ -1,3 +1,6 @@
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/style/noNonNullAssertion: Legacy SHOWteam behavior is preserved during the structural template migration.
 import type { WeatherProfile } from "./reservations";
 import { BASE_CLOSE_TIME, BASE_OPEN_TIME, MINIMUM_RESERVATION_MINUTES, timeToMinutes } from "./reservations";
 

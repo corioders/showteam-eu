@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {

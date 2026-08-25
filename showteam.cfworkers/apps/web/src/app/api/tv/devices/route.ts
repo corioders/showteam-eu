@@ -1,3 +1,5 @@
+// biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
 import config, { database } from "@payload-config";
 import { getPayload } from "payload";
 

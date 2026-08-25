@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/useFilenamingConvention: Payload collection filenames are stable import contracts.
 import type { CollectionConfig } from "payload";
 
 export const Users: CollectionConfig = {

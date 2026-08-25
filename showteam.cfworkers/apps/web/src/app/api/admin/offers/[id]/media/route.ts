@@ -1,3 +1,4 @@
+// biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
 import config from "@payload-config";
 import { NextResponse } from "next/server";
 import { getPayload } from "payload";
@@ -40,7 +41,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 			user,
 		});
 		const oldMediaId = optimizedMedia[field]?.mediaId;
-		if (oldMediaId && oldMediaId !== mediaId) await deleteOptimizedMedia(payload, oldMediaId);
+		if (oldMediaId && oldMediaId !== mediaId) {
+			await deleteOptimizedMedia(payload, oldMediaId);
+		}
 		revalidateOffers(offer.slug, offer.category);
 		return NextResponse.json({ url: media.url, descriptor: media.descriptor, mediaId, message: "Zdjęcie jest już widoczne." });
 	} catch (error) {

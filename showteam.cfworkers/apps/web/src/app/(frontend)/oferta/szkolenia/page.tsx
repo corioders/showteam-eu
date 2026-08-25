@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import { Activity, BadgeCheck, RadioTower, Sailboat, Waves } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";

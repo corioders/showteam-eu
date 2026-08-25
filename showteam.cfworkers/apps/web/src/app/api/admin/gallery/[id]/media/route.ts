@@ -34,11 +34,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 		const media = imageUpload
 			? await createOptimizedMedia(payload, form, item.alt || item.caption)
 			: await payload.create({
-				collection: "media",
-				overrideAccess: true,
-				data: { alt: item.alt || item.caption },
-				file: { data: Buffer.from(await (file as File).arrayBuffer()), mimetype: (file as File).type, name: (file as File).name, size: (file as File).size },
-			});
+					collection: "media",
+					overrideAccess: true,
+					data: { alt: item.alt || item.caption },
+					file: { data: Buffer.from(await (file as File).arrayBuffer()), mimetype: (file as File).type, name: (file as File).name, size: (file as File).size },
+				});
 		createdId = Number(media.id);
 		await payload.update({
 			collection: "gallery",

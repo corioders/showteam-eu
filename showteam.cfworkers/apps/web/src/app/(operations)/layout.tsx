@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import type { Metadata, Viewport } from "next";
 import { Inter, Oswald } from "next/font/google";
 import "../globals.css";

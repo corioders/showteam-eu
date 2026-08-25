@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
 import { database } from "@payload-config";
 
 import { ensureOperationalTables } from "@/lib/operational-tables";

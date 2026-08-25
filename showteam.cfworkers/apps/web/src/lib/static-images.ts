@@ -7,17 +7,17 @@ import instagramGarda from "@/app/_assets/instagram-garda.jpg";
 import instagramSnow from "@/app/_assets/instagram-snow-panorama.jpg";
 import legacyBottom from "@/app/_assets/legacy-light-trails-bottom.jpg";
 import legacyTop from "@/app/_assets/legacy-light-trails-top.jpg";
+import padel from "@/app/_assets/padel.jpg";
 import andorra from "@/app/_assets/showteam-andorra-collage.jpg";
 import logo from "@/app/_assets/showteam-logo.svg";
 import monkey from "@/app/_assets/showteam-monkey.svg";
-import padel from "@/app/_assets/padel.jpg";
 import trentino from "@/app/_assets/showteam-trentino-collage.jpg";
-import sailingDrone from "@/app/_assets/summer-sailing-drone.jpg";
+import winterFire from "@/app/_assets/showteam-winter-fire.jpg";
 import summerDoubleWake from "@/app/_assets/summer-double-wake.jpg";
+import sailingDrone from "@/app/_assets/summer-sailing-drone.jpg";
 import summerSunsetWake from "@/app/_assets/summer-sunset-wake.jpg";
 import summerWakeAerial from "@/app/_assets/summer-wake-aerial.jpg";
 import summerWakeHero from "@/app/_assets/summer-wake-hero.jpg";
-import winterFire from "@/app/_assets/showteam-winter-fire.jpg";
 
 const STATIC_IMAGES: Record<string, StaticImageImport> = {
 	"/media/base-life.jpg": baseLife,

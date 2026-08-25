@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noUndeclaredEnvVars: Worker and test environment variables are runtime bindings.
 import { expect, type Page, test } from "@playwright/test";
 
 const adminEmail = process.env.E2E_ADMIN_EMAIL;

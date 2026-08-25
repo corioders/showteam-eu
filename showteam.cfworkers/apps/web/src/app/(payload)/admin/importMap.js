@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/useFilenamingConvention: Payload collection filenames are stable import contracts.
 import { CollectionCards as CollectionCardsF9c02e79a4aed9a3924487c0cd4cafb1 } from "@payloadcms/next/rsc";
 import { R2ClientUploadHandler as R2ClientUploadHandler85cc02ed84006fcc91d3aff39dda669d } from "@payloadcms/storage-r2/client";
 

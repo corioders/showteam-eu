@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
+// biome-ignore-all lint/suspicious/noUndeclaredEnvVars: Worker and test environment variables are runtime bindings.
 import config, { database } from "@payload-config";
 import { getPayload } from "payload";
 

@@ -1,3 +1,6 @@
+// biome-ignore-all lint/a11y/useButtonType: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import Link from "next/link";
 import { notFound } from "next/navigation";
 

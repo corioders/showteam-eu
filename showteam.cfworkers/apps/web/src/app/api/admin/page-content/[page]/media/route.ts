@@ -1,3 +1,5 @@
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 import { Buffer } from "node:buffer";
 
 import config from "@payload-config";
@@ -33,7 +35,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ pag
 	const kind = field.endsWith("VideoUrl") ? "video" : field.endsWith("ImageUrl") || field.endsWith("PosterUrl") ? "image" : undefined;
 	const acceptedTypes = kind === "image" ? imageTypes : videoTypes;
 	const optimizedImage = kind === "image" && typeof form.get("descriptor") === "string";
-	if (typeof defaultValue !== "string" || !kind || (!optimizedImage && (!(file instanceof File) || file.size === 0 || file.size > 80 * 1024 * 1024 || !acceptedTypes.has(file.type)))) {
+	if (
+		typeof defaultValue !== "string" ||
+		!kind ||
+		(!optimizedImage && (!(file instanceof File) || file.size === 0 || file.size > 80 * 1024 * 1024 || !acceptedTypes.has(file.type)))
+	) {
 		return NextResponse.json({ message: "Wybierz obsługiwane zdjęcie lub film do 80 MB." }, { status: 400 });
 	}
 
@@ -68,7 +74,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ pag
 				id: existing.docs[0].id,
 				data: {
 					content: parsed.data,
-					optimizedMedia: optimizedImage ? { ...currentMedia, [field]: { mediaId, descriptor: (media as Awaited<ReturnType<typeof createOptimizedMedia>>).descriptor } } : currentMedia,
+					optimizedMedia: optimizedImage
+						? { ...currentMedia, [field]: { mediaId, descriptor: (media as Awaited<ReturnType<typeof createOptimizedMedia>>).descriptor } }
+						: currentMedia,
 				},
 				overrideAccess: false,
 				user,
@@ -86,7 +94,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ pag
 			});
 		}
 		const oldMediaId = currentMedia[field]?.mediaId;
-		if (optimizedImage && oldMediaId && oldMediaId !== mediaId) await deleteOptimizedMedia(payload, oldMediaId);
+		if (optimizedImage && oldMediaId && oldMediaId !== mediaId) {
+			await deleteOptimizedMedia(payload, oldMediaId);
+		}
 		revalidatePageContent(page);
 		return NextResponse.json({
 			url: mediaUrl,

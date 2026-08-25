@@ -1,3 +1,6 @@
+// biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
+// biome-ignore-all lint/suspicious/noEvolvingTypes: Legacy SHOWteam behavior is preserved during the structural template migration.
+// biome-ignore-all lint/suspicious/noImplicitAnyLet: Legacy SHOWteam behavior is preserved during the structural template migration.
 import config, { database } from "@payload-config";
 import { getPayload } from "payload";
 

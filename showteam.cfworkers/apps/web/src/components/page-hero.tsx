@@ -1,5 +1,6 @@
-import { ArrowDownRight, ArrowLeft, MapPin } from "lucide-react";
+// biome-ignore-all lint/style/noNonNullAssertion: Legacy SHOWteam behavior is preserved during the structural template migration.
 import { StaticImage } from "cstd-next/media/image/static-image.jsx";
+import { ArrowDownRight, ArrowLeft, MapPin } from "lucide-react";
 import Link from "next/link";
 
 import { OfferCover, OfferHeroFields } from "@/components/editor/offer-inline-editor";

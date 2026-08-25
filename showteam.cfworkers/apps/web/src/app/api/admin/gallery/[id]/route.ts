@@ -4,6 +4,7 @@ import { getPayload } from "payload";
 
 import { validSameOrigin } from "@/lib/admin-auth";
 import { parseEditableGalleryItem } from "@/lib/editor-gallery";
+import { deleteOptimizedMedia } from "@/lib/optimized-media";
 import { revalidateGallery } from "@/lib/revalidate-public";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -58,7 +59,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 	}
 	try {
 		const { id } = await params;
+		const item = await payload.findByID({ collection: "gallery", id, depth: 0, overrideAccess: false, user });
 		await payload.delete({ collection: "gallery", id, overrideAccess: false, user });
+		if (typeof item.image === "number") {
+			await deleteOptimizedMedia(payload, item.image);
+		}
 		revalidateGallery();
 		return NextResponse.json({ message: "Materiał został usunięty z galerii." });
 	} catch (error) {

@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import { AdminWorkspace } from "@/components/editor/admin-workspace";
 import { TvDevicesAdminView } from "@/components/payload/tv-devices-admin-view";
 import { requireAdminPage } from "@/lib/admin-page";

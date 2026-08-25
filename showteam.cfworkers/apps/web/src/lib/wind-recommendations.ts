@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
 import { addDaysToBookingDate, endTime, timeRangesOverlap, todayInPoland, type WeatherProfile } from "./reservations";
 
 const lakeLatitude = 49.97635;

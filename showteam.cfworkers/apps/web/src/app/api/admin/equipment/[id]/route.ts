@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
 import config from "@payload-config";
 import { NextResponse } from "next/server";
 import { getPayload } from "payload";
@@ -5,6 +6,7 @@ import { getPayload } from "payload";
 import { validSameOrigin } from "@/lib/admin-auth";
 import { equipmentMutationData } from "@/lib/admin-equipment";
 import { parseEditableEquipment } from "@/lib/editor-equipment";
+import { deleteOptimizedMedia } from "@/lib/optimized-media";
 import { todayInPoland } from "@/lib/reservations";
 import { revalidateEquipment } from "@/lib/revalidate-public";
 
@@ -45,6 +47,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 	}
 	try {
 		const { id } = await params;
+		const equipment = await payload.findByID({ collection: "equipment", id, depth: 0, overrideAccess: false, user });
 		const futureBookings = await payload.count({
 			collection: "bookings",
 			where: { and: [{ equipment: { equals: id } }, { bookingDate: { greater_than_equal: todayInPoland() } }, { status: { in: ["pending", "confirmed"] } }] },
@@ -54,6 +57,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 			return NextResponse.json({ message: "Najpierw anuluj przyszłe rezerwacje tej aktywności. Potem będzie można ją usunąć." }, { status: 409 });
 		}
 		await payload.delete({ collection: "equipment", id, overrideAccess: false, user });
+		if (typeof equipment.image === "number") {
+			await deleteOptimizedMedia(payload, equipment.image);
+		}
 		revalidateEquipment();
 		return NextResponse.json({ message: "Aktywność została usunięta." });
 	} catch (error) {

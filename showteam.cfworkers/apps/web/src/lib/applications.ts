@@ -1,3 +1,4 @@
+// biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
 export const applicationDisciplines = ["Narty", "Snowboard", "Sporty wodne", "Inne"] as const;
 export const applicationLevels = ["Od podstaw", "Doskonalenie", "Jazda sportowa"] as const;
 export const applicationTransport = ["Tak", "Nie", "Nie dotyczy"] as const;

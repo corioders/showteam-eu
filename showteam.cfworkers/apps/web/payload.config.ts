@@ -1,3 +1,7 @@
+// biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
+// biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
+// biome-ignore-all lint/suspicious/noUndeclaredEnvVars: Worker and test environment variables are runtime bindings.
+// biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -30,7 +34,7 @@ import { seedOffers } from "@/lib/seed-offers";
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 const realpath = (value: string) => (fs.existsSync(value) ? fs.realpathSync(value) : "");
-const isCLI = process.argv.some((value) => realpath(value).endsWith(path.join("payload", "bin.js")));
+const isCLI = process.argv.some((value) => realpath(value).endsWith(path.join("payload", "bin.js")) || value.endsWith("seed-ci.ts"));
 const isProduction = process.env.NODE_ENV === "production";
 const isNextBuild = process.env.NEXT_PHASE === "phase-production-build";
 const payloadSecret = process.env.PAYLOAD_SECRET ?? (!isProduction || isNextBuild ? "local-showteam-development-secret-change-me" : undefined);
@@ -52,10 +56,12 @@ const showteamPolish = {
 	},
 };
 
-const cloudflare = isCLI || !isProduction ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });
+const cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =
+	isCLI || !isProduction ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });
 
 export const database = cloudflare.env.D1;
 export const mediaBucket = cloudflare.env.R2;
+export const disposeCloudflareContext = cloudflare.dispose?.bind(cloudflare);
 
 // ponytail: Payload 3.88 generates `DELETE ... WHERE false` while cleaning
 // polymorphic document locks on D1. Re-enable locks after the adapter fixes it.
@@ -107,7 +113,7 @@ export default buildConfig({
 	editor: lexicalEditor(),
 	secret: payloadSecret,
 	typescript: { outputFile: path.resolve(dirname, "payload-types.ts") },
-	db: sqliteD1Adapter({ binding: cloudflare.env.D1, afterSchemaInit: [preserveOperationalTables] }),
+	db: sqliteD1Adapter({ binding: cloudflare.env.D1, afterSchemaInit: [preserveOperationalTables], push: false }),
 	plugins: [r2Storage({ bucket: cloudflare.env.R2, collections: { media: true } })],
 	onInit: isProduction
 		? undefined
@@ -118,7 +124,7 @@ export default buildConfig({
 			},
 });
 
-function getCloudflareContextFromWrangler(): Promise<CloudflareContext> {
+function getCloudflareContextFromWrangler(): Promise<CloudflareContext & { dispose?: () => Promise<void> }> {
 	return import(/* webpackIgnore: true */ `${"__wrangler".replaceAll("_", "")}`).then(({ getPlatformProxy }) =>
 		getPlatformProxy({
 			environment: process.env.CLOUDFLARE_ENV,

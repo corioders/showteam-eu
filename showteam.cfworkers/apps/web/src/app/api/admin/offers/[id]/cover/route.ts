@@ -24,7 +24,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 		const media = await createOptimizedMedia(payload, data, `Zdjęcie okładkowe — ${offer.title}`);
 		mediaId = media.id;
 		await payload.update({ collection: "offers", id, data: { cover: media.id }, overrideAccess: false, user });
-		if (typeof offer.cover === "number" && offer.cover !== mediaId) await deleteOptimizedMedia(payload, offer.cover);
+		if (typeof offer.cover === "number" && offer.cover !== mediaId) {
+			await deleteOptimizedMedia(payload, offer.cover);
+		}
 		revalidateOffers(offer.slug, offer.category);
 		return NextResponse.json({ url: media.url, descriptor: media.descriptor, mediaId: media.id, message: "Zdjęcie jest już widoczne na stronie." });
 	} catch (error) {

@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
+// biome-ignore-all lint/suspicious/noUndeclaredEnvVars: Worker and test environment variables are runtime bindings.
 import { defineConfig, devices } from "@playwright/test";
 
 const externalBaseUrl = process.env.PLAYWRIGHT_BASE_URL;
@@ -18,6 +20,7 @@ export default defineConfig({
 	reporter: "line",
 	use: {
 		baseURL: externalBaseUrl || localBaseUrl,
+		serviceWorkers: "block",
 		trace: "retain-on-failure",
 		screenshot: "only-on-failure",
 	},

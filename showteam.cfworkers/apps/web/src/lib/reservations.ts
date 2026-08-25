@@ -1,3 +1,4 @@
+// biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
 import type { OptimizedImageDescriptor } from "cstd-next/media/image/optimized-image.jsx";
 
 export type BookableEquipment = {

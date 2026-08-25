@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import { Footprints, MountainSnow, PartyPopper, Snowflake, UtensilsCrossed } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
