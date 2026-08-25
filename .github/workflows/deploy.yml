@@ -13,8 +13,8 @@
 # 3. Provision cache R2/D1 resources with OpenTofu in template.cfworkers/infra,
 #    then paste its two D1 output ids into apps/web/wrangler.jsonc.
 #
-# Runs on Blacksmith runners (~2x faster builds, 4x faster cache).
-# Swap `runs-on` for `ubuntu-latest` if Blacksmith is not enabled for this org.
+# Trusted validation and deploy jobs run on the isolated `macbook15` organization runner.
+# Fork pull requests stay on Blacksmith because their code is untrusted.
 # The source template repository skips this workflow; initialized project
 # repositories run it normally.
 
@@ -34,7 +34,7 @@ jobs:
   deploy:
     if: github.repository != 'corioders/cstd-nextjs-template'
     needs: validate
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: [self-hosted, macbook15]
     timeout-minutes: 30
     environment: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
     concurrency:
