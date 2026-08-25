@@ -12,9 +12,13 @@ overrides:
 
 onlyBuiltDependencies:
   - "@biomejs/biome"
+  - "@firebase/util"
   - "@tailwindcss/oxide"
   - esbuild
   - lefthook
+  - lmdb
+  - msgpackr-extract
+  - protobufjs
   - sharp
   - unrs-resolver
   - workerd
