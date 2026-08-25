@@ -47,7 +47,6 @@ export function renderFormSections(sections: FormSection[], userComponents?: Par
 			renderedQuestions.push(<RenderQuestion components={components} key={question.questionNameAttributeID} question={question} />);
 		}
 
-		// biome-ignore assist/source/useSortedKeys: We want the attributes to be in the interface order
 		const renderedFormSection: RenderedFormSection = {
 			title: formSection.title,
 			description: formSection.description,
@@ -94,7 +93,7 @@ function RenderQuestion({ question, components: Components }: RenderQuestionProp
 		return <Components.file {...question} />;
 	}
 
-	throw new Error(`Unsupported question type ${question.type}`);
+	return <CstdError error={new Error(`Unsupported question type ${question.type}`)} />;
 }
 
 const defaultComponents: FormComponents = {

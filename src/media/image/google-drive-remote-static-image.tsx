@@ -6,14 +6,26 @@
 import "server-only";
 
 import { getRequestAuthHeaders } from "cstd-ts/driveCMS/index.js";
+import { cache, use } from "react";
 
-import { RemoteStaticImage, type RemoteStaticImageProps } from "./remote-static-image.jsx";
+import { OptimizedImage } from "./optimized-image.jsx";
+import { loadPrerenderedImage } from "./prerendered-image-runtime.js";
+import type { StaticImageProps } from "./static-image.jsx";
 
-export const GoogleDriveRemoteStaticImage = async function GoogleDriveRemoteStaticImage(props: RemoteStaticImageProps) {
-	const [fetchDriveCMSHeaders, headersError] = await getRequestAuthHeaders(props.src);
-	if (headersError) {
-		return <RemoteStaticImage {...props} />;
-	}
+export interface GoogleDriveRemoteStaticImageProps extends Omit<StaticImageProps, "src"> {
+	src: string;
+}
 
-	return <RemoteStaticImage fetchRequestInit={{ headers: fetchDriveCMSHeaders }} {...props} />;
+export const GoogleDriveRemoteStaticImage = function GoogleDriveRemoteStaticImage({ src, ...imageProps }: GoogleDriveRemoteStaticImageProps) {
+	const optimizedImage = use(loadGoogleDriveRemoteStaticImage(src, imageProps.sizes));
+	return <OptimizedImage {...imageProps} src={optimizedImage} />;
 };
+
+const loadGoogleDriveRemoteStaticImage = cache(async (src: string, sizes: string) => {
+	const [fetchDriveCMSHeaders, headersError] = await getRequestAuthHeaders(src);
+	return loadPrerenderedImage({
+		fetchRequestInit: headersError ? undefined : { headers: fetchDriveCMSHeaders },
+		sizes,
+		src,
+	});
+});
