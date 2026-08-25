@@ -6,6 +6,9 @@
 		},
 		"build-cloudflare": {
 			"outputs": ["build/**"]
+		},
+		"dev": {
+			"dependsOn": ["build"]
 		}
 	}
 }

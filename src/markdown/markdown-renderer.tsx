@@ -10,32 +10,37 @@ import { MarkdownAsync, type Options, defaultUrlTransform as reactMarkdownDefaul
 import remarkGfm from "remark-gfm";
 
 import { CstdError } from "@/error/cstd-error.jsx";
-import { RemoteStaticImage } from "@/media/image/remote-static-image.jsx";
+import { StaticImage } from "@/media/image/static-image.jsx";
 
-export type Props = Options;
+export type Props = Options & {
+	/** Layout contract used to build responsive candidates for Markdown images. */
+	imageSizes: string;
+};
 
 /**
  * https://h.corioders.com/cstd-next/markdown-renderer
  */
-export function MarkdownRenderer({ urlTransform, remarkPlugins, ...props }: Props): JSX.Element {
-	const components = { ...defaultComponents, ...props.components };
+export function MarkdownRenderer({ imageSizes, urlTransform, remarkPlugins, ...props }: Props): JSX.Element {
+	const components = { ...getDefaultComponents(imageSizes), ...props.components };
 	props.components = components;
 	return <MarkdownAsync remarkPlugins={[remarkGfm, ...(remarkPlugins ?? [])]} urlTransform={urlTransform ?? defaultUrlTransform} {...props} />;
 }
 
-const defaultComponents: Props["components"] = {
-	img: (imgProps) => {
-		if (!imgProps.src) {
-			return <CstdError error={new Error("Expected `src` prop on image")} />;
-		}
+function getDefaultComponents(imageSizes: string): Props["components"] {
+	return {
+		img: (imgProps) => {
+			if (!imgProps.src) {
+				return <CstdError error={new Error("Expected `src` prop on image")} />;
+			}
 
-		if (typeof imgProps.src !== "string") {
-			return <CstdError error={new Error("Expected imgProps.src to be a string")} />;
-		}
+			if (typeof imgProps.src !== "string") {
+				return <CstdError error={new Error("Expected imgProps.src to be a string")} />;
+			}
 
-		return <RemoteStaticImage alt={imgProps.alt ?? "TODO NO ALT"} loading="lazy" sizes="TODO SIZES" src={imgProps.src} />;
-	},
-};
+			return <StaticImage alt={imgProps.alt ?? ""} loading="lazy" sizes={imageSizes} src={imgProps.src} />;
+		},
+	};
+}
 
 function defaultUrlTransform(value: string) {
 	if (value.startsWith("data:image")) {
