@@ -1,0 +1,8 @@
+packages:
+  - "."
+
+onlyBuiltDependencies:
+  - "@firebase/util"
+  - lmdb
+  - msgpackr-extract
+  - protobufjs
