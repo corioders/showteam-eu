@@ -1,0 +1,25 @@
+{
+	"name": "showteam.cfworkers",
+	"version": "1.0.0",
+	"private": true,
+	"scripts": {
+		"postinstall": "lefthook install && turbo telemetry disable",
+		"dev": "turbo run dev",
+		"build": "turbo run build",
+		"check": "pnpm check-biome && pnpm check-types",
+		"check-types": "turbo run check-types",
+		"check-biome": "biome check --error-on-warnings",
+		"check-biome-staged": "biome check --error-on-warnings --staged --no-errors-on-unmatched",
+		"check-biome-fix": "biome check --error-on-warnings --fix",
+		"test": "pnpm test:unit && pnpm test:e2e",
+		"test:unit": "turbo run test:unit",
+		"test:e2e": "turbo run test:e2e",
+		"clean": "turbo run clean && rm -rf .turbo"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.10",
+		"lefthook": "^2.1.0",
+		"turbo": "^2.8.3"
+	},
+	"packageManager": "pnpm@11.24.0+sha512.bd27e345e976dcb0be0b7a1228217b049a817e21b1f355c90dbe7dc46671895a8bc1e6d06c24554505ea93ea0b45f489a27ec1bfbc8de6a9659fca0f16fa0000"
+}

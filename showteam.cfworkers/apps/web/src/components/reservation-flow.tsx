@@ -1,0 +1,468 @@
+"use client";
+
+import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, CloudSun, Phone, Sailboat, Waves, Wind, Zap } from "lucide-react";
+import { OptimizedImage } from "cstd-next/media/image/optimized-image.jsx";
+import { useEffect, useMemo, useState } from "react";
+
+import { EquipmentEditor } from "@/components/editor/equipment-editor";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { addDaysToBookingDate, type BookableEquipment, bookingDateChoices } from "@/lib/reservations";
+import { weatherProfileLabel } from "@/lib/wind-recommendations";
+
+type Slot = {
+	time: string;
+	available: number;
+	recommendation?: {
+		recommended: boolean;
+		level: "best" | "medium" | "poor" | "professional";
+		basis: "forecast" | "typical" | "none";
+		label?: string;
+		detail?: string;
+		windKmh?: number;
+		gustKmh?: number;
+	};
+};
+type WindStatus = "forecast" | "outside-range" | "unavailable";
+type Result = { reference: string; equipment: string; date: string; time: string; endTime: string; status: "pending" };
+
+const categoryIcon = { Woda: Waves, Ląd: Zap, Szkolenie: Sailboat, Inne: Sailboat } as const;
+
+export function ReservationFlow({ equipment, today }: { equipment: BookableEquipment[]; today: string }) {
+	const [selectedId, setSelectedId] = useState<number | null>(equipment[0]?.id ?? null);
+	const [date, setDate] = useState(today);
+	const [visibleStart, setVisibleStart] = useState(today);
+	const [time, setTime] = useState("");
+	const [slots, setSlots] = useState<Slot[]>([]);
+	const [loadingSlots, setLoadingSlots] = useState(true);
+	const [windStatus, setWindStatus] = useState<WindStatus | null>(null);
+	const [recommendationNote, setRecommendationNote] = useState("");
+	const [submitting, setSubmitting] = useState(false);
+	const [error, setError] = useState("");
+	const [result, setResult] = useState<Result | null>(null);
+	const selected = useMemo(() => equipment.find((item) => item.id === selectedId), [equipment, selectedId]);
+	const visibleDates = useMemo(() => bookingDateChoices(visibleStart), [visibleStart]);
+
+	function selectDate(nextDate: string) {
+		if (nextDate === date) {
+			return;
+		}
+		setDate(nextDate);
+		setTime("");
+		setSlots([]);
+		setWindStatus(null);
+		setError("");
+		setLoadingSlots(true);
+	}
+
+	useEffect(() => {
+		if (!selectedId || !date || result) {
+			return;
+		}
+		const controller = new AbortController();
+		fetch(`/api/reservations/availability?equipment=${selectedId}&date=${date}`, { signal: controller.signal })
+			.then(async (response) => {
+				const body = (await response.json()) as { slots?: Slot[]; windStatus?: WindStatus; recommendationNote?: string | null; error?: string };
+				if (!response.ok) {
+					throw new Error(body.error || "Nie udało się pobrać terminów.");
+				}
+				setSlots(body.slots || []);
+				setWindStatus(body.windStatus || null);
+				setRecommendationNote(body.recommendationNote || "");
+			})
+			.catch((fetchError) => {
+				if (fetchError.name !== "AbortError") {
+					setError(fetchError.message);
+				}
+			})
+			.finally(() => {
+				if (!controller.signal.aborted) {
+					setLoadingSlots(false);
+				}
+			});
+		return () => controller.abort();
+	}, [date, result, selectedId]);
+
+	async function submit(event: React.FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		if (!selectedId || !date || !time) {
+			return setError("Najpierw wybierz aktywność, datę i godzinę.");
+		}
+		setSubmitting(true);
+		setError("");
+		const form = new FormData(event.currentTarget);
+		const response = await fetch("/api/reservations", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				equipmentId: selectedId,
+				date,
+				time,
+				name: form.get("name"),
+				phone: form.get("phone"),
+				email: form.get("email"),
+				notes: form.get("notes"),
+				instructorRequired: form.get("instructorRequired") === "on",
+				website: form.get("website"),
+			}),
+		});
+		const body = (await response.json()) as Result & { error?: string };
+		setSubmitting(false);
+		if (!response.ok) {
+			setError(body.error || "Nie udało się zapisać rezerwacji.");
+			if (response.status === 409) {
+				setTime("");
+			}
+			return;
+		}
+		setResult(body);
+	}
+
+	if (equipment.length === 0) {
+		return (
+			<Card className="border-white/10 bg-white/[0.04] p-8 text-center">
+				<h2 className="font-black font-display text-3xl uppercase">Rezerwacja online jest teraz niedostępna</h2>
+				<p className="mt-3 text-white/60">Zadzwoń do nas — sprawdzimy dostępne aktywności.</p>
+				<Button asChild={true} className="mt-6">
+					<a href="tel:+48500128090">
+						<Phone className="size-4" /> +48 500 128 090
+					</a>
+				</Button>
+			</Card>
+		);
+	}
+
+	if (result) {
+		return (
+			<Card className="mx-auto max-w-3xl overflow-hidden border-orange-500/30 bg-neutral-950 p-0">
+				<div className="bg-orange-500 p-8 text-black sm:p-12">
+					<div className="flex size-14 items-center justify-center rounded-full bg-black text-orange-500">
+						<Check className="size-7" strokeWidth={3} />
+					</div>
+					<p className="mt-8 font-black text-xs uppercase tracking-[.2em]">Oczekuje na potwierdzenie Asi</p>
+					<h2 className="mt-2 font-black font-display text-5xl uppercase sm:text-7xl">{result.reference}</h2>
+				</div>
+				<div className="grid gap-6 p-8 sm:grid-cols-2 sm:p-12">
+					<div>
+						<span className="eyebrow">Aktywność</span>
+						<p className="mt-2 font-bold text-xl">{result.equipment}</p>
+					</div>
+					<div>
+						<span className="eyebrow">Termin</span>
+						<p className="mt-2 font-bold text-xl">
+							{result.date} · {result.time}–{result.endTime}
+						</p>
+					</div>
+					<p className="text-sm text-white/55 leading-6 sm:col-span-2">
+						Zapisz numer rezerwacji. Asia potwierdzi termin. Jeśli warunki nie będą pasować, ekipa zaproponuje najlepszą dostępną alternatywę.
+					</p>
+					<div className="flex flex-wrap gap-3 sm:col-span-2">
+						<Button
+							onClick={() => {
+								setResult(null);
+								setDate(today);
+								setVisibleStart(today);
+								setTime("");
+								setLoadingSlots(true);
+							}}
+						>
+							<ArrowLeft className="size-4" /> Nowa rezerwacja
+						</Button>
+						<Button asChild={true} variant="outline">
+							<a href="tel:+48500128090">
+								<Phone className="size-4" /> Zadzwoń
+							</a>
+						</Button>
+					</div>
+				</div>
+			</Card>
+		);
+	}
+
+	return (
+		<div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(25rem,.95fr)] lg:items-start">
+			<section aria-labelledby="equipment-heading" className="min-w-0">
+				<div className="mb-5 flex items-end justify-between gap-4">
+					<div>
+						<span className="eyebrow">01 / Aktywności</span>
+						<h2 id="equipment-heading" className="mt-2 font-black font-display text-4xl uppercase">
+							Co chcesz robić?
+						</h2>
+					</div>
+					<div className="flex items-center gap-3">
+						<span className="hidden text-sm text-white/40 sm:block">{equipment.length} pozycji</span>
+						<EquipmentEditor />
+					</div>
+				</div>
+				<div className="flex w-full snap-x snap-mandatory gap-3 overflow-x-auto pb-3 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0">
+					{equipment.map((item) => {
+						const Icon = categoryIcon[item.category as keyof typeof categoryIcon] || Sailboat;
+						const active = item.id === selectedId;
+						return (
+							<div key={item.id} className="relative w-[86%] shrink-0 snap-start sm:w-auto">
+								<button
+									type="button"
+									onClick={() => {
+										setSelectedId(item.id);
+										setTime("");
+										setSlots([]);
+										setWindStatus(null);
+										setRecommendationNote("");
+										setError("");
+										if (date) {
+											setLoadingSlots(true);
+										}
+									}}
+									aria-pressed={active}
+									className={`group min-h-52 w-full border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${active ? "border-orange-500 bg-orange-500 text-black" : "border-white/10 bg-white/[0.035] hover:border-white/30"}`}
+								>
+									{typeof item.image === "object" && item.image?.optimizedImage ? (
+										<div className="relative -mx-5 -mt-5 mb-5 aspect-[16/9] overflow-hidden bg-neutral-900">
+											<OptimizedImage
+												src={item.image.optimizedImage}
+												alt={item.image.alt || item.name}
+												loading="lazy"
+												sizes="(min-width: 768px) 50vw, 100vw"
+												className="absolute inset-0 size-full object-cover transition duration-500 group-hover:scale-[1.03]"
+											/>
+										</div>
+									) : null}
+									<div className="flex items-start justify-between">
+										<Icon className={`size-7 ${active ? "text-black" : "text-orange-500"}`} />
+										<ChevronRight
+											className={`size-5 transition ${active ? "translate-x-0" : "-translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"}`}
+										/>
+									</div>
+									<h3 className="mt-12 font-black font-display text-3xl uppercase leading-none">{item.name}</h3>
+									<p className={`mt-3 text-sm leading-5 ${active ? "text-black/65" : "text-white/50"}`}>{item.description}</p>
+									<div className="mt-4 flex items-center gap-2 font-bold text-xs uppercase tracking-wider">
+										<Clock3 className="size-3.5" /> {item.durationMinutes} min
+									</div>
+									<div className={`mt-2 flex items-center gap-2 font-bold text-[.68rem] uppercase tracking-wider ${active ? "text-black/70" : "text-sky-300"}`}>
+										<Wind className="size-3.5" /> {weatherProfileLabel(item.weatherProfile)}
+									</div>
+								</button>
+								<EquipmentEditor equipment={item} compact={true} className="absolute top-3 right-3" />
+							</div>
+						);
+					})}
+				</div>
+			</section>
+
+			<Card className="min-w-0 border-white/10 bg-neutral-950 p-5 sm:p-7 lg:sticky lg:top-24">
+				<span className="eyebrow">02 / Termin i kontakt</span>
+				<div className="mt-3 flex items-center justify-between gap-4 border-white/10 border-b pb-5">
+					<h2 className="font-black font-display text-4xl uppercase">{selected?.name || "Wybierz aktywność"}</h2>
+					{selected && <Badge className="border border-white/15 bg-transparent text-white">{selected.durationMinutes} min</Badge>}
+				</div>
+				<form onSubmit={submit} className="mt-6 space-y-6">
+					<fieldset aria-labelledby="booking-date-label">
+						<div className="mb-3 flex items-center justify-between gap-3">
+							<span id="booking-date-label" className="flex items-center gap-2 font-bold text-sm">
+								<CalendarDays className="size-4 text-orange-500" /> Data
+							</span>
+							<div className="flex items-center gap-1">
+								<button
+									type="button"
+									aria-label="Poprzedni tydzień"
+									disabled={visibleStart === today}
+									onClick={() => setVisibleStart(addDaysToBookingDate(visibleStart, -7) < today ? today : addDaysToBookingDate(visibleStart, -7))}
+									className="grid size-11 place-items-center border border-white/15 transition hover:border-orange-500 disabled:cursor-not-allowed disabled:opacity-25"
+								>
+									<ChevronLeft className="size-4" />
+								</button>
+								<button
+									type="button"
+									aria-label="Następny tydzień"
+									onClick={() => setVisibleStart(addDaysToBookingDate(visibleStart, 7))}
+									className="grid size-11 place-items-center border border-white/15 transition hover:border-orange-500"
+								>
+									<ChevronRight className="size-4" />
+								</button>
+							</div>
+						</div>
+						<div className="grid grid-cols-4 gap-2 sm:grid-cols-7" aria-label="Najbliższe daty">
+							{visibleDates.map((value, index) => {
+								const parsed = new Date(`${value}T12:00:00Z`);
+								const active = date === value;
+								const dayLabel =
+									index === 0 && value === today ? "Dziś" : new Intl.DateTimeFormat("pl-PL", { weekday: "short", timeZone: "UTC" }).format(parsed).replace(".", "");
+								return (
+									<button
+										key={value}
+										type="button"
+										aria-pressed={active}
+										onClick={() => selectDate(value)}
+										className={`min-h-20 border px-1 py-2 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${active ? "border-orange-500 bg-orange-500 text-black" : "border-white/15 bg-white/[0.035] hover:border-orange-500"}`}
+									>
+										<span className={`block font-bold text-[.65rem] uppercase tracking-wider ${active ? "text-black/60" : "text-white/45"}`}>{dayLabel}</span>
+										<span className="mt-1 block font-black font-display text-2xl leading-none">{parsed.getUTCDate()}</span>
+										<span className={`mt-1 block text-[.65rem] uppercase ${active ? "text-black/60" : "text-white/35"}`}>
+											{new Intl.DateTimeFormat("pl-PL", { month: "short", timeZone: "UTC" }).format(parsed).replace(".", "")}
+										</span>
+									</button>
+								);
+							})}
+						</div>
+						<label className="mt-3 grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 border border-white/10 bg-white/[0.025] px-3 py-2 font-bold text-white/55 text-xs">
+							<span>Inna data</span>
+							<input
+								required={true}
+								type="date"
+								min={today}
+								value={date}
+								onChange={(event) => {
+									if (!event.target.value) {
+										return;
+									}
+									setVisibleStart(event.target.value);
+									selectDate(event.target.value);
+								}}
+								className="h-10 w-full min-w-0 border-0 bg-transparent text-right text-base text-white outline-none [color-scheme:dark]"
+							/>
+						</label>
+					</fieldset>
+					<fieldset>
+						<legend className="mb-2 flex items-center gap-2 font-bold text-sm">
+							<Clock3 className="size-4 text-orange-500" /> Godzina
+						</legend>
+						{!date ? (
+							<p className="border border-white/15 border-dashed p-5 text-sm text-white/40">Wybierz datę, aby zobaczyć wolne godziny.</p>
+						) : loadingSlots ? (
+							<p className="p-5 text-sm text-white/45">Sprawdzam wolne terminy i wiatr…</p>
+						) : slots.length > 0 ? (
+							<SlotPicker slots={slots} selectedTime={time} onSelect={setTime} />
+						) : (
+							<p className="border border-white/15 border-dashed p-5 text-sm text-white/50">Brak wolnych terminów tego dnia.</p>
+						)}
+						{!loadingSlots && windStatus ? (
+							<p className="mt-3 flex items-start gap-2 text-white/40 text-xs leading-5">
+								{windStatus === "forecast" ? <Wind className="mt-0.5 size-3.5 shrink-0 text-sky-300" /> : <CloudSun className="mt-0.5 size-3.5 shrink-0 text-white/35" />}
+								{windStatus === "forecast"
+									? "Polecane godziny uwzględniają krótkoterminową prognozę wiatru dla Jeziora Łąckiego."
+									: windStatus === "outside-range"
+										? "Dla dalszych terminów pokazujemy typowe godziny ustawione przez ekipę. Prognoza pojawi się bliżej daty."
+										: "Prognoza jest chwilowo niedostępna; pokazujemy godziny ustawione przez ekipę."}
+							</p>
+						) : null}
+						{time && slots.find((slot) => slot.time === time)?.recommendation?.detail ? (
+							<p className="mt-3 border-sky-400 border-l-2 pl-3 text-sm text-white/60 leading-5">{slots.find((slot) => slot.time === time)?.recommendation?.detail}</p>
+						) : null}
+					</fieldset>
+					{recommendationNote ? <div className="border-sky-400 border-l-2 pl-4 text-sm text-white/55 leading-6">{recommendationNote}</div> : null}
+					{selected?.notice && <div className="border-orange-500 border-l-2 pl-4 text-sm text-white/55 leading-6">{selected.notice}</div>}
+					<div className="border border-white/10 bg-white/[.035] p-4 text-sm text-white/60 leading-6">
+						<strong className="text-white">Warun może się zmienić — to nie problem.</strong> Jeśli wybrana aktywność nie będzie najlepszą opcją, ekipa powie, co w danym
+						momencie działa najlepiej, i zaproponuje alternatywę.
+					</div>
+					<div className="grid gap-4 border-white/10 border-t pt-6 sm:grid-cols-2">
+						<label className="sm:col-span-2">
+							<span className="mb-2 block font-bold text-sm">Imię i nazwisko</span>
+							<input
+								required={true}
+								name="name"
+								autoComplete="name"
+								minLength={2}
+								maxLength={120}
+								className="h-12 w-full border border-white/15 bg-white/[0.04] px-4 outline-none focus:border-orange-500"
+							/>
+						</label>
+						<label>
+							<span className="mb-2 block font-bold text-sm">Telefon</span>
+							<input
+								required={true}
+								name="phone"
+								type="tel"
+								inputMode="tel"
+								autoComplete="tel"
+								placeholder="500 000 000"
+								className="h-12 w-full border border-white/15 bg-white/[0.04] px-4 outline-none focus:border-orange-500"
+							/>
+						</label>
+						<label>
+							<span className="mb-2 block font-bold text-sm">E-mail</span>
+							<input
+								required={true}
+								name="email"
+								type="email"
+								autoComplete="email"
+								placeholder="adres@email.pl"
+								className="h-12 w-full border border-white/15 bg-white/[0.04] px-4 outline-none focus:border-orange-500"
+							/>
+						</label>
+						<label className="flex min-h-14 items-center gap-3 border border-white/15 bg-white/[0.04] p-4 font-bold sm:col-span-2">
+							<input name="instructorRequired" type="checkbox" className="size-5 accent-orange-500" /> Potrzebuję instruktora
+						</label>
+						<label className="sm:col-span-2">
+							<span className="mb-2 block font-bold text-sm">
+								Uwagi <span className="font-normal text-white/35">(opcjonalnie)</span>
+							</span>
+							<textarea
+								name="notes"
+								rows={3}
+								maxLength={500}
+								className="w-full resize-y border border-white/15 bg-white/[0.04] p-4 outline-none focus:border-orange-500"
+							/>
+						</label>
+						<label className="absolute -left-[10000px]" aria-hidden="true">
+							Strona
+							<input name="website" tabIndex={-1} autoComplete="off" />
+						</label>
+					</div>
+					{error && (
+						<p role="alert" className="border border-red-500/40 bg-red-500/10 p-3 text-red-200 text-sm">
+							{error}
+						</p>
+					)}
+					<Button type="submit" size="lg" disabled={!selectedId || !date || !time || submitting} className="w-full">
+						{submitting ? "Zapisuję…" : "Rezerwuję termin"}
+						<ArrowRight className="size-4" />
+					</Button>
+					<p className="text-center text-white/35 text-xs leading-5">
+						Prognoza jest podpowiedzią, nie gwarancją warunków. Rezerwacja nie obejmuje płatności online. Dane pogodowe: Open-Meteo.
+					</p>
+				</form>
+			</Card>
+		</div>
+	);
+}
+
+function SlotPicker({ slots, selectedTime, onSelect }: { slots: Slot[]; selectedTime: string; onSelect: (time: string) => void }) {
+	return (
+		<div className="space-y-3">
+			<div className="flex flex-wrap gap-x-3 gap-y-1 font-bold text-[.62rem] text-white/50 uppercase tracking-wider" aria-label="Legenda warunków">
+				<span className="text-sky-300">● Najlepszy</span>
+				<span className="text-amber-300">● Średni</span>
+				<span className="text-red-300">● Słaby</span>
+				<span className="text-violet-300">● Profesjonalny</span>
+			</div>
+			<div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+				{slots.map((slot) => (
+					<SlotButton key={slot.time} slot={slot} selected={selectedTime === slot.time} onSelect={onSelect} />
+				))}
+			</div>
+		</div>
+	);
+}
+
+function SlotButton({ slot, selected, onSelect }: { slot: Slot; selected: boolean; onSelect: (time: string) => void }) {
+	const level = slot.recommendation?.level || "poor";
+	const colors = {
+		best: "border-sky-400/70 bg-sky-400/10 text-sky-300 hover:border-sky-300",
+		medium: "border-amber-400/60 bg-amber-400/10 text-amber-300 hover:border-amber-300",
+		poor: "border-red-400/45 bg-red-400/[.07] text-red-300 hover:border-red-300",
+		professional: "border-violet-400/60 bg-violet-400/10 text-violet-300 hover:border-violet-300",
+	} as const;
+	return (
+		<button
+			type="button"
+			onClick={() => onSelect(slot.time)}
+			data-level={level}
+			className={`min-h-14 border px-2 py-2 font-bold text-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${selected ? "border-orange-500 bg-orange-500 text-black" : colors[level]}`}
+		>
+			<span className={`block ${selected ? "text-black" : "text-white"}`}>{slot.time}</span>
+			<span className={`mt-0.5 block text-[.58rem] uppercase tracking-wide ${selected ? "text-black/65" : ""}`}>{slot.recommendation?.label || "Słaby warun"}</span>
+		</button>
+	);
+}

@@ -1,0 +1,78 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "showteam-eu",
+	"compatibility_date": "2025-08-15",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"vars": {
+		"PUBLIC_SITE_URL": "https://www.showteam.eu",
+		"VAPID_PUBLIC_KEY": "BDlvHyOIFUaED8IieFcgE_3Vek2R1sJ_Jt2pi-QLkzGk_Mw0ZAUuQSOPKXloLnjgur-YuC6iE4Ob_a46vopDg_k"
+	},
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS",
+		"run_worker_first": [
+			"/",
+			"/a/*",
+			"/admin*",
+			"/api/*",
+			"/dodaj*",
+			"/tv*",
+			"/kalendarz*",
+			"/polacz-tv*",
+			"/rezerwacje*",
+			"/noclegi",
+			"/r/*",
+			"/zorganizuj-impreze",
+			"/oferta/*",
+			"/kontakt"
+		]
+	},
+	"d1_databases": [
+		{
+			"binding": "D1",
+			"database_id": "fb4ccca4-31e6-4ed0-b3e5-a36b520d89c6",
+			"database_name": "showteam-cms"
+		},
+		{
+			"binding": "NEXT_TAG_CACHE_D1",
+			"database_id": "d574cbf4-5ab1-4545-a66b-3bb1545a379d",
+			"database_name": "showteam-next-tags"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "R2",
+			"bucket_name": "showteam-media"
+		},
+		{
+			"binding": "NEXT_INC_CACHE_R2_BUCKET",
+			"bucket_name": "showteam-next-cache"
+		}
+	],
+	"env": {
+		"preview": {
+			"name": "showteam-eu-preview",
+			"vars": {
+				"PUBLIC_SITE_URL": "https://showteam-eu-preview.corioders.workers.dev",
+				"VAPID_PUBLIC_KEY": "BDlvHyOIFUaED8IieFcgE_3Vek2R1sJ_Jt2pi-QLkzGk_Mw0ZAUuQSOPKXloLnjgur-YuC6iE4Ob_a46vopDg_k"
+			},
+			"d1_databases": [
+				{
+					"binding": "D1",
+					"database_id": "f5fa2b42-977f-4048-8fae-8be5f19fefea",
+					"database_name": "showteam-preview-cms"
+				},
+				{
+					"binding": "NEXT_TAG_CACHE_D1",
+					"database_id": "918c4892-49ca-4473-b346-67780535421f",
+					"database_name": "showteam-preview-next-tags"
+				}
+			],
+			"r2_buckets": [
+				{ "binding": "R2", "bucket_name": "showteam-preview-media" },
+				{ "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "showteam-preview-next-cache" }
+			]
+		}
+	}
+}

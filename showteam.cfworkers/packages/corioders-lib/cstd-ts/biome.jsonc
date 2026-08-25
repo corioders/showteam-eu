@@ -1,0 +1,15 @@
+// biome-ignore-all assist/source/useSortedKeys: I want this file to be in the order presented on biome website
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
+	"root": false,
+	"extends": ["./config/biome.jsonc"],
+	"plugins": ["config/biome-plugin/no-throw.grit"],
+	"linter": {
+		"rules": {
+			"suspicious": {
+				"noExplicitAny": "off",
+				"noConsole": "off"
+			}
+		}
+	}
+}

@@ -1,0 +1,137 @@
+// biome-ignore-all assist/source/useSortedKeys: I want this file to be in the order presented on biome website
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
+	"root": false,
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		}
+	},
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"ignoreUnknown": false,
+		"maxSize": 2097152,
+		// Ignore the 'build' folder
+		"includes": ["**", "!**/build", "!package.json"]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"lineWidth": 170,
+		"formatWithErrors": false,
+		"lineEnding": "lf"
+	},
+	"linter": {
+		"enabled": true,
+		"domains": {
+			"react": "recommended",
+			"next": "recommended",
+			"turborepo": "recommended",
+			"tailwind": "recommended"
+			// "project": "recommended",
+		},
+		"rules": {
+			"complexity": {
+				"noExcessiveCognitiveComplexity": {
+					"level": "warn",
+					"options": {
+						"maxAllowedComplexity": 20
+					}
+				},
+				"noUselessStringConcat": "error",
+				// This rule interferes with the noPropertyAccessFromIndexSignature typescript compiler flag
+				"useLiteralKeys": "off",
+				"useWhile": "on"
+			},
+			"correctness": {
+				"noUndeclaredVariables": "on",
+				"noUnusedImports": {
+					"level": "warn",
+					"fix": "safe"
+				}
+				// https://next.biomejs.dev/linter/rules/use-import-extensions/
+				// "useImportExtensions": {},
+			},
+			"nursery": {
+				// TODO: Follow this issue: https://github.com/biomejs/biome/issues/1274
+				"useSortedClasses": {
+					"level": "error",
+					"fix": "safe",
+					"options": {
+						"functions": ["clsx", "cva", "tw", "tw.*"]
+					}
+				}
+			},
+			"performance": {
+				"noBarrelFile": "warn",
+				"noReExportAll": "warn",
+				"useTopLevelRegex": "warn"
+			},
+			"style": {
+				"noCommonJs": "warn",
+				"noDefaultExport": "warn",
+				"noEnum": "warn",
+				"noExportedImports": "warn",
+				"noImplicitBoolean": "warn",
+				"noNamespace": "warn",
+				"noParameterAssign": "warn",
+				"noParameterProperties": "warn",
+				"noShoutyConstants": "warn",
+				"noSubstr": "warn",
+				"noUnusedTemplateLiteral": "warn",
+				"noUselessElse": "warn",
+				"noYodaExpression": "warn",
+				"useAsConstAssertion": "warn",
+				"useAtIndex": "warn",
+				"useBlockStatements": "warn",
+				"useConsistentArrayType": "warn",
+				"useConsistentBuiltinInstantiation": "warn",
+				"useConsistentCurlyBraces": "warn",
+				"useDefaultParameterLast": "warn",
+				"useExplicitLengthCheck": "warn",
+				"useFilenamingConvention": {
+					"level": "warn",
+					"options": {
+						"strictCase": false,
+						"requireAscii": true,
+						"filenameCases": ["kebab-case"]
+					}
+				},
+				"useForOf": "warn",
+				"useFragmentSyntax": "warn",
+				"useNamingConvention": {
+					"level": "warn",
+					"options": {
+						"strictCase": false
+					}
+				},
+				"useNumberNamespace": "warn",
+				"useSelfClosingElements": "warn",
+				"useSingleVarDeclarator": "warn",
+				"useTrimStartEnd": "warn"
+			},
+			"suspicious": {
+				"noConsole": "warn",
+				"noEvolvingTypes": "warn",
+				"noVar": "warn",
+				"useGuardForIn": "warn"
+			}
+		}
+	},
+	"assist": {
+		"actions": {
+			"source": {
+				"organizeImports": {
+					"level": "on",
+					"options": {
+						"groups": [":NODE:", ":BLANK_LINE:", ":PACKAGE:", ":BLANK_LINE:", ":ALIAS:", ":BLANK_LINE:", ":PATH:"]
+					}
+				}
+			}
+		}
+	}
+}

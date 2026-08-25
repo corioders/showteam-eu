@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cstd-next-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: [self-hosted, macbook15]
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout cstd-next
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          path: workspace/cstd-next
+
+      - name: Checkout cstd-ts
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          repository: corioders/cstd-ts
+          ssh-key: ${{ secrets.CSTD_TS_DEPLOY_KEY }}
+          path: workspace/cstd-ts
+
+      - name: Setup Node.js
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: 24
+          package-manager-cache: false
+
+      - name: Setup pnpm
+        run: corepack enable
+
+      - name: Create shared workspace
+        working-directory: workspace
+        run: |
+          printf 'packages:\n  - "cstd-next"\n  - "cstd-ts"\nminimumReleaseAgeExclude:\n  - next\n  - "@next/*"\nallowBuilds:\n  "@biomejs/biome": true\n  "@firebase/util": true\n  esbuild: true\n  lmdb: true\n  msgpackr-extract: true\n  protobufjs: true\n  sharp: true\n' > pnpm-workspace.yaml
+
+      - name: Install dependencies
+        working-directory: workspace
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build cstd-ts
+        working-directory: workspace
+        run: pnpm --dir cstd-ts check && pnpm --dir cstd-ts build
+
+      - name: Verify cstd-next
+        working-directory: workspace
+        run: pnpm --dir cstd-next check && pnpm --dir cstd-next build
+
+      - name: Test image pipeline
+        working-directory: workspace
+        run: pnpm --dir cstd-next test:unit
