@@ -83,7 +83,7 @@ export async function optimizeImage(imageFile: File, options: OptimizeImageOptio
 		}
 		const [workerOutput, workerError] = await safePromise(() => encodeImageVariants(sourcePixels, targetWidths));
 		if (workerError !== null) {
-			return [null, new Error(`Unable to optimize image '${imageFile.name}'.`, { cause: workerError })];
+			return [null, new Error(`Unable to optimize image '${imageFile.name}': ${workerError.message}`, { cause: workerError })];
 		}
 		const [hashes, hashError] = await safePromise(async () => {
 			const contentHash = await digestHex(sourceBytes);
