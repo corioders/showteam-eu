@@ -3,6 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 const port = 3100;
 const localBaseUrl = `http://localhost:${port}`;
 const externalBaseUrl = process.env["PLAYWRIGHT_BASE_URL"];
+const chromiumExecutablePath = process.env["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"];
 const isCi = Boolean(process.env["CI"]);
 
 // biome-ignore lint/style/noDefaultExport: Playwright requires a default configuration export.
@@ -21,14 +22,20 @@ export default defineConfig({
 		? {}
 		: {
 				webServer: {
-					command: isCi ? `pnpm start --port ${port}` : `pnpm dev --port ${port}`,
+					command: `pnpm start --port ${port}`,
 					url: localBaseUrl,
-					reuseExistingServer: !isCi,
+					reuseExistingServer: false,
 					timeout: 120_000,
 				},
 			}),
 	projects: [
-		{ name: "chromium", use: { ...devices["Desktop Chrome"] } },
+		{
+			name: "chromium",
+			use: {
+				...devices["Desktop Chrome"],
+				...(chromiumExecutablePath ? { launchOptions: { executablePath: chromiumExecutablePath } } : {}),
+			},
+		},
 		{ name: "webkit", use: { ...devices["Desktop Safari"] } },
 	],
 });

@@ -1,7 +1,7 @@
 import path from "node:path";
 
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
-import { nextConfig as cstdNextConfig } from "cstd-next/config/next.config.mjs";
+import { nextConfig as cstdNextConfig } from "cstd-next/config/next.config.js";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
 		root: path.join(import.meta.dirname, "..", ".."),
 	},
 	outputFileTracingRoot: path.join(import.meta.dirname, "..", ".."),
+	outputFileTracingIncludes: {
+		"/*": ["../../packages/corioders-lib/cstd-ts/config/tsconfig.json"],
+	},
 	reactCompiler: true,
 };
 

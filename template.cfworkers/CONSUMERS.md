@@ -22,12 +22,24 @@ For every template or `cstd-*` change, update this table first, then make and
 verify one migration per listed consumer. Shared-library changes go upstream
 first and are brought into each consumer through its subtree.
 
-`cstd-next` config source is `next.config.mts`; TypeScript emits
-`next.config.mjs`. Consumers must import:
+`cstd-next` config source is `next.config.ts`; TypeScript emits
+`next.config.js`. Consumers must import:
 
 ```ts
-import { nextConfig } from "cstd-next/config/next.config.mjs";
+import { nextConfig } from "cstd-next/config/next.config.js";
 ```
+
+Consumer application scripts must run `cstd-next-clean-images` as `prebuild`,
+and their app-level `turbo.json` must set `build.cache` to `false`. Remote image
+contents are external build inputs: skipping `next build` would also skip HTTP
+revalidation. Development assets remain intact while stale production assets
+and obsolete descriptor output are removed before each build. `LocalStaticImage`
+and `RemoteStaticImage` are Server Components; interactive consumers receive
+them through `children`/slot composition so client-side navigation carries the
+final `<picture>` in the existing RSC payload without a metadata fetch.
+Keep `apps/web/public/.assetsignore`: Wrangler uses it to exclude development
+image namespaces from production static-asset uploads without deleting files
+needed by a concurrently running `next dev` process.
 
 After a dependency/runtime change, run `pnpm install --frozen-lockfile`,
 `pnpm build`, `pnpm check`, and `pnpm --filter web exec opennextjs-cloudflare build`

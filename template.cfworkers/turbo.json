@@ -7,15 +7,9 @@
 		"CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY",
 		"CORIODERS_INVALIDATE_PERSISTENT_CACHE",
 		"CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER",
-		"CF_PAGES_BRANCH",
 		"IS_PREVIEW",
 		"NEXT_IS_EXPORT_WORKER",
-		"NEXT_PUBLIC_IS_PREVIEW",
-		"REGENERATE_BRANCH_NAME",
-		"REGENERATE_BUILD_TIMEOUT",
-		"REGENERATE_BUILD_TRIGGER_URL",
-		"REGENERATE_ENABLE",
-		"REGENERATE_OUTPUT_FOLDER_TO_CREATE"
+		"NEXT_PUBLIC_IS_PREVIEW"
 	],
 	"tasks": {
 		"build": {
@@ -37,14 +31,15 @@
 			"dependsOn": ["^check-biome-fix"]
 		},
 		"check-types": {
-			"dependsOn": ["^check-types"]
+			"dependsOn": ["^build", "^check-types"]
 		},
 		"test:unit": {
 			"dependsOn": ["^test:unit"]
 		},
 		"test:e2e": {
 			"cache": false,
-			"env": ["PLAYWRIGHT_BASE_URL"],
+			"dependsOn": ["build"],
+			"env": ["PLAYWRIGHT_BASE_URL", "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"],
 			"outputs": ["playwright-report/**", "test-results/**"]
 		},
 		"clean": {
@@ -52,6 +47,7 @@
 		},
 		"dev": {
 			"cache": false,
+			"dependsOn": ["^build"],
 			"persistent": true
 		}
 	}
