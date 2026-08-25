@@ -21,6 +21,8 @@
 /.next/
 /out/
 /public/_cstd/image/
+/cache/*
+!/cache/config.json
 
 # production
 /build
