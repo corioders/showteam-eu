@@ -19,7 +19,7 @@ import type { JsonValue } from "@/format/json/index.js";
 import { stringToURLSafeString } from "@/net/url.js";
 import type { FileOrFolderPath } from "@/os/path/index.js";
 import { type InterprocessLockManager, newInterprocessLockManagerSync } from "@/runtime/interprocess-lock.js";
-import cacheDriver from "@/storage/unstorage/cache-driver.mjs";
+import cacheDriver from "@/storage/unstorage/cache-driver.js";
 
 type AnyFunction = (...arguments_: readonly any[]) => any;
 
