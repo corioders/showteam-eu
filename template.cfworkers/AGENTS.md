@@ -31,5 +31,6 @@ return [session, null];
 # Workflow
 
 - Read `TODO.md` before starting work, keep its statuses current, remove old already finished tasks, and use it to resume after context loss.
+- Run trusted push and internal pull-request jobs on `[self-hosted, win24-wsl]`; external fork pull requests must stay on Blacksmith and must never run on a self-hosted runner.
 - Keep commits small and focused: one working, reversible change per commit. Do not combine unrelated features or fixes.
 - Do not implement fallbacks for problems that should surface as errors.
