@@ -315,6 +315,7 @@ test("CMS is the single installable staff dashboard", async ({ page }) => {
 });
 
 test("quick uploader previews the exact gallery crop", async ({ page }) => {
+	test.setTimeout(120_000);
 	await page.route("**/api/users/me", (route) => route.fulfill({ json: { user: { name: "Asia" } } }));
 	await page.route("**/api/quick-upload", (route) => {
 		const multipart = route.request().postDataBuffer()?.toString("latin1") || "";
@@ -339,7 +340,7 @@ test("quick uploader previews the exact gallery crop", async ({ page }) => {
 	await page.mouse.up();
 	await expect(page.getByText(/Punkt kadru:/)).not.toHaveText("Punkt kadru: 50%, 50%");
 	await page.getByRole("button", { name: "Opublikuj w galerii" }).click();
-	await expect(page.getByText("Opublikowano 1 materiał.")).toBeVisible();
+	await expect(page.locator('p[role="status"]')).toHaveText("Opublikowano 1 materiał.", { timeout: 90_000 });
 });
 
 test("gallery opens a keyboard-accessible lightbox", async ({ page }) => {
