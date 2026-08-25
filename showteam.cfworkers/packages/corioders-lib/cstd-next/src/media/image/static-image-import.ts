@@ -2,9 +2,11 @@
 // Unauthorized copying of this file, via any medium is strictly prohibited
 // Proprietary and confidential
 
+import type { OptimizedImageDescriptor } from "./optimized-image.jsx";
 import type { PrerenderedImageDevelopmentAsset } from "./prerendered-image-request.js";
 
 export interface StaticImageImport {
 	developmentAsset?: PrerenderedImageDevelopmentAsset;
+	runtimeAsset?: OptimizedImageDescriptor;
 	src: string;
 }

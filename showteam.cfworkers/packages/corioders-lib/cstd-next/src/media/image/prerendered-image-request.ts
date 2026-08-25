@@ -12,6 +12,8 @@ export interface PrerenderedImageDevelopmentAsset {
 export interface PrerenderedImageRequest {
 	/** Loader-generated browser asset used instead of build-time optimization in next dev. */
 	developmentAsset?: PrerenderedImageDevelopmentAsset;
+	/** Loader-generated optimized fallback for routes rendered dynamically in production. */
+	runtimeAsset?: import("./optimized-image.jsx").OptimizedImageDescriptor;
 	sizes: string;
 	src: string;
 }

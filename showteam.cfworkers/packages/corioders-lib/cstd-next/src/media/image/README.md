@@ -20,6 +20,8 @@ The `sizes` prop is the only candidate-width API; image import queries and manua
 
 Turbopack caches local source bytes. In `next dev`, the local loader emits one WebP browser asset and remote images use their original URLs. Development and production output namespaces are separate.
 
+The local loader also emits a sanitized SVG or WebP runtime fallback. Dynamically rendered production routes use that immutable build artifact because they have no static RSC manifest; prerendered routes still receive the full sizes-aware AVIF/WebP descriptor.
+
 A production static prerender fetches remote URLs, runs Sharp, and writes AVIF/WebP assets under `public/_cstd/image`. Generated filenames come from the decoded URL pathname; data URLs derive a filename from their media type. Changing the URL or remote bytes requires another build. Production Workers never download sources or mutate deployment assets.
 
 Remote sources are conditionally revalidated on every build with `ETag` and `Last-Modified`. A `304` reuses cached bytes; a `200` replaces them. Servers without validators are fetched again.
