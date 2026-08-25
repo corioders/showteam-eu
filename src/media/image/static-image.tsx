@@ -18,6 +18,7 @@ export function StaticImage({ src, ...imageProps }: StaticImageProps) {
 	const source = typeof src === "string" ? { src } : src;
 	const request: PrerenderedImageRequest = {
 		developmentAsset: source.developmentAsset,
+		runtimeAsset: source.runtimeAsset,
 		sizes: imageProps.sizes,
 		src: source.src,
 	};

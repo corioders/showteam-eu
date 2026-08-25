@@ -69,6 +69,9 @@ export function usePrerenderedImageResource(request: PrerenderedImageServerReque
 }
 
 export function loadPrerenderedImageResource(request: PrerenderedImageServerRequest): Promise<PrerenderedImageResource> {
+	if (process.env["NEXT_IS_EXPORT_WORKER"] !== "true" && process.env.NODE_ENV !== "development" && request.runtimeAsset !== undefined) {
+		return Promise.resolve({ image: request.runtimeAsset });
+	}
 	assertPrerenderedImageGenerationAllowed();
 	const key = getPrerenderedImageRequestKey(request);
 	const existingPromise = prerenderedImagePromises.get(key);
