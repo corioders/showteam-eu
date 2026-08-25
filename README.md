@@ -84,11 +84,11 @@ normally. To move changes between this repository and the upstream libraries:
 ```bash
 # pull upstream changes in
 git subtree pull --prefix <project>.cfworkers/packages/corioders-lib/cstd-ts \
-  git@github.com:corioders/cstd-ts.git master --squash
+  git@github.com:corioders/cstd-ts.git main --squash
 
 # push local changes back upstream
 git subtree push --prefix <project>.cfworkers/packages/corioders-lib/cstd-ts \
-  git@github.com:corioders/cstd-ts.git master
+  git@github.com:corioders/cstd-ts.git main
 ```
 
 Same for `cstd-next` with `git@github.com:corioders/cstd-next.git`.
