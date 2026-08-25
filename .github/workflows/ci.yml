@@ -42,7 +42,7 @@ jobs:
       - name: Create shared workspace
         working-directory: workspace
         run: |
-          printf 'packages:\n  - "cstd-next"\n  - "cstd-ts"\nminimumReleaseAgeExclude:\n  - next\n  - "@next/*"\nonlyBuiltDependencies:\n  - "@biomejs/biome"\n  - "@firebase/util"\n  - esbuild\n  - lmdb\n  - msgpackr-extract\n  - protobufjs\n  - sharp\n' > pnpm-workspace.yaml
+          printf 'packages:\n  - "cstd-next"\n  - "cstd-ts"\nminimumReleaseAgeExclude:\n  - next\n  - "@next/*"\nallowBuilds:\n  "@biomejs/biome": true\n  "@firebase/util": true\n  esbuild: true\n  lmdb: true\n  msgpackr-extract: true\n  protobufjs: true\n  sharp: true\n' > pnpm-workspace.yaml
 
       - name: Install dependencies
         working-directory: workspace
