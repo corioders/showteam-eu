@@ -17,12 +17,6 @@ export interface ImageResource extends Resource {
 export function isImage(resource: Resource): resource is ImageResource {
 	return resource.mimeType.includes("image");
 }
-/**
- * @deprecated please use getImageDownloadURL
- */
-export function getPublicImageDownloadURL(imageID: ImageID): ImageURL {
-	return `https://drive.usercontent.google.com/uc?id=${imageID}&export=download` as ImageURL;
-}
 
 export function getImageDownloadURL(imageID: ImageID): ImageURL {
 	return `https://www.googleapis.com/drive/v3/files/${imageID}?alt=media&supportsAllDrives=true` as ImageURL;
