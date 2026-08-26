@@ -51,8 +51,8 @@ and replication fields until the import-only plan reports zero creates, changes
 and destroys; only then apply the imports. Run a second plan and require
 `No changes`. Never accept a replacement plan while adopting production data.
 
-The `Infrastructure` workflow runs backend-free format/validation for external
-fork pull requests on Blacksmith. Trusted pull requests plan on `win24-wsl` with
-the `preview` secrets. A push to `deploy` plans again, then applies through the
-review-protected `production` environment. `prevent_destroy` remains mandatory
-for durable resources.
+The reusable `Infrastructure` workflow is part of every `Deploy` run: branch
+pushes plan, while `deploy` applies through the review-protected `production`
+environment. Pull requests also run it directly. External forks get only
+backend-free format/validation on Blacksmith and never receive credentials.
+`prevent_destroy` remains mandatory for durable resources.
