@@ -114,7 +114,9 @@ jobs:
         id: deploy
         run: |
           set -o pipefail
-          pnpm run upload --env preview --preview-alias "${{ github.ref_name }}" 2>&1 | tee deploy-output.log
+          pnpm exec opennextjs-cloudflare build
+          OPEN_NEXT_DEPLOY=true pnpm exec wrangler deploy --env preview
+          OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions upload --env preview --preview-alias "${{ github.ref_name }}" 2>&1 | tee deploy-output.log
 
           VERSION_ID=$(grep -oP 'Worker Version ID: \K[0-9a-f-]+' deploy-output.log | tail -n 1)
           if [[ -z "$VERSION_ID" ]]; then
@@ -141,17 +143,6 @@ jobs:
           RANDOM_VALUE_TO_ENSURE_APPS_WEB_IS_REBUILD_ON_GH_ACTIONS: ${{ github.run_id }}
           NEXT_PUBLIC_IS_DEPLOY: false
           NEXT_PUBLIC_GIT_BRANCH: ${{ github.ref_name }}
-
-      - name: Deploy shared loggable preview
-        if: github.ref_name != 'deploy'
-        run: pnpm exec wrangler deploy --env preview
-        working-directory: showteam.cfworkers/apps/web
-        env:
-          # OpenNext remote R2 population can hang; Wrangler deploy lets the cache warm lazily.
-          OPEN_NEXT_DEPLOY: true
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
-          APP_ENV: preview
 
       - name: Deploy production
         if: github.ref_name == 'deploy'
