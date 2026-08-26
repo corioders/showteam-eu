@@ -4,6 +4,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
+		"predev": "pnpm --workspace-root turbo run build --filter=cstd-next",
 		"dev": "cross-env NODE_OPTIONS=--no-deprecation next dev --experimental-next-config-strip-types",
 		"prebuild": "cstd-next-clean-images",
 		"build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build --experimental-next-config-strip-types",
