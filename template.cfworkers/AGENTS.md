@@ -44,7 +44,11 @@ return [session, null];
 - Run registry commands from `apps/web`, for example `pnpm dlx shadcn@latest search @shadcnblocks -q "hero"` and `pnpm dlx shadcn@latest add @shadcnblocks/<name>`.
 - Registry authentication comes from `SHADCNBLOCKS_API_KEY`. If it is unavailable, stop and request it; never print or commit the key.
 - Inspect and adapt installed source to the project instead of treating registry output as an opaque dependency.
+<!-- BEGIN:template-env-agent-rule -->
+
 - Shared bootstrap secrets are tracked only as `apps/web/.env.age`. Never read, print, or commit plaintext `.env`; maintainers refresh the ciphertext with `./encrypt_template_env.sh` from the template repository root.
+
+<!-- END:template-env-agent-rule -->
 
 # Cloudflare infrastructure
 

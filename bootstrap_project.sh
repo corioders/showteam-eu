@@ -146,6 +146,15 @@ if [[ -f "$ENCRYPTED_ENV" && ! -f "$LOCAL_ENV" ]]; then
 elif [[ -f "$LOCAL_ENV" ]]; then
 	echo "Keeping existing $LOCAL_ENV."
 fi
+rm -f -- "$ENCRYPTED_ENV" encrypt_template_env.sh
+sed -i.bak '/<!-- BEGIN:template-env-docs -->/,/<!-- END:template-env-docs -->/d' README.md
+rm -- README.md.bak
+sed -i.bak '/<!-- BEGIN:template-env-agent-rule -->/,/<!-- END:template-env-agent-rule -->/d' "$PROJECT_DIRECTORY/AGENTS.md"
+rm -- "$PROJECT_DIRECTORY/AGENTS.md.bak"
+sed -i.bak '/^!\.env\.age$/d' "$PROJECT_DIRECTORY/apps/web/.gitignore"
+rm -- "$PROJECT_DIRECTORY/apps/web/.gitignore.bak"
+sed -i.bak '/^- \[/d' "$PROJECT_DIRECTORY/TODO.md"
+rm -- "$PROJECT_DIRECTORY/TODO.md.bak"
 
 REPOSITORY="$GITHUB_OWNER/$PROJECT_NAME"
 WRANGLER_CONFIG="$PROJECT_DIRECTORY/apps/web/wrangler.jsonc"
@@ -183,6 +192,25 @@ if git remote get-url origin >/dev/null 2>&1; then
 fi
 if ! git remote get-url origin >/dev/null 2>&1; then
 	git remote add origin "$TARGET_REMOTE"
+fi
+
+CURRENT_BRANCH=$(git branch --show-current)
+if [[ -z "$CURRENT_BRANCH" ]]; then
+	echo "Bootstrap requires a checked-out branch." >&2
+	exit 1
+fi
+git config remote.pushDefault origin
+git config "branch.$CURRENT_BRANCH.remote" origin
+git config "branch.$CURRENT_BRANCH.merge" refs/heads/main
+git config --unset-all "branch.$CURRENT_BRANCH.pushRemote" 2>/dev/null || true
+
+if git ls-remote --exit-code --heads origin refs/heads/main >/dev/null 2>&1; then
+	git fetch --no-tags origin main:refs/remotes/origin/main
+	if ! git merge-base --is-ancestor refs/remotes/origin/main HEAD; then
+		echo "Refusing to overwrite divergent origin/main in $REPOSITORY." >&2
+		echo "Use an empty repository or reconcile its history before rerunning bootstrap." >&2
+		exit 1
+	fi
 fi
 
 if ! BOOTSTRAP_TOKEN=$(security find-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$BOOTSTRAP_KEYCHAIN_SERVICE" -w 2>/dev/null); then

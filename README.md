@@ -95,9 +95,13 @@ git subtree push --prefix <project>.cfworkers/packages/corioders-lib/cstd-ts \
 
 Same for `cstd-next` with `git@github.com:corioders/cstd-next.git`.
 
+<!-- BEGIN:template-env-docs -->
+
 ## Shared template environment
 
 `template.cfworkers/apps/web/.env` stays ignored. After changing its shared values, run `./encrypt_template_env.sh` and commit only `.env.age`. New project bootstrap asks for the passphrase and restores the local `.env` without overwriting an existing one.
+
+<!-- END:template-env-docs -->
 
 ## Not included on purpose
 
