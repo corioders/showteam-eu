@@ -6,7 +6,7 @@ on:
       - .github/workflows/infra.yml
       - showteam.cfworkers/infra/**
   push:
-    branches: [deploy]
+    branches: [deploy, template-migration]
     paths:
       - .github/workflows/infra.yml
       - showteam.cfworkers/infra/**
