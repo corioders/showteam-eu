@@ -23,6 +23,8 @@
 		"deploy:reminders": "wrangler deploy --config wrangler.reminders.jsonc",
 		"logs": "wrangler tail",
 		"logs:preview": "wrangler tail --env preview",
+		"shadcn:add": "cstd-shadcn-add",
+		"shadcn:learn": "cstd-shadcn-learn",
 		"payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
 		"generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
 		"generate:types": "pnpm run generate:types:cloudflare && pnpm run generate:types:payload",

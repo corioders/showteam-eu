@@ -28,14 +28,11 @@ if (error) {
 return [session, null];
 ```
 
-# Workflow
+# UI components
 
-- Read `TODO.md` before starting work, keep its statuses current, remove old already finished tasks, and use it to resume after context loss.
-- After template changes, migrate every repository listed in the template's `CONSUMERS.md` that consumes the affected files or subtrees.
-- Validate migrations in a disposable clone directly on Windows WSL over SSH; do not run resource-intensive migration test suites on the local Mac. CI may also run on `[self-hosted, win24-wsl]`, but it is not the fast-feedback substitute for the direct clone.
-- Push changes belonging to `cstd-ts` or `cstd-next` to the matching canonical cstd repository before pulling them into consumers.
-- Keep commits small and focused: one working, reversible change per commit. Do not combine unrelated features or fixes.
-- Do not implement fallbacks for problems that should surface as errors.
+- For page sections and reusable UI, search the purchased `@shadcnblocks` registry before writing a custom implementation. Search from `apps/web` with `pnpm dlx shadcn@latest search @shadcnblocks -q "hero"`; install with `pnpm shadcn:add @shadcnblocks/<name>`.
+- Registry authentication comes from `SHADCNBLOCKS_API_KEY`. If it is unavailable, stop and request it; never print or commit the key.
+- Preserve the installed block instead of replacing it with a simplified custom implementation. If normalization reports an unknown incompatibility, make the smallest safe fix, run `pnpm shadcn:learn`, then generalize it as a cstd-next codemod with a synthetic regression test; never copy Shadcnblocks source into cstd-next.
 
 # Cloudflare infrastructure
 
