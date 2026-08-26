@@ -395,6 +395,7 @@ sed -i.bak \
 rm -- "$WRANGLER_CONFIG.bak"
 
 unset BOOTSTRAP_TOKEN SETUP_TOKEN DEPLOY_TOKEN TOKEN_VALUE
+rm -f -- bootstrap_project.sh
 
 git add -A
 if [[ "$SQUASH_TEMPLATE_HISTORY" == true ]]; then

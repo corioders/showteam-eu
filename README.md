@@ -41,7 +41,7 @@ the renamed `cstd-ts` and `cstd-next` directories as pullable git subtrees, disc
 workers.dev subdomain (prompting when a value is missing or ambiguous), creates the private GitHub repository, least-privilege
 Cloudflare setup and deploy tokens, isolated production/preview D1 and R2 resources,
 and GitHub environments/secrets/variables, then writes the D1 IDs into Wrangler,
-commits and pushes the initialized project. On resumed runs it rotates generated
+removes the one-shot bootstrap script, and commits and pushes the initialized project. On resumed runs it rotates generated
 project tokens; only the account-owned bootstrap token remains in Keychain.
 Existing durable resources are reused by name and never deleted. GitHub production reviewers remain manual
 when the private-repository plan does not expose deployment protection rules.
