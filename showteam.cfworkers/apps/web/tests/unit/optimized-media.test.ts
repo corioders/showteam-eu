@@ -45,6 +45,7 @@ describe("optimized CMS media", () => {
 		const payload = { create: vi.fn().mockRejectedValue(new Error("D1 failed")), delete: vi.fn() } as unknown as Payload;
 		await expect(createOptimizedMedia(payload, uploadForm(), "Test")).rejects.toThrow("D1 failed");
 		expect(mediaBucket.put).toHaveBeenCalledTimes(3);
+		expect(mediaBucket.put.mock.calls.every(([, body]) => body instanceof ArrayBuffer)).toBe(true);
 		expect(mediaBucket.delete).toHaveBeenCalledTimes(3);
 	});
 

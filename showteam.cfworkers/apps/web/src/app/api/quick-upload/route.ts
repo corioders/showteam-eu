@@ -104,7 +104,6 @@ export async function POST(request: Request) {
 		await Promise.allSettled(createdGallery.map((id) => payload.delete({ collection: "gallery", id, overrideAccess: true })));
 		await Promise.allSettled(createdMedia.map((id) => deleteOptimizedMedia(payload, id)));
 		payload.logger.error({ err: error, msg: "Quick gallery upload failed" });
-		const message = process.env.APP_ENV === "preview" && error instanceof Error ? error.message : "Nie udało się zapisać plików. Spróbuj ponownie.";
-		return Response.json({ error: message }, { status: 500 });
+		return Response.json({ error: "Nie udało się zapisać plików. Spróbuj ponownie." }, { status: 500 });
 	}
 }

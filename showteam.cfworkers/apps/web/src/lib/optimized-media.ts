@@ -30,7 +30,7 @@ export async function createOptimizedMedia(payload: Payload, form: FormData, alt
 	let mediaId: number | undefined;
 	try {
 		for (const file of extraFiles) {
-			await mediaBucket.put(file.name, file.stream(), { httpMetadata: { contentType: file.type } });
+			await mediaBucket.put(file.name, await file.arrayBuffer(), { httpMetadata: { contentType: file.type } });
 			written.push(file.name);
 		}
 		const media = await payload.create({
