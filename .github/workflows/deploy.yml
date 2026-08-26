@@ -125,7 +125,6 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           APP_ENV: preview
-          IS_PREVIEW: true
           RANDOM_VALUE_TO_ENSURE_APPS_WEB_IS_REBUILD_ON_GH_ACTIONS: ${{ github.run_id }}
           NEXT_PUBLIC_IS_DEPLOY: false
           NEXT_PUBLIC_GIT_BRANCH: ${{ github.ref_name }}
@@ -137,7 +136,6 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           APP_ENV: preview
-          IS_PREVIEW: true
 
       - name: Deploy production
         if: github.ref_name == 'deploy'
@@ -146,7 +144,6 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           APP_ENV: production
-          IS_PREVIEW: false
           RANDOM_VALUE_TO_ENSURE_APPS_WEB_IS_REBUILD_ON_GH_ACTIONS: ${{ github.run_id }}
           NEXT_PUBLIC_IS_DEPLOY: true
           NEXT_PUBLIC_GIT_BRANCH: ${{ github.ref_name }}
