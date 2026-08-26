@@ -49,8 +49,3 @@ return [session, null];
 - Shared bootstrap secrets are tracked only as `apps/web/.env.age`. Never read, print, or commit plaintext `.env`; maintainers refresh the ciphertext with `./encrypt_template_env.sh` from the template repository root.
 
 <!-- END:template-env-agent-rule -->
-
-# Cloudflare infrastructure
-
-- `bootstrap_project.sh` creates durable D1/R2 resources once and reuses exact-name matches on later runs. Never delete or replace them automatically.
-- Never connect fork pull requests or preview deployments to production credentials or data. Trusted jobs run on `[self-hosted, win24-wsl]`.
