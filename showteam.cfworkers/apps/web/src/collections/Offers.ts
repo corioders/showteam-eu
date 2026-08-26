@@ -148,7 +148,7 @@ export const Offers: CollectionConfig = {
 							label: "Zdjęcie okładkowe",
 							type: "upload",
 							relationTo: "media",
-							admin: { description: "Opcjonalne. Bez nowego zdjęcia zostanie obecna fotografia SHOWteam." },
+							admin: { hidden: true },
 						},
 						{ name: "published", label: "Pokaż ofertę na stronie", type: "checkbox", defaultValue: true },
 						{

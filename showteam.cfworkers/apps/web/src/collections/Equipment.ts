@@ -158,7 +158,7 @@ export const Equipment: CollectionConfig = {
 							maxLength: 300,
 							admin: { description: "Napisz krótko, dla kogo jest aktywność i co warto wiedzieć." },
 						},
-						{ name: "image", label: "Zdjęcie", type: "upload", relationTo: "media" },
+						{ name: "image", label: "Zdjęcie", type: "upload", relationTo: "media", admin: { hidden: true } },
 						{
 							type: "row",
 							fields: [
