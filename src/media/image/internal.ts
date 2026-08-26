@@ -51,7 +51,7 @@ function shouldUsePerformancePlaceholder(isDevelopmentMode: boolean, imageInfo: 
 }
 
 export function shouldOptimizeImages(): boolean {
-	return process.env.NODE_ENV !== "development" && process.env["IS_PREVIEW"] !== "true";
+	return process.env.NODE_ENV !== "development" && process.env["APP_ENV"] !== "preview";
 }
 
 export function hash(data: BinaryLike, createHash: typeof createHashType): string {

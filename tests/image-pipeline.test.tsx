@@ -86,14 +86,14 @@ describe("image pipeline", () => {
 
 	it("optimizes only normal production builds", () => {
 		vi.stubEnv("NODE_ENV", "production");
-		vi.stubEnv("IS_PREVIEW", "false");
+		vi.stubEnv("APP_ENV", "production");
 		expect(shouldOptimizeImages()).toBe(true);
 
-		vi.stubEnv("IS_PREVIEW", "true");
+		vi.stubEnv("APP_ENV", "preview");
 		expect(shouldOptimizeImages()).toBe(false);
 
 		vi.stubEnv("NODE_ENV", "development");
-		vi.stubEnv("IS_PREVIEW", "false");
+		vi.stubEnv("APP_ENV", "development");
 		expect(shouldOptimizeImages()).toBe(false);
 	});
 

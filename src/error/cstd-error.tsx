@@ -3,14 +3,13 @@
 // Proprietary and confidential
 // Written by Wiktor Jurkiewicz <watjurk@gmail.com> and Artur Mucowski <artur@mucowski.pl>, March 2025
 
+import { IS_PREVIEW } from "cstd-ts/const.js";
 import { type ErrorReturn, errorToString } from "cstd-ts/error/index.js";
 import type { ComponentProps, ReactNode } from "react";
 
 interface Props extends ComponentProps<"pre"> {
 	error: Error | string;
 }
-
-const IS_PREVIEW = process.env.IS_PREVIEW === "true" || process.env.NEXT_PUBLIC_IS_PREVIEW === "true";
 
 /**
  * https://h.corioders.com/cstd-next/cstd-error
