@@ -15,6 +15,8 @@
 		"upload": "opennextjs-cloudflare build && OPEN_NEXT_DEPLOY=true wrangler versions upload",
 		"logs": "wrangler tail",
 		"logs:preview": "wrangler tail --env preview",
+		"shadcn:add": "cstd-shadcn-add",
+		"shadcn:learn": "cstd-shadcn-learn",
 		"cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
 		"clean": "rm -rf .next .open-next .wrangler public/_cstd/image",
 		"check": "pnpm check-biome && pnpm check-types",

@@ -31,9 +31,9 @@ return [session, null];
 # UI components
 
 - For page sections and reusable UI, search the purchased `@shadcnblocks` registry before writing a custom implementation. In this template, `@shadcnblocks` is the default registry when the user does not name another one.
-- Run registry commands from `apps/web`, for example `pnpm dlx shadcn@latest search @shadcnblocks -q "hero"` and `pnpm dlx shadcn@latest add @shadcnblocks/<name>`.
+- Run registry commands from `apps/web`. Search with `pnpm dlx shadcn@latest search @shadcnblocks -q "hero"`; install with `pnpm shadcn:add @shadcnblocks/<name>` so cstd normalizes only the files changed by the official CLI.
 - Registry authentication comes from `SHADCNBLOCKS_API_KEY`. If it is unavailable, stop and request it; never print or commit the key.
-- Inspect and adapt installed source to the project instead of treating registry output as an opaque dependency.
+- Preserve the installed block instead of replacing it with a simplified custom implementation. If normalization reports an unknown incompatibility, make the smallest safe fix, run `pnpm shadcn:learn`, then generalize it as a cstd-next codemod with a synthetic regression test; never copy Shadcnblocks source into cstd-next.
 <!-- BEGIN:template-env-agent-rule -->
 
 - Shared bootstrap secrets are tracked only as `apps/web/.env.age`. Never read, print, or commit plaintext `.env`; maintainers refresh the ciphertext with `./encrypt_template_env.sh` from the template repository root.
