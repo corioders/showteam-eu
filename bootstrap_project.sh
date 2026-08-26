@@ -191,6 +191,7 @@ fi
 git config remote.pushDefault origin
 git config "branch.$CURRENT_BRANCH.remote" origin
 git config "branch.$CURRENT_BRANCH.merge" refs/heads/main
+git config "branch.$CURRENT_BRANCH.rebase" true
 git config --unset-all "branch.$CURRENT_BRANCH.pushRemote" 2>/dev/null || true
 
 ORIGIN_MAIN_EXISTS=false
@@ -204,9 +205,8 @@ if git ls-remote --exit-code --heads origin refs/heads/main >/dev/null 2>&1; the
 	fi
 fi
 
-SQUASH_TEMPLATE_HISTORY=false
-if [[ "$ORIGIN_MAIN_EXISTS" == false ]] && git remote get-url template 2>/dev/null | grep -Eq '(^git@github\.com:|^https://github\.com/)corioders/cstd-nextjs-template\.git$'; then
-	SQUASH_TEMPLATE_HISTORY=true
+if [[ "$ORIGIN_MAIN_EXISTS" == false ]] && git rev-parse --is-shallow-repository | grep -Fxq true; then
+	git fetch --unshallow template
 fi
 
 if ! BOOTSTRAP_TOKEN=$(security find-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$BOOTSTRAP_KEYCHAIN_SERVICE" -w 2>/dev/null); then
@@ -398,10 +398,7 @@ unset BOOTSTRAP_TOKEN SETUP_TOKEN DEPLOY_TOKEN TOKEN_VALUE
 rm -f -- bootstrap_project.sh
 
 git add -A
-if [[ "$SQUASH_TEMPLATE_HISTORY" == true ]]; then
-	INIT_COMMIT=$(printf 'Initialize %s\n' "$PROJECT_NAME" | git commit-tree "$(git write-tree)")
-	git update-ref "refs/heads/$CURRENT_BRANCH" "$INIT_COMMIT"
-elif ! git diff --cached --quiet; then
+if ! git diff --cached --quiet; then
 	git commit -m "Initialize $PROJECT_NAME"
 fi
 
