@@ -1,7 +1,0 @@
-pre-commit:
-  parallel: true
-  commands:
-    check-biome:
-      root: "showteam.cfworkers/"
-      glob: "**/*.{js,jsx,ts,tsx,json,jsonc,css}"
-      run: pnpm run check-biome-staged
