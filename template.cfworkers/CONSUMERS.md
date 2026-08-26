@@ -11,6 +11,7 @@ exact reminder to add that project to this source registry.
 | --- | --- | --- | --- | --- | --- |
 | `corioders/corioders.com` | `corioders.cfworkers/apps/web` | Lingui routing and typed env | Reconcile application bindings | Planned | — |
 | `corioders/impact-speaker-tracker` | `impact.cfworkers/apps/web` | Firebase, Drive CMS, uploads and document workflows | Reconcile Firebase and cache bindings | Planned | — |
+| `corioders/impact-new-agenda` | `impact-new-agenda.cfworkers/apps/web` | — | — | Migrated | `ff95ff3` |
 | `corioders/showteam-eu` | `showteam.cfworkers/apps/web` | Payload, D1/R2 migrations, fixtures, tests and reminder Worker | — | Migrated | `dd08d80` |
 | `corioders/handbook` | `handbook.cloudflare/apps/web` | Nextra and Pagefind | Replace Next on Pages with OpenNext | Planned | — |
 | `corioders/ui` | `ui.cloudflare/apps/web` | shadcn registry generator | Replace Next on Pages and staged-only CI check | Planned | — |
