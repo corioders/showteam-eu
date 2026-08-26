@@ -4,15 +4,15 @@ This is the source of truth for repositories that must receive template and
 shared-subtree migrations. Add a project when it is created from this template;
 remove it only after archival.
 
-`init_project.sh` deletes this file from the generated project and prints the
+`bootstrap_project.sh` deletes this file from the generated project and prints the
 exact reminder to add that project to this source registry.
 
 | Repository | App directory | Preserve | Migration blocker | Status | Template revision |
 | --- | --- | --- | --- | --- | --- |
 | `corioders/corioders.com` | `corioders.cfworkers/apps/web` | Lingui routing and typed env | Reconcile application bindings | Planned | — |
 | `corioders/impact-speaker-tracker` | `impact.cfworkers/apps/web` | Firebase, Drive CMS, uploads and document workflows | Reconcile Firebase and cache bindings | Planned | — |
-| `corioders/impact-new-agenda` | `impact-new-agenda.cfworkers/apps/web` | — | — | Migrated | `ff95ff3` |
-| `corioders/showteam-eu` | `showteam.cfworkers/apps/web` | Payload, D1/R2 migrations, fixtures, tests and reminder Worker | — | Migrated | `dd08d80` |
+| `corioders/impact-new-agenda` | `impact-new-agenda.cfworkers/apps/web` | — | Remove OpenTofu without replacing durable D1/R2 resources | Migrating | `ff95ff3` |
+| `corioders/showteam-eu` | `showteam.cfworkers/apps/web` | Payload, D1/R2 migrations, fixtures, tests and reminder Worker | Remove OpenTofu without replacing durable D1/R2 resources | Migrating | `dd08d80` |
 | `corioders/handbook` | `handbook.cloudflare/apps/web` | Nextra and Pagefind | Replace Next on Pages with OpenNext | Planned | — |
 | `corioders/ui` | `ui.cloudflare/apps/web` | shadcn registry generator | Replace Next on Pages and staged-only CI check | Planned | — |
 | `poland2-0/poland20` | `poland20.cloudflare/apps/web` | Lingui routing and Drive CMS | Replace Next on Pages and staged-only CI check | Planned | — |

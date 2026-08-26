@@ -9,7 +9,7 @@ driven by pnpm, biome and lefthook, with `cstd-ts` / `cstd-next` vendored as git
 .github/workflows/     reusable validation + pull-request and deploy entrypoints
 .vscode/               editor settings (biome as formatter)
 lefthook.yml           pre-commit biome check
-init_project.sh        one-shot project initialization, deletes itself
+bootstrap_project.sh   one-shot project/repository/Cloudflare bootstrap
 template.cfworkers/    the monorepo
 ├── apps/web/          Next.js app, deployed as a Cloudflare Worker
 ├── packages/
@@ -26,28 +26,20 @@ only that subdirectory.
 
 ## First run
 
-```bash
-./init_project.sh myproject
-```
-
-Then follow `myproject.cfworkers/infra/README.md`. It defines the complete
-OpenTofu setup: dedicated R2 state with locking, least-privilege tokens, GitHub
-variables/environments, safe imports, fork validation, trusted plans and reviewed
-production applies. Paste the two resulting D1 output IDs into
-`myproject.cfworkers/apps/web/wrangler.jsonc`.
-
-On macOS, the complete fresh-project bootstrap is automated. Authenticate `gh`,
-store an account-owned Cloudflare token with only `Account API Tokens Write` in
-Keychain, then run:
+On macOS, authenticate `gh` and store an account-owned Cloudflare token with only
+`Account API Tokens Write` in Keychain. The complete fresh-project bootstrap is:
 
 ```bash
-./bootstrap_project.sh corioders CLOUDFLARE_ACCOUNT_ID WORKERS_DEV_SUBDOMAIN
+./bootstrap_project.sh myproject
 ```
 
-The script creates the private GitHub repository, Cloudflare state/provider/deploy
-tokens, state bucket, GitHub environments/secrets/variables and OpenTofu resources,
-then writes the D1 IDs into Wrangler. It is resumable because generated token values
-stay in project-specific Keychain entries. GitHub production reviewers remain manual
+The script names the project, discovers the GitHub owner, Cloudflare account and
+workers.dev subdomain (prompting when a value is missing or ambiguous), creates the private GitHub repository, least-privilege
+Cloudflare setup and deploy tokens, isolated production/preview D1 and R2 resources,
+and GitHub environments/secrets/variables, then writes the D1 IDs into Wrangler,
+commits and pushes the initialized project. It is resumable because generated token
+values stay in project-specific Keychain entries.
+Existing durable resources are reused by name and never deleted. GitHub production reviewers remain manual
 when the private-repository plan does not expose deployment protection rules.
 
 Install and start:

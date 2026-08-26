@@ -4,26 +4,26 @@ set -euo pipefail
 
 usage() {
 	cat >&2 <<'EOF'
-usage: ./bootstrap_project.sh <github-owner> <cloudflare-account-id> <workers-dev-subdomain>
+usage: ./bootstrap_project.sh <project-name>
 
-Run after ./init_project.sh, from the repository root. Requires authenticated
-gh, curl, jq, tofu, git, and macOS security. Generated Cloudflare credentials
-are stored in macOS Keychain so an interrupted bootstrap can be resumed.
+Run once from the template repository root. Requires authenticated gh, curl,
+jq, git, and macOS security. Generated Cloudflare credentials are stored in
+macOS Keychain so an interrupted bootstrap can be resumed.
 EOF
 }
 
-if [[ $# -ne 3 ]]; then
+if [[ $# -ne 1 ]]; then
 	usage
 	exit 1
 fi
 
-GITHUB_OWNER=$1
-CLOUDFLARE_ACCOUNT_ID=$2
-CLOUDFLARE_WORKERS_DEV_SUBDOMAIN=$3
-KEYCHAIN_ACCOUNT=${CLOUDFLARE_BOOTSTRAP_KEYCHAIN_ACCOUNT:-$GITHUB_OWNER}
-BOOTSTRAP_KEYCHAIN_SERVICE=${CLOUDFLARE_BOOTSTRAP_KEYCHAIN_SERVICE:-corioders.cloudflare.bootstrap}
+PROJECT_NAME=$1
+if [[ ! "$PROJECT_NAME" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
+	echo "Project name must be lowercase alphanumeric with dashes." >&2
+	exit 1
+fi
 
-for command_name in curl gh git jq security shasum tofu; do
+for command_name in curl gh git jq security; do
 	if ! command -v "$command_name" >/dev/null 2>&1; then
 		echo "Missing required command: $command_name" >&2
 		exit 1
@@ -31,6 +31,35 @@ for command_name in curl gh git jq security shasum tofu; do
 done
 
 cd "$(dirname "$0")"
+
+gh auth status >/dev/null
+GITHUB_OWNER=${GITHUB_OWNER:-}
+if [[ -z "$GITHUB_OWNER" ]]; then
+	GITHUB_OWNER=$(gh repo view --json owner --jq '.owner.login' 2>/dev/null || true)
+fi
+if [[ -z "$GITHUB_OWNER" ]]; then
+	read -r -p "GitHub owner: " GITHUB_OWNER </dev/tty
+fi
+KEYCHAIN_ACCOUNT=${CLOUDFLARE_BOOTSTRAP_KEYCHAIN_ACCOUNT:-$GITHUB_OWNER}
+BOOTSTRAP_KEYCHAIN_SERVICE=${CLOUDFLARE_BOOTSTRAP_KEYCHAIN_SERVICE:-corioders.cloudflare.bootstrap}
+
+if [[ -d template.cfworkers ]]; then
+	git mv template.cfworkers "$PROJECT_NAME.cfworkers" 2>/dev/null || mv template.cfworkers "$PROJECT_NAME.cfworkers"
+
+	grep -rlZ --binary-files=without-match -e 'template\.cfworkers' -e 'template-cfworkers' \
+		--exclude-dir=.git --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.turbo \
+		--exclude="$(basename "$0")" . |
+		xargs -0 sed -i.bak -e "s/template\.cfworkers/$PROJECT_NAME.cfworkers/g" -e "s/template-cfworkers/$PROJECT_NAME-cfworkers/g"
+	find . -name '*.bak' -not -path './node_modules/*' -delete
+
+	APP_TITLE=$(printf '%s' "$PROJECT_NAME" | awk -F- '{for (i = 1; i <= NF; i++) {printf "%s%s", (i > 1 ? " " : ""), toupper(substr($i, 1, 1)) substr($i, 2)}}')
+	sed -i.bak \
+		-e "s/\"Template\"/\"$APP_TITLE\"/g" \
+		-e "s/\`Template (/\`$APP_TITLE (/g" \
+		"$PROJECT_NAME.cfworkers/apps/web/src/app/layout.tsx"
+	rm -- "$PROJECT_NAME.cfworkers/apps/web/src/app/layout.tsx.bak"
+	rm -- "$PROJECT_NAME.cfworkers/CONSUMERS.md"
+fi
 
 PROJECT_DIRECTORY=""
 for candidate in ./*.cfworkers; do
@@ -44,36 +73,24 @@ for candidate in ./*.cfworkers; do
 	PROJECT_DIRECTORY=${candidate#./}
 done
 
-if [[ -z "$PROJECT_DIRECTORY" || -f init_project.sh ]]; then
-	echo "Run ./init_project.sh before this script." >&2
+if [[ -z "$PROJECT_DIRECTORY" || "$PROJECT_DIRECTORY" != "$PROJECT_NAME.cfworkers" ]]; then
+	echo "Expected exactly one $PROJECT_NAME.cfworkers directory." >&2
 	exit 1
 fi
 
-PROJECT_NAME=${PROJECT_DIRECTORY%.cfworkers}
 REPOSITORY="$GITHUB_OWNER/$PROJECT_NAME"
-STATE_BUCKET="$PROJECT_NAME-tofu-state"
-STATE_KEY="$PROJECT_NAME/terraform.tfstate"
 WRANGLER_CONFIG="$PROJECT_DIRECTORY/apps/web/wrangler.jsonc"
-INFRA_DIRECTORY="$PROJECT_DIRECTORY/infra"
+PRODUCTION_PREFIX="$PROJECT_NAME-cfworkers"
+PREVIEW_PREFIX="$PRODUCTION_PREFIX-preview"
 
 if [[ ! "$GITHUB_OWNER" =~ ^[A-Za-z0-9-]+$ ]]; then
 	echo "Invalid GitHub owner: $GITHUB_OWNER" >&2
 	exit 1
 fi
-if [[ ! "$CLOUDFLARE_ACCOUNT_ID" =~ ^[0-9a-f]{32}$ ]]; then
-	echo "Cloudflare account ID must be 32 lowercase hexadecimal characters." >&2
-	exit 1
-fi
-if [[ ! "$CLOUDFLARE_WORKERS_DEV_SUBDOMAIN" =~ ^[a-z0-9-]+$ ]]; then
-	echo "Invalid workers.dev subdomain: $CLOUDFLARE_WORKERS_DEV_SUBDOMAIN" >&2
-	exit 1
-fi
-if [[ ! -f "$WRANGLER_CONFIG" || ! -d "$INFRA_DIRECTORY" ]]; then
+if [[ ! -f "$WRANGLER_CONFIG" ]]; then
 	echo "Initialized project files are incomplete." >&2
 	exit 1
 fi
-
-gh auth status >/dev/null
 
 if ! gh repo view "$REPOSITORY" >/dev/null 2>&1; then
 	gh repo create "$REPOSITORY" --private
@@ -99,7 +116,12 @@ if ! git remote get-url origin >/dev/null 2>&1; then
 	git remote add origin "$TARGET_REMOTE"
 fi
 
-BOOTSTRAP_TOKEN=$(security find-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$BOOTSTRAP_KEYCHAIN_SERVICE" -w)
+BOOTSTRAP_TOKEN_WAS_PROMPTED=false
+if ! BOOTSTRAP_TOKEN=$(security find-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$BOOTSTRAP_KEYCHAIN_SERVICE" -w 2>/dev/null); then
+	read -r -s -p "Cloudflare bootstrap token: " BOOTSTRAP_TOKEN </dev/tty
+	echo >/dev/tty
+	BOOTSTRAP_TOKEN_WAS_PROMPTED=true
+fi
 
 cf_api() {
 	local api_token=$1
@@ -133,7 +155,35 @@ cf_api() {
 	printf '%s' "$response"
 }
 
+CLOUDFLARE_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID:-}
+if [[ -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
+	if ACCOUNT_RESPONSE=$(cf_api "$BOOTSTRAP_TOKEN" GET "accounts?per_page=50" 2>/dev/null); then
+		ACCOUNT_COUNT=$(jq -r '.result | length' <<<"$ACCOUNT_RESPONSE")
+		if [[ "$ACCOUNT_COUNT" -eq 1 ]]; then
+			CLOUDFLARE_ACCOUNT_ID=$(jq -r '.result[0].id' <<<"$ACCOUNT_RESPONSE")
+		elif [[ "$ACCOUNT_COUNT" -gt 1 ]]; then
+			jq -r '.result | to_entries[] | "\(.key + 1)) \(.value.name) [\(.value.id)]"' <<<"$ACCOUNT_RESPONSE" >/dev/tty
+			read -r -p "Cloudflare account number: " ACCOUNT_NUMBER </dev/tty
+			if [[ ! "$ACCOUNT_NUMBER" =~ ^[1-9][0-9]*$ || "$ACCOUNT_NUMBER" -gt "$ACCOUNT_COUNT" ]]; then
+				echo "Invalid Cloudflare account number." >&2
+				exit 1
+			fi
+			CLOUDFLARE_ACCOUNT_ID=$(jq -r --argjson index "$((ACCOUNT_NUMBER - 1))" '.result[$index].id' <<<"$ACCOUNT_RESPONSE")
+		fi
+	fi
+	if [[ -z "$CLOUDFLARE_ACCOUNT_ID" ]]; then
+		read -r -p "Cloudflare account ID: " CLOUDFLARE_ACCOUNT_ID </dev/tty
+	fi
+fi
+if [[ ! "$CLOUDFLARE_ACCOUNT_ID" =~ ^[0-9a-f]{32}$ ]]; then
+	echo "Cloudflare account ID must be 32 lowercase hexadecimal characters." >&2
+	exit 1
+fi
+
 cf_api "$BOOTSTRAP_TOKEN" GET "accounts/$CLOUDFLARE_ACCOUNT_ID/tokens/verify" >/dev/null
+if [[ "$BOOTSTRAP_TOKEN_WAS_PROMPTED" == true ]]; then
+	printf '%s\n' "$BOOTSTRAP_TOKEN" | security add-generic-password -U -a "$KEYCHAIN_ACCOUNT" -s "$BOOTSTRAP_KEYCHAIN_SERVICE" -w >/dev/null
+fi
 PERMISSION_RESPONSE=$(cf_api "$BOOTSTRAP_TOKEN" GET "accounts/$CLOUDFLARE_ACCOUNT_ID/tokens/permission_groups")
 TOKEN_LIST_RESPONSE=$(cf_api "$BOOTSTRAP_TOKEN" GET "accounts/$CLOUDFLARE_ACCOUNT_ID/tokens?per_page=100")
 
@@ -150,7 +200,6 @@ permission_id() {
 
 D1_WRITE_PERMISSION=$(permission_id "D1 Write")
 R2_WRITE_PERMISSION=$(permission_id "Workers R2 Storage Write")
-R2_BUCKET_ITEM_WRITE_PERMISSION=$(permission_id "Workers R2 Storage Bucket Item Write")
 WORKERS_SCRIPTS_WRITE_PERMISSION=$(permission_id "Workers Scripts Write")
 
 TOKEN_ID=""
@@ -192,21 +241,42 @@ PROVIDER_POLICIES=$(jq -cn \
 	--arg d1 "$D1_WRITE_PERMISSION" \
 	--arg r2 "$R2_WRITE_PERMISSION" \
 	'[{effect: "allow", permission_groups: [{id: $d1}, {id: $r2}], resources: {($resource): "*"}}]')
-create_or_load_token "$PROJECT_NAME OpenTofu" "corioders.cloudflare.$PROJECT_NAME.opentofu" "$PROVIDER_POLICIES"
-PROVIDER_TOKEN=$TOKEN_VALUE
+create_or_load_token "$PROJECT_NAME Cloudflare setup" "corioders.cloudflare.$PROJECT_NAME.setup" "$PROVIDER_POLICIES"
+SETUP_TOKEN=$TOKEN_VALUE
 
-if ! cf_api "$PROVIDER_TOKEN" GET "accounts/$CLOUDFLARE_ACCOUNT_ID/r2/buckets/$STATE_BUCKET" >/dev/null 2>&1; then
-	cf_api "$PROVIDER_TOKEN" POST "accounts/$CLOUDFLARE_ACCOUNT_ID/r2/buckets" "$(jq -cn --arg name "$STATE_BUCKET" '{name: $name}')" >/dev/null
-fi
+ensure_r2_bucket() {
+	local bucket_name=$1
+	if cf_api "$SETUP_TOKEN" GET "accounts/$CLOUDFLARE_ACCOUNT_ID/r2/buckets/$bucket_name" >/dev/null 2>&1; then
+		return
+	fi
+	cf_api "$SETUP_TOKEN" POST "accounts/$CLOUDFLARE_ACCOUNT_ID/r2/buckets" \
+		"$(jq -cn --arg name "$bucket_name" '{name: $name, locationHint: "eeur", storageClass: "Standard"}')" >/dev/null
+}
 
-STATE_RESOURCE="com.cloudflare.edge.r2.bucket.${CLOUDFLARE_ACCOUNT_ID}_default_$STATE_BUCKET"
-STATE_POLICIES=$(jq -cn \
-	--arg resource "$STATE_RESOURCE" \
-	--arg permission "$R2_BUCKET_ITEM_WRITE_PERMISSION" \
-	'[{effect: "allow", permission_groups: [{id: $permission}], resources: {($resource): "*"}}]')
-create_or_load_token "$PROJECT_NAME OpenTofu state" "corioders.cloudflare.$PROJECT_NAME.state" "$STATE_POLICIES"
-STATE_ACCESS_KEY_ID=$TOKEN_ID
-STATE_SECRET_ACCESS_KEY=$(printf '%s' "$TOKEN_VALUE" | shasum -a 256 | awk '{print $1}')
+ensure_d1_database() {
+	local database_name=$1
+	local database_response
+	local database_count
+
+	database_response=$(cf_api "$SETUP_TOKEN" GET "accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database?name=$database_name&per_page=10000")
+	database_count=$(jq -r --arg name "$database_name" '[.result[] | select(.name == $name)] | length' <<<"$database_response")
+	if [[ "$database_count" -gt 1 ]]; then
+		echo "Multiple D1 databases are named '$database_name'." >&2
+		exit 1
+	fi
+	if [[ "$database_count" -eq 0 ]]; then
+		database_response=$(cf_api "$SETUP_TOKEN" POST "accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database" \
+			"$(jq -cn --arg name "$database_name" '{name: $name, primary_location_hint: "eeur", read_replication: {mode: "disabled"}}')")
+		jq -r '.result.uuid' <<<"$database_response"
+		return
+	fi
+	jq -r --arg name "$database_name" '.result[] | select(.name == $name) | .uuid' <<<"$database_response"
+}
+
+ensure_r2_bucket "$PRODUCTION_PREFIX-next-inc-cache-r2-bucket"
+ensure_r2_bucket "$PREVIEW_PREFIX-next-inc-cache-r2-bucket"
+PRODUCTION_D1_ID=$(ensure_d1_database "$PRODUCTION_PREFIX-next-tag-cache-d1")
+PREVIEW_D1_ID=$(ensure_d1_database "$PREVIEW_PREFIX-next-tag-cache-d1")
 
 DEPLOY_POLICIES=$(jq -cn \
 	--arg resource "$ACCOUNT_RESOURCE" \
@@ -216,37 +286,25 @@ DEPLOY_POLICIES=$(jq -cn \
 	'[{effect: "allow", permission_groups: [{id: $d1}, {id: $r2}, {id: $workers}], resources: {($resource): "*"}}]')
 create_or_load_token "$PROJECT_NAME GitHub deploy" "corioders.cloudflare.$PROJECT_NAME.deploy" "$DEPLOY_POLICIES"
 DEPLOY_TOKEN=$TOKEN_VALUE
+CLOUDFLARE_WORKERS_DEV_SUBDOMAIN=""
+if SUBDOMAIN_RESPONSE=$(cf_api "$DEPLOY_TOKEN" GET "accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" 2>/dev/null); then
+	CLOUDFLARE_WORKERS_DEV_SUBDOMAIN=$(jq -r '.result.subdomain // empty' <<<"$SUBDOMAIN_RESPONSE")
+fi
+if [[ -z "$CLOUDFLARE_WORKERS_DEV_SUBDOMAIN" ]]; then
+	read -r -p "workers.dev subdomain: " CLOUDFLARE_WORKERS_DEV_SUBDOMAIN </dev/tty
+fi
+if [[ ! "$CLOUDFLARE_WORKERS_DEV_SUBDOMAIN" =~ ^[a-z0-9-]+$ ]]; then
+	echo "Cloudflare returned an invalid workers.dev subdomain." >&2
+	exit 1
+fi
 
 for environment_name in preview production; do
 	gh api --method PUT "repos/$REPOSITORY/environments/$environment_name" >/dev/null
-	printf '%s' "$STATE_ACCESS_KEY_ID" | gh secret set TOFU_STATE_ACCESS_KEY_ID --env "$environment_name" --repo "$REPOSITORY"
-	printf '%s' "$STATE_SECRET_ACCESS_KEY" | gh secret set TOFU_STATE_SECRET_ACCESS_KEY --env "$environment_name" --repo "$REPOSITORY"
-	printf '%s' "$PROVIDER_TOKEN" | gh secret set TOFU_CLOUDFLARE_API_TOKEN --env "$environment_name" --repo "$REPOSITORY"
 	printf '%s' "$DEPLOY_TOKEN" | gh secret set CLOUDFLARE_API_TOKEN --env "$environment_name" --repo "$REPOSITORY"
 done
 
 gh variable set CLOUDFLARE_ACCOUNT_ID --body "$CLOUDFLARE_ACCOUNT_ID" --repo "$REPOSITORY"
-gh variable set TOFU_PROJECT_NAME --body "$PROJECT_NAME" --repo "$REPOSITORY"
-gh variable set TOFU_STATE_BUCKET --body "$STATE_BUCKET" --repo "$REPOSITORY"
-gh variable set TOFU_STATE_KEY --body "$STATE_KEY" --repo "$REPOSITORY"
 gh variable set CLOUDFLARE_WORKERS_DEV_SUBDOMAIN --body "$CLOUDFLARE_WORKERS_DEV_SUBDOMAIN" --env preview --repo "$REPOSITORY"
-
-export AWS_ACCESS_KEY_ID=$STATE_ACCESS_KEY_ID
-export AWS_SECRET_ACCESS_KEY=$STATE_SECRET_ACCESS_KEY
-export AWS_ENDPOINT_URL_S3="https://$CLOUDFLARE_ACCOUNT_ID.r2.cloudflarestorage.com"
-export CLOUDFLARE_API_TOKEN=$PROVIDER_TOKEN
-export TF_VAR_cloudflare_account_id=$CLOUDFLARE_ACCOUNT_ID
-export TF_VAR_project_name=$PROJECT_NAME
-
-tofu -chdir="$INFRA_DIRECTORY" init -input=false \
-	-backend-config="bucket=$STATE_BUCKET" \
-	-backend-config="key=$STATE_KEY"
-tofu -chdir="$INFRA_DIRECTORY" fmt -check
-tofu -chdir="$INFRA_DIRECTORY" validate
-tofu -chdir="$INFRA_DIRECTORY" apply -input=false -lock-timeout=5m -auto-approve
-
-PRODUCTION_D1_ID=$(tofu -chdir="$INFRA_DIRECTORY" output -raw production_next_tag_cache_d1_id)
-PREVIEW_D1_ID=$(tofu -chdir="$INFRA_DIRECTORY" output -raw preview_next_tag_cache_d1_id)
 
 sed -i.bak \
 	-e "s/REPLACE_WITH_PRODUCTION_D1_DATABASE_ID/$PRODUCTION_D1_ID/g" \
@@ -254,9 +312,14 @@ sed -i.bak \
 	"$WRANGLER_CONFIG"
 rm -- "$WRANGLER_CONFIG.bak"
 
-unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_ENDPOINT_URL_S3 CLOUDFLARE_API_TOKEN
-unset TF_VAR_cloudflare_account_id TF_VAR_project_name
-unset BOOTSTRAP_TOKEN PROVIDER_TOKEN DEPLOY_TOKEN TOKEN_VALUE STATE_SECRET_ACCESS_KEY
+unset BOOTSTRAP_TOKEN SETUP_TOKEN DEPLOY_TOKEN TOKEN_VALUE
+
+git add -A
+if ! git diff --cached --quiet; then
+	git commit -m "Initialize $PROJECT_NAME"
+fi
+git push -u origin HEAD:main
 
 echo "Bootstrapped $REPOSITORY."
+echo "Add $REPOSITORY to template.cfworkers/CONSUMERS.md in corioders/cstd-nextjs-template."
 echo "Still to do: require a reviewer on the production environment if the GitHub plan supports it."

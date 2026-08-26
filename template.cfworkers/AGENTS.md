@@ -37,6 +37,5 @@ return [session, null];
 
 # Cloudflare infrastructure
 
-- Manage durable D1/R2 resources with OpenTofu using the standard setup in `infra/README.md`: dedicated R2 state bucket, native lockfile, separate least-privilege state/provider tokens, trusted plans, and reviewed production applies.
-- Never connect fork pull requests or preview deployments to production credentials or data. Forks get backend-free validation on Blacksmith; trusted jobs run on `[self-hosted, win24-wsl]`.
-- Before adopting existing resources, require an import-only plan with no creates, changes, or destroys, then require a second `No changes` plan after import.
+- `bootstrap_project.sh` creates durable D1/R2 resources once and reuses exact-name matches on later runs. Never delete or replace them automatically.
+- Never connect fork pull requests or preview deployments to production credentials or data. Trusted jobs run on `[self-hosted, win24-wsl]`.
