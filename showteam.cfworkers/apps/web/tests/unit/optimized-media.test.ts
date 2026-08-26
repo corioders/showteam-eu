@@ -28,6 +28,24 @@ function uploadForm(overrides: Partial<OptimizedImageDescriptor> = {}): FormData
 	return form;
 }
 
+function fullResponsiveUploadForm(): FormData {
+	const widths = Array.from({ length: 18 }, (_, index) => (index + 1) * 100);
+	const webpSrcSet = widths.map((width) => `/api/media/file/responsive-${width}.webp ${width}w`).join(", ");
+	const avifSrcSet = widths.map((width) => `/api/media/file/responsive-${width}.avif ${width}w`).join(", ");
+	const form = new FormData();
+	form.set(
+		"descriptor",
+		JSON.stringify({ ...descriptor, img: { src: "/api/media/file/responsive-1800.webp", srcSet: webpSrcSet }, sources: [{ srcSet: avifSrcSet, type: "image/avif" }] }),
+	);
+	for (const width of widths) {
+		for (const format of ["avif", "webp"] as const) {
+			const key = `responsive-${width}.${format}`;
+			form.append("artifacts", new File([key], key, { type: `image/${format}` }));
+		}
+	}
+	return form;
+}
+
 describe("optimized CMS media", () => {
 	beforeEach(() => {
 		mediaBucket.delete.mockReset();
@@ -36,6 +54,7 @@ describe("optimized CMS media", () => {
 
 	it("accepts a matching AVIF/WebP descriptor and rejects a forged one", () => {
 		expect(validateOptimizedImageUpload(uploadForm()).artifacts).toHaveLength(4);
+		expect(validateOptimizedImageUpload(fullResponsiveUploadForm()).artifacts).toHaveLength(36);
 		expect(() => validateOptimizedImageUpload(uploadForm({ img: { ...descriptor.img, srcSet: `${descriptor.img.srcSet}, /api/media/file/forged.webp 1800w` } }))).toThrow(
 			"Descriptor nie odpowiada przesłanym plikom.",
 		);

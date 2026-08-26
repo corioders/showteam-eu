@@ -7,7 +7,7 @@ import type { OptimizedImageDescriptor } from "cstd-next/media/image/optimized-i
 import type { Payload } from "payload";
 
 const MAX_ARTIFACT_BYTES = 15 * 1024 * 1024;
-const MAX_ARTIFACTS = 16;
+const MAX_ARTIFACTS = 40;
 const SAFE_KEY = /^[a-zA-Z0-9][a-zA-Z0-9._-]{1,220}\.(?:avif|webp)$/;
 
 type StoredOptimizedMedia = {
