@@ -30,19 +30,11 @@ only that subdirectory.
 ./init_project.sh myproject
 ```
 
-Then provision the Cloudflare cache resources with OpenTofu and paste the two
-D1 output ids into `myproject.cfworkers/apps/web/wrangler.jsonc`:
-
-```bash
-export CLOUDFLARE_API_TOKEN=...
-tofu -chdir=myproject.cfworkers/infra init
-tofu -chdir=myproject.cfworkers/infra apply \
-  -var cloudflare_account_id=... \
-  -var project_name=myproject
-```
-
-See `myproject.cfworkers/infra/README.md` for the outputs, permissions and
-adopting manually-created resources.
+Then follow `myproject.cfworkers/infra/README.md`. It defines the complete
+OpenTofu setup: dedicated R2 state with locking, least-privilege tokens, GitHub
+variables/environments, safe imports, fork validation, trusted plans and reviewed
+production applies. Paste the two resulting D1 output IDs into
+`myproject.cfworkers/apps/web/wrangler.jsonc`.
 
 Install and start:
 
