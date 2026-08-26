@@ -82,13 +82,9 @@ jobs:
         run: pnpm test:unit
         working-directory: showteam.cfworkers
 
-      - name: Install Playwright system dependencies
-        run: pnpm --dir apps/web exec playwright install-deps chromium webkit
-        working-directory: showteam.cfworkers
-
       - name: Install Playwright browsers
         if: steps.restore-playwright.outputs.cache-hit != 'true'
-        run: pnpm --dir apps/web exec playwright install chromium webkit
+        run: pnpm --dir apps/web exec playwright install --with-deps chromium webkit
         working-directory: showteam.cfworkers
 
       - name: Save Playwright browsers
