@@ -135,7 +135,7 @@ if [[ -f "$ENCRYPTED_ENV" && ! -f "$LOCAL_ENV" ]]; then
 elif [[ -f "$LOCAL_ENV" ]]; then
 	echo "Keeping existing $LOCAL_ENV."
 fi
-rm -f -- "$ENCRYPTED_ENV" encrypt_template_env.sh
+rm -f -- "$ENCRYPTED_ENV" encrypt_template_env.sh AGENTS.md
 sed -i.bak '/<!-- BEGIN:template-env-docs -->/,/<!-- END:template-env-docs -->/d' README.md
 rm -- README.md.bak
 sed -i.bak '/<!-- BEGIN:template-env-agent-rule -->/,/<!-- END:template-env-agent-rule -->/d' "$PROJECT_DIRECTORY/AGENTS.md"
