@@ -30,7 +30,7 @@ On macOS, authenticate `gh` and store an account-owned Cloudflare token with onl
 `Account API Tokens Write` in Keychain. The complete fresh-project bootstrap is:
 
 ```bash
-git clone git@github.com:corioders/cstd-nextjs-template.git myproject
+git clone --depth 1 --origin template git@github.com:corioders/cstd-nextjs-template.git myproject
 cd myproject
 ./bootstrap_project.sh
 ```
@@ -45,6 +45,8 @@ commits and pushes the initialized project. On resumed runs it rotates generated
 project tokens; only the account-owned bootstrap token remains in Keychain.
 Existing durable resources are reused by name and never deleted. GitHub production reviewers remain manual
 when the private-repository plan does not expose deployment protection rules.
+The new repository starts with one root initialization commit followed by one
+registration commit for each pullable `cstd` subtree; template history is not retained.
 
 Install and start:
 
