@@ -37,7 +37,7 @@
 		"test:e2e": {
 			"cache": false,
 			"dependsOn": ["build"],
-			"env": ["PAYLOAD_SECRET", "PLAYWRIGHT_BASE_URL", "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"],
+			"env": ["PAYLOAD_SECRET", "PLAYWRIGHT_BASE_URL", "PLAYWRIGHT_BROWSERS_PATH", "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"],
 			"outputs": ["playwright-report/**", "test-results/**"]
 		},
 		"clean": {
