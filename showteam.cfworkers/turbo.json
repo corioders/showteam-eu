@@ -7,9 +7,7 @@
 		"CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY",
 		"CORIODERS_INVALIDATE_PERSISTENT_CACHE",
 		"CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER",
-		"IS_PREVIEW",
-		"NEXT_IS_EXPORT_WORKER",
-		"NEXT_PUBLIC_IS_PREVIEW"
+		"NEXT_IS_EXPORT_WORKER"
 	],
 	"tasks": {
 		"build": {
@@ -34,7 +32,7 @@
 			"dependsOn": ["^build", "^check-types"]
 		},
 		"test:unit": {
-			"dependsOn": ["^test:unit"]
+			"dependsOn": ["^build", "^test:unit"]
 		},
 		"test:e2e": {
 			"cache": false,

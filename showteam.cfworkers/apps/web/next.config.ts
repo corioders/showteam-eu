@@ -5,6 +5,8 @@ import { withPayload } from "@payloadcms/next/withPayload";
 import { nextConfig as cstdNextConfig } from "cstd-next/config/next.config.js";
 import type { NextConfig } from "next";
 
+import "./src/env.ts";
+
 const scriptPolicy = process.env.NODE_ENV === "production" ? "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
 const workspaceRoot = path.join(import.meta.dirname, "..", "..");
 
