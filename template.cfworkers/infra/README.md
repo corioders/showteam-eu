@@ -1,17 +1,42 @@
 # Cloudflare infrastructure
 
-OpenTofu owns durable OpenNext cache resources: one R2 bucket and D1 database
-for production, plus isolated equivalents for the shared preview Worker.
-OpenNext/Wrangler owns the generated Worker bundle and deployment.
+OpenTofu owns durable Cloudflare resources. OpenNext/Wrangler owns generated
+Worker bundles and deployments. State lives in a dedicated bootstrap R2 bucket;
+native S3 conditional locking creates `<key>.tflock` while OpenTofu is running.
 
-Set a Cloudflare API token with D1 Edit and Workers R2 Storage Edit permissions:
+## One-time bootstrap
+
+1. Create `<project>-tofu-state` in R2. This bucket deliberately stays outside
+   its own state so destroying a stack cannot remove the state needed to recover it.
+2. Create an R2 Account API token named `<project> OpenTofu state` with only
+   `Object Read & Write`, restricted to that bucket.
+3. Create a Cloudflare Account API token named `<project> OpenTofu` with only
+   `D1 Write` and `Workers R2 Storage Write`. Keep it separate from the broader
+   `CLOUDFLARE_API_TOKEN` used by Wrangler deploys.
+4. Create GitHub environments `preview` and `production`. Add these secrets to both:
+   `TOFU_STATE_ACCESS_KEY_ID`, `TOFU_STATE_SECRET_ACCESS_KEY`,
+   `TOFU_CLOUDFLARE_API_TOKEN`.
+5. Add repository variables `CLOUDFLARE_ACCOUNT_ID`, `TOFU_PROJECT_NAME`,
+   `TOFU_STATE_BUCKET` and `TOFU_STATE_KEY` (`<project>/terraform.tfstate`).
+6. Require a reviewer on the `production` environment. Preview plans never apply;
+   only a reviewed `deploy` branch run can apply.
+
+For local use, export the same values:
 
 ```sh
+export AWS_ACCESS_KEY_ID=...
+export AWS_SECRET_ACCESS_KEY=...
+export AWS_ENDPOINT_URL_S3=https://ACCOUNT_ID.r2.cloudflarestorage.com
 export CLOUDFLARE_API_TOKEN=...
-tofu -chdir=infra init
-tofu -chdir=infra apply \
-  -var cloudflare_account_id=... \
-  -var project_name=myproject
+export TF_VAR_cloudflare_account_id=ACCOUNT_ID
+export TF_VAR_project_name=myproject
+
+tofu -chdir=infra init \
+  -backend-config=bucket=myproject-tofu-state \
+  -backend-config=key=myproject/terraform.tfstate
+tofu -chdir=infra fmt -check
+tofu -chdir=infra validate
+tofu -chdir=infra plan -lock-timeout=5m
 ```
 
 Copy the two output IDs into `apps/web/wrangler.jsonc`:
@@ -21,8 +46,13 @@ tofu -chdir=infra output production_next_tag_cache_d1_id
 tofu -chdir=infra output preview_next_tag_cache_d1_id
 ```
 
-Use a remote state backend before the first shared apply. Do not commit state
-files. Existing manually-created resources must be imported before applying;
-the resource names are shown in `main.tf`. `prevent_destroy` protects cache
-resources from accidental deletion; remove it only when deliberately tearing
-down a project.
+Existing resources must be imported before the first apply. Reconcile location
+and replication fields until the import-only plan reports zero creates, changes
+and destroys; only then apply the imports. Run a second plan and require
+`No changes`. Never accept a replacement plan while adopting production data.
+
+The `Infrastructure` workflow runs backend-free format/validation for external
+fork pull requests on Blacksmith. Trusted pull requests plan on `win24-wsl` with
+the `preview` secrets. A push to `deploy` plans again, then applies through the
+review-protected `production` environment. `prevent_destroy` remains mandatory
+for durable resources.
