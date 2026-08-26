@@ -38,6 +38,14 @@ return [session, null];
 - Keep commits small and focused: one working, reversible change per commit. Do not combine unrelated features or fixes.
 - Do not implement fallbacks for problems that should surface as errors.
 
+# UI components
+
+- For page sections and reusable UI, search the purchased `@shadcnblocks` registry before writing a custom implementation. In this template, `@shadcnblocks` is the default registry when the user does not name another one.
+- Run registry commands from `apps/web`, for example `pnpm dlx shadcn@latest search @shadcnblocks -q "hero"` and `pnpm dlx shadcn@latest add @shadcnblocks/<name>`.
+- Registry authentication comes from `SHADCNBLOCKS_API_KEY`. If it is unavailable, stop and request it; never print or commit the key.
+- Inspect and adapt installed source to the project instead of treating registry output as an opaque dependency.
+- Shared bootstrap secrets are tracked only as `apps/web/.env.age`. Never read, print, or commit plaintext `.env`; maintainers refresh the ciphertext with `./encrypt_template_env.sh` from the template repository root.
+
 # Cloudflare infrastructure
 
 - `bootstrap_project.sh` creates durable D1/R2 resources once and reuses exact-name matches on later runs. Never delete or replace them automatically.

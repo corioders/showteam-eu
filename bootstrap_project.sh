@@ -7,8 +7,9 @@ usage() {
 usage: ./bootstrap_project.sh [project-name]
 
 Run once from the template repository root. Requires authenticated gh, curl,
-jq, git, and macOS security. The account-owned Cloudflare bootstrap token is read
-from macOS Keychain; generated project tokens are rotated on resumed runs.
+jq, git, macOS security, and age (directly or through Nix). The shared template
+env is restored with its passphrase. The account-owned Cloudflare bootstrap token
+is read from macOS Keychain; generated project tokens are rotated on resumed runs.
 EOF
 }
 
@@ -40,7 +41,20 @@ for command_name in curl gh git jq security; do
 		echo "Missing required command: $command_name" >&2
 		exit 1
 	fi
-	done
+done
+
+run_age() {
+	if command -v age >/dev/null 2>&1; then
+		age "$@"
+		return
+	fi
+	if command -v nix >/dev/null 2>&1; then
+		nix shell nixpkgs#age --command age "$@"
+		return
+	fi
+	echo "Missing age. Install age or Nix." >&2
+	exit 1
+}
 
 register_subtree() {
 	local source_prefix=$1
@@ -120,6 +134,17 @@ done
 if [[ -z "$PROJECT_DIRECTORY" || "$PROJECT_DIRECTORY" != "$PROJECT_NAME.cfworkers" ]]; then
 	echo "Expected exactly one $PROJECT_NAME.cfworkers directory." >&2
 	exit 1
+fi
+
+ENCRYPTED_ENV="$PROJECT_DIRECTORY/apps/web/.env.age"
+LOCAL_ENV="$PROJECT_DIRECTORY/apps/web/.env"
+if [[ -f "$ENCRYPTED_ENV" && ! -f "$LOCAL_ENV" ]]; then
+	umask 077
+	echo "Restore shared template environment:"
+	run_age --decrypt --output "$LOCAL_ENV" "$ENCRYPTED_ENV"
+	chmod 600 "$LOCAL_ENV"
+elif [[ -f "$LOCAL_ENV" ]]; then
+	echo "Keeping existing $LOCAL_ENV."
 fi
 
 REPOSITORY="$GITHUB_OWNER/$PROJECT_NAME"

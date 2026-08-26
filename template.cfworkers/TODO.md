@@ -7,3 +7,4 @@ One line per task; delete a line when it is done and committed.
 - [in progress] Persist Next.js and Playwright browser caches in validation workflows and migrate consumers.
 - [in progress] Reduce `apps/web/src/app` to a polished representative starter page and remove demo fixtures.
 - [in progress] Remove Nuqs from the template until a project explicitly needs it.
+- [in progress] Bake Playwright system dependencies into the Windows WSL self-hosted runner image and remove per-run installation.

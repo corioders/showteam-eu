@@ -95,6 +95,10 @@ git subtree push --prefix <project>.cfworkers/packages/corioders-lib/cstd-ts \
 
 Same for `cstd-next` with `git@github.com:corioders/cstd-next.git`.
 
+## Shared template environment
+
+`template.cfworkers/apps/web/.env` stays ignored. After changing its shared values, run `./encrypt_template_env.sh` and commit only `.env.age`. New project bootstrap asks for the passphrase and restores the local `.env` without overwriting an existing one.
+
 ## Not included on purpose
 
 Add these per project; each has a reference implementation in another repository.
@@ -105,4 +109,4 @@ Add these per project; each has a reference implementation in another repository
 | Payload CMS on D1 + R2 storage, migrations | `showteam-eu` |
 | Google Drive/Docs/Sheets as CMS | `poland20`, `impact-speaker-tracker` |
 | Firebase auth on Workers | `impact-speaker-tracker` |
-| shadcn UI components | `pnpm dlx shadcn@latest add <component>` |
+| UI sections and components | Search the purchased `@shadcnblocks` registry first; run `pnpm dlx shadcn@latest search @shadcnblocks -q "<need>"` from `apps/web` |
