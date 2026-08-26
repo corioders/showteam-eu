@@ -17,6 +17,6 @@ tofu -chdir=infra validate
 tofu -chdir=infra plan -lock-timeout=5m
 ```
 
-The `Infrastructure` workflow plans trusted pull requests. A push to `deploy` plans again and applies only after approval in the GitHub `production` environment. Fork pull requests run backend-free formatting and validation on Blacksmith and never receive credentials.
+The reusable `Infrastructure` workflow is part of every `Deploy` run: branch pushes plan, while `deploy` applies only after approval in the GitHub `production` environment. Pull requests also run it directly. Fork pull requests get only backend-free formatting and validation on Blacksmith and never receive credentials.
 
 Every durable resource has `prevent_destroy`; do not remove it for routine deploys. Worker artifacts stay in Wrangler/OpenNext and Payload owns D1 schema migrations.

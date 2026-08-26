@@ -1,12 +1,8 @@
 name: Infrastructure
 
 on:
+  workflow_call:
   pull_request:
-    paths:
-      - .github/workflows/infra.yml
-      - showteam.cfworkers/infra/**
-  push:
-    branches: [deploy, template-migration]
     paths:
       - .github/workflows/infra.yml
       - showteam.cfworkers/infra/**

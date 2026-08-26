@@ -31,9 +31,13 @@ jobs:
   validate:
     uses: ./.github/workflows/validate.yml
 
+  infrastructure:
+    uses: ./.github/workflows/infra.yml
+    secrets: inherit
+
   deploy:
     if: github.repository != 'corioders/cstd-nextjs-template'
-    needs: validate
+    needs: [validate, infrastructure]
     runs-on: [self-hosted, win24-wsl]
     timeout-minutes: 30
     environment: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
