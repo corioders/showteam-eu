@@ -46,6 +46,7 @@ register_subtree() {
 	local source_prefix=$1
 	local target_prefix=$2
 	local package_name=$3
+	local repository=$4
 	local split_commit
 
 	if git log -1 --format=%B --fixed-strings --grep="git-subtree-dir: $target_prefix" | grep -Fxq "git-subtree-dir: $target_prefix"; then
@@ -56,6 +57,7 @@ register_subtree() {
 		exit 1
 	fi
 
+	git fetch --no-tags "$repository" main
 	split_commit=$(git subtree split --prefix "$source_prefix" HEAD)
 	git commit --allow-empty \
 		-m "chore: register $package_name subtree" \
@@ -66,11 +68,13 @@ git-subtree-split: $split_commit"
 register_subtree \
 	"template.cfworkers/packages/corioders-lib/cstd-ts" \
 	"$PROJECT_NAME.cfworkers/packages/corioders-lib/cstd-ts" \
-	"cstd-ts"
+	"cstd-ts" \
+	"git@github.com:corioders/cstd-ts.git"
 register_subtree \
 	"template.cfworkers/packages/corioders-lib/cstd-next" \
 	"$PROJECT_NAME.cfworkers/packages/corioders-lib/cstd-next" \
-	"cstd-next"
+	"cstd-next" \
+	"git@github.com:corioders/cstd-next.git"
 
 gh auth status >/dev/null
 GITHUB_OWNER=${GITHUB_OWNER:-}
