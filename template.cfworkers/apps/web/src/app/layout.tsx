@@ -3,7 +3,6 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { ReactNode } from "react";
 
 import { env } from "@/env";
@@ -14,6 +13,7 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
+	description: "A production-ready Next.js starter for Cloudflare Workers.",
 	title: env.APP_ENV === "production" ? "Template" : `Template (${env.APP_ENV})`,
 };
 
@@ -26,13 +26,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
 	return (
 		<html lang="en" suppressHydrationWarning={true}>
-			<NuqsAdapter>
-				<body className={`${geist.variable} bg-background font-sans text-foreground antialiased`}>
-					<ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
-						{children}
-					</ThemeProvider>
-				</body>
-			</NuqsAdapter>
+			<body className={`${geist.variable} bg-background font-sans text-foreground antialiased`}>
+				<ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
+					{children}
+				</ThemeProvider>
+			</body>
 		</html>
 	);
 }
