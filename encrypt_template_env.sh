@@ -17,7 +17,7 @@ run_age() {
 		return
 	fi
 	if command -v nix >/dev/null 2>&1; then
-		nix shell nixpkgs#age --command age "$@"
+		nix shell nixpkgs/33da5f36e599b50aa7dbbfacb718254423b18354#age --command age "$@"
 		return
 	fi
 	echo "Missing age. Install age or Nix." >&2
