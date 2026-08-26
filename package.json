@@ -18,7 +18,9 @@
 	},
 	"bin": {
 		"cstd-next-clean-images": "./script/clean-prerendered-image-output.js",
-		"cstd-next-finalize-images": "./script/finalize-prerendered-image-build.js"
+		"cstd-next-finalize-images": "./script/finalize-prerendered-image-build.js",
+		"cstd-shadcn-add": "./script/shadcn/add.js",
+		"cstd-shadcn-learn": "./script/shadcn/learn.js"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.10",
