@@ -355,4 +355,3 @@ git push -u origin HEAD:main
 
 echo "Bootstrapped $REPOSITORY."
 echo "Add $REPOSITORY to template.cfworkers/CONSUMERS.md in corioders/cstd-nextjs-template."
-echo "Still to do: require a reviewer on the production environment if the GitHub plan supports it."
