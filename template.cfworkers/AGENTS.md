@@ -28,16 +28,6 @@ if (error) {
 return [session, null];
 ```
 
-# Workflow
-
-- Read `TODO.md` before starting work, keep its statuses current, remove old already finished tasks, and use it to resume after context loss.
-- After template changes, migrate every repository listed in the template's `CONSUMERS.md` that consumes the affected files or subtrees.
-- Validate migrations in a disposable clone directly on Windows WSL over SSH; do not run resource-intensive migration test suites on the local Mac. CI may also run on `[self-hosted, win24-wsl]`, but it is not the fast-feedback substitute for the direct clone.
-- Push changes belonging to `cstd-ts` or `cstd-next` to the matching canonical cstd repository before pulling them into consumers.
-- Run trusted push and internal pull-request jobs on `[self-hosted, win24-wsl]`; external fork pull requests must stay on Blacksmith and must never run on a self-hosted runner.
-- Keep commits small and focused: one working, reversible change per commit. Do not combine unrelated features or fixes.
-- Do not implement fallbacks for problems that should surface as errors.
-
 # UI components
 
 - For page sections and reusable UI, search the purchased `@shadcnblocks` registry before writing a custom implementation. In this template, `@shadcnblocks` is the default registry when the user does not name another one.
