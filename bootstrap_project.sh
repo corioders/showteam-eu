@@ -7,8 +7,8 @@ usage() {
 usage: ./bootstrap_project.sh [project-name]
 
 Run once from the template repository root. Requires authenticated gh, curl,
-jq, git, and macOS security. Generated Cloudflare credentials are stored in
-macOS Keychain so an interrupted bootstrap can be resumed.
+jq, git, and macOS security. The account-owned Cloudflare bootstrap token is read
+from macOS Keychain; generated project tokens are rotated on resumed runs.
 EOF
 }
 
@@ -84,7 +84,7 @@ fi
 if [[ -z "$GITHUB_OWNER" ]]; then
 	read -r -p "GitHub owner: " GITHUB_OWNER </dev/tty
 fi
-KEYCHAIN_ACCOUNT=${CLOUDFLARE_BOOTSTRAP_KEYCHAIN_ACCOUNT:-$GITHUB_OWNER}
+KEYCHAIN_ACCOUNT=${CLOUDFLARE_BOOTSTRAP_KEYCHAIN_ACCOUNT:-corioders}
 BOOTSTRAP_KEYCHAIN_SERVICE=${CLOUDFLARE_BOOTSTRAP_KEYCHAIN_SERVICE:-corioders.cloudflare.bootstrap}
 
 if [[ -d template.cfworkers ]]; then
@@ -160,11 +160,9 @@ if ! git remote get-url origin >/dev/null 2>&1; then
 	git remote add origin "$TARGET_REMOTE"
 fi
 
-BOOTSTRAP_TOKEN_WAS_PROMPTED=false
 if ! BOOTSTRAP_TOKEN=$(security find-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$BOOTSTRAP_KEYCHAIN_SERVICE" -w 2>/dev/null); then
-	read -r -s -p "Cloudflare bootstrap token: " BOOTSTRAP_TOKEN </dev/tty
-	echo >/dev/tty
-	BOOTSTRAP_TOKEN_WAS_PROMPTED=true
+	echo "Missing Cloudflare bootstrap token in Keychain service '$BOOTSTRAP_KEYCHAIN_SERVICE', account '$KEYCHAIN_ACCOUNT'." >&2
+	exit 1
 fi
 
 cf_api() {
@@ -225,9 +223,6 @@ if [[ ! "$CLOUDFLARE_ACCOUNT_ID" =~ ^[0-9a-f]{32}$ ]]; then
 fi
 
 cf_api "$BOOTSTRAP_TOKEN" GET "accounts/$CLOUDFLARE_ACCOUNT_ID/tokens/verify" >/dev/null
-if [[ "$BOOTSTRAP_TOKEN_WAS_PROMPTED" == true ]]; then
-	printf '%s\n' "$BOOTSTRAP_TOKEN" | security add-generic-password -U -a "$KEYCHAIN_ACCOUNT" -s "$BOOTSTRAP_KEYCHAIN_SERVICE" -w >/dev/null
-fi
 PERMISSION_RESPONSE=$(cf_api "$BOOTSTRAP_TOKEN" GET "accounts/$CLOUDFLARE_ACCOUNT_ID/tokens/permission_groups")
 TOKEN_LIST_RESPONSE=$(cf_api "$BOOTSTRAP_TOKEN" GET "accounts/$CLOUDFLARE_ACCOUNT_ID/tokens?per_page=100")
 
@@ -248,10 +243,9 @@ WORKERS_SCRIPTS_WRITE_PERMISSION=$(permission_id "Workers Scripts Write")
 
 TOKEN_ID=""
 TOKEN_VALUE=""
-create_or_load_token() {
+create_or_rotate_token() {
 	local token_name=$1
-	local keychain_service=$2
-	local policies=$3
+	local policies=$2
 	local token_response
 	local token_count
 
@@ -262,11 +256,7 @@ create_or_load_token() {
 	fi
 	TOKEN_ID=$(jq -r --arg name "$token_name" '.result[] | select(.name == $name and .status == "active") | .id' <<<"$TOKEN_LIST_RESPONSE")
 	if [[ -n "$TOKEN_ID" ]]; then
-		if ! TOKEN_VALUE=$(security find-generic-password -a "$KEYCHAIN_ACCOUNT" -s "$keychain_service" -w 2>/dev/null); then
-			echo "Token '$token_name' exists, but its value is missing from Keychain service '$keychain_service'." >&2
-			exit 1
-		fi
-		return
+		cf_api "$BOOTSTRAP_TOKEN" DELETE "accounts/$CLOUDFLARE_ACCOUNT_ID/tokens/$TOKEN_ID" >/dev/null
 	fi
 
 	token_response=$(cf_api "$BOOTSTRAP_TOKEN" POST "accounts/$CLOUDFLARE_ACCOUNT_ID/tokens" "$(jq -cn --arg name "$token_name" --argjson policies "$policies" '{name: $name, policies: $policies}')")
@@ -276,7 +266,6 @@ create_or_load_token() {
 		echo "Cloudflare did not return credentials for '$token_name'." >&2
 		exit 1
 	fi
-	printf '%s\n' "$TOKEN_VALUE" | security add-generic-password -U -a "$KEYCHAIN_ACCOUNT" -s "$keychain_service" -w >/dev/null
 }
 
 ACCOUNT_RESOURCE="com.cloudflare.api.account.$CLOUDFLARE_ACCOUNT_ID"
@@ -285,7 +274,7 @@ PROVIDER_POLICIES=$(jq -cn \
 	--arg d1 "$D1_WRITE_PERMISSION" \
 	--arg r2 "$R2_WRITE_PERMISSION" \
 	'[{effect: "allow", permission_groups: [{id: $d1}, {id: $r2}], resources: {($resource): "*"}}]')
-create_or_load_token "$PROJECT_NAME Cloudflare setup" "corioders.cloudflare.$PROJECT_NAME.setup" "$PROVIDER_POLICIES"
+create_or_rotate_token "$PROJECT_NAME Cloudflare setup" "$PROVIDER_POLICIES"
 SETUP_TOKEN=$TOKEN_VALUE
 
 ensure_r2_bucket() {
@@ -328,7 +317,7 @@ DEPLOY_POLICIES=$(jq -cn \
 	--arg r2 "$R2_WRITE_PERMISSION" \
 	--arg workers "$WORKERS_SCRIPTS_WRITE_PERMISSION" \
 	'[{effect: "allow", permission_groups: [{id: $d1}, {id: $r2}, {id: $workers}], resources: {($resource): "*"}}]')
-create_or_load_token "$PROJECT_NAME GitHub deploy" "corioders.cloudflare.$PROJECT_NAME.deploy" "$DEPLOY_POLICIES"
+create_or_rotate_token "$PROJECT_NAME GitHub deploy" "$DEPLOY_POLICIES"
 DEPLOY_TOKEN=$TOKEN_VALUE
 CLOUDFLARE_WORKERS_DEV_SUBDOMAIN=""
 if SUBDOMAIN_RESPONSE=$(cf_api "$DEPLOY_TOKEN" GET "accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" 2>/dev/null); then
