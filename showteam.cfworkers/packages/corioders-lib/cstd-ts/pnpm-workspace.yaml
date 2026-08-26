@@ -1,8 +1,0 @@
-packages:
-  - "."
-
-allowBuilds:
-  "@firebase/util": true
-  lmdb: true
-  msgpackr-extract: true
-  protobufjs: true

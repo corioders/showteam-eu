@@ -1,21 +1,19 @@
 {
-	"typescript.enablePromptUseWorkspaceTsdk": true,
+	"[css]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
 	"[typescript]": {
 		"editor.defaultFormatter": "biomejs.biome"
 	},
 	"[typescriptreact]": {
 		"editor.defaultFormatter": "biomejs.biome"
 	},
-	"[json]": {
-		"editor.defaultFormatter": "biomejs.biome"
-	},
-	"[css]": {
-		"editor.defaultFormatter": "biomejs.biome"
+	"editor.codeActionsOnSave": {
+		"source.fixAll.biome": "explicit"
 	},
 	"editor.formatOnSave": true,
-	"editor.codeActionsOnSave": {
-		"source.organizeImports.biome": "explicit",
-		"quickfix.biome": "explicit"
-	},
-	"js/ts.preferences.importModuleSpecifierEnding": "js"
+	"typescript.enablePromptUseWorkspaceTsdk": true
 }
