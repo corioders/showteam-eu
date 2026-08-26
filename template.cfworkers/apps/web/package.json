@@ -4,6 +4,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
+		"predev": "pnpm --workspace-root turbo run build --filter=cstd-next",
 		"dev": "next dev --experimental-next-config-strip-types",
 		"prebuild": "cstd-next-clean-images",
 		"build": "next build --experimental-next-config-strip-types",
