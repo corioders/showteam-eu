@@ -3,5 +3,3 @@
 //
 // Now making this a function makes the caller, re-query process.env solving the issue.
 export const CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER = () => process.env["CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER"] === "true";
-
-export const IS_DEVELOPMENT = process.env["NODE_ENV"] === "development";
