@@ -30,10 +30,14 @@ On macOS, authenticate `gh` and store an account-owned Cloudflare token with onl
 `Account API Tokens Write` in Keychain. The complete fresh-project bootstrap is:
 
 ```bash
-./bootstrap_project.sh myproject
+git clone git@github.com:corioders/cstd-nextjs-template.git myproject
+cd myproject
+./bootstrap_project.sh
 ```
 
-The script names the project, discovers the GitHub owner, Cloudflare account and
+The script proposes the clone directory name as the project name and asks for confirmation;
+an explicit name can still be passed as `./bootstrap_project.sh myproject`. It registers
+the renamed `cstd-ts` and `cstd-next` directories as pullable git subtrees, discovers the GitHub owner, Cloudflare account and
 workers.dev subdomain (prompting when a value is missing or ambiguous), creates the private GitHub repository, least-privilege
 Cloudflare setup and deploy tokens, isolated production/preview D1 and R2 resources,
 and GitHub environments/secrets/variables, then writes the D1 IDs into Wrangler,

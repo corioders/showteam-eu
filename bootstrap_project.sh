@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
 	cat >&2 <<'EOF'
-usage: ./bootstrap_project.sh <project-name>
+usage: ./bootstrap_project.sh [project-name]
 
 Run once from the template repository root. Requires authenticated gh, curl,
 jq, git, and macOS security. Generated Cloudflare credentials are stored in
@@ -12,12 +12,24 @@ macOS Keychain so an interrupted bootstrap can be resumed.
 EOF
 }
 
-if [[ $# -ne 1 ]]; then
+if [[ $# -gt 1 ]]; then
 	usage
 	exit 1
 fi
 
-PROJECT_NAME=$1
+cd "$(dirname "$0")"
+
+PROJECT_NAME=${1:-}
+if [[ -z "$PROJECT_NAME" ]]; then
+	PROJECT_NAME=$(basename "$PWD")
+	read -r -p "Use '$PROJECT_NAME' as the project name? [Y/n] " CONFIRM_PROJECT_NAME </dev/tty
+	if [[ "$CONFIRM_PROJECT_NAME" =~ ^[Nn]$ ]]; then
+		read -r -p "Project name: " PROJECT_NAME </dev/tty
+	elif [[ -n "$CONFIRM_PROJECT_NAME" && ! "$CONFIRM_PROJECT_NAME" =~ ^[Yy]$ ]]; then
+		echo "Expected y or n." >&2
+		exit 1
+	fi
+fi
 if [[ ! "$PROJECT_NAME" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
 	echo "Project name must be lowercase alphanumeric with dashes." >&2
 	exit 1
@@ -28,9 +40,37 @@ for command_name in curl gh git jq security; do
 		echo "Missing required command: $command_name" >&2
 		exit 1
 	fi
-done
+	done
 
-cd "$(dirname "$0")"
+register_subtree() {
+	local source_prefix=$1
+	local target_prefix=$2
+	local package_name=$3
+	local split_commit
+
+	if git log -1 --format=%B --fixed-strings --grep="git-subtree-dir: $target_prefix" | grep -Fxq "git-subtree-dir: $target_prefix"; then
+		return
+	fi
+	if [[ ! -d "$source_prefix" ]]; then
+		echo "Cannot register $package_name subtree: missing $source_prefix." >&2
+		exit 1
+	fi
+
+	split_commit=$(git subtree split --prefix "$source_prefix" HEAD)
+	git commit --allow-empty \
+		-m "chore: register $package_name subtree" \
+		-m "git-subtree-dir: $target_prefix
+git-subtree-split: $split_commit"
+}
+
+register_subtree \
+	"template.cfworkers/packages/corioders-lib/cstd-ts" \
+	"$PROJECT_NAME.cfworkers/packages/corioders-lib/cstd-ts" \
+	"cstd-ts"
+register_subtree \
+	"template.cfworkers/packages/corioders-lib/cstd-next" \
+	"$PROJECT_NAME.cfworkers/packages/corioders-lib/cstd-next" \
+	"cstd-next"
 
 gh auth status >/dev/null
 GITHUB_OWNER=${GITHUB_OWNER:-}
