@@ -1,7 +1,9 @@
 resource "cloudflare_d1_database" "cms" {
-  account_id            = var.cloudflare_account_id
-  name                  = "showteam-cms"
-  primary_location_hint = "eeur"
+  account_id = var.cloudflare_account_id
+  name       = "showteam-cms"
+  read_replication = {
+    mode = "disabled"
+  }
   lifecycle { prevent_destroy = true }
 }
 resource "cloudflare_r2_bucket" "media" {
@@ -12,9 +14,11 @@ resource "cloudflare_r2_bucket" "media" {
   lifecycle { prevent_destroy = true }
 }
 resource "cloudflare_d1_database" "next_tag_cache" {
-  account_id            = var.cloudflare_account_id
-  name                  = "showteam-next-tags"
-  primary_location_hint = "eeur"
+  account_id = var.cloudflare_account_id
+  name       = "showteam-next-tags"
+  read_replication = {
+    mode = "disabled"
+  }
   lifecycle { prevent_destroy = true }
 }
 resource "cloudflare_r2_bucket" "next_incremental_cache" {
@@ -25,9 +29,11 @@ resource "cloudflare_r2_bucket" "next_incremental_cache" {
   lifecycle { prevent_destroy = true }
 }
 resource "cloudflare_d1_database" "preview_cms" {
-  account_id            = var.cloudflare_account_id
-  name                  = "showteam-preview-cms"
-  primary_location_hint = "eeur"
+  account_id = var.cloudflare_account_id
+  name       = "showteam-preview-cms"
+  read_replication = {
+    mode = "disabled"
+  }
   lifecycle { prevent_destroy = true }
 }
 resource "cloudflare_r2_bucket" "preview_media" {
@@ -38,9 +44,11 @@ resource "cloudflare_r2_bucket" "preview_media" {
   lifecycle { prevent_destroy = true }
 }
 resource "cloudflare_d1_database" "preview_next_tag_cache" {
-  account_id            = var.cloudflare_account_id
-  name                  = "showteam-preview-next-tags"
-  primary_location_hint = "eeur"
+  account_id = var.cloudflare_account_id
+  name       = "showteam-preview-next-tags"
+  read_replication = {
+    mode = "disabled"
+  }
   lifecycle { prevent_destroy = true }
 }
 resource "cloudflare_r2_bucket" "preview_next_incremental_cache" {
