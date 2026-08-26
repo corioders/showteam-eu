@@ -132,6 +132,8 @@ jobs:
         run: pnpm exec wrangler deploy --env preview
         working-directory: template.cfworkers/apps/web
         env:
+          # OpenNext remote R2 population can hang; Wrangler deploy lets the cache warm lazily.
+          OPEN_NEXT_DEPLOY: true
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           APP_ENV: preview
 
