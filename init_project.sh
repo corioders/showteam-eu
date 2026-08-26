@@ -31,12 +31,17 @@ grep -rlZ --binary-files=without-match -e 'template\.cfworkers' -e 'template-cfw
 	xargs -0 sed -i.bak -e "s/template\.cfworkers/$NAME.cfworkers/g" -e "s/template-cfworkers/$NAME-cfworkers/g"
 find . -name '*.bak' -not -path './node_modules/*' -delete
 
+APP_TITLE=$(printf '%s' "$NAME" | awk -F- '{for (i = 1; i <= NF; i++) {printf "%s%s", (i > 1 ? " " : ""), toupper(substr($i, 1, 1)) substr($i, 2)}}')
+sed -i.bak \
+	-e "s/\"Template\"/\"$APP_TITLE\"/g" \
+	-e "s/\`Template (/\`$APP_TITLE (/g" \
+	"$NAME.cfworkers/apps/web/src/app/layout.tsx"
+rm -- "$NAME.cfworkers/apps/web/src/app/layout.tsx.bak"
+
 echo "Renamed to $NAME.cfworkers."
 rm -- "$NAME.cfworkers/CONSUMERS.md"
 echo "Still to do:"
 
 echo "  - add this repository and app directory to cstd-nextjs-template/template.cfworkers/CONSUMERS.md"
-echo "  - follow $NAME.cfworkers/infra/README.md to bootstrap locked R2 state, GitHub environments/tokens and R2/D1 resources"
-echo "  - paste the two OpenTofu D1 output ids into $NAME.cfworkers/apps/web/wrangler.jsonc"
-echo "  - set the app title in $NAME.cfworkers/apps/web/src/app/layout.tsx"
+echo "  - run ./bootstrap_project.sh <github-owner> <cloudflare-account-id> <workers-dev-subdomain>"
 rm -- "$0"

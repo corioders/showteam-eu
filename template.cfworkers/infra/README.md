@@ -6,6 +6,10 @@ native S3 conditional locking creates `<key>.tflock` while OpenTofu is running.
 
 ## One-time bootstrap
 
+On macOS, run the repository-root `bootstrap_project.sh` after `init_project.sh` to
+perform steps 1–5, apply this stack, and write both D1 output IDs into Wrangler.
+The manual procedure below remains the platform-independent reference.
+
 1. Create `<project>-tofu-state` in R2. This bucket deliberately stays outside
    its own state so destroying a stack cannot remove the state needed to recover it.
 2. Create an R2 Account API token named `<project> OpenTofu state` with only

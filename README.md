@@ -36,6 +36,20 @@ variables/environments, safe imports, fork validation, trusted plans and reviewe
 production applies. Paste the two resulting D1 output IDs into
 `myproject.cfworkers/apps/web/wrangler.jsonc`.
 
+On macOS, the complete fresh-project bootstrap is automated. Authenticate `gh`,
+store an account-owned Cloudflare token with only `Account API Tokens Write` in
+Keychain, then run:
+
+```bash
+./bootstrap_project.sh corioders CLOUDFLARE_ACCOUNT_ID WORKERS_DEV_SUBDOMAIN
+```
+
+The script creates the private GitHub repository, Cloudflare state/provider/deploy
+tokens, state bucket, GitHub environments/secrets/variables and OpenTofu resources,
+then writes the D1 IDs into Wrangler. It is resumable because generated token values
+stay in project-specific Keychain entries. GitHub production reviewers remain manual
+when the private-repository plan does not expose deployment protection rules.
+
 Install and start:
 
 ```bash
