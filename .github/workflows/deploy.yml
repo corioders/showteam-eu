@@ -10,8 +10,7 @@
 # 2. Repository Settings > Environments: create 'preview' and 'production'.
 #    Add CLOUDFLARE_API_TOKEN as a secret to both.
 #    Add CLOUDFLARE_WORKERS_DEV_SUBDOMAIN as a variable to 'preview'.
-# 3. Provision cache R2/D1 resources with OpenTofu in showteam.cfworkers/infra,
-#    then paste its two D1 output ids into apps/web/wrangler.jsonc.
+# 3. Preserve the durable D1/R2 resources named in apps/web/wrangler.jsonc.
 #
 # Trusted validation and deploy jobs run on the isolated `win24-wsl` organization runner.
 # Fork pull requests stay on Blacksmith because their code is untrusted.
@@ -31,13 +30,9 @@ jobs:
   validate:
     uses: ./.github/workflows/validate.yml
 
-  infrastructure:
-    uses: ./.github/workflows/infra.yml
-    secrets: inherit
-
   deploy:
     if: github.repository != 'corioders/cstd-nextjs-template'
-    needs: [validate, infrastructure]
+    needs: validate
     runs-on: [self-hosted, win24-wsl]
     timeout-minutes: 30
     environment: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}

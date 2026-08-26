@@ -33,3 +33,8 @@ return [session, null];
 - Read `TODO.md` before starting work, keep its statuses current, remove old already finished tasks, and use it to resume after context loss.
 - Keep commits small and focused: one working, reversible change per commit. Do not combine unrelated features or fixes.
 - Do not implement fallbacks for problems that should surface as errors.
+
+# Cloudflare infrastructure
+
+- The CMS, media, and cache D1/R2 resources bound in `apps/web/wrangler.jsonc` are durable. Never delete or replace them automatically.
+- Payload owns D1 schema migrations.
