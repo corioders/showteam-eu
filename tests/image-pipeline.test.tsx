@@ -14,6 +14,7 @@ import { cleanPrerenderedImageProductionOutput } from "../src/media/image/clean-
 import type { GoogleDriveRemoteStaticImage } from "../src/media/image/google-drive-remote-static-image.jsx";
 import { getPictureSourcesNotSvg, hash, optimizeImageBufferInternal, optimizeSvg, readImageInfoFromBuffer, shouldOptimizeImages } from "../src/media/image/internal.js";
 import { OptimizedImage, validateSizesProperty } from "../src/media/image/optimized-image.jsx";
+import { finalizePrerenderedImageBuild } from "../src/media/image/prerendered-image-build-finalizer.js";
 import { getDevelopmentPrerenderedImage } from "../src/media/image/prerendered-image-development.js";
 import { getPrerenderedImageRequestKey, serializePrerenderedImageRequest } from "../src/media/image/prerendered-image-request.js";
 import type { PrerenderedImageResource } from "../src/media/image/prerendered-image-resource.js";
@@ -351,6 +352,29 @@ describe("image pipeline", () => {
 			expect(runtimeAssetMetadata.format).toBe("webp");
 			expect(sourceFiles).toEqual([hash(ONE_PIXEL_PNG, createHash)]);
 			expect(cachedSource).toEqual(ONE_PIXEL_PNG);
+		} finally {
+			process.chdir(originalWorkingDirectory);
+			await fs.rm(fixtureDirectory, { force: true, recursive: true });
+		}
+	});
+
+	it("restores runtime assets when Turbopack reuses a cached loader result", async () => {
+		const originalWorkingDirectory = process.cwd();
+		const fixtureDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "cstd-next-image-runtime-restore-"));
+
+		try {
+			process.chdir(fixtureDirectory);
+			await staticImageImportLoader.call({ cacheable: () => undefined, resourcePath: path.join(fixtureDirectory, "static.png"), resourceQuery: "" }, ONE_PIXEL_PNG);
+			const runtimeAssetDirectory = path.join(fixtureDirectory, "public/_cstd/image/asset/runtime");
+			await fs.rm(runtimeAssetDirectory, { force: true, recursive: true });
+			await fs.mkdir(path.join(fixtureDirectory, ".next/server/app"), { recursive: true });
+			await fs.writeFile(path.join(fixtureDirectory, ".next/required-server-files.json"), JSON.stringify({ config: {} }));
+
+			await finalizePrerenderedImageBuild(fixtureDirectory);
+
+			const contentHash = hash(ONE_PIXEL_PNG, createHash);
+			const restoredAsset = await fs.readFile(path.join(runtimeAssetDirectory, `${contentHash}.webp`));
+			expect((await sharp(restoredAsset).metadata()).format).toBe("webp");
 		} finally {
 			process.chdir(originalWorkingDirectory);
 			await fs.rm(fixtureDirectory, { force: true, recursive: true });
