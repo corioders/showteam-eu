@@ -8,6 +8,7 @@ import path from "node:path";
 
 import type { OptimizedImageDescriptor } from "./optimized-image.jsx";
 import { PRERENDERED_IMAGE_DESCRIPTOR_DIRECTORY, PRERENDERED_IMAGE_MANIFEST_PLACEHOLDER, PRERENDERED_IMAGE_MARKER_ATTRIBUTE } from "./prerendered-image-resource.js";
+import { STATIC_IMAGE_SOURCE_DIRECTORY, writeStaticImageRuntimeAsset } from "./static-image-runtime-asset.js";
 
 const MANIFEST_KEY_PATTERN = "[a-f0-9]{32}";
 const MANIFEST_KEY_REGEX = new RegExp(`${PRERENDERED_IMAGE_MARKER_ATTRIBUTE}="(${MANIFEST_KEY_PATTERN})"`, "g");
@@ -22,6 +23,7 @@ interface RequiredServerFiles {
 }
 
 export async function finalizePrerenderedImageBuild(projectDirectory: string): Promise<void> {
+	await restoreCachedStaticImageRuntimeAssets(projectDirectory);
 	const primaryDistDirectory = path.join(projectDirectory, ".next");
 	const outputDirectories = [primaryDistDirectory];
 	const standaloneDistDirectory = await getStandaloneDistDirectory(projectDirectory, primaryDistDirectory);
@@ -36,6 +38,29 @@ export async function finalizePrerenderedImageBuild(projectDirectory: string): P
 			await injectRouteManifest(projectDirectory, htmlFile);
 		}
 	}
+}
+
+async function restoreCachedStaticImageRuntimeAssets(projectDirectory: string): Promise<void> {
+	const sourceDirectory = path.join(projectDirectory, STATIC_IMAGE_SOURCE_DIRECTORY);
+	let sourceFiles: Dirent[];
+	try {
+		sourceFiles = await fs.readdir(sourceDirectory, { withFileTypes: true });
+	} catch (error) {
+		if (isMissingPathError(error)) {
+			return;
+		}
+		// biome-ignore lint/plugin/no-throw: Unexpected filesystem failures must reject the build.
+		throw error;
+	}
+
+	await Promise.all(
+		sourceFiles
+			.filter((entry) => entry.isFile())
+			.map(async (entry) => {
+				const imageBuffer = await fs.readFile(path.join(sourceDirectory, entry.name));
+				await writeStaticImageRuntimeAsset(projectDirectory, entry.name, imageBuffer);
+			}),
+	);
 }
 
 async function getStandaloneDistDirectory(projectDirectory: string, primaryDistDirectory: string): Promise<string | null> {
