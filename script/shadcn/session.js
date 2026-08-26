@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const IGNORED_DIRECTORIES = new Set([".git", ".next", ".open-next", ".turbo", ".wrangler", "build", "coverage", "node_modules"]);
-export const NORMALIZED_EXTENSIONS = new Set([".css", ".js", ".jsx", ".ts", ".tsx"]);
+export const NORMALIZED_EXTENSIONS = new Set([".css", ".js", ".json", ".jsonc", ".jsx", ".ts", ".tsx"]);
 
 export function run(command, args, options = {}) {
 	const result = spawnSync(command, args, {
@@ -30,7 +30,7 @@ function walk(directory, root, files) {
 		const absolutePath = path.join(directory, entry.name);
 		if (entry.isDirectory()) {
 			walk(absolutePath, root, files);
-		} else if (entry.isFile()) {
+		} else if (entry.isFile() && NORMALIZED_EXTENSIONS.has(path.extname(entry.name))) {
 			files.push(path.relative(root, absolutePath));
 		}
 	}
