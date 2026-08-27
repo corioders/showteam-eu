@@ -63,9 +63,16 @@ export function loadPrerenderedImage(request: PrerenderedImageServerRequest): Pr
 	return loadPrerenderedImageResource(request).then((resource) => resource.image);
 }
 
-/** Suspends only the server prerender while fetch/Sharp/filesystem work completes. */
 export function usePrerenderedImageResource(request: PrerenderedImageServerRequest): PrerenderedImageResource {
-	return use(loadPrerenderedImageResource(request));
+	if (process.env["NEXT_IS_EXPORT_WORKER"] !== "true" && process.env.NODE_ENV !== "development" && request.runtimeAsset !== undefined) {
+		return { image: request.runtimeAsset };
+	}
+	return use(loadCachedPrerenderedImageResource(request));
+}
+
+async function loadCachedPrerenderedImageResource(request: PrerenderedImageRequest): Promise<PrerenderedImageResource> {
+	"use cache";
+	return loadPrerenderedImageResource(request);
 }
 
 export function loadPrerenderedImageResource(request: PrerenderedImageServerRequest): Promise<PrerenderedImageResource> {
