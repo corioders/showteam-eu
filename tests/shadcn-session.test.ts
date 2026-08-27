@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { afterAll, describe, expect, it } from "vitest";
 
-import { loadLocalEnvironment, snapshotFiles } from "../script/shadcn/session.js";
+import { loadLocalEnvironment, run, snapshotFiles } from "../script/shadcn/session.js";
 
 const fixtureDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "cstd-shadcn-session-"));
 
@@ -30,5 +30,14 @@ describe("Shadcnblocks installation snapshots", () => {
 
 		expect(process.env[variableName]).toBe("loaded");
 		delete process.env[variableName];
+	});
+
+	it("can answer an interactive command without inheriting stdin", () => {
+		const result = run(process.execPath, ["-e", 'process.stdin.once("data", (input) => process.stdout.write(input))'], {
+			capture: true,
+			input: "n\n",
+		});
+
+		expect(result.stdout).toBe("n\n");
 	});
 });

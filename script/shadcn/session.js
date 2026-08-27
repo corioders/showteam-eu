@@ -14,10 +14,12 @@ export function loadLocalEnvironment(cwd) {
 }
 
 export function run(command, args, options = {}) {
+	const outputMode = options.capture ? "pipe" : "inherit";
 	const result = spawnSync(command, args, {
 		cwd: options.cwd,
 		encoding: "utf8",
-		stdio: options.capture ? "pipe" : "inherit",
+		input: options.input,
+		stdio: options.input === undefined ? outputMode : ["pipe", outputMode, outputMode],
 	});
 	if (result.error) {
 		console.error(result.error.message);
