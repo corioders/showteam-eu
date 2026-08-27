@@ -3,6 +3,7 @@
 // biome-ignore-all lint/style/noNonNullAssertion: Legacy SHOWteam behavior is preserved during the structural template migration.
 // biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
 import config, { database } from "@payload-config";
+import { connection } from "next/server";
 import { getPayload } from "payload";
 
 import { validSameOrigin } from "@/lib/admin-auth";
@@ -18,6 +19,7 @@ async function admin(request: Request) {
 }
 
 export async function GET(request: Request) {
+	await connection();
 	if (!(await admin(request))) {
 		return Response.json({ error: "Zaloguj się do panelu." }, { status: 401 });
 	}

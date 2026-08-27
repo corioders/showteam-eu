@@ -1,5 +1,6 @@
 // biome-ignore-all lint/suspicious/noUndeclaredEnvVars: Worker and test environment variables are runtime bindings.
 import config, { database } from "@payload-config";
+import { connection } from "next/server";
 import { getPayload } from "payload";
 
 import { validSameOrigin } from "@/lib/admin-auth";
@@ -11,6 +12,7 @@ async function user(request: Request) {
 }
 
 export async function GET(request: Request) {
+	await connection();
 	const currentUser = await user(request);
 	if (!currentUser) {
 		return Response.json({ error: "Zaloguj się do panelu." }, { status: 401 });

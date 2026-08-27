@@ -1,8 +1,11 @@
+import { connection } from "next/server";
+
 import { type GalleryPhoto, getGalleryPage } from "@/lib/gallery";
 
 const seasons = new Set<GalleryPhoto["season"]>(["Lato", "Zima", "Szkolenia"]);
 
 export async function GET(request: Request) {
+	await connection();
 	const { searchParams } = new URL(request.url);
 	const requestedSeason = searchParams.get("season");
 	const season = requestedSeason && seasons.has(requestedSeason as GalleryPhoto["season"]) ? (requestedSeason as GalleryPhoto["season"]) : undefined;

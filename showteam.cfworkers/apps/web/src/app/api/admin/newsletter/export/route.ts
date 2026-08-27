@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
 import config, { database } from "@payload-config";
+import { connection } from "next/server";
 import { getPayload } from "payload";
 
 import { csvCell } from "@/lib/applications";
@@ -7,6 +8,7 @@ import { csvCell } from "@/lib/applications";
 type NewsletterRow = { email: string; contact_name: string; consented_at: string | null; applications: number };
 
 export async function GET(request: Request) {
+	await connection();
 	const payload = await getPayload({ config });
 	if (!(await payload.auth({ headers: request.headers })).user) {
 		return Response.json({ error: "Zaloguj się do panelu." }, { status: 401 });

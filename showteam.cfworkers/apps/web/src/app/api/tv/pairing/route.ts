@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
 import { database } from "@payload-config";
+import { connection } from "next/server";
 
 import { ensureOperationalTables } from "@/lib/operational-tables";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
+	await connection();
 	await ensureOperationalTables(database);
 	const url = new URL(request.url);
 	const id = url.searchParams.get("id") || "";

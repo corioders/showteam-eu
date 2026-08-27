@@ -2,6 +2,7 @@
 // biome-ignore-all lint/suspicious/noEvolvingTypes: Legacy SHOWteam behavior is preserved during the structural template migration.
 // biome-ignore-all lint/suspicious/noImplicitAnyLet: Legacy SHOWteam behavior is preserved during the structural template migration.
 import config, { database } from "@payload-config";
+import { connection } from "next/server";
 import { getPayload } from "payload";
 
 import { ensureOperationalTables } from "@/lib/operational-tables";
@@ -10,6 +11,7 @@ import { type StaffEventDatabaseRow, staffEventBlocksRange, staffEventFromDataba
 import { getWindForecast, recommendationWindows, recommendSlot } from "@/lib/wind-recommendations";
 
 export async function GET(request: Request) {
+	await connection();
 	await ensureOperationalTables(database);
 	const url = new URL(request.url);
 	const equipmentId = Number(url.searchParams.get("equipment"));

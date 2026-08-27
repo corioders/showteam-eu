@@ -1,8 +1,9 @@
 import config from "@payload-config";
-import { NextResponse } from "next/server";
+import { connection, NextResponse } from "next/server";
 import { getPayload } from "payload";
 
 export async function GET(request: Request) {
+	await connection();
 	const payload = await getPayload({ config });
 	const { user } = await payload.auth({ headers: request.headers });
 	if (!user) {

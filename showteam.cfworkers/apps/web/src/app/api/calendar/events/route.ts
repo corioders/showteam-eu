@@ -1,6 +1,7 @@
 // biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Legacy SHOWteam behavior is preserved during the structural template migration.
 // biome-ignore-all lint/style/useNamingConvention: Payload, D1, and external API field names are compatibility contracts.
 import config, { database } from "@payload-config";
+import { connection } from "next/server";
 import { getPayload } from "payload";
 
 import { ensureOperationalTables } from "@/lib/operational-tables";
@@ -17,6 +18,7 @@ function cookieValue(cookieHeader: string | null, name: string): string | undefi
 }
 
 export async function GET(request: Request) {
+	await connection();
 	await ensureOperationalTables(database);
 	const payload = await getPayload({ config });
 	const { user } = await payload.auth({ headers: request.headers });
