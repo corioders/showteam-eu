@@ -43,8 +43,16 @@ if (changedFiles.length === 0) {
 
 const patchPath = path.join(sessionDirectory, "learning.patch");
 fs.writeFileSync(patchPath, patches.join("\n"));
+const repositoryRoot = run("git", ["rev-parse", "--show-toplevel"], { capture: true, cwd }).stdout.trim();
+const cstdNextRoot = path.resolve(import.meta.dirname, "..", "..");
+const cstdNextPrefix = path.relative(repositoryRoot, cstdNextRoot) || ".";
+const pushCommand = cstdNextPrefix === "." ? "git push origin main" : `git subtree push --prefix ${cstdNextPrefix} git@github.com:corioders/cstd-next.git main`;
 console.log(`Captured manual fixes for: ${changedFiles.join(", ")}`);
 console.log(`Local diff: ${patchPath}`);
-console.log(
-	"Generalize the smallest safe transformation in cstd-next/script/shadcn/codemods.js and add a synthetic regression test. Never copy Shadcnblocks source into cstd-next.",
-);
+console.log("Shadcnblocks learning is NOT complete. This command records evidence; it does not write a codemod.");
+console.log("Before project branding, content, or demo-data changes:");
+console.log(`1. Generalize only reusable compatibility fixes in ${cstdNextPrefix}/script/shadcn/codemods.js.`);
+console.log(`2. Add a synthetic regression test in ${cstdNextPrefix}/test/shadcn-codemods.test.ts; never copy paid source into cstd-next.`);
+console.log(`3. Run: pnpm --dir ${cstdNextPrefix} test:unit`);
+console.log(`4. Commit the cstd-next changes, then run: ${pushCommand}`);
+console.log("5. Confirm canonical cstd-next is pushed. Only then customize the installed block for this project.");
