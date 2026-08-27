@@ -4,7 +4,7 @@ import path from "node:path";
 
 import { afterAll, describe, expect, it } from "vitest";
 
-import { snapshotFiles } from "../script/shadcn/session.js";
+import { loadLocalEnvironment, snapshotFiles } from "../script/shadcn/session.js";
 
 const fixtureDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "cstd-shadcn-session-"));
 
@@ -19,5 +19,16 @@ describe("Shadcnblocks installation snapshots", () => {
 		fs.writeFileSync(path.join(fixtureDirectory, "component.tsx"), "export const Component = () => null;\n");
 
 		expect([...snapshotFiles(fixtureDirectory).keys()]).toEqual(["component.tsx"]);
+	});
+
+	it("loads the app environment without shell evaluation", () => {
+		const variableName = "CSTD_SHADCN_SESSION_TEST_KEY";
+		delete process.env[variableName];
+		fs.writeFileSync(path.join(fixtureDirectory, ".env"), `${variableName}=loaded\n`);
+
+		loadLocalEnvironment(fixtureDirectory);
+
+		expect(process.env[variableName]).toBe("loaded");
+		delete process.env[variableName];
 	});
 });

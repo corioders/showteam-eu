@@ -6,6 +6,13 @@ import path from "node:path";
 const IGNORED_DIRECTORIES = new Set([".git", ".next", ".open-next", ".turbo", ".wrangler", "build", "coverage", "node_modules"]);
 export const NORMALIZED_EXTENSIONS = new Set([".css", ".js", ".json", ".jsonc", ".jsx", ".ts", ".tsx"]);
 
+export function loadLocalEnvironment(cwd) {
+	const environmentPath = path.join(cwd, ".env");
+	if (fs.existsSync(environmentPath)) {
+		process.loadEnvFile(environmentPath);
+	}
+}
+
 export function run(command, args, options = {}) {
 	const result = spawnSync(command, args, {
 		cwd: options.cwd,
