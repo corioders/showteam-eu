@@ -1,0 +1,15 @@
+{
+	"extends": ["//"],
+	"tasks": {
+		"build": {
+			"env": ["APP_ENV", "CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER", "NEXT_IS_EXPORT_WORKER"],
+			"outputs": ["build/**"]
+		},
+		"build-cloudflare": {
+			"outputs": ["build/**"]
+		},
+		"dev": {
+			"dependsOn": ["build"]
+		}
+	}
+}
