@@ -395,7 +395,6 @@ describe("image pipeline", () => {
 			await Promise.all([
 				fs.writeFile(path.join(fixtureDirectory, ".next/required-server-files.json"), JSON.stringify({ config: {} })),
 				fs.writeFile(path.join(appDirectory, "gallery.html"), `<img data-cstd-prerendered-image="${manifestKey}">`),
-				fs.writeFile(path.join(appDirectory, "gallery.rsc"), "route shell"),
 				fs.writeFile(path.join(segmentDirectory, "_full.segment.rsc"), placeholder),
 				fs.writeFile(path.join(descriptorDirectory, `${manifestKey}.json`), JSON.stringify({ width: 1, height: 1, img: { src: "/image.webp" } })),
 			]);
