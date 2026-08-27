@@ -24,6 +24,7 @@
 		"deploy:reminders": "wrangler deploy --config wrangler.reminders.jsonc",
 		"logs": "wrangler tail",
 		"logs:preview": "wrangler tail --env preview",
+		"shadcn:search": "cstd-shadcn-search",
 		"shadcn:add": "cstd-shadcn-add",
 		"shadcn:learn": "cstd-shadcn-learn",
 		"payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
