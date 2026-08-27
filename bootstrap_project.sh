@@ -248,12 +248,14 @@ if [[ ! "$INFISICAL_IDENTITY_ID" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 	echo "Infisical returned an invalid identity ID." >&2
 	exit 1
 fi
+INFISICAL_OIDC_METHOD=PATCH
 if ! grep -Fxq "oidc-auth" <<<"$INFISICAL_OIDC_RESPONSE"; then
-	infisical_api POST "v1/auth/oidc-auth/identities/$INFISICAL_IDENTITY_ID" "$(jq -cn \
-		--arg subject "repo:$REPOSITORY:*" \
-		--arg audience "https://github.com/$GITHUB_OWNER" \
-		'{oidcDiscoveryUrl: "https://token.actions.githubusercontent.com", boundIssuer: "https://token.actions.githubusercontent.com", boundClaims: {}, boundAudiences: $audience, boundSubject: $subject, accessTokenTrustedIps: [{ipAddress: "0.0.0.0/0"}, {ipAddress: "::/0"}], accessTokenTTL: 3600, accessTokenMaxTTL: 3600, accessTokenNumUsesLimit: 0}')" >/dev/null
+	INFISICAL_OIDC_METHOD=POST
 fi
+infisical_api "$INFISICAL_OIDC_METHOD" "v1/auth/oidc-auth/identities/$INFISICAL_IDENTITY_ID" "$(jq -cn \
+	--arg repository "$REPOSITORY" \
+	--arg audience "https://github.com/$GITHUB_OWNER" \
+	'{oidcDiscoveryUrl: "https://token.actions.githubusercontent.com", boundIssuer: "https://token.actions.githubusercontent.com", boundClaims: {repository: $repository}, boundAudiences: $audience, boundSubject: "", accessTokenTrustedIps: [{ipAddress: "0.0.0.0/0"}, {ipAddress: "::/0"}], accessTokenTTL: 3600, accessTokenMaxTTL: 3600, accessTokenNumUsesLimit: 0}')" >/dev/null
 
 TARGET_REMOTE="git@github.com:$REPOSITORY.git"
 if git remote get-url origin >/dev/null 2>&1; then
