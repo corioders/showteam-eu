@@ -93,4 +93,4 @@ if (patchErrors.length > 0 || biomeResult.status !== 0 || typecheckResult.status
 	process.exit(1);
 }
 
-console.log(`Normalized ${sourceFiles.length} Shadcnblocks source file(s).`);
+console.log(`Shadcnblocks compatibility ready (${sourceFiles.length} source file(s)). Customize now; do not run shadcn:learn.`);
