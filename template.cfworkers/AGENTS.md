@@ -10,7 +10,7 @@
 - Preserve inherited platform capabilities. Do not disable `cstdNextConfig.cacheComponents`, remove the OpenNext R2 incremental-cache or D1 tag-cache adapters/bindings, or replace those bindings with application storage. Add project bindings alongside them.
 - Production and preview must use distinct durable resources. A production binding must never reference a preview D1 database or R2 bucket.
 - Do not weaken shared Biome, TypeScript, environment-validation, build, or test rules to make new code pass. Use a narrow, justified suppression only where the underlying boundary requires it.
-- Treat build and framework deprecation warnings as required work. Follow the installed Next.js documentation; use `proxy.ts`, not the deprecated `middleware.ts` convention.
+- Treat build and framework deprecation warnings as required work, but do not mechanically rename working `middleware.ts` to `proxy.ts`: the current OpenNext Cloudflare adapter does not support Next.js Node Proxy. Preserve Edge Middleware required by the application until the adapter supports Proxy; do not add either boundary when the application does not need one.
 - Preserve existing providers and other starter capabilities unless the project explicitly removes them. Do not register a global service worker when only one feature needs its scope.
 
 # Error handling

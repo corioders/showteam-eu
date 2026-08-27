@@ -189,12 +189,6 @@ if (!fs.existsSync(path.join(workspaceDirectory, "apps/web/public/.assetsignore"
 	errors.push("apps/web/public/.assetsignore must be preserved.");
 }
 
-for (const extension of ["js", "jsx", "ts", "tsx"]) {
-	if (fs.existsSync(path.join(workspaceDirectory, `apps/web/src/middleware.${extension}`))) {
-		errors.push(`Next.js middleware.${extension} is deprecated; use proxy.${extension}.`);
-	}
-}
-
 if (errors.length > 0) {
 	for (const error of errors) {
 		process.stderr.write(`- ${error}\n`);
