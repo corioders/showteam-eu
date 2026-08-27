@@ -31,7 +31,7 @@ if (!canonicalCheck.isCurrent) {
 }
 
 const before = snapshotFiles(cwd);
-run("pnpm", ["dlx", "shadcn@latest", "add", ...shadcnArguments], { cwd, input: "n\n" });
+run("pnpm", ["dlx", "shadcn@latest", "add", "--silent", ...shadcnArguments], { cwd, input: "n\n" });
 const afterInstall = snapshotFiles(cwd);
 const installedFiles = changedFiles(before, afterInstall);
 const sourceFiles = installedFiles.filter((relativePath) => NORMALIZED_EXTENSIONS.has(path.extname(relativePath)));
@@ -40,7 +40,7 @@ replaceDirectory(sessionDirectory);
 copyFiles(cwd, sourceFiles, path.join(sessionDirectory, "raw"));
 
 if (sourceFiles.length > 0) {
-	run("pnpm", ["exec", "biome", "check", "--fix", "--no-errors-on-unmatched", ...sourceFiles], { allowFailure: true, cwd });
+	run("pnpm", ["exec", "biome", "check", "--fix", "--no-errors-on-unmatched", ...sourceFiles], { allowFailure: true, capture: true, cwd });
 }
 copyFiles(cwd, sourceFiles, path.join(sessionDirectory, "baseline"));
 
@@ -62,7 +62,7 @@ if (sourceFiles.length > 0) {
 			fs.writeFileSync(absolutePath, normalized);
 		}
 	}
-	run("pnpm", ["exec", "biome", "check", "--fix", "--no-errors-on-unmatched", ...sourceFiles], { allowFailure: true, cwd });
+	run("pnpm", ["exec", "biome", "check", "--fix", "--no-errors-on-unmatched", ...sourceFiles], { allowFailure: true, capture: true, cwd });
 }
 
 copyFiles(cwd, sourceFiles, path.join(sessionDirectory, "normalized"));
@@ -72,6 +72,7 @@ const biomeResult =
 	sourceFiles.length > 0
 		? run("pnpm", ["exec", "biome", "check", "--error-on-warnings", "--no-errors-on-unmatched", ...sourceFiles], { allowFailure: true, cwd })
 		: { status: 0 };
+run("pnpm", ["--filter", "cstd-next", "build"], { cwd });
 const typecheckResult = run("pnpm", ["run", "check-types"], { allowFailure: true, cwd });
 if (patchErrors.length > 0 || biomeResult.status !== 0 || typecheckResult.status !== 0) {
 	for (const patchError of patchErrors) {
