@@ -255,10 +255,10 @@ test("stay booking administration stays private", async ({ request }) => {
 test("stays use a separate date-range booking flow", async ({ page }) => {
 	await page.goto("/noclegi");
 	await expect(page.getByRole("heading", { name: "Noclegi nad wodą." })).toBeVisible();
-	await expect(page.getByLabel("Kontener mieszkalny")).toBeVisible();
-	await expect(page.getByLabel("Domek holenderski")).toBeVisible();
-	await expect(page.getByLabel("Przyjazd")).toBeVisible();
-	await expect(page.getByLabel("Wyjazd")).toBeVisible();
+	await expect(page.getByLabel("Kontener mieszkalny").filter({ visible: true })).toHaveCount(1);
+	await expect(page.getByLabel("Domek holenderski").filter({ visible: true })).toHaveCount(1);
+	await expect(page.getByLabel("Przyjazd").filter({ visible: true })).toHaveCount(1);
+	await expect(page.getByLabel("Wyjazd").filter({ visible: true })).toHaveCount(1);
 });
 
 test("SMS links require a deliberate confirmation", async ({ page }) => {
@@ -270,8 +270,8 @@ test("SMS links require a deliberate confirmation", async ({ page }) => {
 test("party inquiry form exposes flexible dates and editable proposals", async ({ page }) => {
 	await page.goto("/zorganizuj-impreze");
 	await expect(page.getByRole("heading", { name: "Zorganizuj imprezę." })).toBeVisible();
-	await expect(page.getByLabel("Impreza")).toBeVisible();
-	await expect(page.getByRole("checkbox", { name: "Spływ", exact: true })).toBeVisible();
+	await expect(page.getByLabel("Impreza").filter({ visible: true })).toHaveCount(1);
+	await expect(page.getByRole("checkbox", { name: "Spływ", exact: true }).filter({ visible: true })).toHaveCount(1);
 	await page.getByRole("button", { name: "Dodaj kolejny możliwy termin" }).click();
 	await expect(page.getByLabel("Termin 2 — od")).toBeVisible();
 	await expect(page.getByLabel("Grill")).toBeVisible();
@@ -480,7 +480,7 @@ test.describe("mobile", () => {
 	test("gallery images load and retain varied proportions", async ({ page }) => {
 		await page.goto("/galeria");
 		const figures = page.locator("figure");
-		const images = figures.locator("img");
+		const images = figures.locator("img").filter({ visible: true });
 		await expect(images.first()).toBeVisible();
 		const state = await images.evaluateAll((nodes) =>
 			nodes.map((image) => {
@@ -517,7 +517,7 @@ test.describe("mobile", () => {
 		await page.getByRole("button", { name: "Wyślij zgłoszenie" }).click();
 		await expect(page.getByText("Wybierz rodzaj wyjazdu.")).toBeVisible();
 		await page.getByRole("button", { name: "Zima", exact: true }).click();
-		await expect(page.getByLabel("Transport autokarem")).toBeVisible();
+		await expect(page.getByLabel("Transport autokarem").filter({ visible: true })).toHaveCount(1);
 		expect(
 			await page
 				.getByLabel(/Dyscyplina/)
@@ -525,7 +525,7 @@ test.describe("mobile", () => {
 				.allTextContents(),
 		).not.toContain("Sporty wodne");
 		await page.getByRole("button", { name: "Lato", exact: true }).click();
-		await expect(page.getByLabel("Transport autokarem")).toHaveCount(0);
+		await expect(page.getByLabel("Transport autokarem").filter({ visible: true })).toHaveCount(0);
 		expect(
 			await page
 				.getByLabel(/Dyscyplina/)
