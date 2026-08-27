@@ -31,8 +31,8 @@ return [session, null];
 # UI components
 
 - For page sections and reusable UI, search the purchased `@shadcnblocks` registry before writing a custom implementation. In this template, `@shadcnblocks` is the default registry when the user does not name another one.
-- Run registry commands from `apps/web`. Search with `pnpm dlx shadcn@latest search @shadcnblocks -q "hero"`; install with `pnpm shadcn:add @shadcnblocks/<name>` so cstd normalizes only the files changed by the official CLI.
-- Registry authentication comes from `SHADCNBLOCKS_API_KEY`. If it is unavailable, stop and request it; never print or commit the key.
+- Run registry commands from the cfworkers workspace root. Search with `pnpm shadcn:search -- -q "hero"`; install with `pnpm shadcn:add @shadcnblocks/<name>` so cstd normalizes only the files changed by the official CLI.
+- Registry authentication comes from `apps/web/.env` through the cstd wrappers. Never read, print, source or manually export `SHADCNBLOCKS_API_KEY`; if the wrapper reports it missing, request it.
 - Preserve the installed Shadcnblocks block instead of replacing or simplifying it. Treat it as upstream source; this is a Corioders compatibility migration before it is project UI work.
 - Keep compatibility and customization as separate phases. Compatibility includes reusable Biome, TypeScript, accessibility, runtime and house-convention fixes. Branding, copy, domain behavior and demo data are project customization and must wait.
 - If normalization reports an unknown incompatibility, stop before customization. Fix only the generic compatibility errors in the installed block, then run `pnpm shadcn:learn`. That command captures evidence; it does not write the codemod.
