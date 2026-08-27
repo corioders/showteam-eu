@@ -1,8 +1,17 @@
 # Toolchain
 
 - Use `pnpm`. Never `npm` or `yarn`.
-- Run checks with `pnpm check` (biome + tsc) before committing. `pnpm check-biome-fix` applies safe fixes.
+- Run checks with `pnpm check` (template invariants + biome + tsc) before committing. `pnpm check-biome-fix` applies safe fixes.
+- After creating any commit, immediately push the current branch to `origin`, monitor its CI run, and fix it until green. Do not declare committed work complete while local `HEAD` is absent from `origin` or its CI is pending, canceled, or failing.
 - `packages/corioders-lib/cstd-ts` and `cstd-next` are git subtrees of the shared libraries. Change them here only when the fix belongs upstream. Before declaring such work complete, commit it and push the matching subtree to the canonical `cstd` remote — see the root README.
+
+# Template capabilities
+
+- Preserve inherited platform capabilities. Do not disable `cstdNextConfig.cacheComponents`, remove the OpenNext R2 incremental-cache or D1 tag-cache adapters/bindings, or replace those bindings with application storage. Add project bindings alongside them.
+- Production and preview must use distinct durable resources. A production binding must never reference a preview D1 database or R2 bucket.
+- Do not weaken shared Biome, TypeScript, environment-validation, build, or test rules to make new code pass. Use a narrow, justified suppression only where the underlying boundary requires it.
+- Treat build and framework deprecation warnings as required work. Follow the installed Next.js documentation; use `proxy.ts`, not the deprecated `middleware.ts` convention.
+- Preserve existing providers and other starter capabilities unless the project explicitly removes them. Do not register a global service worker when only one feature needs its scope.
 
 # Error handling
 

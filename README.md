@@ -8,7 +8,8 @@ driven by pnpm, biome and lefthook, with `cstd-ts` / `cstd-next` vendored as git
 ```
 .github/workflows/     reusable validation + pull-request and deploy entrypoints
 .vscode/               editor settings (biome as formatter)
-lefthook.yml           pre-commit biome check
+AGENTS.md               repository delivery rules; template-only rules are removed by bootstrap
+lefthook.yml           pre-commit invariant and biome checks
 bootstrap_project.sh   one-shot project/repository/Cloudflare bootstrap
 template.cfworkers/    the monorepo
 ├── apps/web/          Next.js app, deployed as a Cloudflare Worker
@@ -67,7 +68,7 @@ Run from the `<project>.cfworkers/` directory.
 | --- | --- |
 | `pnpm dev` | `next dev` plus a watch build of the cstd libraries |
 | `pnpm build` | production Next.js build |
-| `pnpm check` | biome + tsc across the workspace |
+| `pnpm check` | template invariants + biome + tsc across the workspace |
 | `pnpm check-biome-fix` | apply biome's safe fixes |
 | `pnpm test:unit` | run Vitest |
 | `pnpm test:e2e` | run Playwright against Chromium and WebKit |

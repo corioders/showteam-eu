@@ -34,14 +34,14 @@
 		}
 	],
 	"r2_buckets": [
-		// Incremental cache for the Next.js data/fetch cache, see open-next.config.ts
+		// REQUIRED: incremental cache for Next.js. Keep this binding and append application buckets.
 		{
 			"binding": "NEXT_INC_CACHE_R2_BUCKET",
 			"bucket_name": "template-cfworkers-next-inc-cache-r2-bucket"
 		}
 	],
 	"d1_databases": [
-		// Tag cache backing revalidateTag/revalidatePath, see open-next.config.ts
+		// REQUIRED: tag cache backing revalidateTag/revalidatePath. Keep this binding and append application databases.
 		{
 			"binding": "NEXT_TAG_CACHE_D1",
 			"database_id": "REPLACE_WITH_PRODUCTION_D1_DATABASE_ID",
@@ -76,12 +76,14 @@
 				}
 			],
 			"r2_buckets": [
+				// REQUIRED: preview cache. Keep it separate from every production bucket.
 				{
 					"binding": "NEXT_INC_CACHE_R2_BUCKET",
 					"bucket_name": "template-cfworkers-preview-next-inc-cache-r2-bucket"
 				}
 			],
 			"d1_databases": [
+				// REQUIRED: preview tag cache. Keep it separate from every production database.
 				{
 					"binding": "NEXT_TAG_CACHE_D1",
 					"database_id": "REPLACE_WITH_PREVIEW_D1_DATABASE_ID",

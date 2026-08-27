@@ -6,6 +6,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
 	...cstdNextConfig,
+	// Required template capability. Fix incompatible application code instead of disabling Cache Components.
+	cacheComponents: true,
 	turbopack: {
 		...cstdNextConfig.turbopack,
 		root: path.join(import.meta.dirname, "..", ".."),

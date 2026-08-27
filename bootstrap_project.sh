@@ -37,7 +37,7 @@ if [[ ! "$PROJECT_NAME" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
 fi
 APP_TITLE=$(printf '%s' "$PROJECT_NAME" | awk -F- '{for (i = 1; i <= NF; i++) {printf "%s%s", (i > 1 ? " " : ""), toupper(substr($i, 1, 1)) substr($i, 2)}}')
 
-for command_name in curl gh git jq security; do
+for command_name in curl gh git jq node security; do
 	if ! command -v "$command_name" >/dev/null 2>&1; then
 		echo "Missing required command: $command_name" >&2
 		exit 1
@@ -78,6 +78,7 @@ register_subtree() {
 		-m "chore: register $package_name subtree" \
 		-m "git-subtree-dir: $target_prefix
 git-subtree-split: $split_commit"
+	git push -u origin HEAD:main
 }
 
 gh auth status >/dev/null
@@ -135,7 +136,7 @@ if [[ -f "$ENCRYPTED_ENV" && ! -f "$LOCAL_ENV" ]]; then
 elif [[ -f "$LOCAL_ENV" ]]; then
 	echo "Keeping existing $LOCAL_ENV."
 fi
-rm -f -- "$ENCRYPTED_ENV" encrypt_template_env.sh AGENTS.md
+rm -f -- "$ENCRYPTED_ENV" encrypt_template_env.sh
 sed -i.bak \
 	-e "1s/.*/# $APP_TITLE/" \
 	-e "s/^Corioders house template: /$APP_TITLE: /" \
@@ -147,6 +148,8 @@ sed -i.bak \
 	-e '/<!-- BEGIN:template-not-included-docs -->/,/<!-- END:template-not-included-docs -->/d' \
 	README.md
 rm -- README.md.bak
+sed -i.bak '/<!-- BEGIN:template-maintainer-agent-rules -->/,/<!-- END:template-maintainer-agent-rules -->/d' AGENTS.md
+rm -- AGENTS.md.bak
 sed -i.bak '/<!-- BEGIN:template-env-agent-rule -->/,/<!-- END:template-env-agent-rule -->/d' "$PROJECT_DIRECTORY/AGENTS.md"
 rm -- "$PROJECT_DIRECTORY/AGENTS.md.bak"
 sed -i.bak '/^!\.env\.age$/d' "$PROJECT_DIRECTORY/apps/web/.gitignore"
@@ -360,16 +363,22 @@ ensure_d1_database() {
 	if [[ "$database_count" -eq 0 ]]; then
 		database_response=$(cf_api "$SETUP_TOKEN" POST "accounts/$CLOUDFLARE_ACCOUNT_ID/d1/database" \
 			"$(jq -cn --arg name "$database_name" '{name: $name, primary_location_hint: "eeur", read_replication: {mode: "disabled"}}')")
-		jq -r '.result.uuid' <<<"$database_response"
+		jq -r '.result.uuid // .result.id // empty' <<<"$database_response"
 		return
 	fi
-	jq -r --arg name "$database_name" '.result[] | select(.name == $name) | .uuid' <<<"$database_response"
+	jq -r --arg name "$database_name" '.result[] | select(.name == $name) | (.uuid // .id // empty)' <<<"$database_response"
 }
 
 ensure_r2_bucket "$PRODUCTION_PREFIX-next-inc-cache-r2-bucket"
 ensure_r2_bucket "$PREVIEW_PREFIX-next-inc-cache-r2-bucket"
 PRODUCTION_D1_ID=$(ensure_d1_database "$PRODUCTION_PREFIX-next-tag-cache-d1")
 PREVIEW_D1_ID=$(ensure_d1_database "$PREVIEW_PREFIX-next-tag-cache-d1")
+for database_id in "$PRODUCTION_D1_ID" "$PREVIEW_D1_ID"; do
+	if [[ ! "$database_id" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
+		echo "Cloudflare returned an invalid D1 database ID: ${database_id:-<empty>}." >&2
+		exit 1
+	fi
+done
 
 DEPLOY_POLICIES=$(jq -cn \
 	--arg resource "$ACCOUNT_RESOURCE" \
@@ -405,12 +414,15 @@ sed -i.bak \
 	"$WRANGLER_CONFIG"
 rm -- "$WRANGLER_CONFIG.bak"
 
+node "$PROJECT_DIRECTORY/script/check-template-invariants.js"
+
 unset BOOTSTRAP_TOKEN SETUP_TOKEN DEPLOY_TOKEN TOKEN_VALUE
 rm -f -- bootstrap_project.sh
 
 git add -A
 if ! git diff --cached --quiet; then
 	git commit -m "Initialize $PROJECT_NAME"
+	git push -u origin HEAD:main
 fi
 
 register_subtree \
