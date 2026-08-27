@@ -5,6 +5,7 @@ import ts from "typescript";
 const NO_THROW_REASON = "Preserve upstream Shadcnblocks behavior; adapt only when project semantics require it.";
 const SOURCE_EXTENSIONS = new Set([".js", ".jsx", ".ts", ".tsx"]);
 const WHITESPACE_ONLY = /^[\t ]*$/;
+const UNUSED_SHIPPED_DATE_FORMATTER = /const shippedDateFormatter = new Intl\.DateTimeFormat\("en-US", [\s\S]*?\);\n?/;
 
 function getScriptKind(filePath) {
 	if (filePath.endsWith(".tsx")) {
@@ -84,7 +85,17 @@ function adaptShadcnBaseUi(source, filePath) {
 		normalized = normalized.replaceAll("isActive={item.isActive}", "isActive={item.isActive ?? false}");
 		normalized = normalized.replaceAll("isActive={child.isActive}", "isActive={child.isActive ?? false}");
 		normalized = normalized.replaceAll("item.children!.map", "item.children?.map");
-		return normalized.replaceAll("!payload?.length", "payload === undefined || payload.length === 0");
+		normalized = normalized.replaceAll("!payload?.length", "payload === undefined || payload.length === 0");
+		normalized = normalized.replace(UNUSED_SHIPPED_DATE_FORMATTER, "");
+		normalized = normalized.replace(
+			"if (!active || payload === undefined || payload.length === 0) return null;\n\tconst entry = payload[0];",
+			"const [entry] = payload ?? [];\n\tif (!active || entry === undefined) {\n\t\treturn null;\n\t}",
+		);
+		normalized = normalized.replace(
+			"const handleQuarterChange = (value: string) => {",
+			"const handleQuarterChange = (value: string | null) => {\n\t\tif (value === null) {\n\t\t\treturn;\n\t\t}",
+		);
+		return normalized.replaceAll("salesPipelineData.q1", 'salesPipelineData["q1"] ?? []');
 	}
 
 	return source;
