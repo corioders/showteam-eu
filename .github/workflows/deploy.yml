@@ -101,7 +101,7 @@ jobs:
         run: |
           RESPONSE_FILE=$(mktemp)
           trap 'rm -f "$RESPONSE_FILE"' EXIT
-          WORKER_NAME="${{ github.event.repository.name }}-cfworkers-web-preview"
+          WORKER_NAME="template-cfworkers-web-preview"
           HTTP_STATUS=$(curl --silent --show-error --output "$RESPONSE_FILE" --write-out '%{http_code}' \
             --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/workers/$WORKER_NAME")
