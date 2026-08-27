@@ -7,6 +7,7 @@ export interface RunOptions {
 }
 
 export const NORMALIZED_EXTENSIONS: Set<string>;
+export function loadLocalEnvironment(cwd: string): void;
 export function run(command: string, args: string[], options?: RunOptions): SpawnSyncReturns<string>;
 export function snapshotFiles(root: string): Map<string, string>;
 export function changedFiles(before: Map<string, string>, after: Map<string, string>): string[];
