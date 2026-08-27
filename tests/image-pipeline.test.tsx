@@ -382,6 +382,33 @@ describe("image pipeline", () => {
 		}
 	});
 
+	it("injects partial-prerender manifests when the placeholder exists only in an RSC segment", async () => {
+		const fixtureDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "cstd-next-image-ppr-"));
+		const manifestKey = "a".repeat(32);
+		const placeholder = "__CSTD_NEXT_PRERENDERED_IMAGE_MANIFEST__";
+
+		try {
+			const appDirectory = path.join(fixtureDirectory, ".next/server/app");
+			const segmentDirectory = path.join(appDirectory, "gallery.segments");
+			const descriptorDirectory = path.join(fixtureDirectory, ".next/cache/corioders/cstd-next-prerendered-image/descriptor");
+			await Promise.all([fs.mkdir(segmentDirectory, { recursive: true }), fs.mkdir(descriptorDirectory, { recursive: true })]);
+			await Promise.all([
+				fs.writeFile(path.join(fixtureDirectory, ".next/required-server-files.json"), JSON.stringify({ config: {} })),
+				fs.writeFile(path.join(appDirectory, "gallery.html"), `<img data-cstd-prerendered-image="${manifestKey}">`),
+				fs.writeFile(path.join(appDirectory, "gallery.rsc"), "route shell"),
+				fs.writeFile(path.join(segmentDirectory, "_full.segment.rsc"), placeholder),
+				fs.writeFile(path.join(descriptorDirectory, `${manifestKey}.json`), JSON.stringify({ width: 1, height: 1, img: { src: "/image.webp" } })),
+			]);
+
+			await finalizePrerenderedImageBuild(fixtureDirectory);
+
+			expect(await fs.readFile(path.join(appDirectory, "gallery.html"), "utf8")).toBe("<img>");
+			expect(await fs.readFile(path.join(segmentDirectory, "_full.segment.rsc"), "utf8")).not.toContain(placeholder);
+		} finally {
+			await fs.rm(fixtureDirectory, { force: true, recursive: true });
+		}
+	});
+
 	it("cleans production outputs without touching development images", async () => {
 		const fixtureDirectory = await fs.mkdtemp(path.join(os.tmpdir(), "cstd-next-image-cleanup-"));
 		const imageDirectory = path.join(fixtureDirectory, "public/_cstd/image");
