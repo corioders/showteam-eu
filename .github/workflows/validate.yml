@@ -52,7 +52,7 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-playwright-${{ hashFiles('template.cfworkers/pnpm-lock.yaml') }}
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --store-dir .pnpm-store
         working-directory: template.cfworkers
 
       - name: Check code
