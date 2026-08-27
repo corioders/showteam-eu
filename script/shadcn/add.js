@@ -31,7 +31,17 @@ if (!canonicalCheck.isCurrent) {
 }
 
 const before = snapshotFiles(cwd);
-run("pnpm", ["dlx", "shadcn@latest", "add", "--silent", ...shadcnArguments], { cwd, input: "n\n" });
+const installResult = run("pnpm", ["dlx", "shadcn@latest", "add", "--silent", ...shadcnArguments], {
+	allowFailure: true,
+	capture: true,
+	cwd,
+	input: "n\n",
+});
+if (installResult.status !== 0) {
+	process.stderr.write(installResult.stderr);
+	process.stderr.write(installResult.stdout);
+	process.exit(installResult.status ?? 1);
+}
 const afterInstall = snapshotFiles(cwd);
 const installedFiles = changedFiles(before, afterInstall);
 const sourceFiles = installedFiles.filter((relativePath) => NORMALIZED_EXTENSIONS.has(path.extname(relativePath)));
@@ -72,6 +82,7 @@ const biomeResult =
 	sourceFiles.length > 0
 		? run("pnpm", ["exec", "biome", "check", "--error-on-warnings", "--no-errors-on-unmatched", ...sourceFiles], { allowFailure: true, cwd })
 		: { status: 0 };
+run("pnpm", ["--filter", "cstd-ts", "build"], { cwd });
 run("pnpm", ["--filter", "cstd-next", "build"], { cwd });
 const typecheckResult = run("pnpm", ["run", "check-types"], { allowFailure: true, cwd });
 if (patchErrors.length > 0 || biomeResult.status !== 0 || typecheckResult.status !== 0) {
