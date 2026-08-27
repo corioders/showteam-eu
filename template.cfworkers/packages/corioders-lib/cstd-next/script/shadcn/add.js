@@ -4,9 +4,10 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { normalizeShadcnSource } from "./codemods.js";
-import { changedFiles, copyFiles, getSessionDirectory, NORMALIZED_EXTENSIONS, replaceDirectory, run, snapshotFiles } from "./session.js";
+import { changedFiles, copyFiles, getSessionDirectory, loadLocalEnvironment, NORMALIZED_EXTENSIONS, replaceDirectory, run, snapshotFiles } from "./session.js";
 
 const cwd = process.cwd();
+loadLocalEnvironment(cwd);
 const shadcnArguments = process.argv.slice(2);
 if (shadcnArguments.length === 0) {
 	console.error("usage: pnpm shadcn:add <registry-item> [...shadcn-options]");
