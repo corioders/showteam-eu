@@ -15,7 +15,7 @@ if (shadcnArguments.length === 0) {
 }
 
 const before = snapshotFiles(cwd);
-run("pnpm", ["dlx", "shadcn@latest", "add", ...shadcnArguments], { cwd });
+run("pnpm", ["dlx", "shadcn@latest", "add", ...shadcnArguments], { cwd, input: "n\n" });
 const afterInstall = snapshotFiles(cwd);
 const installedFiles = changedFiles(before, afterInstall);
 const sourceFiles = installedFiles.filter((relativePath) => NORMALIZED_EXTENSIONS.has(path.extname(relativePath)));

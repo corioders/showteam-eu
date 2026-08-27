@@ -4,6 +4,7 @@ export interface RunOptions {
 	allowFailure?: boolean;
 	capture?: boolean;
 	cwd?: string;
+	input?: string;
 }
 
 export const NORMALIZED_EXTENSIONS: Set<string>;
