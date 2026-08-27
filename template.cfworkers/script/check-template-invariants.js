@@ -6,9 +6,84 @@ const defaultWorkspaceDirectory = path.resolve(path.dirname(fileURLToPath(import
 const workspaceDirectory = process.argv[2] ? path.resolve(process.argv[2]) : defaultWorkspaceDirectory;
 const errors = [];
 const previewResourcePattern = /preview/i;
+const nonNewlinePattern = /[^\n]/g;
+const whitespacePattern = /\s/;
 
 function read(relativePath) {
 	return fs.readFileSync(path.join(workspaceDirectory, relativePath), "utf8");
+}
+
+function readJsonString(contents, startIndex) {
+	for (let index = startIndex + 1; index < contents.length; index += 1) {
+		if (contents[index] === "\\") {
+			index += 1;
+			continue;
+		}
+		if (contents[index] === '"') {
+			return [contents.slice(startIndex, index + 1), index];
+		}
+	}
+	return [contents.slice(startIndex), contents.length - 1];
+}
+
+function stripJsonComments(contents) {
+	let result = "";
+	for (let index = 0; index < contents.length; index += 1) {
+		if (contents[index] === '"') {
+			const [jsonString, endIndex] = readJsonString(contents, index);
+			result += jsonString;
+			index = endIndex;
+			continue;
+		}
+		if (contents.startsWith("//", index)) {
+			const endIndex = contents.indexOf("\n", index + 2);
+			if (endIndex === -1) {
+				break;
+			}
+			result += "\n";
+			index = endIndex;
+			continue;
+		}
+		if (contents.startsWith("/*", index)) {
+			const endIndex = contents.indexOf("*/", index + 2);
+			if (endIndex === -1) {
+				result += "/";
+				break;
+			}
+			result += contents.slice(index, endIndex + 2).replace(nonNewlinePattern, "");
+			index = endIndex + 1;
+			continue;
+		}
+		result += contents[index];
+	}
+	return result;
+}
+
+function stripTrailingCommas(contents) {
+	let result = "";
+	for (let index = 0; index < contents.length; index += 1) {
+		if (contents[index] === '"') {
+			const [jsonString, endIndex] = readJsonString(contents, index);
+			result += jsonString;
+			index = endIndex;
+			continue;
+		}
+		if (contents[index] === ",") {
+			let nextIndex = index + 1;
+			while (whitespacePattern.test(contents[nextIndex] ?? "")) {
+				nextIndex += 1;
+			}
+			if (contents[nextIndex] === "}" || contents[nextIndex] === "]") {
+				continue;
+			}
+		}
+		result += contents[index];
+	}
+	return result;
+}
+
+function parseJsonc(contents) {
+	return JSON.parse(stripTrailingCommas(stripJsonComments(contents)));
 }
 
 function requireMatch(contents, pattern, message) {
@@ -43,15 +118,15 @@ if (environmentIndex === -1) {
 } else {
 	const productionConfig = wranglerConfig.slice(0, environmentIndex);
 	const previewConfig = wranglerConfig.slice(environmentIndex);
-	for (const key of ["bucket_name", "database_name"]) {
-		const productionNames = values(productionConfig, key);
-		const previewNames = values(previewConfig, key);
-		if (productionNames.some((name) => previewResourcePattern.test(name))) {
+	for (const key of ["bucket_name", "database_name", "database_id"]) {
+		const productionValues = values(productionConfig, key);
+		const previewValues = values(previewConfig, key);
+		if (key !== "database_id" && productionValues.some((value) => previewResourcePattern.test(value))) {
 			errors.push(`Production ${key} values must not reference preview resources.`);
 		}
-		const sharedNames = productionNames.filter((name) => previewNames.includes(name));
-		if (sharedNames.length > 0) {
-			errors.push(`Production and preview must not share ${key}: ${sharedNames.join(", ")}.`);
+		const sharedValues = productionValues.filter((value) => previewValues.includes(value));
+		if (sharedValues.length > 0) {
+			errors.push(`Production and preview must not share ${key}: ${sharedValues.join(", ")}.`);
 		}
 	}
 }
@@ -79,10 +154,19 @@ if (tagCacheIds.length !== 2) {
 
 const biomeConfig = read("biome.jsonc");
 requireMatch(biomeConfig, /no-throw\.grit/, "biome.jsonc must keep the no-throw plugin.");
-for (const rule of ["noDefaultExport", "useNamingConvention"]) {
-	if (new RegExp(`"${rule}"\\s*:\\s*"off"`).test(biomeConfig)) {
-		errors.push(`biome.jsonc must not disable ${rule} workspace-wide.`);
+try {
+	const biomeConfigObject = parseJsonc(biomeConfig);
+	if (!biomeConfigObject.extends?.includes("./packages/corioders-lib/cstd-ts/config/biome.jsonc")) {
+		errors.push("biome.jsonc must extend the shared cstd-ts configuration.");
 	}
+	for (const rule of ["noDefaultExport", "useNamingConvention"]) {
+		if (biomeConfigObject.linter?.rules?.style?.[rule] === "off") {
+			errors.push(`biome.jsonc must not disable ${rule} workspace-wide.`);
+		}
+	}
+	// Narrow overrides remain available for framework boundaries and generated code.
+} catch (error) {
+	errors.push(`biome.jsonc must remain valid JSONC: ${error instanceof Error ? error.message : String(error)}.`);
 }
 
 const rootLayout = read("apps/web/src/app/layout.tsx");
