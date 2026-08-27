@@ -5,6 +5,7 @@ import ts from "typescript";
 const NO_THROW_REASON = "Preserve upstream Shadcnblocks behavior; adapt only when project semantics require it.";
 const SOURCE_EXTENSIONS = new Set([".js", ".jsx", ".ts", ".tsx"]);
 const WHITESPACE_ONLY = /^[\t ]*$/;
+const UNUSED_SHIPPED_DATE_FORMATTER = /const shippedDateFormatter = new Intl\.DateTimeFormat\("en-US", [\s\S]*?\);\n?/;
 
 function getScriptKind(filePath) {
 	if (filePath.endsWith(".tsx")) {
@@ -69,6 +70,7 @@ function adaptShadcnBaseUi(source, filePath) {
 	if (filePath.endsWith("sidebar.tsx")) {
 		return insertBeforeClientDirective(source, [
 			"// biome-ignore-all lint/suspicious/noDocumentCookie: The state is intentionally persisted for seven days and the Cookie Store API is not supported in every target browser.",
+			"// biome-ignore-all lint/correctness/useExhaustiveDependencies: Base UI state setters are stable and retain upstream dependency declarations.",
 		]);
 	}
 
@@ -78,13 +80,25 @@ function adaptShadcnBaseUi(source, filePath) {
 			"// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: The upstream dashboard keeps metric display decisions co-located with the data mapping.",
 			"// biome-ignore-all lint/style/useNamingConvention: Order-status labels are external display values and must match their source strings.",
 			"// biome-ignore-all lint/suspicious/noArrayIndexKey: Fulfillment progress is an immutable positional visualisation.",
+			"// biome-ignore-all lint/style/useBlockStatements: Preserve the upstream block's compact guard clauses.",
+			"// biome-ignore-all lint/correctness/useExhaustiveDependencies: Preserve upstream React hook dependencies.",
 		]);
 		normalized = normalized.replace('import type { TooltipProps } from "recharts";', 'import type { TooltipContentProps } from "recharts";');
 		normalized = normalized.replaceAll("}: TooltipProps<number, string> & {", "}: Partial<TooltipContentProps<number, string>> & {");
 		normalized = normalized.replaceAll("isActive={item.isActive}", "isActive={item.isActive ?? false}");
 		normalized = normalized.replaceAll("isActive={child.isActive}", "isActive={child.isActive ?? false}");
 		normalized = normalized.replaceAll("item.children!.map", "item.children?.map");
-		return normalized.replaceAll("!payload?.length", "payload === undefined || payload.length === 0");
+		normalized = normalized.replaceAll("!payload?.length", "payload === undefined || payload.length === 0");
+		normalized = normalized.replace(UNUSED_SHIPPED_DATE_FORMATTER, "");
+		normalized = normalized.replace(
+			"if (!active || payload === undefined || payload.length === 0) return null;\n\tconst entry = payload[0];",
+			"const [entry] = payload ?? [];\n\tif (!active || entry === undefined) {\n\t\treturn null;\n\t}",
+		);
+		normalized = normalized.replace(
+			"const handleQuarterChange = (value: string) => {",
+			"const handleQuarterChange = (value: string | null) => {\n\t\tif (value === null) {\n\t\t\treturn;\n\t\t}",
+		);
+		return normalized.replaceAll("salesPipelineData.q1", 'salesPipelineData["q1"] ?? []').replaceAll("filteredOrders.length ?", "filteredOrders.length > 0 ?");
 	}
 
 	return source;
