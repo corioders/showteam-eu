@@ -33,6 +33,7 @@ const pageManifestRule = {
 	},
 };
 export const nextConfig: NextConfig = {
+	cacheComponents: true,
 	images: {
 		disableStaticImages: true,
 	},

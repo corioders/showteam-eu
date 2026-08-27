@@ -3,6 +3,9 @@
 	"root": false,
 	"$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
 	"extends": ["./../cstd-ts/config/biome.jsonc"],
+	"files": {
+		"includes": ["!script/shadcn/patches"]
+	},
 	"plugins": ["../cstd-ts/config/biome-plugin/no-throw.grit"],
 	"linter": {
 		"rules": {
