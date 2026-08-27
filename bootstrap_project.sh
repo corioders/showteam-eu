@@ -202,6 +202,7 @@ git config "branch.$CURRENT_BRANCH.remote" origin
 git config "branch.$CURRENT_BRANCH.merge" refs/heads/main
 git config "branch.$CURRENT_BRANCH.rebase" true
 git config merge.directoryRenames true
+git config alias.pl '!./pull_template.sh'
 git config --unset-all "branch.$CURRENT_BRANCH.pushRemote" 2>/dev/null || true
 
 ORIGIN_MAIN_EXISTS=false
