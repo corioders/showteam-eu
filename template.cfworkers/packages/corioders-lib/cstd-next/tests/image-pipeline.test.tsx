@@ -46,7 +46,7 @@ describe("image pipeline", () => {
 		expectTypeOf<ReturnType<typeof useBrowserPrerenderedImageResource>>().toEqualTypeOf<PrerenderedImageResource>();
 	});
 
-	it("wraps pages at a server boundary without making unused client page props dynamic", () => {
+	it("wraps client page params in a cache-components suspension boundary", () => {
 		const loaderContext = {
 			cacheable: vi.fn(),
 			resourcePath: "/project/app/page.tsx",
@@ -61,6 +61,7 @@ describe("image pipeline", () => {
 
 		expect(clientPageWithoutProps).toContain("createElement(ClientPageRoot, { Component: OriginalPage, serverProvidedParams: null })");
 		expect(clientPageWithParams).toContain("createElement(ClientPageRoot, { Component: OriginalPage, serverProvidedParams: null })");
+		expect(clientPageWithParams).toContain("createElement(Suspense, { fallback: null }");
 		expect(serverPage).toContain("createElement(OriginalPage, props)");
 		expect(loaderContext.cacheable).toHaveBeenCalledWith(true);
 	});
