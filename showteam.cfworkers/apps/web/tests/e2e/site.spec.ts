@@ -77,9 +77,10 @@ test("official TikTok is linked from the site", async ({ page }) => {
 
 test("waterfront stays are published without invented pricing", async ({ page }) => {
 	await page.goto("/oferta/noclegi-nad-woda");
+	const main = page.getByRole("main");
 	await expect(page.getByRole("heading", { name: "Noclegi nad wodą" })).toBeVisible();
-	await expect(page.getByText("Kontenery mieszkalne")).toBeVisible();
-	await expect(page.getByText("Domki holenderskie")).toBeVisible();
+	await expect(main.getByText("Kontenery mieszkalne")).toBeVisible();
+	await expect(main.getByText("Domki holenderskie")).toBeVisible();
 	await expect(page.getByRole("button", { name: "Zdjęcia obiektów" })).toHaveCount(0);
 	await expect(page.getByText(/Zdjęcia kontenerów i domków dodamy po sesji/)).toHaveCount(0);
 	await expect(page.getByText(/\b(?:PLN|cena)\b|\d+\s*zł/i)).toHaveCount(0);

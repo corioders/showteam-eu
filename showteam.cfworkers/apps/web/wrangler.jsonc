@@ -2,7 +2,7 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": ".open-next/worker.js",
 	"name": "showteam-eu",
-	"compatibility_date": "2025-08-15",
+	"compatibility_date": "2026-05-05",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
 	"vars": {
 		"PUBLIC_SITE_URL": "https://www.showteam.eu",
@@ -34,6 +34,7 @@
 			"database_id": "fb4ccca4-31e6-4ed0-b3e5-a36b520d89c6",
 			"database_name": "showteam-cms"
 		},
+		// REQUIRED: tag cache backing revalidateTag/revalidatePath. Keep this binding and append application databases.
 		{
 			"binding": "NEXT_TAG_CACHE_D1",
 			"database_id": "d574cbf4-5ab1-4545-a66b-3bb1545a379d",
@@ -45,6 +46,7 @@
 			"binding": "R2",
 			"bucket_name": "showteam-media"
 		},
+		// REQUIRED: incremental cache for Next.js. Keep this binding and append application buckets.
 		{
 			"binding": "NEXT_INC_CACHE_R2_BUCKET",
 			"bucket_name": "showteam-next-cache"
@@ -63,6 +65,7 @@
 					"database_id": "f5fa2b42-977f-4048-8fae-8be5f19fefea",
 					"database_name": "showteam-preview-cms"
 				},
+				// REQUIRED: preview tag cache. Keep it separate from every production database.
 				{
 					"binding": "NEXT_TAG_CACHE_D1",
 					"database_id": "918c4892-49ca-4473-b346-67780535421f",
@@ -71,6 +74,7 @@
 			],
 			"r2_buckets": [
 				{ "binding": "R2", "bucket_name": "showteam-preview-media" },
+				// REQUIRED: preview cache. Keep it separate from every production bucket.
 				{ "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "showteam-preview-next-cache" }
 			]
 		}

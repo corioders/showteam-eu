@@ -2,6 +2,7 @@
 	"name": "showteam.cfworkers",
 	"version": "1.0.0",
 	"private": true,
+	"type": "module",
 	"scripts": {
 		"postinstall": "lefthook install && turbo telemetry disable",
 		"dev": "turbo run dev",
@@ -9,7 +10,8 @@
 		"shadcn:search": "pnpm --dir apps/web shadcn:search",
 		"shadcn:add": "pnpm --dir apps/web shadcn:add",
 		"shadcn:learn": "pnpm --dir apps/web shadcn:learn",
-		"check": "pnpm check-biome && pnpm check-types",
+		"check": "pnpm check-invariants && pnpm check-biome && pnpm check-types",
+		"check-invariants": "node script/check-template-invariants.js",
 		"check-types": "turbo run check-types",
 		"check-biome": "biome check --error-on-warnings",
 		"check-biome-staged": "biome check --error-on-warnings --staged --no-errors-on-unmatched",

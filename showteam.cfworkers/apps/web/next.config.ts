@@ -12,6 +12,8 @@ const workspaceRoot = path.join(import.meta.dirname, "..", "..");
 
 const nextConfig: NextConfig = {
 	...cstdNextConfig,
+	// Required template capability. Fix incompatible application code instead of disabling Cache Components.
+	cacheComponents: true,
 	async redirects() {
 		return [
 			{ destination: "/a/dodaj", permanent: false, source: "/dodaj" },
