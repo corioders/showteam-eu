@@ -70,6 +70,7 @@ function adaptShadcnBaseUi(source, filePath) {
 	if (filePath.endsWith("sidebar.tsx")) {
 		return insertBeforeClientDirective(source, [
 			"// biome-ignore-all lint/suspicious/noDocumentCookie: The state is intentionally persisted for seven days and the Cookie Store API is not supported in every target browser.",
+			"// biome-ignore-all lint/correctness/useExhaustiveDependencies: Base UI state setters are stable and retain upstream dependency declarations.",
 		]);
 	}
 
@@ -79,6 +80,8 @@ function adaptShadcnBaseUi(source, filePath) {
 			"// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: The upstream dashboard keeps metric display decisions co-located with the data mapping.",
 			"// biome-ignore-all lint/style/useNamingConvention: Order-status labels are external display values and must match their source strings.",
 			"// biome-ignore-all lint/suspicious/noArrayIndexKey: Fulfillment progress is an immutable positional visualisation.",
+			"// biome-ignore-all lint/style/useBlockStatements: Preserve the upstream block's compact guard clauses.",
+			"// biome-ignore-all lint/correctness/useExhaustiveDependencies: Preserve upstream React hook dependencies.",
 		]);
 		normalized = normalized.replace('import type { TooltipProps } from "recharts";', 'import type { TooltipContentProps } from "recharts";');
 		normalized = normalized.replaceAll("}: TooltipProps<number, string> & {", "}: Partial<TooltipContentProps<number, string>> & {");
@@ -95,7 +98,7 @@ function adaptShadcnBaseUi(source, filePath) {
 			"const handleQuarterChange = (value: string) => {",
 			"const handleQuarterChange = (value: string | null) => {\n\t\tif (value === null) {\n\t\t\treturn;\n\t\t}",
 		);
-		return normalized.replaceAll("salesPipelineData.q1", 'salesPipelineData["q1"] ?? []');
+		return normalized.replaceAll("salesPipelineData.q1", 'salesPipelineData["q1"] ?? []').replaceAll("filteredOrders.length ?", "filteredOrders.length > 0 ?");
 	}
 
 	return source;
