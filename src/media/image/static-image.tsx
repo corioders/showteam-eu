@@ -2,8 +2,6 @@
 // Unauthorized copying of this file, via any medium is strictly prohibited
 // Proprietary and confidential
 
-import { Suspense } from "react";
-
 import { usePrerenderedImageResource } from "#cstd-next-prerendered-image-runtime";
 
 import { OptimizedImage, type OptimizedImageProps } from "./optimized-image.jsx";
@@ -16,15 +14,7 @@ export interface StaticImageProps extends Omit<OptimizedImageProps, "src"> {
 }
 
 /** Prerenders either a local static import or a remote URL into deployment-owned image assets. */
-export function StaticImage(props: StaticImageProps) {
-	return (
-		<Suspense fallback={null}>
-			<PrerenderedStaticImage {...props} />
-		</Suspense>
-	);
-}
-
-function PrerenderedStaticImage({ src, ...imageProps }: StaticImageProps) {
+export function StaticImage({ src, ...imageProps }: StaticImageProps) {
 	const source = typeof src === "string" ? { src } : src;
 	const request: PrerenderedImageRequest = {
 		developmentAsset: source.developmentAsset,
