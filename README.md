@@ -24,6 +24,8 @@ The wrapper directory (`<project>.cfworkers/`) is deliberate: workflows and hook
 the repository root, the deployable monorepo lives one level down, and CI sparse-checkouts
 only that subdirectory.
 
+<!-- BEGIN:template-bootstrap-docs -->
+
 ## First run
 
 On macOS, authenticate `gh` and store an account-owned Cloudflare token with only
@@ -48,6 +50,8 @@ when the private-repository plan does not expose deployment protection rules.
 The new repository adds one initialization commit followed by one registration
 commit for each pullable `cstd` subtree. Template ancestry is retained so later
 updates work through `git pull template main`.
+
+<!-- END:template-bootstrap-docs -->
 
 Install and start:
 
@@ -106,6 +110,8 @@ Same for `cstd-next` with `git@github.com:corioders/cstd-next.git`.
 
 <!-- END:template-env-docs -->
 
+<!-- BEGIN:template-not-included-docs -->
+
 ## Not included on purpose
 
 Add these per project; each has a reference implementation in another repository.
@@ -117,3 +123,5 @@ Add these per project; each has a reference implementation in another repository
 | Google Drive/Docs/Sheets as CMS | `poland20`, `impact-speaker-tracker` |
 | Firebase auth on Workers | `impact-speaker-tracker` |
 | UI sections and components | From `apps/web`, search `@shadcnblocks` with `pnpm dlx shadcn@latest search @shadcnblocks -q "<need>"`, then install through `pnpm shadcn:add @shadcnblocks/<name>` so cstd applies learned compatibility fixes |
+
+<!-- END:template-not-included-docs -->

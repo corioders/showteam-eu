@@ -35,6 +35,7 @@ if [[ ! "$PROJECT_NAME" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
 	echo "Project name must be lowercase alphanumeric with dashes." >&2
 	exit 1
 fi
+APP_TITLE=$(printf '%s' "$PROJECT_NAME" | awk -F- '{for (i = 1; i <= NF; i++) {printf "%s%s", (i > 1 ? " " : ""), toupper(substr($i, 1, 1)) substr($i, 2)}}')
 
 for command_name in curl gh git jq security; do
 	if ! command -v "$command_name" >/dev/null 2>&1; then
@@ -99,7 +100,6 @@ if [[ -d template.cfworkers ]]; then
 		xargs -0 sed -i.bak -e "s/template\.cfworkers/$PROJECT_NAME.cfworkers/g" -e "s/template-cfworkers/$PROJECT_NAME-cfworkers/g"
 	find . -name '*.bak' -not -path './node_modules/*' -delete
 
-	APP_TITLE=$(printf '%s' "$PROJECT_NAME" | awk -F- '{for (i = 1; i <= NF; i++) {printf "%s%s", (i > 1 ? " " : ""), toupper(substr($i, 1, 1)) substr($i, 2)}}')
 	sed -i.bak \
 		-e "s/\"Template\"/\"$APP_TITLE\"/g" \
 		-e "s/\`Template (/\`$APP_TITLE (/g" \
@@ -135,7 +135,18 @@ if [[ -f "$ENCRYPTED_ENV" && ! -f "$LOCAL_ENV" ]]; then
 elif [[ -f "$LOCAL_ENV" ]]; then
 	echo "Keeping existing $LOCAL_ENV."
 fi
-rm -f -- "$ENCRYPTED_ENV" encrypt_template_env.sh AGENTS.md README.md
+rm -f -- "$ENCRYPTED_ENV" encrypt_template_env.sh AGENTS.md
+sed -i.bak \
+	-e "1s/.*/# $APP_TITLE/" \
+	-e "s/^Corioders house template: /$APP_TITLE: /" \
+	-e "s/myproject\.cfworkers/$PROJECT_NAME.cfworkers/g" \
+	-e "s/<project>\.cfworkers/$PROJECT_NAME.cfworkers/g" \
+	-e '/bootstrap_project\.sh.*one-shot project\/repository\/Cloudflare bootstrap/d' \
+	-e '/<!-- BEGIN:template-bootstrap-docs -->/,/<!-- END:template-bootstrap-docs -->/d' \
+	-e '/<!-- BEGIN:template-env-docs -->/,/<!-- END:template-env-docs -->/d' \
+	-e '/<!-- BEGIN:template-not-included-docs -->/,/<!-- END:template-not-included-docs -->/d' \
+	README.md
+rm -- README.md.bak
 sed -i.bak '/<!-- BEGIN:template-env-agent-rule -->/,/<!-- END:template-env-agent-rule -->/d' "$PROJECT_DIRECTORY/AGENTS.md"
 rm -- "$PROJECT_DIRECTORY/AGENTS.md.bak"
 sed -i.bak '/^!\.env\.age$/d' "$PROJECT_DIRECTORY/apps/web/.gitignore"
