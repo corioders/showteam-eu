@@ -95,13 +95,38 @@ jobs:
         run: pnpm install --frozen-lockfile
         working-directory: template.cfworkers
 
+      - name: Check preview Worker
+        if: github.ref_name != 'deploy'
+        id: preview-worker
+        run: |
+          RESPONSE_FILE=$(mktemp)
+          trap 'rm -f "$RESPONSE_FILE"' EXIT
+          WORKER_NAME="${{ github.event.repository.name }}-cfworkers-web-preview"
+          HTTP_STATUS=$(curl --silent --show-error --output "$RESPONSE_FILE" --write-out '%{http_code}' \
+            --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/workers/$WORKER_NAME")
+
+          case "$HTTP_STATUS" in
+            200) echo "exists=true" >> "$GITHUB_OUTPUT" ;;
+            404) echo "exists=false" >> "$GITHUB_OUTPUT" ;;
+            *)
+              echo "Cloudflare Worker lookup failed with HTTP $HTTP_STATUS." >&2
+              exit 1
+              ;;
+          esac
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
       - name: Upload preview
         if: github.ref_name != 'deploy'
         id: deploy
         run: |
           set -o pipefail
           pnpm exec opennextjs-cloudflare build
-          OPEN_NEXT_DEPLOY=true pnpm exec wrangler deploy --env preview
+          if [[ "${{ steps.preview-worker.outputs.exists }}" == "false" ]]; then
+            OPEN_NEXT_DEPLOY=true pnpm exec wrangler deploy --env preview
+          fi
           OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions upload --env preview --preview-alias "${{ github.ref_name }}" 2>&1 | tee deploy-output.log
 
           VERSION_ID=$(grep -oP 'Worker Version ID: \K[0-9a-f-]+' deploy-output.log | tail -n 1)
@@ -112,6 +137,11 @@ jobs:
           if [[ -z "${{ vars.CLOUDFLARE_WORKERS_DEV_SUBDOMAIN }}" ]]; then
             echo "CLOUDFLARE_WORKERS_DEV_SUBDOMAIN is not configured for the preview environment." >&2
             exit 1
+          fi
+
+          OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions deploy "$VERSION_ID@100%" --env preview --yes
+          if [[ "${{ steps.preview-worker.outputs.exists }}" == "true" ]]; then
+            OPEN_NEXT_DEPLOY=true pnpm exec wrangler triggers deploy --env preview
           fi
 
           VERSION_PREFIX=${VERSION_ID%%-*}
