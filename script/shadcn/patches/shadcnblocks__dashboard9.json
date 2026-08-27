@@ -22,5 +22,9 @@
 		"src/components/ui/tooltip.tsx": "f9e000b5cfa92000219d77e72534be528ef6b3fb3989bc03c01117c50ff879a2",
 		"src/hooks/use-mobile.ts": "106dce98246cde14a7b1b4d1a3eb7e83e323cdf0a4d553f9e292bde1daa3c525"
 	},
-	"changedFiles": ["src/components/dashboard9.tsx", "src/components/ui/chart.tsx", "src/components/ui/sidebar.tsx"]
+	"changedFiles": [
+		"src/components/dashboard9.tsx",
+		"src/components/ui/chart.tsx",
+		"src/components/ui/sidebar.tsx"
+	]
 }
