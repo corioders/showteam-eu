@@ -7,8 +7,6 @@ import { GalleryGrid } from "@/components/gallery-grid";
 import { getGalleryPage } from "@/lib/gallery";
 import { getPageContent } from "@/lib/page-content";
 
-export const revalidate = false;
-
 export const metadata: Metadata = {
 	title: "Galeria",
 	description: "Zdjęcia z letnich i zimowych wyjazdów, szkoleń oraz wydarzeń SHOWteam.",

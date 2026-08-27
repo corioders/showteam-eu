@@ -18,8 +18,6 @@ export const metadata: Metadata = {
 	description: "Kurs sternika motorowodnego, żeglarza jachtowego, operatora radiowego i szkolenia z aktywności.",
 	alternates: { canonical: "/oferta/szkolenia" },
 };
-export const revalidate = false;
-
 const programs = [
 	{
 		icon: Waves,

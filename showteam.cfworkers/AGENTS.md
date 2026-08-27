@@ -30,12 +30,13 @@ return [session, null];
 
 # UI components
 
-- For page sections and reusable UI, search the purchased `@shadcnblocks` registry before writing a custom implementation. From the cfworkers workspace root, search with `pnpm shadcn:search -- -q "hero"`; install with `pnpm shadcn:add @shadcnblocks/<name>`.
+- For page sections and reusable UI, search the purchased `@shadcnblocks` registry before writing a custom implementation. In this template, `@shadcnblocks` is the default registry when the user does not name another one.
+- Run registry commands from the cfworkers workspace root. Search with `pnpm shadcn:search -- -q "hero"`; install with `pnpm shadcn:add @shadcnblocks/<name>` so cstd normalizes only the files changed by the official CLI.
 - Registry authentication comes from `apps/web/.env` through the cstd wrappers. Never read, print, source or manually export `SHADCNBLOCKS_API_KEY`; if the wrapper reports it missing, request it.
 - Preserve the installed Shadcnblocks block instead of replacing or simplifying it. Treat it as upstream source; this is a Corioders compatibility migration before it is project UI work.
 - Keep compatibility and customization as separate phases. Compatibility includes reusable Biome, TypeScript, accessibility, runtime and house-convention fixes. Branding, copy, domain behavior and demo data are project customization and must wait.
-- If normalization reports an unknown incompatibility, stop before customization. Fix only the generic compatibility errors in the installed block, then run `pnpm shadcn:learn`. That command captures evidence; it does not write the codemod.
-- Complete the workflow printed by `shadcn:learn`: implement the smallest reusable rule in the vendored `cstd-next/script/shadcn/codemods.js`, add a synthetic regression test without paid source, run the cstd-next tests, commit it, and push the subtree to `git@github.com:corioders/cstd-next.git` `main`. The integration is incomplete until canonical cstd-next is pushed. Only then customize the block for the project.
+- If normalization reports an unknown or stale incompatibility, stop before customization. Fix every generic compatibility error in the installed block, then run `pnpm shadcn:learn`. It records and self-verifies the complete per-block patch against the exact upstream source; do not hand-write partial codemod rules.
+- Complete the workflow printed by `shadcn:learn`: inspect the learned patch for compatibility-only changes, run the cstd-next tests, commit it, and push the subtree to `git@github.com:corioders/cstd-next.git` `main`. The integration is incomplete until canonical cstd-next is pushed. Only then customize the block for the project.
 
 # Cloudflare infrastructure
 

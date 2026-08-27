@@ -15,7 +15,6 @@ import { getGallery } from "@/lib/gallery";
 import { contact } from "@/lib/offers";
 import { getPageContent } from "@/lib/page-content";
 
-export const revalidate = false;
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function Home() {

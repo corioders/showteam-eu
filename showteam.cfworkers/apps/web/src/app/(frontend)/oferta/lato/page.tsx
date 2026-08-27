@@ -16,8 +16,6 @@ export const metadata: Metadata = {
 	description: "WAKE & SURF Village, SHOWCamp i sporty wodne nad Jeziorem Łąckim.",
 	alternates: { canonical: "/oferta/lato" },
 };
-export const revalidate = false;
-
 const activities = [
 	[Waves, "summerWaterTitle", "Na wodzie", "summerWaterBody", "Wakeboard, narty wodne, SUP, kajaki, windsurfing, wing foil i skutery wodne."],
 	[Sailboat, "summerSailingTitle", "Pod żaglami", "summerSailingBody", "Katamarany Hobie Cat, łodzie żaglowe i kursy prowadzone przez instruktorów."],

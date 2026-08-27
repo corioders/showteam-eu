@@ -1,6 +1,7 @@
 // biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import type { Metadata, Viewport } from "next";
 import { Inter, Oswald } from "next/font/google";
+import { Suspense } from "react";
 import "../globals.css";
 import "../(payload)/custom.css";
 
@@ -11,7 +12,9 @@ export const viewport: Viewport = { themeColor: "#080a0b", width: "device-width"
 export default function OperationsLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="pl" className={`${inter.variable} ${oswald.variable}`}>
-			<body>{children}</body>
+			<body>
+				<Suspense fallback={null}>{children}</Suspense>
+			</body>
 		</html>
 	);
 }

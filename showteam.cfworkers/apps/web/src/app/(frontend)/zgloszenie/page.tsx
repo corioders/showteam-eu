@@ -12,8 +12,6 @@ export const metadata: Metadata = {
 	description: "Zgłoszenie uczestnika na wyjazd, SHOWCamp lub szkolenie SHOWteam.",
 	alternates: { canonical: "/zgloszenie" },
 };
-export const revalidate = false;
-
 export default async function ApplicationPage({ searchParams }: { searchParams: Promise<{ oferta?: string }> }) {
 	const [offers, query, pageContent] = await Promise.all([getOffers(), searchParams, getPageContent("application")]);
 	const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Warsaw", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());

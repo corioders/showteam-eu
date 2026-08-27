@@ -17,8 +17,6 @@ export const metadata: Metadata = {
 	description: "Trentino, Andorra, Pireneje, lodowiec i szkolenie narciarskie.",
 	alternates: { canonical: "/oferta/zima" },
 };
-export const revalidate = false;
-
 export default async function WinterPage() {
 	const offer = await getOfferByCategory("Zima");
 	if (!offer) {

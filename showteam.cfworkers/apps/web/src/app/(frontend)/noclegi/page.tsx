@@ -10,7 +10,6 @@ export const metadata: Metadata = {
 	description: "Zarezerwuj kontener mieszkalny lub domek holenderski przy WAKE & SURF Village.",
 	alternates: { canonical: "/noclegi" },
 };
-export const dynamic = "force-dynamic";
 export default async function StaysPage() {
 	const pageContent = await getPageContent("stays");
 	const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Warsaw" }).format(new Date());

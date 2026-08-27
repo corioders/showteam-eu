@@ -6,7 +6,6 @@ import { ReservationFlow } from "@/components/reservation-flow";
 import { getBookableEquipment } from "@/lib/equipment";
 import { getPageContent } from "@/lib/page-content";
 
-export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
 	title: "Rezerwuj aktywność",
 	description: "Zarezerwuj aktywność w WAKE & SURF Village nad Jeziorem Łąckim.",

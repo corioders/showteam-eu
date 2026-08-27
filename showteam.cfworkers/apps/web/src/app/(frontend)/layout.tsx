@@ -2,6 +2,7 @@
 // biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import type { Metadata } from "next";
 import { Inter, Oswald } from "next/font/google";
+import { Suspense } from "react";
 
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { EditorProvider } from "@/components/editor/editor-provider";
@@ -34,12 +35,20 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
 	return (
 		<html lang="pl" className={`${inter.variable} ${oswald.variable}`}>
 			<body>
-				<AnalyticsTracker />
+				<Suspense fallback={null}>
+					<AnalyticsTracker />
+				</Suspense>
 				<EditorProvider>
-					<SiteHeader />
-					<main>{children}</main>
+					<Suspense fallback={null}>
+						<SiteHeader />
+					</Suspense>
+					<main>
+						<Suspense fallback={null}>{children}</Suspense>
+					</main>
 					<SiteFooter />
-					<EditorToolbar />
+					<Suspense fallback={null}>
+						<EditorToolbar />
+					</Suspense>
 				</EditorProvider>
 				<script
 					type="application/ld+json"

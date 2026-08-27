@@ -7,7 +7,6 @@ import { getPayload } from "payload";
 
 import { TvApproval } from "@/components/tv-approval";
 
-export const dynamic = "force-dynamic";
 export default async function ConnectTvPage({ searchParams }: { searchParams: Promise<{ pair?: string; secret?: string }> }) {
 	const params = await searchParams;
 	const pair = params.pair || "";

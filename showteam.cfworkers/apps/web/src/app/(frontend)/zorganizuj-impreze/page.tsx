@@ -7,7 +7,6 @@ import { EditableImage, EditableText, PageContentEditor } from "@/components/edi
 import { EventInquiryForm } from "@/components/event-inquiry-form";
 import { getPageContent } from "@/lib/page-content";
 
-export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
 	title: "Zorganizuj imprezę lub spływ",
 	description: "Zorganizuj imprezę, spływ kajakowy i aktywny dzień w WAKE & SURF Village.",
