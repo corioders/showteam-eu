@@ -30,14 +30,10 @@ return [session, null];
 
 # UI components
 
-- For page sections and reusable UI, search the purchased `@shadcnblocks` registry before writing a custom implementation. In this template, `@shadcnblocks` is the default registry when the user does not name another one.
-- Run registry commands from the cfworkers workspace root. Search with `pnpm shadcn:search -- -q "hero"`; install with `pnpm shadcn:add @shadcnblocks/<name>` so cstd normalizes only the files changed by the official CLI.
-- Registry authentication comes from `apps/web/.env` through the cstd wrappers. Never read, print, source or manually export `SHADCNBLOCKS_API_KEY`; if the wrapper reports it missing, request it.
-- Preserve the installed Shadcnblocks block instead of replacing or simplifying it. Treat it as upstream source; this is a Corioders compatibility migration before it is project UI work.
-- Keep compatibility and customization as separate phases. Compatibility includes reusable Biome, TypeScript, accessibility, runtime and house-convention fixes. Branding, copy, domain behavior and demo data are project customization and must wait.
-- If normalization reports an unknown or stale incompatibility, stop before customization. Fix every generic compatibility error in the installed block, then run `pnpm shadcn:learn`. It records and self-verifies the complete per-block patch against the exact upstream source; do not hand-write partial codemod rules.
-- If `pnpm shadcn:add` succeeds, do not run `pnpm shadcn:learn`; the canonical compatibility patch is already valid, so proceed directly to project customization.
-- Complete the workflow printed by `shadcn:learn`: inspect the learned patch for compatibility-only changes, run the cstd-next tests, commit it, and push the subtree to `git@github.com:corioders/cstd-next.git` `main`. The integration is incomplete until canonical cstd-next is pushed. Only then customize the block for the project.
+- For page sections and reusable UI, use purchased `@shadcnblocks` before custom code. From the workspace root: `pnpm shadcn:search -- -q "hero"`, then `pnpm shadcn:add @shadcnblocks/<name>`. Preserve the installed block; customize it instead of replacing or simplifying it.
+- `shadcn:add` is the complete compatibility gate. Exit 0 → customize immediately; do not inspect its implementation, rerun compatibility work, or run `shadcn:learn`.
+- Unknown/stale incompatibility → before customization, fix only generic compatibility errors and run `pnpm shadcn:learn`; follow its test/commit/canonical `cstd-next` push instructions. Never hand-write a partial codemod.
+- Authentication is loaded by the wrappers from `apps/web/.env`. Never read, print, source or manually export `SHADCNBLOCKS_API_KEY`; request it only when the wrapper reports it missing.
 <!-- BEGIN:template-env-agent-rule -->
 
 - Shared bootstrap secrets are tracked only as `apps/web/.env.age`. Never read, print, or commit plaintext `.env`; maintainers refresh the ciphertext with `./encrypt_template_env.sh` from the template repository root.

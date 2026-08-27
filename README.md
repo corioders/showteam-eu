@@ -122,6 +122,6 @@ Add these per project; each has a reference implementation in another repository
 | Payload CMS on D1 + R2 storage, migrations | `showteam-eu` |
 | Google Drive/Docs/Sheets as CMS | `poland20`, `impact-speaker-tracker` |
 | Firebase auth on Workers | `impact-speaker-tracker` |
-| UI sections and components | From `apps/web`, search `@shadcnblocks` with `pnpm dlx shadcn@latest search @shadcnblocks -q "<need>"`, then install through `pnpm shadcn:add @shadcnblocks/<name>` so cstd applies learned compatibility fixes |
+| UI sections and components | From the cfworkers root, search with `pnpm shadcn:search -- -q "<need>"`, then run `pnpm shadcn:add @shadcnblocks/<name>`; exit 0 means customize immediately without `shadcn:learn` |
 
 <!-- END:template-not-included-docs -->
