@@ -225,11 +225,10 @@ test("visual editor session stays private", async ({ page, request }) => {
 	await expect(page.getByRole("complementary", { name: "Narzędzia administratora" })).toHaveCount(0);
 });
 
-test("operator workspaces require an admin login", async ({ request }) => {
+test("operator workspaces require an admin login", async ({ page }) => {
 	for (const path of ["/a/kalendarz", "/a/zgloszenia", "/a/imprezy", "/a/noclegi", "/a/statystyki", "/a/telewizory"]) {
-		const response = await request.get(path, { maxRedirects: 0 });
-		expect(response.status()).toBe(307);
-		expect(response.headers().location).toContain("/admin/login?redirect=");
+		await page.goto(path);
+		await expect(page).toHaveURL((url) => url.pathname === "/admin/login" && url.searchParams.get("redirect") === path);
 	}
 });
 
