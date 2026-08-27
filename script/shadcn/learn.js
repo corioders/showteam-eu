@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { writeLearnedPatch } from "./patches.js";
 import { getSessionDirectory, run } from "./session.js";
 
 const cwd = process.cwd();
@@ -14,45 +15,42 @@ if (!fs.existsSync(manifestPath)) {
 }
 
 const session = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-const patches = [];
-const changedFiles = [];
-for (const relativePath of session.sourceFiles) {
-	const normalizedPath = path.join(sessionDirectory, "normalized", relativePath);
-	const currentPath = path.join(cwd, relativePath);
-	if (!fs.existsSync(normalizedPath) || !fs.existsSync(currentPath)) {
-		continue;
-	}
-	const normalized = fs.readFileSync(normalizedPath);
-	const current = fs.readFileSync(currentPath);
-	if (normalized.equals(current)) {
-		continue;
-	}
-	changedFiles.push(relativePath);
-	const result = run("git", ["diff", "--no-index", "--no-prefix", "--", normalizedPath, currentPath], {
-		allowFailure: true,
-		capture: true,
-		cwd,
-	});
-	patches.push(result.stdout);
-}
-
-if (changedFiles.length === 0) {
-	console.error("No manual fixes found after the latest normalized Shadcnblocks install.");
+if (session.registryItems?.length !== 1) {
+	console.error("Learning requires exactly one @shadcnblocks registry item in the latest installation session.");
 	process.exit(1);
 }
 
-const patchPath = path.join(sessionDirectory, "learning.patch");
-fs.writeFileSync(patchPath, patches.join("\n"));
+const existingSourceFiles = session.sourceFiles.filter((relativePath) => fs.existsSync(path.join(cwd, relativePath)));
+const biomeResult = run("pnpm", ["exec", "biome", "check", "--error-on-warnings", "--no-errors-on-unmatched", ...existingSourceFiles], {
+	allowFailure: true,
+	cwd,
+});
+const typecheckResult = run("pnpm", ["run", "check-types"], { allowFailure: true, cwd });
+if (biomeResult.status !== 0 || typecheckResult.status !== 0) {
+	console.error("The block still fails compatibility checks. Fix every generic error before learning its patch.");
+	process.exit(1);
+}
+
 const repositoryRoot = run("git", ["rev-parse", "--show-toplevel"], { capture: true, cwd }).stdout.trim();
 const cstdNextRoot = path.resolve(import.meta.dirname, "..", "..");
 const cstdNextPrefix = path.relative(repositoryRoot, cstdNextRoot) || ".";
+const patchDirectory = path.join(cstdNextRoot, "script", "shadcn", "patches");
+const [learnedPatch, learningError] = writeLearnedPatch({
+	baselineRoot: path.join(sessionDirectory, "baseline"),
+	currentRoot: cwd,
+	patchDirectory,
+	registryItem: session.registryItems[0],
+	sourceFiles: session.sourceFiles,
+});
+if (learningError) {
+	console.error(learningError.message);
+	process.exit(1);
+}
 const pushCommand = cstdNextPrefix === "." ? "git push origin main" : `git subtree push --prefix ${cstdNextPrefix} git@github.com:corioders/cstd-next.git main`;
-console.log(`Captured manual fixes for: ${changedFiles.join(", ")}`);
-console.log(`Local diff: ${patchPath}`);
-console.log("Shadcnblocks learning is NOT complete. This command records evidence; it does not write a codemod.");
+console.log(`Learned and self-verified ${session.registryItems[0]} compatibility fixes for: ${learnedPatch.changedFiles.join(", ")}`);
+console.log(`Patch: ${learnedPatch.patchPath}`);
+console.log(`Manifest: ${learnedPatch.manifestPath}`);
 console.log("Before project branding, content, or demo-data changes:");
-console.log(`1. Generalize only reusable compatibility fixes in ${cstdNextPrefix}/script/shadcn/codemods.js.`);
-console.log(`2. Add a synthetic regression test in ${cstdNextPrefix}/test/shadcn-codemods.test.ts; never copy paid source into cstd-next.`);
-console.log(`3. Run: pnpm --dir ${cstdNextPrefix} test:unit`);
-console.log(`4. Commit the cstd-next changes, then run: ${pushCommand}`);
-console.log("5. Confirm canonical cstd-next is pushed. Only then customize the installed block for this project.");
+console.log(`1. Run: pnpm --dir ${cstdNextPrefix} test:unit`);
+console.log(`2. Commit the learned patch, then run: ${pushCommand}`);
+console.log("3. Confirm canonical cstd-next is pushed. Only then customize the installed block for this project.");
