@@ -29,7 +29,7 @@ only that subdirectory.
 
 ## First run
 
-On macOS, authenticate `gh` and store an account-owned Cloudflare token with only
+On macOS, authenticate `gh` and `infisical`, and store an account-owned Cloudflare token with only
 `Account API Tokens Write` in Keychain. The complete fresh-project bootstrap is:
 
 ```bash
@@ -40,10 +40,11 @@ cd myproject
 
 The script proposes the clone directory name as the project name and asks for confirmation;
 an explicit name can still be passed as `./bootstrap_project.sh myproject`. It registers
-the renamed `cstd-ts` and `cstd-next` directories as pullable git subtrees, discovers the GitHub owner, Cloudflare account and
-workers.dev subdomain (prompting when a value is missing or ambiguous), creates the private GitHub repository, least-privilege
-Cloudflare setup and deploy tokens, isolated production/preview D1 and R2 resources,
-and GitHub environments/secrets/variables, then writes the D1 IDs into Wrangler,
+the renamed `cstd-ts` and `cstd-next` directories as pullable git subtrees, creates or resumes a delete-protected Infisical project
+with the same name, copies the template's `dev` secrets, and configures a read-only GitHub Actions identity using OIDC. It discovers
+the GitHub owner, Cloudflare account and workers.dev subdomain (prompting when a value is missing or ambiguous), creates the private
+GitHub repository, least-privilege Cloudflare setup and deploy tokens, isolated production/preview D1 and R2 resources, stores the
+deploy token in Infisical `staging`/`prod`, and creates GitHub environments/variables, then writes the D1 IDs into Wrangler,
 removes the one-shot bootstrap script, and commits and pushes the initialized project. On resumed runs it rotates generated
 project tokens; only the account-owned bootstrap token remains in Keychain.
 Existing durable resources are reused by name and never deleted. GitHub production reviewers remain manual
@@ -72,9 +73,10 @@ Run from the `<project>.cfworkers/` directory.
 | `pnpm check-biome-fix` | apply biome's safe fixes |
 | `pnpm test:unit` | run Vitest |
 | `pnpm test:e2e` | run Playwright against Chromium and WebKit |
-| `pnpm --dir apps/web preview` | build for Workers and serve locally through workerd |
-| `pnpm --dir apps/web deploy` | build and deploy production |
-| `pnpm --dir apps/web logs` | tail production Worker logs |
+| `pnpm preview` | inject `staging` secrets, build for Workers and serve locally through workerd |
+| `pnpm deploy` | inject `prod` secrets, build and deploy production |
+| `pnpm logs` | inject `prod` secrets and tail production Worker logs |
+| `pnpm logs:preview` | inject `staging` secrets and tail preview Worker logs |
 
 ## Deployment
 
@@ -105,9 +107,12 @@ Same for `cstd-next` with `git@github.com:corioders/cstd-next.git`.
 
 <!-- BEGIN:template-env-docs -->
 
-## Shared template environment
+## Project secrets
 
-`template.cfworkers/apps/web/.env` stays ignored. After changing its shared values, run `./encrypt_template_env.sh` and commit only `.env.age`. New project bootstrap asks for the passphrase and restores the local `.env` without overwriting an existing one.
+The committed `template.cfworkers/.infisical.json` links this repository to its Infisical EU project. Run secret-dependent commands
+through `pnpm dev` and `pnpm shadcn:*`; the CLI injects `dev` secrets without writing `.env`. Bootstrap commits a project-specific
+`.infisical.json`. Developers authenticate with their own Infisical accounts; CI uses short-lived GitHub OIDC credentials and loads
+deployment secrets directly from Infisical.
 
 <!-- END:template-env-docs -->
 

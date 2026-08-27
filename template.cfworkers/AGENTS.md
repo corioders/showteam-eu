@@ -46,9 +46,9 @@ return [session, null];
 - After a successful exact-block install, inspect only changed filenames, the exported component, and identifiers relevant to the requested copy, data or branding. Use `git diff --name-only`, `rg` and narrow ranges; do not dump or read the whole generated block unless a concrete error or ambiguity requires it.
 - Keep the installed UI skills. Do not invoke frontend-design or React performance guidance merely to install and wire an exact block; invoke them when the request includes original design, restyling, performance work, or non-trivial React architecture.
 - Wire the exported block, make only the requested project customizations, then run `pnpm check`.
-- Authentication is loaded by the wrappers from `apps/web/.env`. Never read, print, source or manually export `SHADCNBLOCKS_API_KEY`; request it only when the wrapper reports it missing.
+- Authentication is injected by the workspace wrappers from Infisical. Never read, print, export or write `SHADCNBLOCKS_API_KEY`; authenticate with Infisical when the wrapper reports access is missing.
 <!-- BEGIN:template-env-agent-rule -->
 
-- Shared bootstrap secrets are tracked only as `apps/web/.env.age`. Never read, print, or commit plaintext `.env`; maintainers refresh the ciphertext with `./encrypt_template_env.sh` from the template repository root.
+- Project secrets live in the Infisical project linked by `.infisical.json`. Never read, print, export, or write them to `.env`; use `infisical run` or an existing workspace wrapper.
 
 <!-- END:template-env-agent-rule -->

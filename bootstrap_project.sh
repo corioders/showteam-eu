@@ -6,10 +6,10 @@ usage() {
 	cat >&2 <<'EOF'
 usage: ./bootstrap_project.sh [project-name]
 
-Run once from the template repository root. Requires authenticated gh, curl,
-jq, git, macOS security, and age (directly or through Nix). The shared template
-env is restored with its passphrase. The account-owned Cloudflare bootstrap token
-is read from macOS Keychain; generated project tokens are rotated on resumed runs.
+Run once from the template repository root. Requires authenticated gh and Infisical
+CLIs, curl, jq, git, and macOS security. A new Infisical project receives the shared
+template secrets. The account-owned Cloudflare bootstrap token is read from macOS
+Keychain; generated project tokens are rotated on resumed runs.
 EOF
 }
 
@@ -35,27 +35,18 @@ if [[ ! "$PROJECT_NAME" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
 	echo "Project name must be lowercase alphanumeric with dashes." >&2
 	exit 1
 fi
+if [[ ${#PROJECT_NAME} -gt 36 ]]; then
+	echo "Project name must be at most 36 characters for its Infisical slug." >&2
+	exit 1
+fi
 APP_TITLE=$(printf '%s' "$PROJECT_NAME" | awk -F- '{for (i = 1; i <= NF; i++) {printf "%s%s", (i > 1 ? " " : ""), toupper(substr($i, 1, 1)) substr($i, 2)}}')
 
-for command_name in curl gh git jq node security; do
+for command_name in curl gh git infisical jq node security; do
 	if ! command -v "$command_name" >/dev/null 2>&1; then
 		echo "Missing required command: $command_name" >&2
 		exit 1
 	fi
 done
-
-run_age() {
-	if command -v age >/dev/null 2>&1; then
-		age "$@"
-		return
-	fi
-	if command -v nix >/dev/null 2>&1; then
-		nix shell nixpkgs/33da5f36e599b50aa7dbbfacb718254423b18354#age --command age "$@"
-		return
-	fi
-	echo "Missing age. Install age or Nix." >&2
-	exit 1
-}
 
 register_subtree() {
 	local source_prefix=$1
@@ -126,17 +117,80 @@ if [[ -z "$PROJECT_DIRECTORY" || "$PROJECT_DIRECTORY" != "$PROJECT_NAME.cfworker
 	exit 1
 fi
 
-ENCRYPTED_ENV="$PROJECT_DIRECTORY/apps/web/.env.age"
-LOCAL_ENV="$PROJECT_DIRECTORY/apps/web/.env"
-if [[ -f "$ENCRYPTED_ENV" && ! -f "$LOCAL_ENV" ]]; then
-	umask 077
-	echo "Restore shared template environment:"
-	run_age --decrypt --output "$LOCAL_ENV" "$ENCRYPTED_ENV"
-	chmod 600 "$LOCAL_ENV"
-elif [[ -f "$LOCAL_ENV" ]]; then
-	echo "Keeping existing $LOCAL_ENV."
+INFISICAL_CONFIG="$PROJECT_DIRECTORY/.infisical.json"
+if ! jq -e '.workspaceId | type == "string" and length > 0' "$INFISICAL_CONFIG" >/dev/null 2>&1; then
+	echo "Missing or invalid $INFISICAL_CONFIG." >&2
+	exit 1
 fi
-rm -f -- "$ENCRYPTED_ENV" encrypt_template_env.sh
+INFISICAL_SOURCE_PROJECT_ID=$(jq -r '.workspaceId' "$INFISICAL_CONFIG")
+INFISICAL_DOMAIN=$(jq -r '.domain // "https://app.infisical.com"' "$INFISICAL_CONFIG")
+if [[ ! "$INFISICAL_DOMAIN" =~ ^https://[^/]+$ ]]; then
+	echo "Invalid Infisical domain in $INFISICAL_CONFIG." >&2
+	exit 1
+fi
+INFISICAL_API_URL="$INFISICAL_DOMAIN/api"
+if ! INFISICAL_ACCESS_TOKEN=$(infisical user get token --plain --silent --domain "$INFISICAL_API_URL" 2>/dev/null); then
+	echo "Infisical authentication is required. Run: infisical login --domain $INFISICAL_API_URL" >&2
+	exit 1
+fi
+
+infisical_api() {
+	local method=$1
+	local path=$2
+	local body=${3:-}
+	local response
+
+	if [[ -n "$body" ]]; then
+		response=$(
+			{
+				printf 'url = "%s/api/%s"\n' "$INFISICAL_DOMAIN" "$path"
+				printf 'header = "Authorization: Bearer %s"\n' "$INFISICAL_ACCESS_TOKEN"
+				printf 'header = "Content-Type: application/json"\n'
+			} | curl --silent --show-error --fail-with-body --request "$method" --data "$body" --config -
+		)
+	else
+		response=$(
+			{
+				printf 'url = "%s/api/%s"\n' "$INFISICAL_DOMAIN" "$path"
+				printf 'header = "Authorization: Bearer %s"\n' "$INFISICAL_ACCESS_TOKEN"
+			} | curl --silent --show-error --fail-with-body --request "$method" --config -
+		)
+	fi
+	printf '%s' "$response"
+}
+
+INFISICAL_PROJECTS_RESPONSE=$(infisical_api GET "v1/projects")
+INFISICAL_PROJECT_COUNT=$(jq -r --arg slug "$PROJECT_NAME" '[.projects[] | select(.slug == $slug)] | length' <<<"$INFISICAL_PROJECTS_RESPONSE")
+if [[ "$INFISICAL_PROJECT_COUNT" -gt 1 ]]; then
+	echo "Multiple Infisical projects use slug '$PROJECT_NAME'." >&2
+	exit 1
+fi
+INFISICAL_PROJECT_ID=$(jq -r --arg slug "$PROJECT_NAME" '.projects[] | select(.slug == $slug) | .id' <<<"$INFISICAL_PROJECTS_RESPONSE")
+if [[ -z "$INFISICAL_PROJECT_ID" ]]; then
+	INFISICAL_PROJECT_RESPONSE=$(infisical_api POST "v1/projects" "$(jq -cn --arg name "$PROJECT_NAME" '{projectName: $name, slug: $name, type: "secret-manager", shouldCreateDefaultEnvs: true, hasDeleteProtection: true}')")
+	INFISICAL_PROJECT_ID=$(jq -r '.project.id // empty' <<<"$INFISICAL_PROJECT_RESPONSE")
+elif [[ $(jq -r --arg slug "$PROJECT_NAME" '.projects[] | select(.slug == $slug) | .name' <<<"$INFISICAL_PROJECTS_RESPONSE") != "$PROJECT_NAME" ]]; then
+	echo "Infisical slug '$PROJECT_NAME' belongs to a differently named project." >&2
+	exit 1
+fi
+if [[ ! "$INFISICAL_PROJECT_ID" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
+	echo "Infisical returned an invalid project ID." >&2
+	exit 1
+fi
+INFISICAL_TEMP_DIRECTORY=$(mktemp -d)
+trap 'rm -f -- "$INFISICAL_TEMP_DIRECTORY/template.env"; rmdir "$INFISICAL_TEMP_DIRECTORY"' EXIT
+INFISICAL_TOKEN="$INFISICAL_ACCESS_TOKEN" infisical export --silent --domain "$INFISICAL_API_URL" \
+	--projectId "$INFISICAL_SOURCE_PROJECT_ID" --env dev --format dotenv >"$INFISICAL_TEMP_DIRECTORY/template.env"
+if [[ -s "$INFISICAL_TEMP_DIRECTORY/template.env" ]]; then
+	INFISICAL_TOKEN="$INFISICAL_ACCESS_TOKEN" infisical secrets set --silent --domain "$INFISICAL_API_URL" \
+		--projectId "$INFISICAL_PROJECT_ID" --env dev --file "$INFISICAL_TEMP_DIRECTORY/template.env" >/dev/null
+fi
+rm -f -- "$INFISICAL_TEMP_DIRECTORY/template.env"
+rmdir "$INFISICAL_TEMP_DIRECTORY"
+trap - EXIT
+jq -n --arg workspaceId "$INFISICAL_PROJECT_ID" --arg domain "$INFISICAL_DOMAIN" \
+	'{workspaceId: $workspaceId, defaultEnvironment: "dev", domain: $domain}' >"$INFISICAL_CONFIG.tmp"
+mv "$INFISICAL_CONFIG.tmp" "$INFISICAL_CONFIG"
 sed -i.bak \
 	-e "1s/.*/# $APP_TITLE/" \
 	-e "s/^Corioders house template: /$APP_TITLE: /" \
@@ -144,16 +198,11 @@ sed -i.bak \
 	-e "s/<project>\.cfworkers/$PROJECT_NAME.cfworkers/g" \
 	-e '/bootstrap_project\.sh.*one-shot project\/repository\/Cloudflare bootstrap/d' \
 	-e '/<!-- BEGIN:template-bootstrap-docs -->/,/<!-- END:template-bootstrap-docs -->/d' \
-	-e '/<!-- BEGIN:template-env-docs -->/,/<!-- END:template-env-docs -->/d' \
 	-e '/<!-- BEGIN:template-not-included-docs -->/,/<!-- END:template-not-included-docs -->/d' \
 	README.md
 rm -- README.md.bak
 sed -i.bak '/<!-- BEGIN:template-maintainer-agent-rules -->/,/<!-- END:template-maintainer-agent-rules -->/d' AGENTS.md
 rm -- AGENTS.md.bak
-sed -i.bak '/<!-- BEGIN:template-env-agent-rule -->/,/<!-- END:template-env-agent-rule -->/d' "$PROJECT_DIRECTORY/AGENTS.md"
-rm -- "$PROJECT_DIRECTORY/AGENTS.md.bak"
-sed -i.bak '/^!\.env\.age$/d' "$PROJECT_DIRECTORY/apps/web/.gitignore"
-rm -- "$PROJECT_DIRECTORY/apps/web/.gitignore.bak"
 sed -i.bak '/^- \[/d' "$PROJECT_DIRECTORY/TODO.md"
 rm -- "$PROJECT_DIRECTORY/TODO.md.bak"
 
@@ -177,6 +226,33 @@ fi
 if [[ $(gh repo view "$REPOSITORY" --json visibility --jq .visibility) != "PRIVATE" ]]; then
 	echo "Refusing to bootstrap non-private repository: $REPOSITORY" >&2
 	exit 1
+fi
+
+INFISICAL_IDENTITY_NAME="$PROJECT_NAME GitHub Actions"
+INFISICAL_IDENTITIES_RESPONSE=$(infisical_api GET "v1/projects/$INFISICAL_PROJECT_ID/identities?limit=1000")
+INFISICAL_IDENTITY_COUNT=$(jq -r --arg name "$INFISICAL_IDENTITY_NAME" '[.identities[] | select(.name == $name)] | length' <<<"$INFISICAL_IDENTITIES_RESPONSE")
+if [[ "$INFISICAL_IDENTITY_COUNT" -gt 1 ]]; then
+	echo "Multiple Infisical identities are named '$INFISICAL_IDENTITY_NAME'." >&2
+	exit 1
+fi
+INFISICAL_IDENTITY_ID=$(jq -r --arg name "$INFISICAL_IDENTITY_NAME" '.identities[] | select(.name == $name) | .id' <<<"$INFISICAL_IDENTITIES_RESPONSE")
+if [[ -z "$INFISICAL_IDENTITY_ID" ]]; then
+	INFISICAL_IDENTITY_RESPONSE=$(infisical_api POST "v1/projects/$INFISICAL_PROJECT_ID/identities" \
+		"$(jq -cn --arg name "$INFISICAL_IDENTITY_NAME" '{name: $name, hasDeleteProtection: true, roles: [{role: "viewer", isTemporary: false}]}')")
+	INFISICAL_IDENTITY_ID=$(jq -r '.identity.id // empty' <<<"$INFISICAL_IDENTITY_RESPONSE")
+	INFISICAL_OIDC_RESPONSE=""
+else
+	INFISICAL_OIDC_RESPONSE=$(jq -r --arg name "$INFISICAL_IDENTITY_NAME" '.identities[] | select(.name == $name) | .authMethods[]?' <<<"$INFISICAL_IDENTITIES_RESPONSE")
+fi
+if [[ ! "$INFISICAL_IDENTITY_ID" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
+	echo "Infisical returned an invalid identity ID." >&2
+	exit 1
+fi
+if ! grep -Fxq "oidc-auth" <<<"$INFISICAL_OIDC_RESPONSE"; then
+	infisical_api POST "v1/auth/oidc-auth/identities/$INFISICAL_IDENTITY_ID" "$(jq -cn \
+		--arg subject "repo:$REPOSITORY:*" \
+		--arg audience "https://github.com/$GITHUB_OWNER" \
+		'{oidcDiscoveryUrl: "https://token.actions.githubusercontent.com", boundIssuer: "https://token.actions.githubusercontent.com", boundClaims: {}, boundAudiences: $audience, boundSubject: $subject, accessTokenTrustedIps: [{ipAddress: "0.0.0.0/0"}, {ipAddress: "::/0"}], accessTokenTTL: 3600, accessTokenMaxTTL: 3600, accessTokenNumUsesLimit: 0}')" >/dev/null
 fi
 
 TARGET_REMOTE="git@github.com:$REPOSITORY.git"
@@ -402,11 +478,23 @@ fi
 
 for environment_name in preview production; do
 	gh api --method PUT "repos/$REPOSITORY/environments/$environment_name" >/dev/null
-	printf '%s' "$DEPLOY_TOKEN" | gh secret set CLOUDFLARE_API_TOKEN --env "$environment_name" --repo "$REPOSITORY"
 done
+
+INFISICAL_TEMP_DIRECTORY=$(mktemp -d)
+trap 'rm -f -- "$INFISICAL_TEMP_DIRECTORY/deploy.env"; rmdir "$INFISICAL_TEMP_DIRECTORY"' EXIT
+printf 'CLOUDFLARE_API_TOKEN=%s\n' "$DEPLOY_TOKEN" >"$INFISICAL_TEMP_DIRECTORY/deploy.env"
+for infisical_environment in staging prod; do
+	INFISICAL_TOKEN="$INFISICAL_ACCESS_TOKEN" infisical secrets set --silent --domain "$INFISICAL_API_URL" \
+		--projectId "$INFISICAL_PROJECT_ID" --env "$infisical_environment" --file "$INFISICAL_TEMP_DIRECTORY/deploy.env" >/dev/null
+done
+rm -f -- "$INFISICAL_TEMP_DIRECTORY/deploy.env"
+rmdir "$INFISICAL_TEMP_DIRECTORY"
+trap - EXIT
 
 gh variable set CLOUDFLARE_ACCOUNT_ID --body "$CLOUDFLARE_ACCOUNT_ID" --repo "$REPOSITORY"
 gh variable set CLOUDFLARE_WORKERS_DEV_SUBDOMAIN --body "$CLOUDFLARE_WORKERS_DEV_SUBDOMAIN" --env preview --repo "$REPOSITORY"
+gh variable set INFISICAL_DOMAIN --body "$INFISICAL_DOMAIN" --repo "$REPOSITORY"
+gh variable set INFISICAL_IDENTITY_ID --body "$INFISICAL_IDENTITY_ID" --repo "$REPOSITORY"
 
 sed -i.bak \
 	-e "s/REPLACE_WITH_PRODUCTION_D1_DATABASE_ID/$PRODUCTION_D1_ID/g" \
@@ -416,7 +504,7 @@ rm -- "$WRANGLER_CONFIG.bak"
 
 node "$PROJECT_DIRECTORY/script/check-template-invariants.js"
 
-unset BOOTSTRAP_TOKEN SETUP_TOKEN DEPLOY_TOKEN TOKEN_VALUE
+unset BOOTSTRAP_TOKEN DEPLOY_TOKEN INFISICAL_ACCESS_TOKEN SETUP_TOKEN TOKEN_VALUE
 rm -f -- bootstrap_project.sh
 
 git add -A

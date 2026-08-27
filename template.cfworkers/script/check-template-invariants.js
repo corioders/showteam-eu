@@ -152,6 +152,24 @@ if (tagCacheIds.length !== 2) {
 	}
 }
 
+const infisicalConfig = JSON.parse(read(".infisical.json"));
+if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(infisicalConfig.workspaceId ?? "")) {
+	errors.push(".infisical.json must link a valid Infisical project ID.");
+}
+if (infisicalConfig.defaultEnvironment !== "dev") {
+	errors.push(".infisical.json must default to the dev environment.");
+}
+if (!/^https:\/\/[^/]+$/.test(infisicalConfig.domain ?? "")) {
+	errors.push(".infisical.json must pin an HTTPS Infisical domain.");
+}
+
+const packageJson = JSON.parse(read("package.json"));
+for (const scriptName of ["dev", "preview", "deploy", "logs", "logs:preview", "shadcn:search", "shadcn:add", "shadcn:learn"]) {
+	if (!/^infisical run(?: --env=[a-z]+)? -- /.test(packageJson.scripts?.[scriptName] ?? "")) {
+		errors.push(`package.json script ${scriptName} must inject Infisical secrets.`);
+	}
+}
+
 const biomeConfig = read("biome.jsonc");
 requireMatch(biomeConfig, /no-throw\.grit/, "biome.jsonc must keep the no-throw plugin.");
 try {
