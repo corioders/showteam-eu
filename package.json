@@ -36,7 +36,8 @@
 	"imports": {
 		"#cstd-next-prerendered-image-runtime": {
 			"types": "./src/media/image/prerendered-image-runtime.ts",
-			"default": "./build/media/image/prerendered-image-runtime.js"
+			"react-server": "./build/media/image/prerendered-image-runtime.js",
+			"default": "./build/media/image/prerendered-image-runtime-browser.js"
 		}
 	},
 	"name": "cstd-next",
