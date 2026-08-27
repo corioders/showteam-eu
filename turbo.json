@@ -1,8 +1,8 @@
 {
 	"extends": ["//"],
-	"globalEnv": ["CORIODERS_DRIVE_CMS_KEY", "CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY", "CORIODERS_INVALIDATE_PERSISTENT_CACHE", "IS_PREVIEW", "NEXT_PUBLIC_IS_PREVIEW"],
 	"tasks": {
 		"build": {
+			"env": ["APP_ENV", "CORIODERS_DRIVE_CMS_KEY", "CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY", "CORIODERS_INVALIDATE_PERSISTENT_CACHE"],
 			"outputs": ["build/**"]
 		},
 		"build-cloudflare": {
