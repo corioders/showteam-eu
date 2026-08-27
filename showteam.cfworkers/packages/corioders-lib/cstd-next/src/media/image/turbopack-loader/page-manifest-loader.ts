@@ -24,7 +24,7 @@ const pageManifestLoader = function pageManifestLoader(this: TurbopackLoaderCont
 	const sourceFile = ts.createSourceFile(this.resourcePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 	const isClientPage = hasUseClientDirective(sourceFile);
 	return [
-		'import { createElement, Fragment } from "react";',
+		'import { createElement, Fragment, Suspense } from "react";',
 		`import OriginalPage from ${JSON.stringify(originalPageSpecifier)};`,
 		...(isClientPage ? ['import { ClientPageRoot } from "next/dist/client/components/client-page.js";'] : []),
 		'import { PrerenderedImageManifestSeed } from "cstd-next/media/image/prerendered-image-manifest.jsx";',
@@ -35,7 +35,9 @@ const pageManifestLoader = function pageManifestLoader(this: TurbopackLoaderCont
 		"		Fragment,",
 		"		null,",
 		"		createElement(PrerenderedImageManifestSeed, { value: PRERENDERED_IMAGE_MANIFEST_PLACEHOLDER }),",
-		isClientPage ? "		createElement(ClientPageRoot, { Component: OriginalPage, serverProvidedParams: null })," : "		createElement(OriginalPage, props),",
+		isClientPage
+			? "		createElement(Suspense, { fallback: null }, createElement(ClientPageRoot, { Component: OriginalPage, serverProvidedParams: null })),"
+			: "		createElement(OriginalPage, props),",
 		"	);",
 		"}",
 	].join("\n");
