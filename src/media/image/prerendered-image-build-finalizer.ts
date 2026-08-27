@@ -91,7 +91,7 @@ async function injectRouteManifest(projectDirectory: string, htmlFile: string): 
 
 	let patchedRscFiles = 0;
 	for (const rscFile of rscFiles) {
-		if (await patchRscFile(rscFile, encodedManifest)) {
+		if ((await pathExists(rscFile)) && (await patchRscFile(rscFile, encodedManifest))) {
 			patchedRscFiles += 1;
 		}
 	}
