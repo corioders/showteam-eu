@@ -8,6 +8,6 @@ import type { PrerenderedImageRequest } from "./prerendered-image-request.js";
 import type { PrerenderedImageResource } from "./prerendered-image-resource.js";
 import { loadPrerenderedImageResource } from "./prerendered-image-runtime.js";
 
-export function loadCachedPrerenderedImageResource(request: PrerenderedImageRequest): Promise<PrerenderedImageResource> {
+export async function loadCachedPrerenderedImageResource(request: PrerenderedImageRequest): Promise<PrerenderedImageResource> {
 	return loadPrerenderedImageResource(request);
 }
