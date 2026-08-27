@@ -23,4 +23,13 @@ describe("Shadcnblocks codemods", () => {
 
 		expect(normalizeShadcnSource(input, "styles.css")).toBe(input);
 	});
+
+	it("adapts Base UI and Recharts dashboard source", () => {
+		const source = `"use client";\nimport type { TooltipProps } from "recharts";\nfunction Tooltip({ payload }: TooltipProps<number, string>) {\n\tif (!payload?.length) return null;\n}\n`;
+		const normalized = normalizeShadcnSource(source, "dashboard9.tsx");
+
+		expect(normalized).toContain("TooltipContentProps");
+		expect(normalized).toContain("payload === undefined || payload.length === 0");
+		expect(normalized).toContain("biome-ignore-all lint/performance/noImgElement");
+	});
 });
