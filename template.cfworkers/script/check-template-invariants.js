@@ -163,6 +163,14 @@ if (!/^https:\/\/[^/]+$/.test(infisicalConfig.domain ?? "")) {
 	errors.push(".infisical.json must pin an HTTPS Infisical domain.");
 }
 
+const deployWorkflow = read("../.github/workflows/deploy.yml");
+if (/opennextjs-cloudflare populateCache remote/.test(deployWorkflow)) {
+	errors.push("The deploy workflow must not use the hanging OpenNext remote cache helper.");
+}
+requireMatch(deployWorkflow, /wrangler r2 object put/, "The deploy workflow must upload preview cache entries through Wrangler.");
+requireMatch(deployWorkflow, /wrangler d1 execute NEXT_TAG_CACHE_D1/, "The deploy workflow must initialize the preview tag cache.");
+requireMatch(deployWorkflow, /Shared preview verification failed/, "The deploy workflow must verify the deployed shared preview.");
+
 const packageJson = JSON.parse(read("package.json"));
 for (const scriptName of ["dev", "preview", "deploy", "logs", "logs:preview", "shadcn:search", "shadcn:add", "shadcn:learn"]) {
 	if (!/^infisical run(?: --env=[a-z]+)? -- /.test(packageJson.scripts?.[scriptName] ?? "")) {

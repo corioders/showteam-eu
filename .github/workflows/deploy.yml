@@ -133,6 +133,30 @@ jobs:
         run: |
           set -o pipefail
           pnpm exec opennextjs-cloudflare build
+
+          # ponytail: OpenNext 1.20.2's remote helper hangs on this Linux runner.
+          # Upload the generated cache through Wrangler until the helper is fixed upstream.
+          CACHE_BUCKET="template-cfworkers-preview-next-inc-cache-r2-bucket"
+          while IFS= read -r -d '' CACHE_FILE; do
+            RELATIVE_PATH=${CACHE_FILE#".open-next/cache/"}
+            if [[ "$RELATIVE_PATH" == __fetch/* ]]; then
+              RELATIVE_PATH=${RELATIVE_PATH#"__fetch/"}
+              BUILD_ID=${RELATIVE_PATH%%/*}
+              CACHE_KEY=/${RELATIVE_PATH#*/}
+              CACHE_TYPE=fetch
+            else
+              BUILD_ID=${RELATIVE_PATH%%/*}
+              CACHE_KEY=/${RELATIVE_PATH#*/}
+              CACHE_KEY=${CACHE_KEY%.cache}
+              CACHE_TYPE=cache
+            fi
+            CACHE_HASH=$(printf '%s' "$CACHE_KEY" | sha256sum | cut -d' ' -f1)
+            R2_KEY="incremental-cache/${BUILD_ID}/${CACHE_HASH}.${CACHE_TYPE}"
+            pnpm exec wrangler r2 object put "${CACHE_BUCKET}/${R2_KEY}" --remote --file "$CACHE_FILE"
+          done < <(find .open-next/cache -type f -print0)
+
+          pnpm exec wrangler d1 execute NEXT_TAG_CACHE_D1 --remote --env preview \
+            --command "CREATE TABLE IF NOT EXISTS revalidations (tag TEXT NOT NULL, revalidatedAt INTEGER NOT NULL, stale INTEGER, expire INTEGER default NULL, UNIQUE(tag) ON CONFLICT REPLACE);"
           OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions upload --env preview --preview-alias "${{ github.ref_name }}" 2>&1 | tee deploy-output.log
 
           VERSION_ID=$(grep -oP 'Worker Version ID: \K[0-9a-f-]+' deploy-output.log | tail -n 1)
@@ -150,6 +174,14 @@ jobs:
 
           VERSION_PREFIX=${VERSION_ID%%-*}
           PREVIEW_HOST="template-cfworkers-web-preview.${{ vars.CLOUDFLARE_WORKERS_DEV_SUBDOMAIN }}.workers.dev"
+          RESPONSE_FILE=$(mktemp)
+          trap 'rm -f "$RESPONSE_FILE"' EXIT
+          HTTP_STATUS=$(curl --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 20 \
+            --output "$RESPONSE_FILE" --write-out '%{http_code}' "https://${PREVIEW_HOST}/")
+          if [[ "$HTTP_STATUS" != "200" ]]; then
+            echo "Shared preview verification failed with HTTP $HTTP_STATUS." >&2
+            exit 1
+          fi
           {
             echo "preview_url=https://${VERSION_PREFIX}-${PREVIEW_HOST}"
             echo "alias_url=https://${{ github.ref_name }}-${PREVIEW_HOST}"
