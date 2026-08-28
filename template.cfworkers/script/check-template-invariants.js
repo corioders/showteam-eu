@@ -169,6 +169,7 @@ if (/opennextjs-cloudflare populateCache remote/.test(deployWorkflow)) {
 }
 requireMatch(deployWorkflow, /wrangler r2 object put/, "The deploy workflow must upload preview cache entries through Wrangler.");
 requireMatch(deployWorkflow, /wrangler d1 execute NEXT_TAG_CACHE_D1/, "The deploy workflow must initialize the preview tag cache.");
+requireMatch(deployWorkflow, /curl --silent --show-error --location --retry 5/, "The preview healthcheck must follow redirects.");
 requireMatch(deployWorkflow, /Shared preview verification failed/, "The deploy workflow must verify the deployed shared preview.");
 
 const packageJson = JSON.parse(read("package.json"));
