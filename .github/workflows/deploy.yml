@@ -1,12 +1,11 @@
 # Deploys template.cfworkers to Cloudflare Workers.
-# The 'deploy' branch publishes production; every other branch uploads an isolated
-# preview version and deploys the latest build to a shared Worker with observable logs.
+# Pull requests upload an isolated preview and deploy the latest build to a shared
+# Worker with observable logs; the 'deploy' branch publishes production.
 #
 # bootstrap_project.sh provisions Infisical + GitHub OIDC, Cloudflare cache
 # resources, the deploy token in Infisical staging/prod, and Wrangler bindings.
 #
-# Trusted validation and deploy jobs run on the isolated `win24-wsl` organization runner.
-# Fork pull requests stay on Blacksmith because their code is untrusted.
+# Validation and deploy run together on the isolated `win24-wsl` organization runner.
 # The source template repository skips this workflow; initialized project
 # repositories run it normally.
 
@@ -14,6 +13,9 @@ name: Deploy
 
 on:
   push:
+    branches:
+      - deploy
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -25,16 +27,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
+  validate-template:
+    if: github.repository == 'corioders/cstd-nextjs-template'
     uses: ./.github/workflows/validate.yml
 
   deploy:
     if: github.repository != 'corioders/cstd-nextjs-template'
-    needs: validate
     runs-on: [self-hosted, win24-wsl]
     timeout-minutes: 30
     environment: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
     env:
+      DEPLOY_REF: ${{ github.head_ref || github.ref_name }}
       PNPM_STORE_PATH: ${{ github.workspace }}/../../.pnpm-store
     concurrency:
       group: ${{ github.ref_name == 'deploy' && format('deploy-production-{0}', github.run_id) || 'deploy-shared-preview' }}
@@ -45,6 +48,7 @@ jobs:
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           sparse-checkout: |
+            .github/workflows/deploy.yml
             template.cfworkers
 
       - name: Setup Node.js
@@ -90,6 +94,14 @@ jobs:
           CACHE_DIRECTORY="/home/runner/_work/.build-cache/next/${GITHUB_REPOSITORY//\//-}"
           mkdir --parents "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next
           ln --symbolic --force --no-dereference "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next/cache
+
+      - name: Validate and build
+        run: pnpm validate
+        working-directory: template.cfworkers
+
+      - name: Run browser tests
+        run: pnpm --dir apps/web exec playwright test
+        working-directory: template.cfworkers
 
       - name: Fetch deployment secrets from Infisical
         uses: Infisical/secrets-action@77ab1f4ccd183a543cb5b42435fbd181189f4995 # v1.0.16
@@ -171,7 +183,7 @@ jobs:
             | xargs -0 --no-run-if-empty --max-args=1 --max-procs="$(nproc)" bash -c 'upload_cache_file "$1"' _
           wait "$D1_PID"
 
-          OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions upload --env preview --preview-alias "${{ github.ref_name }}" 2>&1 | tee deploy-output.log
+          OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions upload --env preview --preview-alias "$DEPLOY_REF" 2>&1 | tee deploy-output.log
 
           VERSION_ID=$(grep -oP 'Worker Version ID: \K[0-9a-f-]+' deploy-output.log | tail -n 1)
           if [[ -z "$VERSION_ID" ]]; then
@@ -198,14 +210,14 @@ jobs:
           fi
           {
             echo "preview_url=https://${VERSION_PREFIX}-${PREVIEW_HOST}"
-            echo "alias_url=https://${{ github.ref_name }}-${PREVIEW_HOST}"
+            echo "alias_url=https://${DEPLOY_REF}-${PREVIEW_HOST}"
             echo "shared_url=https://${PREVIEW_HOST}"
           } >> "$GITHUB_OUTPUT"
         working-directory: template.cfworkers/apps/web
         env:
           APP_ENV: preview
           NEXT_PUBLIC_IS_DEPLOY: false
-          NEXT_PUBLIC_GIT_BRANCH: ${{ github.ref_name }}
+          NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
 
       - name: Deploy production
         if: github.ref_name == 'deploy'
@@ -214,7 +226,7 @@ jobs:
         env:
           APP_ENV: production
           NEXT_PUBLIC_IS_DEPLOY: true
-          NEXT_PUBLIC_GIT_BRANCH: ${{ github.ref_name }}
+          NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
 
       - name: Display preview URLs
         if: success() && github.ref_name != 'deploy'
