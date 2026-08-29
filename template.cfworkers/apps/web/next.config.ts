@@ -19,7 +19,9 @@ const nextConfig: NextConfig = {
 	reactCompiler: true,
 };
 
-initOpenNextCloudflareForDev();
+initOpenNextCloudflareForDev({
+	persist: process.env["CSTD_D1_PERSIST_PATH"] ? { path: process.env["CSTD_D1_PERSIST_PATH"] } : undefined,
+});
 
 // biome-ignore lint/style/noDefaultExport: Nextjs requirement
 export default nextConfig;
