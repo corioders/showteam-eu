@@ -61,7 +61,7 @@ const nextConfig: NextConfig = {
 };
 
 initOpenNextCloudflareForDev({
-	persist: process.env.CSTD_D1_PERSIST_PATH ? { path: process.env.CSTD_D1_PERSIST_PATH } : undefined,
+	...(process.env.CSTD_D1_PERSIST_PATH ? { persist: { path: process.env.CSTD_D1_PERSIST_PATH } } : {}),
 });
 
 // biome-ignore lint/style/noDefaultExport: Next.js requires a default config export.
