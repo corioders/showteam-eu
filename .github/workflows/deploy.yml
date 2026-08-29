@@ -1,6 +1,6 @@
 # Deploys showteam.cfworkers to Cloudflare Workers.
-# The 'deploy' branch publishes production; every other branch uploads an isolated
-# preview version and deploys the latest build to a shared Worker with observable logs.
+# Pull requests upload an isolated preview and deploy the latest build to a shared
+# Worker with observable logs; the 'deploy' branch publishes production.
 #
 # Required setup:
 # 1. Create a Cloudflare API token at https://dash.cloudflare.com/profile/api-tokens
@@ -12,8 +12,7 @@
 #    Add CLOUDFLARE_WORKERS_DEV_SUBDOMAIN as a variable to 'preview'.
 # 3. Preserve the durable D1/R2 resources named in apps/web/wrangler.jsonc.
 #
-# Trusted validation and deploy jobs run on the isolated `win24-wsl` organization runner.
-# Fork pull requests stay on Blacksmith because their code is untrusted.
+# Validation and deploy run together on the isolated `win24-wsl` organization runner.
 # The source template repository skips this workflow; initialized project
 # repositories run it normally.
 
@@ -21,6 +20,9 @@ name: Deploy
 
 on:
   push:
+    branches:
+      - deploy
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -31,15 +33,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
-    uses: ./.github/workflows/validate.yml
-
   deploy:
     if: github.repository != 'corioders/cstd-nextjs-template'
-    needs: validate
     runs-on: [self-hosted, win24-wsl]
     timeout-minutes: 30
     environment: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
+    env:
+      DEPLOY_REF: ${{ github.head_ref || github.ref_name }}
+      PNPM_STORE_PATH: ${{ github.workspace }}/../../.pnpm-store
     concurrency:
       group: ${{ github.ref_name == 'deploy' && format('deploy-production-{0}', github.run_id) || 'deploy-shared-preview' }}
       cancel-in-progress: ${{ github.ref_name != 'deploy' }}
@@ -48,34 +49,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
+          clean: false
           sparse-checkout: |
+            .github
             showteam.cfworkers
 
       - name: Setup Node.js
+        if: runner.environment != 'self-hosted'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 24
           package-manager-cache: false
 
       - name: Setup pnpm
+        if: runner.environment != 'self-hosted'
         run: corepack enable
 
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        working-directory: showteam.cfworkers
-        run: echo "STORE_PATH=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-
-      - name: Restore pnpm cache
-        id: restore-pnpm
-        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Restore Turborepo cache
+        if: runner.environment != 'self-hosted'
         id: restore-turbo
         uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
@@ -85,6 +76,7 @@ jobs:
             ${{ runner.os }}-turbo-
 
       - name: Restore Next.js cache
+        if: runner.environment != 'self-hosted'
         id: restore-next
         uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
@@ -95,8 +87,77 @@ jobs:
             ${{ runner.os }}-${{ runner.arch }}-nextjs-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --prefer-offline --store-dir "$PNPM_STORE_PATH"
         working-directory: showteam.cfworkers
+
+      - name: Use persistent Next.js cache
+        run: |
+          CACHE_DIRECTORY="/home/runner/_work/.build-cache/next/${GITHUB_REPOSITORY//\//-}"
+          mkdir --parents "$CACHE_DIRECTORY" showteam.cfworkers/apps/web/.next
+          ln --symbolic --force --no-dereference "$CACHE_DIRECTORY" showteam.cfworkers/apps/web/.next/cache
+
+      - name: Restore local D1 snapshot
+        id: restore-d1
+        run: |
+          BUILD_INPUTS_HASH=$(
+            {
+              git ls-files --stage -- \
+                showteam.cfworkers/pnpm-lock.yaml \
+                showteam.cfworkers/apps/web/migrations \
+                showteam.cfworkers/apps/web/payload.config.ts \
+                showteam.cfworkers/apps/web/scripts/seed-ci.ts \
+                showteam.cfworkers/apps/web/src/collections \
+                showteam.cfworkers/apps/web/src/globals \
+                'showteam.cfworkers/apps/web/src/lib/seed-*'
+              printf '%s' 'E2E_ADMIN_EMAIL=ci-admin@showteam.invalid'
+            } | sha256sum | cut -d' ' -f1
+          )
+          echo "CSTD_BUILD_INPUTS_HASH=$BUILD_INPUTS_HASH" >> "$GITHUB_ENV"
+          CACHE_DIRECTORY="/home/runner/_work/.build-cache/showteam-d1/$BUILD_INPUTS_HASH"
+          echo "cache-directory=$CACHE_DIRECTORY" >> "$GITHUB_OUTPUT"
+          if [[ -f "$CACHE_DIRECTORY/.complete" ]]; then
+            mkdir --parents showteam.cfworkers/apps/web/.wrangler
+            cp --archive "$CACHE_DIRECTORY/state" showteam.cfworkers/apps/web/.wrangler/state
+            echo "cache-hit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "cache-hit=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Migrate local D1
+        if: steps.restore-d1.outputs.cache-hit != 'true'
+        run: pnpm migrate:local
+        working-directory: showteam.cfworkers/apps/web
+
+      - name: Seed local D1
+        if: steps.restore-d1.outputs.cache-hit != 'true'
+        run: pnpm seed:local
+        working-directory: showteam.cfworkers/apps/web
+        env:
+          E2E_ADMIN_EMAIL: ci-admin@showteam.invalid
+          E2E_ADMIN_PASSWORD: showteam-ci-password-2026
+
+      - name: Save local D1 snapshot
+        if: steps.restore-d1.outputs.cache-hit != 'true'
+        run: |
+          CACHE_DIRECTORY="${{ steps.restore-d1.outputs.cache-directory }}"
+          TEMPORARY_DIRECTORY="${CACHE_DIRECTORY}.${GITHUB_RUN_ID}.${GITHUB_RUN_ATTEMPT}.tmp"
+          mkdir --parents "$TEMPORARY_DIRECTORY"
+          cp --archive showteam.cfworkers/apps/web/.wrangler/state "$TEMPORARY_DIRECTORY/state"
+          mkdir --parents "$(dirname "$CACHE_DIRECTORY")"
+          mv "$TEMPORARY_DIRECTORY" "$CACHE_DIRECTORY"
+          touch "$CACHE_DIRECTORY/.complete"
+
+      - name: Validate and build
+        run: pnpm validate
+        working-directory: showteam.cfworkers
+        env:
+          PAYLOAD_SECRET: local-ci-secret
+
+      - name: Run browser tests
+        run: pnpm --dir apps/web exec playwright test
+        working-directory: showteam.cfworkers
+        env:
+          PAYLOAD_SECRET: local-ci-secret
 
       - name: Ensure preview Worker exists
         if: github.ref_name != 'deploy'
@@ -151,8 +212,8 @@ jobs:
         id: deploy
         run: |
           set -o pipefail
-          pnpm exec opennextjs-cloudflare build
-          OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions upload --env preview --preview-alias "${{ github.ref_name }}" 2>&1 | tee deploy-output.log
+          pnpm --workspace-root build:worker
+          OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions upload --env preview --preview-alias "$DEPLOY_REF" 2>&1 | tee deploy-output.log
 
           VERSION_ID=$(grep -oP 'Worker Version ID: \K[0-9a-f-]+' deploy-output.log | tail -n 1)
           if [[ -z "$VERSION_ID" ]]; then
@@ -171,7 +232,7 @@ jobs:
           PREVIEW_HOST="showteam-eu-preview.${{ vars.CLOUDFLARE_WORKERS_DEV_SUBDOMAIN }}.workers.dev"
           {
             echo "preview_url=https://${VERSION_PREFIX}-${PREVIEW_HOST}"
-            echo "alias_url=https://${{ github.ref_name }}-${PREVIEW_HOST}"
+            echo "alias_url=https://${DEPLOY_REF}-${PREVIEW_HOST}"
             echo "shared_url=https://${PREVIEW_HOST}"
           } >> "$GITHUB_OUTPUT"
         working-directory: showteam.cfworkers/apps/web
@@ -179,9 +240,8 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
           APP_ENV: preview
-          RANDOM_VALUE_TO_ENSURE_APPS_WEB_IS_REBUILD_ON_GH_ACTIONS: ${{ github.run_id }}
           NEXT_PUBLIC_IS_DEPLOY: false
-          NEXT_PUBLIC_GIT_BRANCH: ${{ github.ref_name }}
+          NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
 
       - name: Deploy production
         if: github.ref_name == 'deploy'
@@ -190,9 +250,8 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           APP_ENV: production
-          RANDOM_VALUE_TO_ENSURE_APPS_WEB_IS_REBUILD_ON_GH_ACTIONS: ${{ github.run_id }}
           NEXT_PUBLIC_IS_DEPLOY: true
-          NEXT_PUBLIC_GIT_BRANCH: ${{ github.ref_name }}
+          NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
 
       - name: Display preview URLs
         if: success() && github.ref_name != 'deploy'
@@ -223,23 +282,16 @@ jobs:
             echo "Published \`${{ github.sha }}\` from the \`deploy\` branch."
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Save pnpm cache
-        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
-        if: always() && steps.restore-pnpm.outputs.cache-hit != 'true'
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-
       - name: Save Turborepo cache
         uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
-        if: always() && steps.restore-turbo.outputs.cache-hit != 'true'
+        if: always() && runner.environment != 'self-hosted' && steps.restore-turbo.outputs.cache-hit != 'true'
         with:
           path: showteam.cfworkers/.turbo
           key: ${{ runner.os }}-turbo-${{ github.sha }}
 
       - name: Save Next.js cache
         uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
-        if: steps.restore-next.outputs.cache-hit != 'true'
+        if: runner.environment != 'self-hosted' && steps.restore-next.outputs.cache-hit != 'true'
         with:
           path: showteam.cfworkers/apps/web/.next/cache
           key: ${{ steps.restore-next.outputs.cache-primary-key }}

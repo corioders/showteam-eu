@@ -23,3 +23,6 @@ if (adminEmail && adminPassword) {
 }
 await payload.destroy();
 await disposeCloudflareContext?.();
+
+// Miniflare retains background handles after its explicit disposal in this CLI process.
+process.exit(0);

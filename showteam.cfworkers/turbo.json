@@ -15,6 +15,10 @@
 			"inputs": ["$TURBO_DEFAULT$", ".env*"],
 			"outputs": [".next/**", "!.next/cache/**", "build/**"]
 		},
+		"build:worker": {
+			"dependsOn": ["build"],
+			"outputs": [".open-next/**"]
+		},
 		"check": {
 			"dependsOn": ["^check"]
 		},

@@ -176,10 +176,13 @@ if (!appPackage.scripts?.prebuild?.includes("cstd-next-clean-images")) {
 if (!appPackage.scripts?.postbuild?.includes("cstd-next-finalize-images")) {
 	errors.push("apps/web/package.json must keep cstd-next-finalize-images in postbuild.");
 }
+if (!appPackage.scripts?.["build:worker"]?.includes("--skipNextBuild")) {
+	errors.push("apps/web/package.json must transform the existing Next.js output instead of rebuilding it.");
+}
 
 const appTurboConfig = JSON.parse(read("apps/web/turbo.json"));
-if (appTurboConfig.tasks?.build?.cache !== false) {
-	errors.push("apps/web/turbo.json must keep application build caching disabled.");
+if (appTurboConfig.tasks?.build?.cache === false) {
+	errors.push("apps/web/turbo.json must keep application build caching enabled.");
 }
 if (!fs.existsSync(path.join(workspaceDirectory, "apps/web/public/.assetsignore"))) {
 	errors.push("apps/web/public/.assetsignore must be preserved.");
