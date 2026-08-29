@@ -213,7 +213,7 @@ jobs:
         id: preview-d1
         run: |
           RESULT=$(
-            pnpm exec wrangler d1 execute D1 --remote --env preview --json +              --command "CREATE TABLE IF NOT EXISTS _cstd_ci_snapshots (hash TEXT PRIMARY KEY); SELECT COUNT(*) AS matches FROM _cstd_ci_snapshots WHERE hash = '$CSTD_BUILD_INPUTS_HASH';"
+            pnpm exec wrangler d1 execute D1 --remote --env preview --json --command "CREATE TABLE IF NOT EXISTS _cstd_ci_snapshots (hash TEXT PRIMARY KEY); SELECT COUNT(*) AS matches FROM _cstd_ci_snapshots WHERE hash = '$CSTD_BUILD_INPUTS_HASH';"
           )
           if jq --exit-status '.[-1].results[0].matches == 1' <<<"$RESULT" >/dev/null; then
             echo "cache-hit=true" >> "$GITHUB_OUTPUT"
