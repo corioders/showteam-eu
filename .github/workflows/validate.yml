@@ -128,7 +128,7 @@ jobs:
           key: ${{ steps.restore-playwright.outputs.cache-primary-key }}
 
       - name: Run browser tests
-        run: pnpm --dir apps/web exec playwright test
+        run: pnpm exec turbo run test:e2e --filter=web --concurrency=100%
         working-directory: template.cfworkers
 
       - name: Save pnpm cache

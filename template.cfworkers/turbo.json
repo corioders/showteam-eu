@@ -3,11 +3,14 @@
 	"globalDependencies": ["**/.env.*local"],
 	"globalEnv": [
 		"APP_ENV",
+		"CSTD_BUILD_INPUTS_HASH",
 		"CORIODERS_DRIVE_CMS_KEY",
 		"CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY",
 		"CORIODERS_INVALIDATE_PERSISTENT_CACHE",
 		"CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER",
-		"NEXT_IS_EXPORT_WORKER"
+		"NEXT_IS_EXPORT_WORKER",
+		"NEXT_PUBLIC_GIT_BRANCH",
+		"NEXT_PUBLIC_IS_DEPLOY"
 	],
 	"tasks": {
 		"build": {
@@ -39,9 +42,8 @@
 			"dependsOn": ["^build", "^test:unit"]
 		},
 		"test:e2e": {
-			"cache": false,
 			"dependsOn": ["build"],
-			"env": ["PLAYWRIGHT_BASE_URL", "PLAYWRIGHT_BROWSERS_PATH", "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"],
+			"env": ["CI", "PLAYWRIGHT_BASE_URL", "PLAYWRIGHT_BROWSERS_PATH", "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"],
 			"outputs": ["playwright-report/**", "test-results/**"]
 		},
 		"clean": {

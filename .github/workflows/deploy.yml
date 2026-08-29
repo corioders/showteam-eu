@@ -117,7 +117,7 @@ jobs:
         working-directory: template.cfworkers
 
       - name: Run browser tests
-        run: pnpm --dir apps/web exec playwright test
+        run: pnpm exec turbo run test:e2e --filter=web --concurrency=100%
         working-directory: template.cfworkers
 
       - name: Fetch deployment secrets from Infisical
