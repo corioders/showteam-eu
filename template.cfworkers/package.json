@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"postinstall": "lefthook install && turbo telemetry disable",
+		"postinstall": "[ \"${CI:-}\" = true ] || (lefthook install && turbo telemetry disable)",
 		"dev": "infisical run -- turbo run dev",
 		"build": "turbo run build",
 		"build:worker": "NEXT_PRIVATE_STANDALONE=true turbo run build:worker --filter=web --concurrency=100%",

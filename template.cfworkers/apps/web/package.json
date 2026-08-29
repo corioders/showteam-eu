@@ -29,7 +29,7 @@
 		"check-biome-fix": "biome check --error-on-warnings --fix",
 		"test:unit": "vitest run",
 		"test:e2e": "playwright test",
-		"postinstall": "next telemetry disable"
+		"postinstall": "[ \"${CI:-}\" = true ] || next telemetry disable"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.1.0",
