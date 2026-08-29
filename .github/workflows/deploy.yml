@@ -170,7 +170,7 @@ jobs:
           PAYLOAD_SECRET: local-ci-secret
 
       - name: Run browser tests
-        run: pnpm --dir apps/web exec playwright test
+        run: pnpm exec turbo run test:e2e --filter=web --concurrency=100%
         working-directory: showteam.cfworkers
         env:
           PAYLOAD_SECRET: local-ci-secret
