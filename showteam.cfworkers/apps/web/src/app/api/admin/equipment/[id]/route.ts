@@ -8,7 +8,6 @@ import { equipmentMutationData } from "@/lib/admin-equipment";
 import { parseEditableEquipment } from "@/lib/editor-equipment";
 import { deleteOptimizedMedia } from "@/lib/optimized-media";
 import { todayInPoland } from "@/lib/reservations";
-import { revalidateEquipment } from "@/lib/revalidate-public";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
 	if (!validSameOrigin(request)) {
@@ -26,7 +25,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 	try {
 		const { id } = await params;
 		await payload.update({ collection: "equipment", id, data: equipmentMutationData(parsed.data), overrideAccess: false, user });
-		revalidateEquipment();
 		return NextResponse.json({ message: "Zmiany aktywności zostały opublikowane." });
 	} catch (error) {
 		payload.logger.error({ err: error, msg: "Visual equipment update failed" });
@@ -60,7 +58,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 		if (typeof equipment.image === "number") {
 			await deleteOptimizedMedia(payload, equipment.image);
 		}
-		revalidateEquipment();
 		return NextResponse.json({ message: "Aktywność została usunięta." });
 	} catch (error) {
 		payload.logger.error({ err: error, msg: "Inline equipment deletion failed" });

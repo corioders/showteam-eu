@@ -4,7 +4,6 @@ import { getPayload } from "payload";
 
 import { validSameOrigin } from "@/lib/admin-auth";
 import { createOptimizedMedia, deleteOptimizedMedia } from "@/lib/optimized-media";
-import { revalidateEquipment } from "@/lib/revalidate-public";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
 	if (!validSameOrigin(request)) {
@@ -26,7 +25,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 		if (typeof equipment.image === "number" && equipment.image !== createdId) {
 			await deleteOptimizedMedia(payload, equipment.image);
 		}
-		revalidateEquipment();
 		return NextResponse.json({ message: "Zdjęcie aktywności jest już widoczne." });
 	} catch (error) {
 		if (createdId) {

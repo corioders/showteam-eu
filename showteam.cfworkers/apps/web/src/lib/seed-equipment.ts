@@ -58,6 +58,7 @@ export async function seedEquipment(payload: Awaited<ReturnType<typeof getPayloa
 		}
 		await payload.create({
 			collection: "equipment",
+			context: { disableRevalidate: true },
 			data: {
 				name,
 				slug,

@@ -2,6 +2,7 @@
 import { ArrowLeft, ArrowUpRight, Facebook, Instagram, Mail, MapPin, Music2, Phone } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { EditableText, EditableUrl, PageContentEditor } from "@/components/editor/page-content-editor";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,15 @@ export const metadata: Metadata = {
 	alternates: { canonical: "/kontakt" },
 };
 
-export default async function ContactPage() {
+export default function ContactPage() {
+	return (
+		<Suspense fallback={null}>
+			<ContactContent />
+		</Suspense>
+	);
+}
+
+async function ContactContent() {
 	const pageContent = await getPageContent("contact");
 	const content = pageContent.values;
 	const phoneLink = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;

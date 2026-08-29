@@ -5,7 +5,6 @@ import { getPayload } from "payload";
 import { validSameOrigin } from "@/lib/admin-auth";
 import { equipmentMutationData, nextEquipmentSortOrder } from "@/lib/admin-equipment";
 import { parseEditableEquipment } from "@/lib/editor-equipment";
-import { revalidateEquipment } from "@/lib/revalidate-public";
 
 export async function POST(request: Request) {
 	if (!validSameOrigin(request)) {
@@ -27,7 +26,6 @@ export async function POST(request: Request) {
 			overrideAccess: false,
 			user,
 		});
-		revalidateEquipment();
 		return NextResponse.json({ message: "Aktywność została dodana i opublikowana." }, { status: 201 });
 	} catch (error) {
 		payload.logger.error({ err: error, msg: "Visual equipment create failed" });

@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { GalleryUploadEditor } from "@/components/editor/gallery-upload-editor";
 import { EditableText, PageContentEditor } from "@/components/editor/page-content-editor";
@@ -13,7 +14,15 @@ export const metadata: Metadata = {
 	alternates: { canonical: "/galeria" },
 };
 
-export default async function GalleryPage() {
+export default function GalleryPage() {
+	return (
+		<Suspense fallback={null}>
+			<GalleryContent />
+		</Suspense>
+	);
+}
+
+async function GalleryContent() {
 	const [gallery, pageContent] = await Promise.all([getGalleryPage(), getPageContent("gallery")]);
 	return (
 		<PageContentEditor page="gallery" initial={pageContent.values} initialMedia={pageContent.media}>

@@ -11,6 +11,7 @@ import { sqliteD1Adapter } from "@payloadcms/db-d1-sqlite";
 import { lexicalEditor } from "@payloadcms/richtext-lexical";
 import { r2Storage } from "@payloadcms/storage-r2";
 import { pl } from "@payloadcms/translations/languages/pl";
+import { revalidatePlugin } from "@pro-laico/payload-revalidate";
 import { buildConfig } from "payload";
 import type { GetPlatformProxyOptions } from "wrangler";
 
@@ -115,7 +116,17 @@ export default buildConfig({
 	secret: payloadSecret,
 	typescript: { outputFile: path.resolve(dirname, "payload-types.ts") },
 	db: sqliteD1Adapter({ binding: cloudflare.env.D1, afterSchemaInit: [preserveOperationalTables], push: false }),
-	plugins: [r2Storage({ bucket: cloudflare.env.R2, collections: { media: true } })],
+	plugins: [
+		r2Storage({ bucket: cloudflare.env.R2, collections: { media: true } }),
+		revalidatePlugin({
+			collections: {
+				equipment: { lists: { bookable: ["active", "sortOrder"] } },
+				gallery: { lists: { public: ["published", "season", "sortOrder"] } },
+				offers: { lists: { public: ["published", "sortOrder"] } },
+				"page-content": { idField: "page" },
+			},
+		}),
+	],
 	onInit:
 		isProduction || isCI
 			? undefined

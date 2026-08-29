@@ -6,7 +6,6 @@ import { getPayload } from "payload";
 
 import { validSameOrigin } from "@/lib/admin-auth";
 import { createOptimizedMedia, deleteOptimizedMedia } from "@/lib/optimized-media";
-import { revalidateGallery } from "@/lib/revalidate-public";
 
 const allowedTypes = new Set(["image/webp", "video/mp4", "video/webm", "video/quicktime"]);
 const maxBytes = 80 * 1024 * 1024;
@@ -48,7 +47,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 		});
 		const oldIds = [item.image].filter((value): value is number => typeof value === "number" && value !== createdId);
 		await Promise.allSettled(oldIds.map((mediaId) => deleteOptimizedMedia(payload, mediaId)));
-		revalidateGallery();
 		return NextResponse.json({ message: "Nowy plik jest już widoczny w galerii." });
 	} catch (error) {
 		await deleteOptimizedMedia(payload, createdId);

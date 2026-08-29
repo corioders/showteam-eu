@@ -2,6 +2,7 @@
 import config from "@payload-config";
 import type { Metadata } from "next";
 import { getPayload } from "payload";
+import { Suspense } from "react";
 
 import { EditableImage, EditableText, PageContentEditor } from "@/components/editor/page-content-editor";
 import { EventInquiryForm } from "@/components/event-inquiry-form";
@@ -13,7 +14,15 @@ export const metadata: Metadata = {
 	alternates: { canonical: "/zorganizuj-impreze" },
 };
 
-export default async function OrganizeEventPage() {
+export default function OrganizeEventPage() {
+	return (
+		<Suspense fallback={null}>
+			<OrganizeEventContent />
+		</Suspense>
+	);
+}
+
+async function OrganizeEventContent() {
 	const payload = await getPayload({ config });
 	const [equipment, settings, pageContent] = await Promise.all([
 		payload.find({ collection: "equipment", overrideAccess: true, limit: 100, sort: "sortOrder", where: { active: { equals: true } } }),

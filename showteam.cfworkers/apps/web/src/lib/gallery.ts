@@ -1,14 +1,12 @@
 // biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Legacy SHOWteam behavior is preserved during the structural template migration.
 // biome-ignore-all lint/performance/noBarrelFile: Legacy SHOWteam behavior is preserved during the structural template migration.
-import config from "@payload-config";
 import type { OptimizedImageDescriptor } from "cstd-next/media/image/optimized-image.jsx";
 import type { StaticImageImport } from "cstd-next/media/image/static-image-import.js";
-import { unstable_cache } from "next/cache";
 import { connection } from "next/server";
-import { getPayload } from "payload";
 
 import { findGalleryAsset } from "@/lib/gallery-assets";
 import { type DesktopGalleryLayout, defaultMobileLayout, type MobileGalleryLayout } from "@/lib/gallery-layout";
+import { findDocByID, findIds } from "@/lib/payload-cache";
 import { resolveStaticImage } from "@/lib/static-images";
 
 export { defaultMobileLayout, galleryLayoutClass, galleryMobileClass } from "@/lib/gallery-layout";
@@ -76,34 +74,39 @@ function toPhoto(document: Record<string, unknown>): GalleryPhoto | null {
 	};
 }
 
-const getCachedGalleryPage = unstable_cache(
-	async (safePage: number, safeLimit: number, season?: GalleryPhoto["season"]): Promise<GalleryPage> => {
-		const payload = await getPayload({ config });
-		const result = await payload.find({
-			collection: "gallery",
-			where: {
-				and: [{ published: { equals: true } }, ...(season ? [{ season: { equals: season } }] : [])],
-			},
-			sort: ["-sortOrder", "-createdAt"],
-			depth: 1,
-			page: safePage,
-			limit: safeLimit,
-		});
-		const photos = result.docs.flatMap((document) => {
-			const photo = toPhoto(document as unknown as Record<string, unknown>);
-			return photo ? [photo] : [];
-		});
-		return { photos, page: result.page ?? safePage, totalPages: result.totalPages };
-	},
-	["showteam-gallery"],
-	{ tags: ["gallery"] },
-);
+async function getPublicGalleryIds(safePage: number, safeLimit: number, season?: GalleryPhoto["season"]) {
+	"use cache";
+	return findIds("gallery", {
+		where: {
+			and: [{ published: { equals: true } }, ...(season ? [{ season: { equals: season } }] : [])],
+		},
+		sort: ["-sortOrder", "-createdAt"],
+		page: safePage,
+		limit: safeLimit,
+		list: "public",
+		overrideAccess: false,
+	});
+}
+
+async function getPublicGalleryPhoto(id: string | number): Promise<GalleryPhoto | null> {
+	"use cache";
+	const document = await findDocByID("gallery", id, { depth: 1, overrideAccess: false });
+	return document ? toPhoto(document as unknown as Record<string, unknown>) : null;
+}
 
 export async function getGalleryPage({ page = 1, limit = 24, season }: { page?: number; limit?: number; season?: GalleryPhoto["season"] } = {}): Promise<GalleryPage> {
 	const safePage = Math.max(1, Math.floor(page));
 	const safeLimit = Math.min(48, Math.max(1, Math.floor(limit)));
 	await connection();
-	return getCachedGalleryPage(safePage, safeLimit, season);
+	const result = await getPublicGalleryIds(safePage, safeLimit, season);
+	const photos: GalleryPhoto[] = [];
+	for (const id of result.ids) {
+		const photo = await getPublicGalleryPhoto(id);
+		if (photo) {
+			photos.push(photo);
+		}
+	}
+	return { photos, page: result.page, totalPages: result.totalPages };
 }
 
 export async function getGallery(limit = 24): Promise<GalleryPhoto[]> {

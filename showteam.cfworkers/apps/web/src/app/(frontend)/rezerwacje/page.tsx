@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { EditableImage, EditableText, PageContentEditor } from "@/components/editor/page-content-editor";
 import { ReservationFlow } from "@/components/reservation-flow";
@@ -12,7 +13,15 @@ export const metadata: Metadata = {
 	alternates: { canonical: "/rezerwacje" },
 };
 
-export default async function ReservationsPage() {
+export default function ReservationsPage() {
+	return (
+		<Suspense fallback={null}>
+			<ReservationsContent />
+		</Suspense>
+	);
+}
+
+async function ReservationsContent() {
 	const [equipment, pageContent] = await Promise.all([getBookableEquipment(), getPageContent("reservations")]);
 	const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Warsaw", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 	return (

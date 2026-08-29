@@ -59,6 +59,7 @@
 		"@payloadcms/storage-r2": "3.88.0",
 		"@payloadcms/translations": "3.88.0",
 		"@payloadcms/ui": "3.88.0",
+		"@pro-laico/payload-revalidate": "0.8.5",
 		"@radix-ui/react-accordion": "^1.2.12",
 		"@radix-ui/react-dialog": "^1.1.15",
 		"@radix-ui/react-slot": "^1.2.3",
@@ -96,8 +97,8 @@
 		"esbuild": "0.28.2",
 		"sharp": "^0.35.3",
 		"tailwindcss": "^4.1.13",
-		"typescript": "^5.9.2",
 		"tsx": "^4.22.4",
+		"typescript": "^5.9.2",
 		"vitest": "^4.1.11",
 		"wrangler": "^4.123.0"
 	}

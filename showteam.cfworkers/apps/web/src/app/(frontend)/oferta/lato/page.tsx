@@ -2,6 +2,7 @@
 import { Bike, Sailboat, TentTree, Waves } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { CmsDetails } from "@/components/cms-details";
 import { ContactCta } from "@/components/contact-cta";
@@ -23,7 +24,15 @@ const activities = [
 	[TentTree, "summerAfterTitle", "Po wszystkim", "summerAfterBody", "Glamping, prywatne molo, piaszczysta plaża, hamaki, sauna i wieczorne kino."],
 ] as const;
 
-export default async function SummerPage() {
+export default function SummerPage() {
+	return (
+		<Suspense fallback={null}>
+			<SummerContent />
+		</Suspense>
+	);
+}
+
+async function SummerContent() {
 	const offer = await getOfferByCategory("Lato");
 	if (!offer) {
 		notFound();

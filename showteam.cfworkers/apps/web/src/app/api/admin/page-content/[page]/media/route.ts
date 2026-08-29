@@ -9,7 +9,6 @@ import { getPayload } from "payload";
 import { validSameOrigin } from "@/lib/admin-auth";
 import { createOptimizedMedia, deleteOptimizedMedia } from "@/lib/optimized-media";
 import { isPageContentName, pageContentDefaults, parsePageContent } from "@/lib/page-content-schema";
-import { revalidatePageContent } from "@/lib/revalidate-public";
 
 const imageTypes = new Set(["image/webp", "image/jpeg", "image/png", "image/avif"]);
 const videoTypes = new Set(["video/mp4", "video/webm", "video/quicktime"]);
@@ -97,7 +96,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ pag
 		if (optimizedImage && oldMediaId && oldMediaId !== mediaId) {
 			await deleteOptimizedMedia(payload, oldMediaId);
 		}
-		revalidatePageContent(page);
 		return NextResponse.json({
 			url: mediaUrl,
 			descriptor: optimizedImage ? (media as Awaited<ReturnType<typeof createOptimizedMedia>>).descriptor : undefined,

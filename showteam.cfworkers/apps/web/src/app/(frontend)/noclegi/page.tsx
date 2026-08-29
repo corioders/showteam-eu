@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { EditableImage, EditableText, PageContentEditor } from "@/components/editor/page-content-editor";
 import { StayBookingForm } from "@/components/stay-booking-form";
@@ -10,7 +11,15 @@ export const metadata: Metadata = {
 	description: "Zarezerwuj kontener mieszkalny lub domek holenderski przy WAKE & SURF Village.",
 	alternates: { canonical: "/noclegi" },
 };
-export default async function StaysPage() {
+export default function StaysPage() {
+	return (
+		<Suspense fallback={null}>
+			<StaysContent />
+		</Suspense>
+	);
+}
+
+async function StaysContent() {
 	const pageContent = await getPageContent("stays");
 	const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Warsaw" }).format(new Date());
 	return (

@@ -2,6 +2,7 @@
 import { ArrowDown, ArrowRight, ArrowUpRight, Facebook, Instagram, MapPin, Music2, Plane, Waves, Wind } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { ContactCta } from "@/components/contact-cta";
 import { EditableImage, EditableText, EditableUrl, PageContentEditor } from "@/components/editor/page-content-editor";
@@ -17,7 +18,15 @@ import { getPageContent } from "@/lib/page-content";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
-export default async function Home() {
+export default function Home() {
+	return (
+		<Suspense fallback={null}>
+			<HomeContent />
+		</Suspense>
+	);
+}
+
+async function HomeContent() {
 	const [offers, gallery, pageContent] = await Promise.all([getOffers(), getGallery(8), getPageContent("home")]);
 	const content = pageContent.values;
 	return (

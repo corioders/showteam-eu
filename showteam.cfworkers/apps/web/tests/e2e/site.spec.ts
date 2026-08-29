@@ -275,8 +275,8 @@ test("party inquiry form exposes flexible dates and editable proposals", async (
 	await expect(page.getByRole("checkbox", { name: "Spływ", exact: true }).filter({ visible: true })).toHaveCount(1);
 	await page.getByRole("button", { name: "Dodaj kolejny możliwy termin" }).click();
 	await expect(page.getByLabel("Termin 2 — od")).toBeVisible();
-	await expect(page.getByLabel("Grill")).toBeVisible();
-	await expect(page.getByLabel("Kulig kajakowy")).toBeVisible();
+	await expect(page.getByLabel("Grill").filter({ visible: true })).toHaveCount(1);
+	await expect(page.getByLabel("Kulig kajakowy").filter({ visible: true })).toHaveCount(1);
 });
 
 test("staff event management stays private and old availability screens are removed", async ({ request }) => {

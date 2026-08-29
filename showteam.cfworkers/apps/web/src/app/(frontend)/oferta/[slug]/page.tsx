@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { getPayload } from "payload";
+import { Suspense } from "react";
 
 import { CmsDetails } from "@/components/cms-details";
 import { ContactCta } from "@/components/contact-cta";
@@ -22,7 +23,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 	return { title: offer.title, description: offer.summary, alternates: { canonical: offer.href } };
 }
 
-export default async function OfferPage({ params }: Props) {
+export default function OfferPage({ params }: Props) {
+	return (
+		<Suspense fallback={null}>
+			<OfferContent params={params} />
+		</Suspense>
+	);
+}
+
+async function OfferContent({ params }: Props) {
 	const { slug } = await params;
 	const payload = await getPayload({ config });
 	const { user } = await payload.auth({ headers: await headers() });

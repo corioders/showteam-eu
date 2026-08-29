@@ -5,7 +5,6 @@ import { getPayload } from "payload";
 import { validSameOrigin } from "@/lib/admin-auth";
 import { parseEditableOffer } from "@/lib/editor-offers";
 import { deleteOptimizedMedia } from "@/lib/optimized-media";
-import { revalidateOffers } from "@/lib/revalidate-public";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
 	if (!validSameOrigin(request)) {
@@ -25,7 +24,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 	try {
 		const { id } = await params;
 		const data = parsed.data;
-		const updatedOffer = await payload.update({
+		await payload.update({
 			collection: "offers",
 			id,
 			data: {
@@ -37,7 +36,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 			overrideAccess: false,
 			user,
 		});
-		revalidateOffers(updatedOffer.slug, updatedOffer.category);
 		return NextResponse.json({ message: "Oferta została opublikowana." });
 	} catch (error) {
 		payload.logger.error({ err: error, msg: "Visual offer update failed" });
@@ -64,7 +62,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 			...optimizedMedia.map((entry) => (entry && typeof entry === "object" && "mediaId" in entry ? Number(entry.mediaId) : null)),
 		];
 		await Promise.allSettled(mediaIds.map((mediaId) => deleteOptimizedMedia(payload, mediaId)));
-		revalidateOffers(offer.slug, offer.category);
 		return NextResponse.json({ message: "Oferta została usunięta." });
 	} catch (error) {
 		payload.logger.error({ err: error, msg: "Inline offer deletion failed" });

@@ -12,6 +12,7 @@ export async function seedGallery(payload: Payload) {
 	for (const [index, asset] of galleryAssets.entries()) {
 		await payload.create({
 			collection: "gallery",
+			context: { disableRevalidate: true },
 			data: {
 				staticImage: asset.value,
 				caption: asset.label,

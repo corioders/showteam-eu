@@ -5,7 +5,6 @@ import { getPayload } from "payload";
 
 import { validSameOrigin } from "@/lib/admin-auth";
 import { createOptimizedMedia, deleteOptimizedMedia } from "@/lib/optimized-media";
-import { revalidateOffers } from "@/lib/revalidate-public";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
 	if (!validSameOrigin(request)) {
@@ -44,7 +43,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 		if (oldMediaId && oldMediaId !== mediaId) {
 			await deleteOptimizedMedia(payload, oldMediaId);
 		}
-		revalidateOffers(offer.slug, offer.category);
 		return NextResponse.json({ url: media.url, descriptor: media.descriptor, mediaId, message: "Zdjęcie jest już widoczne." });
 	} catch (error) {
 		if (mediaId) {

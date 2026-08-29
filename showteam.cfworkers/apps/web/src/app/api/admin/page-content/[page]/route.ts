@@ -4,7 +4,6 @@ import { getPayload } from "payload";
 
 import { validSameOrigin } from "@/lib/admin-auth";
 import { isPageContentName, parsePageContent } from "@/lib/page-content-schema";
-import { revalidatePageContent } from "@/lib/revalidate-public";
 
 export async function PUT(request: Request, { params }: { params: Promise<{ page: string }> }) {
 	if (!validSameOrigin(request)) {
@@ -31,7 +30,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ page
 		} else {
 			await payload.create({ collection: "page-content", data: { page, content: parsed.data }, overrideAccess: false, user });
 		}
-		revalidatePageContent(page);
 		return NextResponse.json({ message: "Zmiany są już widoczne na stronie." });
 	} catch (_error) {
 		return NextResponse.json({ message: "Nie udało się zapisać zmian. Treść nadal jest w formularzu." }, { status: 500 });

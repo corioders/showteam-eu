@@ -1,5 +1,6 @@
 // biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import { ApplicationForm } from "@/components/application-form";
 import { EditableText, PageContentEditor } from "@/components/editor/page-content-editor";
@@ -12,7 +13,15 @@ export const metadata: Metadata = {
 	description: "Zgłoszenie uczestnika na wyjazd, SHOWCamp lub szkolenie SHOWteam.",
 	alternates: { canonical: "/zgloszenie" },
 };
-export default async function ApplicationPage({ searchParams }: { searchParams: Promise<{ oferta?: string }> }) {
+export default function ApplicationPage({ searchParams }: { searchParams: Promise<{ oferta?: string }> }) {
+	return (
+		<Suspense fallback={null}>
+			<ApplicationContent searchParams={searchParams} />
+		</Suspense>
+	);
+}
+
+async function ApplicationContent({ searchParams }: { searchParams: Promise<{ oferta?: string }> }) {
 	const [offers, query, pageContent] = await Promise.all([getOffers(), searchParams, getPageContent("application")]);
 	const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Warsaw", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 	const groups = getApplicationOfferGroups(offers, today);

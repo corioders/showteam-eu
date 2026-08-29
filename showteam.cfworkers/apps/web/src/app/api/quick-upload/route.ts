@@ -8,7 +8,6 @@ import { getPayload } from "payload";
 
 import { parseFocalPoints } from "@/lib/gallery-focal";
 import { createOptimizedMedia, deleteOptimizedMedia } from "@/lib/optimized-media";
-import { revalidateGallery } from "@/lib/revalidate-public";
 
 const VIDEO_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 const CATEGORIES = new Set(["Lato", "Zima", "Szkolenia"]);
@@ -98,7 +97,6 @@ export async function POST(request: Request) {
 			});
 			createdGallery.push(Number(galleryItem.id));
 		}
-		revalidateGallery();
 		return Response.json({ count: itemCount });
 	} catch (error) {
 		await Promise.allSettled(createdGallery.map((id) => payload.delete({ collection: "gallery", id, overrideAccess: true })));

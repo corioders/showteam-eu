@@ -4,7 +4,6 @@ import { getPayload } from "payload";
 
 import { validSameOrigin } from "@/lib/admin-auth";
 import { contact } from "@/lib/offers";
-import { revalidateOffers } from "@/lib/revalidate-public";
 
 export async function POST(request: Request) {
 	if (!validSameOrigin(request)) {
@@ -40,7 +39,6 @@ export async function POST(request: Request) {
 				sortOrder: Number(last.docs[0]?.sortOrder ?? 0) + 10,
 			},
 		});
-		revalidateOffers(offer.slug, offer.category);
 		return NextResponse.json({ href: `/oferta/${offer.slug}` });
 	} catch (error) {
 		payload.logger.error({ err: error, msg: "Inline offer creation failed" });

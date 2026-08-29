@@ -1,6 +1,5 @@
 import config from "@payload-config";
 import type { OptimizedImageDescriptor } from "cstd-next/media/image/optimized-image.jsx";
-import { unstable_cache } from "next/cache";
 import { connection } from "next/server";
 import { getPayload } from "payload";
 
@@ -10,6 +9,7 @@ import summerSailingDrone from "@/app/_assets/summer-sailing-drone.jpg";
 import summerWakeHero from "@/app/_assets/summer-wake-hero.jpg";
 import { isIsoDate, type OfferDate } from "@/lib/offer-dates";
 import { offers as fallbackOffers, type Offer } from "@/lib/offers";
+import { findDoc, findDocByID, findIds } from "@/lib/payload-cache";
 
 const staticImages = {
 	lake: summerWakeHero,
@@ -66,22 +66,45 @@ function toOffer(document: Record<string, unknown>): Offer {
 	};
 }
 
-const getCachedOffers = unstable_cache(
-	async (): Promise<Offer[]> => {
-		const payload = await getPayload({ config });
-		const result = await payload.find({ collection: "offers", where: { published: { equals: true } }, sort: "sortOrder", depth: 1, limit: 100 });
-		return result.docs.map((document) => toOffer(document as unknown as Record<string, unknown>));
-	},
-	["showteam-offers"],
-	{ tags: ["offers"] },
-);
+async function getPublicOfferIds() {
+	"use cache";
+	return (
+		await findIds("offers", {
+			where: { published: { equals: true } },
+			sort: "sortOrder",
+			limit: 100,
+			list: "public",
+			overrideAccess: false,
+		})
+	).ids;
+}
+
+async function getPublicOfferById(id: string | number): Promise<Offer | null> {
+	"use cache";
+	const document = await findDocByID("offers", id, { depth: 1, overrideAccess: false });
+	return document ? toOffer(document as unknown as Record<string, unknown>) : null;
+}
+
+async function getPublicOfferBySlug(slug: string): Promise<Offer | null> {
+	"use cache";
+	const document = await findDoc("offers", { where: { slug: { equals: slug } }, as: slug, depth: 1, overrideAccess: false });
+	return document ? toOffer(document as unknown as Record<string, unknown>) : null;
+}
 
 export async function getOffers(): Promise<Offer[]> {
 	await connection();
-	return getCachedOffers();
+	const offers: Offer[] = [];
+	for (const id of await getPublicOfferIds()) {
+		const offer = await getPublicOfferById(id);
+		if (offer) {
+			offers.push(offer);
+		}
+	}
+	return offers;
 }
 
 export async function getOffer(slug: string, includeUnpublished = false) {
+	await connection();
 	if (includeUnpublished) {
 		try {
 			const payload = await getPayload({ config });
@@ -93,8 +116,7 @@ export async function getOffer(slug: string, includeUnpublished = false) {
 			return undefined;
 		}
 	}
-	const cmsOffers = await getOffers();
-	return cmsOffers.find((offer) => offer.href === `/oferta/${slug}`);
+	return (await getPublicOfferBySlug(slug)) ?? undefined;
 }
 
 export async function getOfferByCategory(category: Offer["category"]) {

@@ -2,6 +2,7 @@
 import { Footprints, MountainSnow, PartyPopper, Snowflake, UtensilsCrossed } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { CmsDetails } from "@/components/cms-details";
 import { ContactCta } from "@/components/contact-cta";
@@ -17,7 +18,15 @@ export const metadata: Metadata = {
 	description: "Trentino, Andorra, Pireneje, lodowiec i szkolenie narciarskie.",
 	alternates: { canonical: "/oferta/zima" },
 };
-export default async function WinterPage() {
+export default function WinterPage() {
+	return (
+		<Suspense fallback={null}>
+			<WinterContent />
+		</Suspense>
+	);
+}
+
+async function WinterContent() {
 	const offer = await getOfferByCategory("Zima");
 	if (!offer) {
 		notFound();

@@ -68,6 +68,9 @@ importers:
       '@payloadcms/ui':
         specifier: 3.88.0
         version: 3.88.0(@types/react@19.2.18)(monaco-editor@0.56.0)(next@16.3.3(@playwright/test@1.62.1)(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.77.4))(payload@3.88.0(graphql@16.14.2)(supports-color@10.2.2)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(supports-color@10.2.2)(typescript@5.9.3)
+      '@pro-laico/payload-revalidate':
+        specifier: 0.8.5
+        version: 0.8.5(next@16.3.3(@playwright/test@1.62.1)(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.77.4))(payload@3.88.0(graphql@16.14.2)(supports-color@10.2.2)(typescript@5.9.3))(react@19.2.6)
       '@radix-ui/react-accordion':
         specifier: ^1.2.12
         version: 1.2.20(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -2526,6 +2529,14 @@ packages:
 
   '@preact/signals-core@1.14.4':
     resolution: {integrity: sha512-HNB6HYeYKhQbJ1aKl+YRjrS4+QWHLKX6qKoUsfS/m0vqzsVaEBiZiaKbG/e+NKk2ch5ALQr/ihWaMHxiCuuWHA==}
+
+  '@pro-laico/payload-revalidate@0.8.5':
+    resolution: {integrity: sha512-3DcToPexB/zWuv8IdE0s9LcFYQ73EwIh7nxkupPfu2ThFax3U51lGUDSSTtzHeOnI1OCMis+4FXOgI83/cmoMQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      next: '>=16.0.0'
+      payload: ^3.0.0
+      react: ^19.0.0
 
   '@protobufjs/aspromise@1.1.2':
     resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
@@ -9187,6 +9198,13 @@ snapshots:
   '@poppinss/exception@1.2.3': {}
 
   '@preact/signals-core@1.14.4': {}
+
+  '@pro-laico/payload-revalidate@0.8.5(next@16.3.3(@playwright/test@1.62.1)(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.77.4))(payload@3.88.0(graphql@16.14.2)(supports-color@10.2.2)(typescript@5.9.3))(react@19.2.6)':
+    dependencies:
+      next: 16.3.3(@playwright/test@1.62.1)(@types/node@24.13.3)(babel-plugin-macros@3.1.0)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(sass@1.77.4)
+      payload: 3.88.0(graphql@16.14.2)(supports-color@10.2.2)(typescript@5.9.3)
+      react: 19.2.6
+      server-only: 0.0.1
 
   '@protobufjs/aspromise@1.1.2': {}
 

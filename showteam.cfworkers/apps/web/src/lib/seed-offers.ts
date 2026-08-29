@@ -90,9 +90,9 @@ export async function seedOffers(payload: Payload) {
 	for (const offer of initialOffers) {
 		const current = refreshExisting ? await payload.find({ collection: "offers", where: { slug: { equals: offer.slug } }, limit: 1 }) : null;
 		if (current?.docs[0]) {
-			await payload.update({ collection: "offers", id: current.docs[0].id, data: offer as never });
+			await payload.update({ collection: "offers", id: current.docs[0].id, data: offer as never, context: { disableRevalidate: true } });
 		} else {
-			await payload.create({ collection: "offers", data: offer as never });
+			await payload.create({ collection: "offers", data: offer as never, context: { disableRevalidate: true } });
 		}
 	}
 }

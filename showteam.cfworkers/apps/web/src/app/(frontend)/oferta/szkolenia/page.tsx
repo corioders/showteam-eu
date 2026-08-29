@@ -3,6 +3,7 @@ import { Activity, BadgeCheck, RadioTower, Sailboat, Waves } from "lucide-react"
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 import { CmsDetails } from "@/components/cms-details";
 import { ContactCta } from "@/components/contact-cta";
@@ -53,7 +54,15 @@ const programs = [
 	},
 ];
 
-export default async function TrainingPage() {
+export default function TrainingPage() {
+	return (
+		<Suspense fallback={null}>
+			<TrainingContent />
+		</Suspense>
+	);
+}
+
+async function TrainingContent() {
 	const offer = await getOfferByCategory("Szkolenia");
 	if (!offer) {
 		notFound();

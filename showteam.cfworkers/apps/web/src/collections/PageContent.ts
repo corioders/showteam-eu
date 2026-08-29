@@ -1,8 +1,6 @@
 // biome-ignore-all lint/style/useFilenamingConvention: Payload collection filenames are stable import contracts.
 import type { CollectionConfig } from "payload";
 
-import { revalidatePageContent } from "@/lib/revalidate-public";
-
 const pagePaths = {
 	home: "/",
 	contact: "/kontakt",
@@ -20,17 +18,6 @@ export const PageContent: CollectionConfig = {
 	admin: { hidden: true, useAsTitle: "page" },
 	timestamps: false,
 	access: { read: () => true, create: isLoggedIn, update: isLoggedIn, delete: () => false },
-	hooks: {
-		afterChange: [
-			({ doc }) => {
-				const page = doc.page as keyof typeof pagePaths;
-				if (page in pagePaths) {
-					revalidatePageContent(page);
-				}
-				return doc;
-			},
-		],
-	},
 	fields: [
 		{ name: "page", type: "select", required: true, unique: true, options: Object.keys(pagePaths) },
 		{ name: "content", type: "json", required: true },
