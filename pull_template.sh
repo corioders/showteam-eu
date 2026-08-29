@@ -56,6 +56,10 @@ while IFS= read -r unmerged_path; do
 		bootstrap_project.sh | encrypt_template_env.sh | showteam.cfworkers/CONSUMERS.md | showteam.cfworkers/apps/web/.env.age)
 			git rm --quiet --force -- "$unmerged_path"
 			;;
+		*.cfworkers/.infisical.json)
+			git checkout --ours -- "$unmerged_path"
+			git add -- "$unmerged_path"
+			;;
 		*)
 			printf '%s\n' "$pull_output" >&2
 			echo "Template pull needs manual resolution: $unmerged_path" >&2

@@ -112,6 +112,10 @@ jobs:
           mkdir --parents "$CACHE_DIRECTORY" showteam.cfworkers/apps/web/.next
           ln --symbolic --force --no-dereference "$CACHE_DIRECTORY" showteam.cfworkers/apps/web/.next/cache
 
+      - name: Resolve external build inputs
+        run: pnpm resolve-build-inputs
+        working-directory: showteam.cfworkers
+
       - name: Restore local D1 snapshot
         id: restore-d1
         run: |

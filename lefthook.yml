@@ -4,7 +4,7 @@ pre-commit:
     check-invariants:
       root: "showteam.cfworkers/"
       run: pnpm run check-invariants
-    check-biome:
+    lint:
       root: "showteam.cfworkers/"
       glob: "**/*.{js,jsx,ts,tsx,json,jsonc,css}"
-      run: pnpm run check-biome-staged
+      run: pnpm run lint:staged
