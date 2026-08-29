@@ -8,6 +8,7 @@
 # Template migrations
 
 - After changing the template, migrate every repository listed in `template.cfworkers/CONSUMERS.md` that consumes the affected files or subtrees.
+- Consumers created by `bootstrap_project.sh` retain template ancestry. Update them with their checked-in `./pull_template.sh template main`; before running it, ensure the clone is not shallow and that remote `template` points to `corioders/cstd-nextjs-template`. If the template change has not reached `main`, pass its explicit source branch instead. Resolve only genuine project customizations; do not manually copy template files. Use a manual migration only for legacy consumers with no template merge base.
 - Validate migrations in a disposable clone directly on Windows WSL over SSH; do not run resource-intensive migration test suites on this Mac. CI may also run on `[self-hosted, win24-wsl]`, but it is not the fast-feedback substitute for the direct clone.
 - When a migration changes `cstd-ts` or `cstd-next`, commit and push the matching subtree to its canonical cstd repository before pulling it into consumers.
 - Treat `shadcn:add` as the complete compatibility gate. Exit 0 proceeds directly to customization without inspecting normalization or running `shadcn:learn`. Only an unknown/stale failure enters learning; inspect its complete compatibility-only patch, test it, and push canonical `cstd-next` before customization. Never hand-write a partial codemod.
