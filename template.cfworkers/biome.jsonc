@@ -3,21 +3,20 @@
 	"$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
 	"extends": ["./packages/corioders-lib/cstd-ts/config/biome.jsonc"],
 	"plugins": ["packages/corioders-lib/cstd-ts/config/biome-plugin/no-throw.grit"],
-	"formatter": {
+	"files": {
 		"includes": [
-			"**",
 			"!skills-lock.json",
-			"!**/.agents/skills/**",
-			"!**/node_modules/**",
-			"!**/cache/**",
-			"!**/dist/**",
-			"!**/build/**",
-			"!**/coverage/**",
-			"!**/.git/**",
-			"!**/.github/**",
-			"!**/.idea/**",
-			"!**/.vscode/**",
-			"!**/.wrangler/**"
+			"!**/.agents/skills",
+			"!**/node_modules",
+			"!**/cache",
+			"!**/dist",
+			"!**/build",
+			"!**/coverage",
+			"!**/.git",
+			"!**/.github",
+			"!**/.idea",
+			"!**/.vscode",
+			"!**/.wrangler"
 		]
 	}
 }
