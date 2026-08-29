@@ -26,6 +26,50 @@ continue_template_merge() {
 	GIT_EDITOR=true git merge --continue
 }
 
+consumer_directory=""
+for candidate in ./*.cfworkers; do
+	[[ -d $candidate && $candidate != ./template.cfworkers ]] || continue
+	if [[ -n $consumer_directory ]]; then
+		consumer_directory=""
+		break
+	fi
+	consumer_directory=${candidate#./}
+done
+
+auto_resolve_bootstrap_replacements() {
+	local unmerged_path=$1
+	local temporary_directory base_file ours_file theirs_file result_file project_name
+
+	[[ -n $consumer_directory ]] || return 1
+	git cat-file -e ":1:$unmerged_path" 2>/dev/null || return 1
+	git cat-file -e ":2:$unmerged_path" 2>/dev/null || return 1
+	git cat-file -e ":3:$unmerged_path" 2>/dev/null || return 1
+
+	project_name=${consumer_directory%.cfworkers}
+	temporary_directory=$(mktemp -d)
+	base_file=$temporary_directory/base
+	ours_file=$temporary_directory/ours
+	theirs_file=$temporary_directory/theirs
+	result_file=$temporary_directory/result
+	git show ":1:$unmerged_path" >"$base_file"
+	git show ":2:$unmerged_path" >"$ours_file"
+	git show ":3:$unmerged_path" >"$theirs_file"
+	sed -i.bak \
+		-e "s/template\\.cfworkers/$consumer_directory/g" \
+		-e "s/template-cfworkers/$project_name-cfworkers/g" \
+		"$base_file" "$theirs_file"
+	rm -- "$base_file.bak" "$theirs_file.bak"
+
+	if git merge-file --quiet --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file"; then
+		cp "$result_file" "$unmerged_path"
+		git add -- "$unmerged_path"
+		rm -r -- "$temporary_directory"
+		return 0
+	fi
+	rm -r -- "$temporary_directory"
+	return 1
+}
+
 pull_output=$(git -c merge.directoryRenames=true pull --no-rebase --no-commit --no-ff --autostash "$@" 2>&1)
 pull_status=$?
 if (( pull_status == 0 )); then
@@ -42,13 +86,13 @@ if [[ -z "$unmerged_paths" ]]; then
 	exit "$pull_status"
 fi
 
+manual_paths=()
 while IFS= read -r unmerged_path; do
 	case "$unmerged_path" in
 		AGENTS.md)
 			if git cat-file -e ":2:$unmerged_path" 2>/dev/null; then
-				printf '%s\n' "$pull_output" >&2
-				echo "Template pull needs manual resolution: $unmerged_path" >&2
-				exit "$pull_status"
+				manual_paths+=("$unmerged_path")
+				continue
 			fi
 			git checkout --theirs -- "$unmerged_path"
 			git add -- "$unmerged_path"
@@ -61,11 +105,15 @@ while IFS= read -r unmerged_path; do
 			git add -- "$unmerged_path"
 			;;
 		*)
-			printf '%s\n' "$pull_output" >&2
-			echo "Template pull needs manual resolution: $unmerged_path" >&2
-			exit "$pull_status"
+			auto_resolve_bootstrap_replacements "$unmerged_path" || manual_paths+=("$unmerged_path")
 			;;
 	esac
 done <<<"$unmerged_paths"
+
+if (( ${#manual_paths[@]} > 0 )); then
+	printf '%s\n' "$pull_output" >&2
+	printf 'Template pull needs manual resolution: %s\n' "${manual_paths[@]}" >&2
+	exit "$pull_status"
+fi
 
 continue_template_merge
