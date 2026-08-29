@@ -59,7 +59,7 @@ const showteamPolish = {
 };
 
 const cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =
-	isCLI || !isProduction ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });
+	isCLI || !isProduction || process.env.CSTD_D1_PERSIST_PATH ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });
 
 export const database = cloudflare.env.D1;
 export const mediaBucket = cloudflare.env.R2;
@@ -142,7 +142,7 @@ function getCloudflareContextFromWrangler(): Promise<CloudflareContext & { dispo
 		getPlatformProxy({
 			environment: process.env.CLOUDFLARE_ENV,
 			configPath: process.env.CLOUDFLARE_REMOTE_BINDINGS === "true" ? path.resolve(dirname, "wrangler.migrations.jsonc") : undefined,
-			persist: process.env.CSTD_D1_PERSIST_PATH ? { path: process.env.CSTD_D1_PERSIST_PATH } : undefined,
+			...(process.env.CSTD_D1_PERSIST_PATH ? { persist: { path: process.env.CSTD_D1_PERSIST_PATH } } : {}),
 			remoteBindings: process.env.CLOUDFLARE_REMOTE_BINDINGS === "true",
 		} satisfies GetPlatformProxyOptions),
 	);
