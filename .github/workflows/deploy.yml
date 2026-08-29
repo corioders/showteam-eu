@@ -208,20 +208,44 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
-      - name: Migrate isolated preview D1
+      - name: Check isolated preview D1 snapshot
         if: github.ref_name != 'deploy'
+        id: preview-d1
+        run: |
+          RESULT=$(
+            pnpm exec wrangler d1 execute D1 --remote --env preview --json +              --command "CREATE TABLE IF NOT EXISTS _cstd_ci_snapshots (hash TEXT PRIMARY KEY); SELECT COUNT(*) AS matches FROM _cstd_ci_snapshots WHERE hash = '$CSTD_BUILD_INPUTS_HASH';"
+          )
+          if jq --exit-status '.[-1].results[0].matches == 1' <<<"$RESULT" >/dev/null; then
+            echo "cache-hit=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "cache-hit=false" >> "$GITHUB_OUTPUT"
+          fi
+        working-directory: showteam.cfworkers/apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Migrate isolated preview D1
+        if: github.ref_name != 'deploy' && steps.preview-d1.outputs.cache-hit != 'true'
         run: pnpm deploy:database:preview
         working-directory: showteam.cfworkers/apps/web
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Seed isolated preview D1
-        if: github.ref_name != 'deploy'
+        if: github.ref_name != 'deploy' && steps.preview-d1.outputs.cache-hit != 'true'
         run: pnpm seed:preview
         working-directory: showteam.cfworkers/apps/web
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
+
+      - name: Mark isolated preview D1 snapshot
+        if: github.ref_name != 'deploy' && steps.preview-d1.outputs.cache-hit != 'true'
+        run: |
+          pnpm exec wrangler d1 execute D1 --remote --env preview +            --command "INSERT OR IGNORE INTO _cstd_ci_snapshots (hash) VALUES ('$CSTD_BUILD_INPUTS_HASH');"
+        working-directory: showteam.cfworkers/apps/web
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Upload preview
         if: github.ref_name != 'deploy'
