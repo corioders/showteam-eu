@@ -15,11 +15,12 @@
 	"tasks": {
 		"build": {
 			"dependsOn": ["^build"],
-			"inputs": ["$TURBO_DEFAULT$", ".env*"],
+			"inputs": ["$TURBO_DEFAULT$", ".env*", "!playwright.config.ts", "!vitest.config.ts", "!tests/**"],
 			"outputs": [".next/**", "!.next/cache/**", "build/**"]
 		},
 		"build:worker": {
 			"dependsOn": ["build"],
+			"inputs": ["$TURBO_DEFAULT$", "!playwright.config.ts", "!vitest.config.ts", "!tests/**"],
 			"outputs": [".open-next/**"]
 		},
 		"check": {

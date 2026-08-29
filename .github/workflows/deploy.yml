@@ -112,12 +112,8 @@ jobs:
           mkdir --parents "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next
           ln --symbolic --force --no-dereference "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next/cache
 
-      - name: Validate and build
-        run: pnpm validate
-        working-directory: template.cfworkers
-
-      - name: Run browser tests
-        run: pnpm exec turbo run test:e2e --filter=web --concurrency=100%
+      - name: Validate, build, and run browser tests
+        run: pnpm validate:ci
         working-directory: template.cfworkers
 
       - name: Fetch deployment secrets from Infisical
@@ -133,7 +129,7 @@ jobs:
         if: github.ref_name != 'deploy'
         id: preview-cache
         run: |
-          WORKER_BUILD_HASH=$(pnpm --workspace-root turbo run build:worker --filter=web --dry=json 2>/dev/null | jq -r '.tasks[] | select(.task == "build:worker") | .hash')
+          WORKER_BUILD_HASH=$(pnpm --workspace-root turbo run build:worker --filter=web --dry=json 2>/dev/null | jq --exit-status --raw-output '.tasks[] | select(.task == "build:worker") | .hash')
           MARKER_DIRECTORY="/home/runner/_work/.build-cache/deploy/${GITHUB_REPOSITORY//\//-}/${PREVIEW_ALIAS}"
           MARKER_FILE="$MARKER_DIRECTORY/current.json"
           SHARED_MARKER_FILE="${MARKER_DIRECTORY%/*}/shared-current-version"
@@ -146,10 +142,12 @@ jobs:
           if [[ -f "$MARKER_FILE" ]] \
             && jq --exit-status --arg hash "$WORKER_BUILD_HASH" '.worker_build_hash == $hash and (.version_id | length > 0)' "$MARKER_FILE" >/dev/null
           then
+            VERSION_ID=$(jq -r .version_id "$MARKER_FILE")
             ALIAS_URL=$(jq -r .alias_url "$MARKER_FILE")
-            HTTP_STATUS=$(curl --silent --show-error --location --max-time 10 --output /dev/null --write-out '%{http_code}' "$ALIAS_URL" || true)
+            HTTP_STATUS=$(curl --silent --show-error --retry 5 --retry-all-errors --retry-delay 1 --retry-max-time 30 --output /dev/null --write-out '%{http_code}' \
+              --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/template-cfworkers-web-preview/versions/$VERSION_ID" || true)
             if [[ "$HTTP_STATUS" == "200" ]]; then
-              VERSION_ID=$(jq -r .version_id "$MARKER_FILE")
               SHARED_CURRENT=false
               if [[ -f "$SHARED_MARKER_FILE" && "$(<"$SHARED_MARKER_FILE")" == "$VERSION_ID" ]]; then
                 SHARED_CURRENT=true
@@ -169,6 +167,7 @@ jobs:
         working-directory: template.cfworkers/apps/web
         env:
           APP_ENV: preview
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           NEXT_PUBLIC_IS_DEPLOY: false
           NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
 

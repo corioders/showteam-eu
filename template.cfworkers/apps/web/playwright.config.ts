@@ -1,3 +1,5 @@
+import { availableParallelism } from "node:os";
+
 import { defineConfig, devices } from "@playwright/test";
 
 const port = 3100;
@@ -10,7 +12,7 @@ const isCi = Boolean(process.env["CI"]);
 export default defineConfig({
 	testDir: "./tests/e2e",
 	fullyParallel: true,
-	...(isCi ? { workers: 2 } : {}),
+	...(isCi ? { workers: Math.min(4, availableParallelism()) } : {}),
 	retries: isCi ? 1 : 0,
 	reporter: "line",
 	use: {

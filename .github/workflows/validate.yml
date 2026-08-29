@@ -104,8 +104,8 @@ jobs:
           mkdir --parents "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next
           ln --symbolic --force --no-dereference "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next/cache
 
-      - name: Validate and build
-        run: pnpm validate
+      - name: Validate, build, and run browser tests
+        run: pnpm validate:ci
         working-directory: template.cfworkers
 
       - name: Save Next.js cache
@@ -126,10 +126,6 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ${{ steps.restore-playwright.outputs.cache-primary-key }}
-
-      - name: Run browser tests
-        run: pnpm exec turbo run test:e2e --filter=web --concurrency=100%
-        working-directory: template.cfworkers
 
       - name: Save pnpm cache
         uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
