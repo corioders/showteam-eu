@@ -10,7 +10,7 @@ const isCi = Boolean(process.env["CI"]);
 export default defineConfig({
 	testDir: "./tests/e2e",
 	fullyParallel: true,
-	workers: isCi ? 2 : undefined,
+	...(isCi ? { workers: 2 } : {}),
 	retries: isCi ? 1 : 0,
 	reporter: "line",
 	use: {
