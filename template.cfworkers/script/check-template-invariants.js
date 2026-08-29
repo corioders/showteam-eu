@@ -180,6 +180,19 @@ requireMatch(
 if (deployWorkflow.indexOf("name: Resolve external build inputs") > deployWorkflow.indexOf("name: Validate, build, and run browser tests")) {
 	errors.push("The deploy workflow must resolve external build inputs before cache lookup and build.");
 }
+requireMatch(
+	deployWorkflow,
+	/APP_ENV: \$\{\{ github\.ref_name == 'deploy' && 'production' \|\| 'preview' \}\}/,
+	"The deploy workflow must build and upload with the same deployment environment.",
+);
+if (/pnpm --workspace-root build:worker/.test(deployWorkflow)) {
+	errors.push("The deploy workflow must upload the OpenNext artifact already produced by validation without rebuilding it.");
+}
+requireMatch(
+	deployWorkflow,
+	/name: Deploy production[\s\S]+?run: OPEN_NEXT_DEPLOY=true pnpm exec wrangler deploy/,
+	"The production deployment must consume the OpenNext artifact already produced by validation.",
+);
 
 const packageJson = JSON.parse(read("package.json"));
 if (packageJson.scripts?.["resolve-build-inputs"] !== "node script/resolve-external-build-inputs.js") {

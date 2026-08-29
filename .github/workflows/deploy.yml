@@ -37,7 +37,10 @@ jobs:
     timeout-minutes: 30
     environment: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
     env:
+      APP_ENV: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
       DEPLOY_REF: ${{ github.head_ref || github.ref_name }}
+      NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
+      NEXT_PUBLIC_IS_DEPLOY: ${{ github.ref_name == 'deploy' }}
       PREVIEW_ALIAS: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}
       PNPM_STORE_PATH: ${{ github.workspace }}/../../.pnpm-store
     concurrency:
@@ -170,10 +173,7 @@ jobs:
           echo "cache_hit=false" >> "$GITHUB_OUTPUT"
         working-directory: template.cfworkers/apps/web
         env:
-          APP_ENV: preview
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          NEXT_PUBLIC_IS_DEPLOY: false
-          NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
 
       - name: Ensure preview Worker exists
         if: github.ref_name != 'deploy' && steps.preview-cache.outputs.cache_hit != 'true'
@@ -212,7 +212,6 @@ jobs:
         id: deploy
         run: |
           set -o pipefail
-          pnpm --workspace-root build:worker
 
           # ponytail: OpenNext 1.20.4's remote helper hangs on this Linux runner.
           # Upload the generated cache through Wrangler until the helper is fixed upstream.
@@ -307,9 +306,6 @@ jobs:
           mv "${SHARED_MARKER_FILE}.tmp" "$SHARED_MARKER_FILE"
         working-directory: template.cfworkers/apps/web
         env:
-          APP_ENV: preview
-          NEXT_PUBLIC_IS_DEPLOY: false
-          NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
           PREVIEW_MARKER_FILE: ${{ steps.preview-cache.outputs.marker_file }}
           SHARED_MARKER_FILE: ${{ steps.preview-cache.outputs.shared_marker_file }}
           WORKER_BUILD_HASH: ${{ steps.preview-cache.outputs.worker_build_hash }}
@@ -328,12 +324,8 @@ jobs:
 
       - name: Deploy production
         if: github.ref_name == 'deploy'
-        run: pnpm run deploy
+        run: OPEN_NEXT_DEPLOY=true pnpm exec wrangler deploy
         working-directory: template.cfworkers/apps/web
-        env:
-          APP_ENV: production
-          NEXT_PUBLIC_IS_DEPLOY: true
-          NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
 
       - name: Display preview URLs
         if: success() && github.ref_name != 'deploy'
