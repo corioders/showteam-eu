@@ -129,8 +129,51 @@ jobs:
           env-slug: ${{ github.ref_name == 'deploy' && 'prod' || 'staging' }}
           domain: ${{ vars.INFISICAL_DOMAIN }}
 
-      - name: Ensure preview Worker exists
+      - name: Check deployed preview
         if: github.ref_name != 'deploy'
+        id: preview-cache
+        run: |
+          WORKER_BUILD_HASH=$(pnpm --workspace-root turbo run build:worker --filter=web --dry=json 2>/dev/null | jq -r '.tasks[] | select(.task == "build:worker") | .hash')
+          MARKER_DIRECTORY="/home/runner/_work/.build-cache/deploy/${GITHUB_REPOSITORY//\//-}/${PREVIEW_ALIAS}"
+          MARKER_FILE="$MARKER_DIRECTORY/current.json"
+          SHARED_MARKER_FILE="${MARKER_DIRECTORY%/*}/shared-current-version"
+          {
+            echo "worker_build_hash=$WORKER_BUILD_HASH"
+            echo "marker_file=$MARKER_FILE"
+            echo "shared_marker_file=$SHARED_MARKER_FILE"
+          } >> "$GITHUB_OUTPUT"
+
+          if [[ -f "$MARKER_FILE" ]] \
+            && jq --exit-status --arg hash "$WORKER_BUILD_HASH" '.worker_build_hash == $hash and (.version_id | length > 0)' "$MARKER_FILE" >/dev/null
+          then
+            ALIAS_URL=$(jq -r .alias_url "$MARKER_FILE")
+            HTTP_STATUS=$(curl --silent --show-error --location --max-time 10 --output /dev/null --write-out '%{http_code}' "$ALIAS_URL" || true)
+            if [[ "$HTTP_STATUS" == "200" ]]; then
+              VERSION_ID=$(jq -r .version_id "$MARKER_FILE")
+              SHARED_CURRENT=false
+              if [[ -f "$SHARED_MARKER_FILE" && "$(<"$SHARED_MARKER_FILE")" == "$VERSION_ID" ]]; then
+                SHARED_CURRENT=true
+              fi
+              {
+                echo "cache_hit=true"
+                echo "shared_current=$SHARED_CURRENT"
+                echo "version_id=$VERSION_ID"
+                echo "preview_url=$(jq -r .preview_url "$MARKER_FILE")"
+                echo "alias_url=$ALIAS_URL"
+                echo "shared_url=$(jq -r .shared_url "$MARKER_FILE")"
+              } >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "cache_hit=false" >> "$GITHUB_OUTPUT"
+        working-directory: template.cfworkers/apps/web
+        env:
+          APP_ENV: preview
+          NEXT_PUBLIC_IS_DEPLOY: false
+          NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
+
+      - name: Ensure preview Worker exists
+        if: github.ref_name != 'deploy' && steps.preview-cache.outputs.cache_hit != 'true'
         run: |
           RESPONSE_FILE=$(mktemp)
           trap 'rm -f "$RESPONSE_FILE"' EXIT
@@ -162,7 +205,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Upload preview
-        if: github.ref_name != 'deploy'
+        if: github.ref_name != 'deploy' && steps.preview-cache.outputs.cache_hit != 'true'
         id: deploy
         run: |
           set -o pipefail
@@ -175,7 +218,6 @@ jobs:
             --command "CREATE TABLE IF NOT EXISTS revalidations (tag TEXT NOT NULL, revalidatedAt INTEGER NOT NULL, stale INTEGER, expire INTEGER default NULL, UNIQUE(tag) ON CONFLICT REPLACE);" &
           D1_PID=$!
 
-          WORKER_BUILD_HASH=$(pnpm --workspace-root turbo run build:worker --filter=web --dry=json 2>/dev/null | jq -r '.tasks[] | select(.task == "build:worker") | .hash')
           CACHE_UPLOAD_MARKER="/home/runner/_work/.build-cache/r2/${GITHUB_REPOSITORY//\//-}/${WORKER_BUILD_HASH}.complete"
 
           upload_cache_file() {
@@ -246,11 +288,40 @@ jobs:
             echo "alias_url=https://${PREVIEW_ALIAS}-${PREVIEW_HOST}"
             echo "shared_url=https://${PREVIEW_HOST}"
           } >> "$GITHUB_OUTPUT"
+
+          mkdir --parents "$(dirname "$PREVIEW_MARKER_FILE")"
+          TEMPORARY_MARKER=$(mktemp "${PREVIEW_MARKER_FILE}.XXXXXX")
+          jq --null-input \
+            --arg worker_build_hash "$WORKER_BUILD_HASH" \
+            --arg version_id "$VERSION_ID" \
+            --arg preview_url "https://${VERSION_PREFIX}-${PREVIEW_HOST}" \
+            --arg alias_url "https://${PREVIEW_ALIAS}-${PREVIEW_HOST}" \
+            --arg shared_url "https://${PREVIEW_HOST}" \
+            '{worker_build_hash: $worker_build_hash, version_id: $version_id, preview_url: $preview_url, alias_url: $alias_url, shared_url: $shared_url}' \
+            > "$TEMPORARY_MARKER"
+          mv "$TEMPORARY_MARKER" "$PREVIEW_MARKER_FILE"
+          printf '%s' "$VERSION_ID" > "${SHARED_MARKER_FILE}.tmp"
+          mv "${SHARED_MARKER_FILE}.tmp" "$SHARED_MARKER_FILE"
         working-directory: template.cfworkers/apps/web
         env:
           APP_ENV: preview
           NEXT_PUBLIC_IS_DEPLOY: false
           NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
+          PREVIEW_MARKER_FILE: ${{ steps.preview-cache.outputs.marker_file }}
+          SHARED_MARKER_FILE: ${{ steps.preview-cache.outputs.shared_marker_file }}
+          WORKER_BUILD_HASH: ${{ steps.preview-cache.outputs.worker_build_hash }}
+
+      - name: Activate cached preview
+        if: github.ref_name != 'deploy' && steps.preview-cache.outputs.cache_hit == 'true' && steps.preview-cache.outputs.shared_current != 'true'
+        run: |
+          OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions deploy "$VERSION_ID@100%" --env preview --yes
+          OPEN_NEXT_DEPLOY=true pnpm exec wrangler triggers deploy --env preview
+          printf '%s' "$VERSION_ID" > "${SHARED_MARKER_FILE}.tmp"
+          mv "${SHARED_MARKER_FILE}.tmp" "$SHARED_MARKER_FILE"
+        working-directory: template.cfworkers/apps/web
+        env:
+          VERSION_ID: ${{ steps.preview-cache.outputs.version_id }}
+          SHARED_MARKER_FILE: ${{ steps.preview-cache.outputs.shared_marker_file }}
 
       - name: Deploy production
         if: github.ref_name == 'deploy'
@@ -267,9 +338,9 @@ jobs:
           {
             echo "## Preview Deployment"
             echo ""
-            echo "- **Shared loggable Worker:** ${{ steps.deploy.outputs.shared_url }}"
-            echo "- **Version Preview URL (isolated, no logs):** ${{ steps.deploy.outputs.preview_url }}"
-            echo "- **Branch Alias URL (isolated, no logs):** ${{ steps.deploy.outputs.alias_url }}"
+            echo "- **Shared loggable Worker:** $SHARED_URL"
+            echo "- **Version Preview URL (isolated, no logs):** $PREVIEW_URL"
+            echo "- **Branch Alias URL (isolated, no logs):** $ALIAS_URL"
             echo ""
             echo "Reproduce server errors on the shared Worker, then run:"
             echo ""
@@ -280,6 +351,10 @@ jobs:
             echo "---"
             echo "_Branch:_ \`${{ github.ref_name }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          SHARED_URL: ${{ steps.preview-cache.outputs.shared_url || steps.deploy.outputs.shared_url }}
+          PREVIEW_URL: ${{ steps.preview-cache.outputs.preview_url || steps.deploy.outputs.preview_url }}
+          ALIAS_URL: ${{ steps.preview-cache.outputs.alias_url || steps.deploy.outputs.alias_url }}
 
       - name: Display production deployment
         if: success() && github.ref_name == 'deploy'
