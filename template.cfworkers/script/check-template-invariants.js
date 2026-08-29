@@ -185,6 +185,11 @@ requireMatch(
 	/APP_ENV: \$\{\{ github\.ref_name == 'deploy' && 'production' \|\| 'preview' \}\}/,
 	"The deploy workflow must build and upload with the same deployment environment.",
 );
+requireMatch(
+	deployWorkflow,
+	/name: Normalize preview alias[\s\S]+?PREVIEW_ALIAS=\$SAFE_PREVIEW_ALIAS/,
+	"The deploy workflow must normalize branch names before using them as Cloudflare preview aliases.",
+);
 if (/pnpm --workspace-root build:worker/.test(deployWorkflow)) {
 	errors.push("The deploy workflow must upload the OpenNext artifact already produced by validation without rebuilding it.");
 }
