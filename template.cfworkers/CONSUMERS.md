@@ -11,9 +11,9 @@ exact reminder to add that project to this source registry.
 | --- | --- | --- | --- | --- | --- |
 | `corioders/corioders.com` | `corioders.cfworkers/apps/web` | Lingui routing and typed env | Reconcile application bindings | Planned | — |
 | `corioders/impact-speaker-tracker` | `impact.cfworkers/apps/web` | Firebase, Drive CMS, uploads and document workflows | Reconcile Firebase and cache bindings | Planned | — |
-| `corioders/impact-new-agenda` | `impact-new-agenda.cfworkers/apps/web` | — | — | Migrated | `c052e7c` |
-| `corioders/showteam-eu` | `showteam.cfworkers/apps/web` | Payload, D1/R2 migrations, fixtures, tests and reminder Worker | — | Migrated | `c052e7c` |
-| `corioders/corioders-tickets` | `corioders-tickets.cfworkers/apps/web` | Active dashboard implementation | — | Migrated | `c052e7c` |
+| `corioders/impact-new-agenda` | `impact-new-agenda.cfworkers/apps/web` | — | — | Migrated | `666876e` |
+| `corioders/showteam-eu` | `showteam.cfworkers/apps/web` | Payload, D1/R2 migrations, fixtures, tests and reminder Worker | — | Migrated | `666876e` |
+| `corioders/corioders-tickets` | `corioders-tickets.cfworkers/apps/web` | Active dashboard implementation | — | Migrated | `666876e` |
 | `corioders/handbook` | `handbook.cloudflare/apps/web` | Nextra and Pagefind | Replace Next on Pages with OpenNext | Planned | — |
 | `corioders/ui` | `ui.cloudflare/apps/web` | shadcn registry generator | Replace Next on Pages and staged-only CI check | Planned | — |
 | `poland2-0/poland20` | `poland20.cloudflare/apps/web` | Lingui routing and Drive CMS | Replace Next on Pages and staged-only CI check | Planned | — |
@@ -69,8 +69,9 @@ code must read that snapshot instead of querying mutable upstream state again.
 Providers run concurrently. Projects with pure builds or fully server-side CMS
 reads omit the registry and retain the constant empty-input fingerprint.
 
-After a dependency/runtime change, run `pnpm install --frozen-lockfile`,
-`pnpm validate`, and `pnpm test:e2e` in every consumer.
+After a dependency/runtime change, require green CI for each exact pushed consumer
+HEAD. Run focused local checks only when needed for feedback or diagnosis, directly
+on Windows WSL rather than duplicating the complete CI gate.
 
 ## Migration acceptance checklist
 
@@ -78,5 +79,5 @@ After a dependency/runtime change, run `pnpm install --frozen-lockfile`,
 - Preserve or improve existing unit, browser and integration tests before changing infrastructure.
 - Inventory environment variables, Worker bindings, cron triggers and additional Workers.
 - Port D1 migrations and fixtures; verify them against a freshly reset local database.
-- Run full Biome, typecheck, Vitest, Chromium, WebKit, Next build and OpenNext build.
+- Confirm CI runs the required Biome, typecheck, Vitest, browser, Next and OpenNext checks.
 - Update the row to `Migrated` with the applied template commit only after all checks pass.
