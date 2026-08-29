@@ -129,6 +129,7 @@ function getCloudflareContextFromWrangler(): Promise<CloudflareContext & { dispo
 		getPlatformProxy({
 			environment: process.env.CLOUDFLARE_ENV,
 			configPath: process.env.CLOUDFLARE_REMOTE_BINDINGS === "true" ? path.resolve(dirname, "wrangler.migrations.jsonc") : undefined,
+			persist: process.env.CSTD_D1_PERSIST_PATH ? { path: process.env.CSTD_D1_PERSIST_PATH } : undefined,
 			remoteBindings: process.env.CLOUDFLARE_REMOTE_BINDINGS === "true",
 		} satisfies GetPlatformProxyOptions),
 	);

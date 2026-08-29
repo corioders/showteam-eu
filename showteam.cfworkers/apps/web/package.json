@@ -39,7 +39,7 @@
 		"check-biome-staged": "biome check --error-on-warnings --staged --no-errors-on-unmatched",
 		"check-biome-fix": "biome check --error-on-warnings --fix",
 		"test:unit": "vitest run",
-		"test:e2e": "playwright test",
+		"test:e2e": "node scripts/run-e2e.mjs",
 		"clean": "rm -rf .next .open-next .wrangler public/_cstd/image",
 		"postinstall": "[ \"${CI:-}\" = true ] || next telemetry disable"
 	},

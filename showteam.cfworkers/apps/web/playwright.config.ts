@@ -3,7 +3,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const externalBaseUrl = process.env.PLAYWRIGHT_BASE_URL;
-const ciPort = 3100 + (Number(process.env.GITHUB_RUN_ID?.slice(-3) || 0) % 1000);
+const ciPort = Number(process.env.CSTD_E2E_PORT) || 3100 + (Number(process.env.GITHUB_RUN_ID?.slice(-3) || 0) % 1000);
 const testPort = process.env.CI ? ciPort : 3000;
 const localBaseUrl = `http://localhost:${testPort}`;
 
