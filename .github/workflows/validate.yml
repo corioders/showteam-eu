@@ -24,7 +24,7 @@ jobs:
         with:
           clean: false
           sparse-checkout: |
-            .github/workflows/deploy.yml
+            .github
             template.cfworkers
 
       - name: Setup Node.js
