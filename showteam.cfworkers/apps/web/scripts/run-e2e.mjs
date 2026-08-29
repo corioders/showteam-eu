@@ -1,10 +1,9 @@
 import { spawn } from "node:child_process";
 import { cp, mkdir, rm } from "node:fs/promises";
-import { availableParallelism } from "node:os";
 import path from "node:path";
 
 const configuredShardCount = process.env.CSTD_E2E_SHARDS;
-const shardCount = process.env.CI ? Number(configuredShardCount || Math.min(4, availableParallelism())) : 1;
+const shardCount = process.env.CI ? Number(configuredShardCount || 1) : 1;
 const runsAgainstExternalUrl = Boolean(process.env.PLAYWRIGHT_BASE_URL);
 
 if (!Number.isInteger(shardCount) || shardCount < 1) {
