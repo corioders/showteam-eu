@@ -14,6 +14,7 @@
 		"NEXT_PUBLIC_IS_DEPLOY",
 		"PAYLOAD_SECRET"
 	],
+	"globalPassThroughEnv": ["CSTD_D1_PERSIST_PATH"],
 	"tasks": {
 		"//#check-invariants": {
 			"cache": false

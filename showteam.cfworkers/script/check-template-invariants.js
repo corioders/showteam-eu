@@ -100,7 +100,8 @@ const nextConfig = read("apps/web/next.config.ts");
 requireMatch(nextConfig, /\.\.\.cstdNextConfig/, "apps/web/next.config.ts must extend cstdNextConfig.");
 requireMatch(nextConfig, /cacheComponents:\s*true/, "apps/web/next.config.ts must keep Cache Components enabled.");
 requireMatch(nextConfig, /reactCompiler:\s*true/, "apps/web/next.config.ts must keep the React compiler enabled.");
-requireMatch(nextConfig, /initOpenNextCloudflareForDev\(\)/, "apps/web/next.config.ts must initialize the Cloudflare development context.");
+requireMatch(nextConfig, /initOpenNextCloudflareForDev\(\{/, "apps/web/next.config.ts must initialize the Cloudflare development context with explicit options.");
+requireMatch(nextConfig, /CSTD_D1_PERSIST_PATH/, "apps/web/next.config.ts must isolate persisted Cloudflare state when a path is provided.");
 if (/cacheComponents:\s*false/.test(nextConfig)) {
 	errors.push("apps/web/next.config.ts must not disable Cache Components.");
 }

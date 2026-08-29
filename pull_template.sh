@@ -21,6 +21,37 @@ strip_template_maintainer_agent_rules() {
 	git add -- AGENTS.md
 }
 
+auto_resolve_agent_rules() {
+	local temporary_directory base_file ours_file theirs_file result_file
+
+	git cat-file -e ":1:AGENTS.md" 2>/dev/null || return 1
+	git cat-file -e ":2:AGENTS.md" 2>/dev/null || return 1
+	git cat-file -e ":3:AGENTS.md" 2>/dev/null || return 1
+
+	temporary_directory=$(mktemp -d)
+	base_file=$temporary_directory/base
+	ours_file=$temporary_directory/ours
+	theirs_file=$temporary_directory/theirs
+	result_file=$temporary_directory/result
+	git show ":1:AGENTS.md" >"$base_file"
+	git show ":2:AGENTS.md" >"$ours_file"
+	git show ":3:AGENTS.md" >"$theirs_file"
+
+	for file in "$base_file" "$ours_file" "$theirs_file"; do
+		sed -i.bak '/<!-- BEGIN:template-maintainer-agent-rules -->/,/<!-- END:template-maintainer-agent-rules -->/d' "$file"
+		rm -- "$file.bak"
+	done
+
+	if git merge-file --quiet --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file"; then
+		cp "$result_file" AGENTS.md
+		git add -- AGENTS.md
+		rm -r -- "$temporary_directory"
+		return 0
+	fi
+	rm -r -- "$temporary_directory"
+	return 1
+}
+
 continue_template_merge() {
 	strip_template_maintainer_agent_rules || return
 	GIT_EDITOR=true git merge --continue
@@ -90,14 +121,9 @@ manual_paths=()
 while IFS= read -r unmerged_path; do
 	case "$unmerged_path" in
 		AGENTS.md)
-			if git cat-file -e ":2:$unmerged_path" 2>/dev/null; then
-				manual_paths+=("$unmerged_path")
-				continue
-			fi
-			git checkout --theirs -- "$unmerged_path"
-			git add -- "$unmerged_path"
+			auto_resolve_agent_rules || manual_paths+=("$unmerged_path")
 			;;
-		bootstrap_project.sh | encrypt_template_env.sh | showteam.cfworkers/CONSUMERS.md | showteam.cfworkers/apps/web/.env.age)
+		bootstrap_project.sh | encrypt_template_env.sh | template.*workers/CONSUMERS.md | template.*workers/apps/web/.env.age)
 			git rm --quiet --force -- "$unmerged_path"
 			;;
 		*.cfworkers/.infisical.json)
