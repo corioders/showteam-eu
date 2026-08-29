@@ -36,6 +36,7 @@ const dirname = path.dirname(filename);
 const realpath = (value: string) => (fs.existsSync(value) ? fs.realpathSync(value) : "");
 const isCLI = process.argv.some((value) => realpath(value).endsWith(path.join("payload", "bin.js")) || value.endsWith("seed-ci.ts"));
 const isProduction = process.env.NODE_ENV === "production";
+const isCI = process.env.CI === "true";
 const isNextBuild = process.env.NEXT_PHASE === "phase-production-build";
 const payloadSecret = process.env.PAYLOAD_SECRET ?? (!isProduction || isNextBuild ? "local-showteam-development-secret-change-me" : undefined);
 
@@ -115,13 +116,14 @@ export default buildConfig({
 	typescript: { outputFile: path.resolve(dirname, "payload-types.ts") },
 	db: sqliteD1Adapter({ binding: cloudflare.env.D1, afterSchemaInit: [preserveOperationalTables], push: false }),
 	plugins: [r2Storage({ bucket: cloudflare.env.R2, collections: { media: true } })],
-	onInit: isProduction
-		? undefined
-		: async (payload) => {
-				await seedOffers(payload);
-				await seedGallery(payload);
-				await seedEquipment(payload);
-			},
+	onInit:
+		isProduction || isCI
+			? undefined
+			: async (payload) => {
+					await seedOffers(payload);
+					await seedGallery(payload);
+					await seedEquipment(payload);
+				},
 });
 
 function getCloudflareContextFromWrangler(): Promise<CloudflareContext & { dispose?: () => Promise<void> }> {
