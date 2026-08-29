@@ -3,7 +3,7 @@
 	"tasks": {
 		"build": {
 			"outputs": [".next/**", "!.next/cache/**", "public/_cstd/image/asset/production/**"],
-			"env": ["CSTD_BUILD_INPUTS_HASH", "IS_CLOUDFLARE", "NEXT_PRIVATE_STANDALONE", "NEXT_PUBLIC_IS_DEPLOY", "NEXT_PUBLIC_GIT_BRANCH"]
+			"env": ["CSTD_BUILD_INPUTS_HASH", "CSTD_EXTERNAL_BUILD_INPUTS_HASH", "IS_CLOUDFLARE", "NEXT_PRIVATE_STANDALONE", "NEXT_PUBLIC_IS_DEPLOY", "NEXT_PUBLIC_GIT_BRANCH"]
 		}
 	}
 }

@@ -1,6 +1,7 @@
 .tmp*
 .pnpm-store
 .dev.vars
+.cstd/build-inputs/
 
 # Created by https://www.toptal.com/developers/gitignore/api/node,linux,macos,nextjs,windows,turbo
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,linux,macos,nextjs,windows,turbo

@@ -172,8 +172,19 @@ requireMatch(deployWorkflow, /xargs[^\n]+--max-procs/, "The deploy workflow must
 requireMatch(deployWorkflow, /wrangler d1 execute NEXT_TAG_CACHE_D1/, "The deploy workflow must initialize the preview tag cache.");
 requireMatch(deployWorkflow, /curl --silent --show-error --location --retry 5/, "The preview healthcheck must follow redirects.");
 requireMatch(deployWorkflow, /Shared preview verification failed/, "The deploy workflow must verify the deployed shared preview.");
+requireMatch(
+	deployWorkflow,
+	/name: Resolve external build inputs\s+run: pnpm resolve-build-inputs/,
+	"The deploy workflow must resolve external build inputs before building.",
+);
+if (deployWorkflow.indexOf("name: Resolve external build inputs") > deployWorkflow.indexOf("name: Validate, build, and run browser tests")) {
+	errors.push("The deploy workflow must resolve external build inputs before cache lookup and build.");
+}
 
 const packageJson = JSON.parse(read("package.json"));
+if (packageJson.scripts?.["resolve-build-inputs"] !== "node script/resolve-external-build-inputs.js") {
+	errors.push("package.json must expose the external build-input resolver.");
+}
 for (const scriptName of ["dev", "preview", "deploy", "logs", "logs:preview", "shadcn:search", "shadcn:add", "shadcn:learn"]) {
 	if (!/^infisical run(?: --env=[a-z]+)? -- /.test(packageJson.scripts?.[scriptName] ?? "")) {
 		errors.push(`package.json script ${scriptName} must inject Infisical secrets.`);

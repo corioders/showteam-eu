@@ -35,7 +35,7 @@ Consumer application scripts must run `cstd-next-clean-images` as `prebuild`,
 keep `build` cacheable, and transform its standalone output with the cacheable
 `build:worker` task instead of invoking `next build` again. Turbo hashes source
 and declared environment values; applications with build-time CMS or other
-external reads must set `CSTD_BUILD_INPUTS_HASH` to a digest of the exact external
+external reads must set `CSTD_EXTERNAL_BUILD_INPUTS_HASH` to a digest of the exact external
 snapshot. Restore that snapshot together with the cache so a hit reproduces the
 same build inputs. Development assets remain intact while stale production assets
 and obsolete descriptor output are removed before each build. `LocalStaticImage`
@@ -45,6 +45,29 @@ final `<picture>` in the existing RSC payload without a metadata fetch.
 Keep `apps/web/public/.assetsignore`: Wrangler uses it to exclude development
 image namespaces from production static-asset uploads without deleting files
 needed by a concurrently running `next dev` process.
+
+Register build-time external data in `external-build-inputs.json`:
+
+```json
+{
+  "version": 1,
+  "dependencies": [
+    {
+      "name": "public-cms",
+      "command": ["node", "script/snapshot-public-cms.js"]
+    }
+  ]
+}
+```
+
+The resolver runs every deploy before Turborepo checks its cache. Each provider
+inherits the build environment and writes its complete, immutable point-in-time
+snapshot below `CSTD_BUILD_INPUT_DIRECTORY`; it must not print secrets. The
+resolver atomically installs those files under `.cstd/build-inputs/<name>`, hashes
+their names and bytes, and exports the aggregate `CSTD_EXTERNAL_BUILD_INPUTS_HASH`. Build
+code must read that snapshot instead of querying mutable upstream state again.
+Providers run concurrently. Projects with pure builds or fully server-side CMS
+reads omit the registry and retain the constant empty-input fingerprint.
 
 After a dependency/runtime change, run `pnpm install --frozen-lockfile`,
 `pnpm validate`, and `pnpm test:e2e` in every consumer.

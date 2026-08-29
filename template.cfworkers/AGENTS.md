@@ -1,7 +1,7 @@
 # Toolchain
 
 - Use `pnpm`. Never `npm` or `yarn`.
-- Run checks with `pnpm check` (template invariants + biome + tsc) before committing. `pnpm check-biome-fix` applies safe fixes.
+- Run checks with `pnpm check` (template invariants + lint + typecheck) before committing. `pnpm lint:fix` applies safe fixes.
 - After creating any commit, immediately push the current branch to `origin`, monitor its CI run, and fix it until green. Do not declare committed work complete while local `HEAD` is absent from `origin` or its CI is pending, canceled, or failing.
 - `packages/corioders-lib/cstd-ts` and `cstd-next` are git subtrees of the shared libraries. Change them here only when the fix belongs upstream. Before declaring such work complete, commit it and push the matching subtree to the canonical `cstd` remote — see the root README.
 

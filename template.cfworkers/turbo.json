@@ -4,6 +4,7 @@
 	"globalEnv": [
 		"APP_ENV",
 		"CSTD_BUILD_INPUTS_HASH",
+		"CSTD_EXTERNAL_BUILD_INPUTS_HASH",
 		"CORIODERS_DRIVE_CMS_KEY",
 		"CORIODERS_GOOGLE_FILE_UPLOAD_CMS_KEY",
 		"CORIODERS_INVALIDATE_PERSISTENT_CACHE",
@@ -13,6 +14,12 @@
 		"NEXT_PUBLIC_IS_DEPLOY"
 	],
 	"tasks": {
+		"//#check-invariants": {
+			"cache": false
+		},
+		"//#lint": {
+			"cache": false
+		},
 		"build": {
 			"dependsOn": ["^build"],
 			"inputs": ["$TURBO_DEFAULT$", ".env*", "!playwright.config.ts", "!vitest.config.ts", "!tests/**"],

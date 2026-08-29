@@ -70,7 +70,7 @@ Run from the `<project>.cfworkers/` directory.
 | `pnpm dev` | `next dev` plus a watch build of the cstd libraries |
 | `pnpm build` | production Next.js build |
 | `pnpm check` | template invariants + biome + tsc across the workspace |
-| `pnpm check-biome-fix` | apply biome's safe fixes |
+| `pnpm lint:fix` | apply Biome's safe fixes |
 | `pnpm test:unit` | run Vitest |
 | `pnpm test:e2e` | run Playwright against Chromium and WebKit |
 | `pnpm preview` | inject `staging` secrets, build for Workers and serve locally through workerd |
