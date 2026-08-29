@@ -242,7 +242,7 @@ jobs:
       - name: Mark isolated preview D1 snapshot
         if: github.ref_name != 'deploy' && steps.preview-d1.outputs.cache-hit != 'true'
         run: |
-          pnpm exec wrangler d1 execute D1 --remote --env preview +            --command "INSERT OR IGNORE INTO _cstd_ci_snapshots (hash) VALUES ('$CSTD_BUILD_INPUTS_HASH');"
+          pnpm exec wrangler d1 execute D1 --remote --env preview --command "INSERT OR IGNORE INTO _cstd_ci_snapshots (hash) VALUES ('$CSTD_BUILD_INPUTS_HASH');"
         working-directory: showteam.cfworkers/apps/web
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
