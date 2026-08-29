@@ -152,6 +152,20 @@ if (tagCacheIds.length !== 2) {
 	}
 }
 
+const deployWorkflow = read("../.github/workflows/deploy.yml");
+requireMatch(
+	deployWorkflow,
+	/APP_ENV: \$\{\{ github\.ref_name == 'deploy' && 'production' \|\| 'preview' \}\}/,
+	"The deploy workflow must build and upload with the same deployment environment.",
+);
+if (/pnpm --workspace-root build:worker/.test(deployWorkflow)) {
+	errors.push("The deploy workflow must upload the OpenNext artifact already produced by validation without rebuilding it.");
+}
+requireMatch(
+	deployWorkflow,
+	/name: Deploy production[\s\S]+?run: OPEN_NEXT_DEPLOY=true pnpm exec wrangler deploy/,
+	"The production deployment must consume the OpenNext artifact already produced by validation.",
+);
 const biomeConfig = read("biome.jsonc");
 requireMatch(biomeConfig, /no-throw\.grit/, "biome.jsonc must keep the no-throw plugin.");
 try {

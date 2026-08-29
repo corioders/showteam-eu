@@ -39,7 +39,10 @@ jobs:
     timeout-minutes: 30
     environment: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
     env:
+      APP_ENV: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
       DEPLOY_REF: ${{ github.head_ref || github.ref_name }}
+      NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
+      NEXT_PUBLIC_IS_DEPLOY: ${{ github.ref_name == 'deploy' }}
       PREVIEW_ALIAS: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}
       PNPM_STORE_PATH: ${{ github.workspace }}/../../.pnpm-store
     concurrency:
@@ -216,11 +219,8 @@ jobs:
         working-directory: showteam.cfworkers/apps/web
         env:
           PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
-          APP_ENV: preview
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          NEXT_PUBLIC_IS_DEPLOY: false
-          NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
 
       - name: Ensure preview Worker exists
         if: github.ref_name != 'deploy' && steps.preview-cache.outputs.cache_hit != 'true'
@@ -299,7 +299,6 @@ jobs:
         id: deploy
         run: |
           set -o pipefail
-          pnpm --workspace-root build:worker
           OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions upload --env preview --preview-alias "$PREVIEW_ALIAS" 2>&1 | tee deploy-output.log
 
           VERSION_ID=$(grep -oP 'Worker Version ID: \K[0-9a-f-]+' deploy-output.log | tail -n 1)
@@ -340,9 +339,6 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
-          APP_ENV: preview
-          NEXT_PUBLIC_IS_DEPLOY: false
-          NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
           PREVIEW_MARKER_FILE: ${{ steps.preview-cache.outputs.marker_file }}
           SHARED_MARKER_FILE: ${{ steps.preview-cache.outputs.shared_marker_file }}
           WORKER_BUILD_HASH: ${{ steps.preview-cache.outputs.worker_build_hash }}
@@ -362,13 +358,10 @@ jobs:
 
       - name: Deploy production
         if: github.ref_name == 'deploy'
-        run: pnpm run deploy
+        run: OPEN_NEXT_DEPLOY=true pnpm exec wrangler deploy
         working-directory: showteam.cfworkers/apps/web
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          APP_ENV: production
-          NEXT_PUBLIC_IS_DEPLOY: true
-          NEXT_PUBLIC_GIT_BRANCH: ${{ github.head_ref || github.ref_name }}
 
       - name: Display preview URLs
         if: success() && github.ref_name != 'deploy'
