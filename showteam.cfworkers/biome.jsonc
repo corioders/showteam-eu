@@ -4,23 +4,22 @@
 	"extends": ["./packages/corioders-lib/cstd-ts/config/biome.jsonc"],
 	"plugins": ["packages/corioders-lib/cstd-ts/config/biome-plugin/no-throw.grit"],
 	"files": {
-		"includes": ["!apps/web/cloudflare-env.d.ts", "!apps/web/payload-types.ts", "!apps/web/migrations"]
-	},
-	"formatter": {
 		"includes": [
-			"**",
 			"!skills-lock.json",
-			"!**/.agents/skills/**",
-			"!**/node_modules/**",
-			"!**/cache/**",
-			"!**/dist/**",
-			"!**/build/**",
-			"!**/coverage/**",
-			"!**/.git/**",
-			"!**/.github/**",
-			"!**/.idea/**",
-			"!**/.vscode/**",
-			"!**/.wrangler/**"
+			"!**/.agents/skills",
+			"!**/node_modules",
+			"!**/cache",
+			"!**/dist",
+			"!**/build",
+			"!**/coverage",
+			"!**/.git",
+			"!**/.github",
+			"!**/.idea",
+			"!**/.vscode",
+			"!**/.wrangler",
+			"!apps/web/cloudflare-env.d.ts",
+			"!apps/web/payload-types.ts",
+			"!apps/web/migrations"
 		]
 	}
 }
