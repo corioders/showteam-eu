@@ -58,6 +58,16 @@ jobs:
             .github
             showteam.cfworkers
 
+      - name: Normalize preview alias
+        if: github.ref_name != 'deploy'
+        run: |
+          SAFE_PREVIEW_ALIAS=$(printf '%s' "$PREVIEW_ALIAS" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g; s/^-+//' | cut -c1-63 | sed -E 's/-+$//')
+          if [[ -z "$SAFE_PREVIEW_ALIAS" ]]; then
+            echo "The Git ref does not produce a valid preview alias." >&2
+            exit 1
+          fi
+          echo "PREVIEW_ALIAS=$SAFE_PREVIEW_ALIAS" >> "$GITHUB_ENV"
+
       - name: Setup Node.js
         if: runner.environment != 'self-hosted'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
