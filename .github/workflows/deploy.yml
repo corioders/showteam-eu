@@ -88,7 +88,22 @@ jobs:
             ${{ runner.os }}-${{ runner.arch }}-nextjs-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline --store-dir "$PNPM_STORE_PATH"
+        run: |
+          INSTALL_INPUTS_HASH=$(
+            {
+              git ls-files --stage -- pnpm-lock.yaml pnpm-workspace.yaml .npmrc ':(glob)**/package.json' ':(glob)patches/**'
+              node --version
+              pnpm --version
+            } | sha256sum | cut -d' ' -f1
+          )
+          INSTALL_MARKER="node_modules/.ci-install-${INSTALL_INPUTS_HASH}"
+          if [[ "${{ runner.environment }}" == "self-hosted" && -f "$INSTALL_MARKER" ]]; then
+            exit 0
+          fi
+          pnpm install --frozen-lockfile --prefer-offline --store-dir "$PNPM_STORE_PATH"
+          if [[ "${{ runner.environment }}" == "self-hosted" ]]; then
+            touch "$INSTALL_MARKER"
+          fi
         working-directory: template.cfworkers
 
       - name: Use persistent Next.js cache
