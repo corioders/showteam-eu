@@ -1,0 +1,5 @@
+language js(typescript, jsx)
+
+`throw $error` as $throw where {
+	register_diagnostic(span=$throw, message="`throw` is disallowed. Return an `ErrorReturn` or `ErrorReturnPromise` from `cstd-ts/error` instead.")
+}

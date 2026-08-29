@@ -1,0 +1,10 @@
+pre-commit:
+  parallel: true
+  commands:
+    check-invariants:
+      root: "showteam.cfworkers/"
+      run: pnpm run check-invariants
+    lint:
+      root: "showteam.cfworkers/"
+      glob: "**/*.{js,jsx,ts,tsx,json,jsonc,css}"
+      run: pnpm run lint:staged

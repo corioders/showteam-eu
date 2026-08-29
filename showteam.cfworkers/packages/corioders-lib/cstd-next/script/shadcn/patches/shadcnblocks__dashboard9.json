@@ -1,0 +1,30 @@
+{
+	"formatVersion": 1,
+	"registryItem": "@shadcnblocks/dashboard9",
+	"baselineHashes": {
+		"package.json": "8379c6887c96ac0d1285d02f73cacfe5af7113873e2740fb06b1521c7d7193de",
+		"src/components/dashboard9.tsx": "bd8ee14a2a898a35fd0c5ddd7d3e7fcfcaba6d920fb85711678042c94ff80174",
+		"src/components/ui/avatar.tsx": "cce1347e236e0494ac602812694bb3ffc0a518d1821c55dcbfef08b6da103697",
+		"src/components/ui/badge.tsx": "df76148997fb6280ecfd79e5a5bc94a64ae08744d5b868abd60ce439dbec8b85",
+		"src/components/ui/button.tsx": "47c420b7919f17531e7a178f067f614865a5a0aba2ca7a6af3b25e2b87759940",
+		"src/components/ui/card.tsx": "a126d108053bae3efa5f110bfbbc716e697b75852c980e5e5cc826963e0647b8",
+		"src/components/ui/chart.tsx": "4f0e356568532cc6287391230deff4d5c5012c65c9a873ccc59d5b599c970a3b",
+		"src/components/ui/collapsible.tsx": "4b7994bcd30fe27a7f1466dfa179f43898ebed28e86cc2e7ee6d4599bb6179bd",
+		"src/components/ui/dropdown-menu.tsx": "a4f234c4611d9597637f3a9faf4367c27bc067fdfd014f4a0b7046bb3d396a2c",
+		"src/components/ui/input.tsx": "1e27f21af8d811b40ff299c9528a53bf4744915ed958b81ffd3fd503d294f857",
+		"src/components/ui/scroll-area.tsx": "e6683fc0a911ebef00a68fe51553edb7e2a0c19608458fd4ca0c4d6205793c15",
+		"src/components/ui/select.tsx": "b85e3fee6dc52c7b6c39d58f7ab7fea31b573b17614f9444e0f2a94ddbde905c",
+		"src/components/ui/separator.tsx": "164fb9ee49682be6b7a27fe08c8c5fbd836820e858fb0abecf0906fc03144c73",
+		"src/components/ui/sheet.tsx": "52c680171657a7425552870cfc52563b02dabd411f8c6da0ab186d4813106ab0",
+		"src/components/ui/sidebar.tsx": "6e9e9b6c4345867deaf416f639842b3fe0d893461feda6b52d6c91ed90b1923b",
+		"src/components/ui/skeleton.tsx": "de304a1e2cc6ca9bcb61071180da00e5442498332791af3d76778aec53867bb3",
+		"src/components/ui/table.tsx": "b29dbc63a135eb6f5e1e015749c89d7df6345c1f0d62410dbb7723260b095f8c",
+		"src/components/ui/tooltip.tsx": "f9e000b5cfa92000219d77e72534be528ef6b3fb3989bc03c01117c50ff879a2",
+		"src/hooks/use-mobile.ts": "106dce98246cde14a7b1b4d1a3eb7e83e323cdf0a4d553f9e292bde1daa3c525"
+	},
+	"changedFiles": [
+		"src/components/dashboard9.tsx",
+		"src/components/ui/chart.tsx",
+		"src/components/ui/sidebar.tsx"
+	]
+}

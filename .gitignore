@@ -10,7 +10,3 @@ artifacts/
 test-results/
 playwright-report/
 .wrangler/
-infra/.terraform/
-infra/*.tfstate
-infra/*.tfstate.*
-infra/*.tfplan

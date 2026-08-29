@@ -1,0 +1,38 @@
+{
+	"name": "showteam.cfworkers",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"postinstall": "[ \"${CI:-}\" = true ] || (lefthook install && turbo telemetry disable)",
+		"dev": "infisical run -- turbo run dev",
+		"build": "turbo run build",
+		"build:worker": "NEXT_PRIVATE_STANDALONE=true turbo run build:worker --filter=web --concurrency=100%",
+		"validate": "NEXT_PRIVATE_STANDALONE=true turbo run build:worker check-types test:unit \"//#lint\" \"//#check-invariants\" --concurrency=100%",
+		"validate:ci": "NEXT_PRIVATE_STANDALONE=true turbo run build:worker check-types test:unit test:e2e \"//#lint\" \"//#check-invariants\" --concurrency=100%",
+		"preview": "infisical run --env=staging -- pnpm --dir apps/web preview",
+		"deploy": "infisical run --env=prod -- pnpm --dir apps/web deploy",
+		"logs": "infisical run --env=prod -- pnpm --dir apps/web logs",
+		"logs:preview": "infisical run --env=staging -- pnpm --dir apps/web logs:preview",
+		"shadcn:search": "infisical run -- pnpm --dir apps/web shadcn:search",
+		"shadcn:add": "infisical run -- pnpm --dir apps/web shadcn:add",
+		"shadcn:learn": "infisical run -- pnpm --dir apps/web shadcn:learn",
+		"check": "turbo run check-types \"//#lint\" \"//#check-invariants\" --concurrency=100%",
+		"check-invariants": "node script/check-template-invariants.js && node --test script/resolve-external-build-inputs.test.js",
+		"resolve-build-inputs": "node script/resolve-external-build-inputs.js",
+		"typecheck": "turbo run check-types",
+		"lint": "biome check --error-on-warnings",
+		"lint:staged": "biome check --error-on-warnings --staged --no-errors-on-unmatched",
+		"lint:fix": "biome check --error-on-warnings --fix",
+		"test": "pnpm test:unit && pnpm test:e2e",
+		"test:unit": "turbo run test:unit",
+		"test:e2e": "turbo run test:e2e",
+		"clean": "turbo run clean && rm -rf .turbo"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.10",
+		"lefthook": "^2.1.0",
+		"turbo": "^2.8.3"
+	},
+	"packageManager": "pnpm@11.24.0+sha512.bd27e345e976dcb0be0b7a1228217b049a817e21b1f355c90dbe7dc46671895a8bc1e6d06c24554505ea93ea0b45f489a27ec1bfbc8de6a9659fca0f16fa0000"
+}
