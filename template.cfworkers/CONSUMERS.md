@@ -32,9 +32,12 @@ import { nextConfig } from "cstd-next/config/next.config.js";
 ```
 
 Consumer application scripts must run `cstd-next-clean-images` as `prebuild`,
-and their app-level `turbo.json` must set `build.cache` to `false`. Remote image
-contents are external build inputs: skipping `next build` would also skip HTTP
-revalidation. Development assets remain intact while stale production assets
+keep `build` cacheable, and transform its standalone output with the cacheable
+`build:worker` task instead of invoking `next build` again. Turbo hashes source
+and declared environment values; applications with build-time CMS or other
+external reads must set `CSTD_BUILD_INPUTS_HASH` to a digest of the exact external
+snapshot. Restore that snapshot together with the cache so a hit reproduces the
+same build inputs. Development assets remain intact while stale production assets
 and obsolete descriptor output are removed before each build. `LocalStaticImage`
 and `RemoteStaticImage` are Server Components; interactive consumers receive
 them through `children`/slot composition so client-side navigation carries the
@@ -44,8 +47,7 @@ image namespaces from production static-asset uploads without deleting files
 needed by a concurrently running `next dev` process.
 
 After a dependency/runtime change, run `pnpm install --frozen-lockfile`,
-`pnpm build`, `pnpm check`, and `pnpm --filter web exec opennextjs-cloudflare build`
-in every consumer.
+`pnpm validate`, and `pnpm test:e2e` in every consumer.
 
 ## Migration acceptance checklist
 

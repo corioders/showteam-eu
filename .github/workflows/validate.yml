@@ -17,7 +17,7 @@ jobs:
     runs-on: ${{ fromJSON(inputs.runner) }}
     timeout-minutes: 30
     env:
-      PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
+      PNPM_STORE_PATH: ${{ format('{0}/../../.pnpm-store', github.workspace) }}
     steps:
       - name: Checkout
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
@@ -27,15 +27,39 @@ jobs:
             template.cfworkers
 
       - name: Setup Node.js
+        if: runner.environment != 'self-hosted'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 24
           package-manager-cache: false
 
       - name: Setup pnpm
+        if: runner.environment != 'self-hosted'
         run: corepack enable
 
+      - name: Restore pnpm cache
+        if: runner.environment != 'self-hosted'
+        id: restore-pnpm
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ hashFiles('template.cfworkers/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-pnpm-
+
+      - name: Restore Turborepo cache
+        if: runner.environment != 'self-hosted'
+        id: restore-turbo
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: template.cfworkers/.turbo
+          key: ${{ runner.os }}-${{ runner.arch }}-turbo-validate-${{ hashFiles('template.cfworkers/pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-turbo-validate-${{ hashFiles('template.cfworkers/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-${{ runner.arch }}-turbo-
+
       - name: Restore Next.js cache
+        if: runner.environment != 'self-hosted'
         id: restore-next
         uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
@@ -46,51 +70,61 @@ jobs:
             ${{ runner.os }}-${{ runner.arch }}-nextjs-
 
       - name: Restore Playwright browsers
+        if: runner.environment != 'self-hosted'
         id: restore-playwright
         uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
-          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+          path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-${{ runner.arch }}-playwright-${{ hashFiles('template.cfworkers/pnpm-lock.yaml') }}
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --store-dir .pnpm-store
+        run: pnpm install --frozen-lockfile --prefer-offline --store-dir "$PNPM_STORE_PATH" ${{ steps.restore-pnpm.outputs.cache-hit == 'true' && '--offline' || '' }}
         working-directory: template.cfworkers
 
-      - name: Check code
-        run: pnpm check
-        working-directory: template.cfworkers
+      - name: Use persistent Next.js cache
+        if: runner.environment == 'self-hosted'
+        run: |
+          CACHE_DIRECTORY="/home/runner/_work/.build-cache/next/${GITHUB_REPOSITORY//\//-}"
+          mkdir --parents "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next
+          ln --symbolic --force --no-dereference "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next/cache
 
-      - name: Build application
-        run: pnpm build
-        working-directory: template.cfworkers
-
-      - name: Build Cloudflare Worker
-        run: pnpm --dir apps/web exec opennextjs-cloudflare build
+      - name: Validate and build
+        run: pnpm validate
         working-directory: template.cfworkers
 
       - name: Save Next.js cache
-        if: steps.restore-next.outputs.cache-hit != 'true'
+        if: runner.environment != 'self-hosted' && steps.restore-next.outputs.cache-hit != 'true'
         uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: template.cfworkers/apps/web/.next/cache
           key: ${{ steps.restore-next.outputs.cache-primary-key }}
 
-      - name: Run unit tests
-        run: pnpm test:unit
-        working-directory: template.cfworkers
-
       - name: Install Playwright browsers
-        if: steps.restore-playwright.outputs.cache-hit != 'true'
+        if: runner.environment != 'self-hosted' && steps.restore-playwright.outputs.cache-hit != 'true'
         run: pnpm --dir apps/web exec playwright install chromium webkit
         working-directory: template.cfworkers
 
       - name: Save Playwright browsers
-        if: steps.restore-playwright.outputs.cache-hit != 'true'
+        if: runner.environment != 'self-hosted' && steps.restore-playwright.outputs.cache-hit != 'true'
         uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
-          path: ${{ env.PLAYWRIGHT_BROWSERS_PATH }}
+          path: ~/.cache/ms-playwright
           key: ${{ steps.restore-playwright.outputs.cache-primary-key }}
 
       - name: Run browser tests
-        run: pnpm test:e2e
+        run: pnpm --dir apps/web exec playwright test
         working-directory: template.cfworkers
+
+      - name: Save pnpm cache
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
+        if: always() && runner.environment != 'self-hosted' && steps.restore-pnpm.outputs.cache-hit != 'true'
+        with:
+          path: ${{ env.PNPM_STORE_PATH }}
+          key: ${{ steps.restore-pnpm.outputs.cache-primary-key }}
+
+      - name: Save Turborepo cache
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
+        if: success() && runner.environment != 'self-hosted' && steps.restore-turbo.outputs.cache-hit != 'true'
+        with:
+          path: template.cfworkers/.turbo
+          key: ${{ steps.restore-turbo.outputs.cache-primary-key }}

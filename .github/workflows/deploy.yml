@@ -34,6 +34,8 @@ jobs:
     runs-on: [self-hosted, win24-wsl]
     timeout-minutes: 30
     environment: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
+    env:
+      PNPM_STORE_PATH: ${{ github.workspace }}/../../.pnpm-store
     concurrency:
       group: ${{ github.ref_name == 'deploy' && format('deploy-production-{0}', github.run_id) || 'deploy-shared-preview' }}
       cancel-in-progress: ${{ github.ref_name != 'deploy' }}
@@ -46,33 +48,30 @@ jobs:
             template.cfworkers
 
       - name: Setup Node.js
+        if: runner.environment != 'self-hosted'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 24
           package-manager-cache: false
 
       - name: Setup pnpm
+        if: runner.environment != 'self-hosted'
         run: corepack enable
 
-      - name: Restore pnpm cache
-        id: restore-pnpm
-        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
-        with:
-          path: template.cfworkers/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Restore Turborepo cache
+        if: runner.environment != 'self-hosted'
         id: restore-turbo
         uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: template.cfworkers/.turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          key: ${{ runner.os }}-${{ runner.arch }}-turbo-deploy-${{ github.ref_name }}-${{ hashFiles('template.cfworkers/pnpm-lock.yaml') }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-turbo-
+            ${{ runner.os }}-${{ runner.arch }}-turbo-deploy-${{ github.ref_name }}-${{ hashFiles('template.cfworkers/pnpm-lock.yaml') }}-
+            ${{ runner.os }}-${{ runner.arch }}-turbo-validate-${{ hashFiles('template.cfworkers/pnpm-lock.yaml') }}-${{ github.sha }}
+            ${{ runner.os }}-${{ runner.arch }}-turbo-
 
       - name: Restore Next.js cache
+        if: runner.environment != 'self-hosted'
         id: restore-next
         uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
@@ -83,8 +82,14 @@ jobs:
             ${{ runner.os }}-${{ runner.arch }}-nextjs-
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --store-dir .pnpm-store
+        run: pnpm install --frozen-lockfile --prefer-offline --store-dir "$PNPM_STORE_PATH"
         working-directory: template.cfworkers
+
+      - name: Use persistent Next.js cache
+        run: |
+          CACHE_DIRECTORY="/home/runner/_work/.build-cache/next/${GITHUB_REPOSITORY//\//-}"
+          mkdir --parents "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next
+          ln --symbolic --force --no-dereference "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next/cache
 
       - name: Fetch deployment secrets from Infisical
         uses: Infisical/secrets-action@77ab1f4ccd183a543cb5b42435fbd181189f4995 # v1.0.16
@@ -132,12 +137,17 @@ jobs:
         id: deploy
         run: |
           set -o pipefail
-          pnpm exec opennextjs-cloudflare build
+          pnpm --workspace-root build:worker
 
-          # ponytail: OpenNext 1.20.2's remote helper hangs on this Linux runner.
+          # ponytail: OpenNext 1.20.4's remote helper hangs on this Linux runner.
           # Upload the generated cache through Wrangler until the helper is fixed upstream.
           CACHE_BUCKET="template-cfworkers-preview-next-inc-cache-r2-bucket"
-          while IFS= read -r -d '' CACHE_FILE; do
+          pnpm exec wrangler d1 execute NEXT_TAG_CACHE_D1 --remote --env preview \
+            --command "CREATE TABLE IF NOT EXISTS revalidations (tag TEXT NOT NULL, revalidatedAt INTEGER NOT NULL, stale INTEGER, expire INTEGER default NULL, UNIQUE(tag) ON CONFLICT REPLACE);" &
+          D1_PID=$!
+
+          upload_cache_file() {
+            CACHE_FILE=$1
             RELATIVE_PATH=${CACHE_FILE#".open-next/cache/"}
             if [[ "$RELATIVE_PATH" == __fetch/* ]]; then
               RELATIVE_PATH=${RELATIVE_PATH#"__fetch/"}
@@ -153,10 +163,14 @@ jobs:
             CACHE_HASH=$(printf '%s' "$CACHE_KEY" | sha256sum | cut -d' ' -f1)
             R2_KEY="incremental-cache/${BUILD_ID}/${CACHE_HASH}.${CACHE_TYPE}"
             pnpm exec wrangler r2 object put "${CACHE_BUCKET}/${R2_KEY}" --remote --file "$CACHE_FILE"
-          done < <(find .open-next/cache -type f -print0)
+          }
+          export -f upload_cache_file
+          export CACHE_BUCKET
+          # shellcheck disable=SC2016
+          find .open-next/cache -type f -print0 \
+            | xargs -0 --no-run-if-empty --max-args=1 --max-procs="$(nproc)" bash -c 'upload_cache_file "$1"' _
+          wait "$D1_PID"
 
-          pnpm exec wrangler d1 execute NEXT_TAG_CACHE_D1 --remote --env preview \
-            --command "CREATE TABLE IF NOT EXISTS revalidations (tag TEXT NOT NULL, revalidatedAt INTEGER NOT NULL, stale INTEGER, expire INTEGER default NULL, UNIQUE(tag) ON CONFLICT REPLACE);"
           OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions upload --env preview --preview-alias "${{ github.ref_name }}" 2>&1 | tee deploy-output.log
 
           VERSION_ID=$(grep -oP 'Worker Version ID: \K[0-9a-f-]+' deploy-output.log | tail -n 1)
@@ -190,7 +204,6 @@ jobs:
         working-directory: template.cfworkers/apps/web
         env:
           APP_ENV: preview
-          RANDOM_VALUE_TO_ENSURE_APPS_WEB_IS_REBUILD_ON_GH_ACTIONS: ${{ github.run_id }}
           NEXT_PUBLIC_IS_DEPLOY: false
           NEXT_PUBLIC_GIT_BRANCH: ${{ github.ref_name }}
 
@@ -200,7 +213,6 @@ jobs:
         working-directory: template.cfworkers/apps/web
         env:
           APP_ENV: production
-          RANDOM_VALUE_TO_ENSURE_APPS_WEB_IS_REBUILD_ON_GH_ACTIONS: ${{ github.run_id }}
           NEXT_PUBLIC_IS_DEPLOY: true
           NEXT_PUBLIC_GIT_BRANCH: ${{ github.ref_name }}
 
@@ -233,23 +245,16 @@ jobs:
             echo "Published \`${{ github.sha }}\` from the \`deploy\` branch."
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Save pnpm cache
-        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
-        if: always() && steps.restore-pnpm.outputs.cache-hit != 'true'
-        with:
-          path: template.cfworkers/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-
       - name: Save Turborepo cache
         uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
-        if: always() && steps.restore-turbo.outputs.cache-hit != 'true'
+        if: always() && runner.environment != 'self-hosted' && steps.restore-turbo.outputs.cache-hit != 'true'
         with:
           path: template.cfworkers/.turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          key: ${{ steps.restore-turbo.outputs.cache-primary-key }}
 
       - name: Save Next.js cache
         uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
-        if: steps.restore-next.outputs.cache-hit != 'true'
+        if: runner.environment != 'self-hosted' && steps.restore-next.outputs.cache-hit != 'true'
         with:
           path: template.cfworkers/apps/web/.next/cache
           key: ${{ steps.restore-next.outputs.cache-primary-key }}

@@ -168,6 +168,7 @@ if (/opennextjs-cloudflare populateCache remote/.test(deployWorkflow)) {
 	errors.push("The deploy workflow must not use the hanging OpenNext remote cache helper.");
 }
 requireMatch(deployWorkflow, /wrangler r2 object put/, "The deploy workflow must upload preview cache entries through Wrangler.");
+requireMatch(deployWorkflow, /xargs[^\n]+--max-procs/, "The deploy workflow must upload preview cache entries concurrently.");
 requireMatch(deployWorkflow, /wrangler d1 execute NEXT_TAG_CACHE_D1/, "The deploy workflow must initialize the preview tag cache.");
 requireMatch(deployWorkflow, /curl --silent --show-error --location --retry 5/, "The preview healthcheck must follow redirects.");
 requireMatch(deployWorkflow, /Shared preview verification failed/, "The deploy workflow must verify the deployed shared preview.");
@@ -207,10 +208,13 @@ if (!appPackage.scripts?.prebuild?.includes("cstd-next-clean-images")) {
 if (!appPackage.scripts?.postbuild?.includes("cstd-next-finalize-images")) {
 	errors.push("apps/web/package.json must keep cstd-next-finalize-images in postbuild.");
 }
+if (!appPackage.scripts?.["build:worker"]?.includes("--skipNextBuild")) {
+	errors.push("apps/web/package.json must transform the existing Next.js output instead of rebuilding it.");
+}
 
 const appTurboConfig = JSON.parse(read("apps/web/turbo.json"));
-if (appTurboConfig.tasks?.build?.cache !== false) {
-	errors.push("apps/web/turbo.json must keep application build caching disabled.");
+if (appTurboConfig.tasks?.build?.cache === false) {
+	errors.push("apps/web/turbo.json must keep application build caching enabled.");
 }
 if (!fs.existsSync(path.join(workspaceDirectory, "apps/web/public/.assetsignore"))) {
 	errors.push("apps/web/public/.assetsignore must be preserved.");

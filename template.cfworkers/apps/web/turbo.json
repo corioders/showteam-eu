@@ -2,9 +2,8 @@
 	"extends": ["//"],
 	"tasks": {
 		"build": {
-			"cache": false,
 			"outputs": [".next/**", "!.next/cache/**"],
-			"env": ["IS_CLOUDFLARE", "RANDOM_VALUE_TO_ENSURE_APPS_WEB_IS_REBUILD_ON_GH_ACTIONS", "NEXT_PUBLIC_IS_DEPLOY", "NEXT_PUBLIC_GIT_BRANCH"]
+			"env": ["CSTD_BUILD_INPUTS_HASH", "IS_CLOUDFLARE", "NEXT_PRIVATE_STANDALONE", "NEXT_PUBLIC_IS_DEPLOY", "NEXT_PUBLIC_GIT_BRANCH"]
 		}
 	}
 }
