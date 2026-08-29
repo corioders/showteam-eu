@@ -160,6 +160,9 @@ jobs:
             --command "CREATE TABLE IF NOT EXISTS revalidations (tag TEXT NOT NULL, revalidatedAt INTEGER NOT NULL, stale INTEGER, expire INTEGER default NULL, UNIQUE(tag) ON CONFLICT REPLACE);" &
           D1_PID=$!
 
+          WORKER_BUILD_HASH=$(pnpm --workspace-root turbo run build:worker --filter=web --dry=json 2>/dev/null | jq -r '.tasks[] | select(.task == "build:worker") | .hash')
+          CACHE_UPLOAD_MARKER="/home/runner/_work/.build-cache/r2/${GITHUB_REPOSITORY//\//-}/${WORKER_BUILD_HASH}.complete"
+
           upload_cache_file() {
             CACHE_FILE=$1
             RELATIVE_PATH=${CACHE_FILE#".open-next/cache/"}
@@ -180,12 +183,25 @@ jobs:
           }
           export -f upload_cache_file
           export CACHE_BUCKET
-          # shellcheck disable=SC2016
-          find .open-next/cache -type f -print0 \
-            | xargs -0 --no-run-if-empty --max-args=1 --max-procs="$(nproc)" bash -c 'upload_cache_file "$1"' _
-          wait "$D1_PID"
+          if [[ -f "$CACHE_UPLOAD_MARKER" ]]; then
+            R2_PID=
+          else
+            (
+              # shellcheck disable=SC2016
+              find .open-next/cache -type f -print0 \
+                | xargs -0 --no-run-if-empty --max-args=1 --max-procs="$(nproc)" bash -c 'upload_cache_file "$1"' _
+              mkdir --parents "$(dirname "$CACHE_UPLOAD_MARKER")"
+              touch "$CACHE_UPLOAD_MARKER"
+            ) &
+            R2_PID=$!
+          fi
 
           OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions upload --env preview --preview-alias "$PREVIEW_ALIAS" 2>&1 | tee deploy-output.log
+
+          wait "$D1_PID"
+          if [[ -n "$R2_PID" ]]; then
+            wait "$R2_PID"
+          fi
 
           VERSION_ID=$(grep -oP 'Worker Version ID: \K[0-9a-f-]+' deploy-output.log | tail -n 1)
           if [[ -z "$VERSION_ID" ]]; then
