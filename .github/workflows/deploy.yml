@@ -12,7 +12,7 @@
 #    Add CLOUDFLARE_WORKERS_DEV_SUBDOMAIN as a variable to 'preview'.
 # 3. Preserve the durable D1/R2 resources named in apps/web/wrangler.jsonc.
 #
-# Validation and deploy run together on the isolated `win24-wsl` organization runner.
+# Validation and deploy run on a worker selected by the organization scheduler.
 # The source template repository skips this workflow; initialized project
 # repositories run it normally.
 
@@ -33,9 +33,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  schedule-deploy:
     if: github.repository != 'corioders/cstd-nextjs-template'
-    runs-on: [self-hosted, win24-wsl]
+    uses: ./.github/workflows/schedule-runner.yml
+
+  deploy:
+    needs: schedule-deploy
+    if: github.repository != 'corioders/cstd-nextjs-template'
+    runs-on: [self-hosted, "${{ needs.schedule-deploy.outputs.runner-label }}"]
     timeout-minutes: 30
     environment: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
     env:
@@ -124,6 +129,12 @@ jobs:
           CACHE_DIRECTORY="/home/runner/_work/.build-cache/next/${GITHUB_REPOSITORY//\//-}"
           mkdir --parents "$CACHE_DIRECTORY" showteam.cfworkers/apps/web/.next
           ln --symbolic --force --no-dereference "$CACHE_DIRECTORY" showteam.cfworkers/apps/web/.next/cache
+
+      - name: Use persistent Turborepo cache
+        run: |
+          CACHE_DIRECTORY="/home/runner/_work/.build-cache/turbo/${GITHUB_REPOSITORY//\//-}"
+          mkdir --parents "$CACHE_DIRECTORY"
+          ln --symbolic "$CACHE_DIRECTORY" showteam.cfworkers/.turbo
 
       - name: Resolve external build inputs
         run: pnpm resolve-build-inputs
