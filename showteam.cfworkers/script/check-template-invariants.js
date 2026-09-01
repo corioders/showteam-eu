@@ -172,6 +172,15 @@ requireMatch(
 	/name: Deploy production[\s\S]+?run: OPEN_NEXT_DEPLOY=true pnpm exec wrangler deploy/,
 	"The production deployment must consume the OpenNext artifact already produced by validation.",
 );
+const packageJson = JSON.parse(read("package.json"));
+if (packageJson.scripts?.["resolve-build-inputs"] !== "node script/resolve-external-build-inputs.js") {
+	errors.push("package.json must expose the external build-input resolver.");
+}
+for (const scriptName of ["dev", "preview", "deploy", "logs", "logs:preview", "shadcn:search", "shadcn:add", "shadcn:patch"]) {
+	if (!/^infisical run(?: --env=[a-z]+)? -- /.test(packageJson.scripts?.[scriptName] ?? "")) {
+		errors.push(`package.json script ${scriptName} must inject Infisical secrets.`);
+	}
+}
 const biomeConfig = read("biome.jsonc");
 requireMatch(biomeConfig, /no-throw\.grit/, "biome.jsonc must keep the no-throw plugin.");
 try {

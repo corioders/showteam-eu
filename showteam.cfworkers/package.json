@@ -16,7 +16,7 @@
 		"logs:preview": "infisical run --env=staging -- pnpm --dir apps/web logs:preview",
 		"shadcn:search": "infisical run -- pnpm --dir apps/web shadcn:search",
 		"shadcn:add": "infisical run -- pnpm --dir apps/web shadcn:add",
-		"shadcn:learn": "infisical run -- pnpm --dir apps/web shadcn:learn",
+		"shadcn:patch": "infisical run -- pnpm --dir apps/web shadcn:patch",
 		"check": "turbo run check-types \"//#lint\" \"//#check-invariants\" --concurrency=100%",
 		"check-invariants": "node script/check-template-invariants.js && node --test script/resolve-external-build-inputs.test.js",
 		"resolve-build-inputs": "node script/resolve-external-build-inputs.js",
