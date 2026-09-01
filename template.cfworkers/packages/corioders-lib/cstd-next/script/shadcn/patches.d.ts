@@ -1,4 +1,6 @@
 export function registryItemsFromArguments(arguments_: string[]): string[];
+export function readShadcnStyle(cwd: string): [string, null] | [null, Error];
+export function learnedPatchPaths(patchDirectory: string, registryItem: string, style: string): { manifestPath: string; patchPath: string };
 
 interface LearnedPatchOptions {
 	baselineRoot: string;
@@ -6,6 +8,7 @@ interface LearnedPatchOptions {
 	patchDirectory: string;
 	registryItem: string;
 	sourceFiles: string[];
+	style: string;
 }
 
 interface LearnedPatchResult {
@@ -20,6 +23,7 @@ interface ApplyPatchOptions {
 	cwd: string;
 	patchDirectory: string;
 	registryItem: string;
+	style: string;
 }
 
 export type ApplyPatchResult = { status: "missing" } | { status: "applied"; changedFiles: string[] } | { status: "invalid" | "stale"; error: string };

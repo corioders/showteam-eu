@@ -1,6 +1,7 @@
 {
-	"formatVersion": 1,
+	"formatVersion": 2,
 	"registryItem": "@shadcnblocks/checkout12",
+	"style": "base-mira",
 	"baselineHashes": {
 		"package.json": "d1c73b00c2aa1c9acddd58ab3a5f413f8931d6852c91e701f827eeedffc964e2",
 		"src/components/checkout12.tsx": "a95b98bd9d286b2e406d052c818ac57fd8e6e647d36f1c4c4d9cd0fe84a05a7e",

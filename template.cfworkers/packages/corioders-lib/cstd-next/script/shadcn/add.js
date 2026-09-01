@@ -3,14 +3,16 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { CSTD_NEXT_CANONICAL_REPOSITORY, checkCanonicalShadcnNormalization } from "./canonical.js";
+import { synchronizeCanonicalShadcnNormalization } from "./canonical.js";
 import { normalizeShadcnSource } from "./codemods.js";
-import { applyLearnedPatch, registryItemsFromArguments } from "./patches.js";
+import { applyLearnedPatch, readShadcnStyle, registryItemsFromArguments } from "./patches.js";
 import { changedFiles, copyFiles, getSessionDirectory, loadLocalEnvironment, NORMALIZED_EXTENSIONS, replaceDirectory, run, snapshotFiles } from "./session.js";
 
 const cwd = process.cwd();
 loadLocalEnvironment(cwd);
-const shadcnArguments = process.argv.slice(2);
+const commandArguments = process.argv.slice(2);
+const canonicalAlreadySynchronized = commandArguments[0] === "--cstd-canonical-synchronized";
+const shadcnArguments = canonicalAlreadySynchronized ? commandArguments.slice(1) : commandArguments;
 if (shadcnArguments.length === 0) {
 	console.error("usage: pnpm shadcn:add <registry-item> [...shadcn-options]");
 	process.exit(1);
@@ -18,15 +20,24 @@ if (shadcnArguments.length === 0) {
 const registryItems = registryItemsFromArguments(shadcnArguments);
 const cstdNextRoot = path.resolve(import.meta.dirname, "..", "..");
 const gitRoot = run("git", ["rev-parse", "--show-toplevel"], { capture: true, cwd }).stdout.trim();
-const canonicalCheck = checkCanonicalShadcnNormalization({ cstdNextRoot, gitRoot });
-if (canonicalCheck.error !== null) {
-	console.error(canonicalCheck.error.message);
-	process.exit(1);
+if (!canonicalAlreadySynchronized) {
+	const canonicalSynchronization = synchronizeCanonicalShadcnNormalization({ cstdNextRoot, gitRoot });
+	if (canonicalSynchronization.error !== null) {
+		console.error(canonicalSynchronization.error.message);
+		process.exit(1);
+	}
+	if (canonicalSynchronization.status === "updated") {
+		console.log("Pulled the fast-forward canonical cstd-next update; restarting shadcn:add with the updated compatibility rules.");
+		const restarted = run(process.execPath, [import.meta.filename, "--cstd-canonical-synchronized", ...shadcnArguments], {
+			allowFailure: true,
+			cwd,
+		});
+		process.exit(restarted.status ?? 1);
+	}
 }
-if (!canonicalCheck.isCurrent) {
-	const subtreePrefix = path.relative(gitRoot, cstdNextRoot);
-	console.error("Canonical cstd-next contains newer Shadcnblocks normalization. Update the subtree before installing a block:");
-	console.error(`git subtree pull --prefix ${subtreePrefix} ${CSTD_NEXT_CANONICAL_REPOSITORY} main --squash`);
+const [style, styleError] = readShadcnStyle(cwd);
+if (styleError) {
+	console.error(styleError.message);
 	process.exit(1);
 }
 
@@ -56,8 +67,10 @@ copyFiles(cwd, sourceFiles, path.join(sessionDirectory, "baseline"));
 
 const patchDirectory = path.join(cstdNextRoot, "script", "shadcn", "patches");
 const patchErrors = [];
+const patchResults = [];
 for (const registryItem of registryItems) {
-	const result = applyLearnedPatch({ cwd, patchDirectory, registryItem });
+	const result = applyLearnedPatch({ cwd, patchDirectory, registryItem, style });
+	patchResults.push({ registryItem, status: result.status });
 	if (result.status === "invalid" || result.status === "stale") {
 		patchErrors.push(result.error);
 	}
@@ -76,7 +89,10 @@ if (sourceFiles.length > 0) {
 }
 
 copyFiles(cwd, sourceFiles, path.join(sessionDirectory, "normalized"));
-fs.writeFileSync(path.join(sessionDirectory, "session.json"), `${JSON.stringify({ cwd, installedFiles, registryItems, sourceFiles }, null, "\t")}\n`);
+fs.writeFileSync(
+	path.join(sessionDirectory, "session.json"),
+	`${JSON.stringify({ cwd, installedFiles, patchResults, registryItems, sourceFiles, style }, null, "\t")}\n`,
+);
 
 const biomeResult =
 	sourceFiles.length > 0
@@ -89,8 +105,13 @@ if (patchErrors.length > 0 || biomeResult.status !== 0 || typecheckResult.status
 	for (const patchError of patchErrors) {
 		console.error(patchError);
 	}
-	console.error("Fix only the installed block's generic compatibility errors, then run `pnpm shadcn:learn` before project customization.");
+	console.error(`The ${style} installation remains at the exact destination paths requested by Shadcn:`);
+	for (const relativePath of sourceFiles) {
+		console.error(`- ${path.join(cwd, relativePath)}`);
+	}
+	console.error("Fix only generic compatibility errors in those installed files. Do not change branding, content, demo data, layout, or styling.");
+	console.error("Then run `pnpm shadcn:patch`; it will verify, commit, and push the style-specific patch to canonical cstd-next.");
 	process.exit(1);
 }
 
-console.log(`Shadcnblocks compatibility ready (${sourceFiles.length} source file(s)). Customize now; do not run shadcn:learn.`);
+console.log(`Shadcnblocks compatibility ready for style ${style} (${sourceFiles.length} source file(s)). Customize now; do not run shadcn:patch.`);
