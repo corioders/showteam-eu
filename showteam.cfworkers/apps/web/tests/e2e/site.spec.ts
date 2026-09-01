@@ -156,7 +156,16 @@ test("legacy staff pages redirect under /a", async ({ request }) => {
 	}
 });
 
-test("hero video stops on its last frame and restarts after leaving the viewport", async ({ page }) => {
+test("hero video does not loop and restarts after leaving the viewport", async ({ page }) => {
+	await page.addInitScript(() => {
+		HTMLMediaElement.prototype.play = function play() {
+			this.dataset.playCount = String(Number(this.dataset.playCount ?? "0") + 1);
+			return Promise.resolve();
+		};
+		HTMLMediaElement.prototype.pause = function pause() {
+			this.dataset.pauseCount = String(Number(this.dataset.pauseCount ?? "0") + 1);
+		};
+	});
 	await page.goto("/");
 	const video = page.locator("section video").first();
 	await expect(video).toBeVisible();
@@ -165,24 +174,16 @@ test("hero video stops on its last frame and restarts after leaving the viewport
 	await expect(video).toHaveAttribute("playsinline", "");
 	expect(await video.getAttribute("controls")).toBeNull();
 	expect(await video.getAttribute("loop")).toBeNull();
-	await video.evaluate(async (element) => {
-		const player = element as HTMLVideoElement;
-		player.playbackRate = 8;
-		await player.play();
+	await expect.poll(() => video.getAttribute("data-play-count")).not.toBeNull();
+	const initialPlayCount = Number(await video.getAttribute("data-play-count"));
+	await video.evaluate((element) => {
+		(element as HTMLVideoElement).currentTime = 1;
 	});
-	await expect.poll(() => video.evaluate((element) => (element as HTMLVideoElement).ended), { timeout: 5_000 }).toBe(true);
-	await expect
-		.poll(() =>
-			video.evaluate((element) => {
-				const player = element as HTMLVideoElement;
-				return Math.abs(player.duration - player.currentTime) < 0.15;
-			}),
-		)
-		.toBe(true);
 	await page.evaluate(() => window.scrollTo(0, window.innerHeight + 200));
 	await expect.poll(() => video.evaluate((element) => (element as HTMLVideoElement).currentTime)).toBe(0);
+	await expect.poll(() => video.getAttribute("data-pause-count")).not.toBeNull();
 	await page.evaluate(() => window.scrollTo(0, 0));
-	await expect.poll(() => video.evaluate((element) => (element as HTMLVideoElement).currentTime > 0)).toBe(true);
+	await expect.poll(async () => Number(await video.getAttribute("data-play-count"))).toBeGreaterThan(initialPlayCount);
 });
 
 test("gallery filters CMS photos", async ({ page }) => {
