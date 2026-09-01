@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { CSTD_NEXT_CANONICAL_REPOSITORY, checkCanonicalShadcnNormalization } from "./canonical.js";
 import { normalizeShadcnSource } from "./codemods.js";
 import { applyLearnedPatch, registryItemsFromArguments } from "./patches.js";
 import { changedFiles, copyFiles, getSessionDirectory, loadLocalEnvironment, NORMALIZED_EXTENSIONS, replaceDirectory, run, snapshotFiles } from "./session.js";
@@ -15,9 +16,32 @@ if (shadcnArguments.length === 0) {
 	process.exit(1);
 }
 const registryItems = registryItemsFromArguments(shadcnArguments);
+const cstdNextRoot = path.resolve(import.meta.dirname, "..", "..");
+const gitRoot = run("git", ["rev-parse", "--show-toplevel"], { capture: true, cwd }).stdout.trim();
+const canonicalCheck = checkCanonicalShadcnNormalization({ cstdNextRoot, gitRoot });
+if (canonicalCheck.error !== null) {
+	console.error(canonicalCheck.error.message);
+	process.exit(1);
+}
+if (!canonicalCheck.isCurrent) {
+	const subtreePrefix = path.relative(gitRoot, cstdNextRoot);
+	console.error("Canonical cstd-next contains newer Shadcnblocks normalization. Update the subtree before installing a block:");
+	console.error(`git subtree pull --prefix ${subtreePrefix} ${CSTD_NEXT_CANONICAL_REPOSITORY} main --squash`);
+	process.exit(1);
+}
 
 const before = snapshotFiles(cwd);
-run("pnpm", ["dlx", "shadcn@latest", "add", ...shadcnArguments], { cwd, input: "n\n" });
+const installResult = run("pnpm", ["dlx", "shadcn@latest", "add", "--silent", ...shadcnArguments], {
+	allowFailure: true,
+	capture: true,
+	cwd,
+	input: "n\n",
+});
+if (installResult.status !== 0) {
+	process.stderr.write(installResult.stderr);
+	process.stderr.write(installResult.stdout);
+	process.exit(installResult.status ?? 1);
+}
 const afterInstall = snapshotFiles(cwd);
 const installedFiles = changedFiles(before, afterInstall);
 const sourceFiles = installedFiles.filter((relativePath) => NORMALIZED_EXTENSIONS.has(path.extname(relativePath)));
@@ -26,11 +50,10 @@ replaceDirectory(sessionDirectory);
 copyFiles(cwd, sourceFiles, path.join(sessionDirectory, "raw"));
 
 if (sourceFiles.length > 0) {
-	run("pnpm", ["exec", "biome", "check", "--fix", "--no-errors-on-unmatched", ...sourceFiles], { allowFailure: true, cwd });
+	run("pnpm", ["exec", "biome", "check", "--fix", "--no-errors-on-unmatched", ...sourceFiles], { allowFailure: true, capture: true, cwd });
 }
 copyFiles(cwd, sourceFiles, path.join(sessionDirectory, "baseline"));
 
-const cstdNextRoot = path.resolve(import.meta.dirname, "..", "..");
 const patchDirectory = path.join(cstdNextRoot, "script", "shadcn", "patches");
 const patchErrors = [];
 for (const registryItem of registryItems) {
@@ -49,7 +72,7 @@ if (sourceFiles.length > 0) {
 			fs.writeFileSync(absolutePath, normalized);
 		}
 	}
-	run("pnpm", ["exec", "biome", "check", "--fix", "--no-errors-on-unmatched", ...sourceFiles], { allowFailure: true, cwd });
+	run("pnpm", ["exec", "biome", "check", "--fix", "--no-errors-on-unmatched", ...sourceFiles], { allowFailure: true, capture: true, cwd });
 }
 
 copyFiles(cwd, sourceFiles, path.join(sessionDirectory, "normalized"));
@@ -59,6 +82,8 @@ const biomeResult =
 	sourceFiles.length > 0
 		? run("pnpm", ["exec", "biome", "check", "--error-on-warnings", "--no-errors-on-unmatched", ...sourceFiles], { allowFailure: true, cwd })
 		: { status: 0 };
+run("pnpm", ["--filter", "cstd-ts", "build"], { cwd });
+run("pnpm", ["--filter", "cstd-next", "build"], { cwd });
 const typecheckResult = run("pnpm", ["run", "check-types"], { allowFailure: true, cwd });
 if (patchErrors.length > 0 || biomeResult.status !== 0 || typecheckResult.status !== 0) {
 	for (const patchError of patchErrors) {
@@ -68,4 +93,4 @@ if (patchErrors.length > 0 || biomeResult.status !== 0 || typecheckResult.status
 	process.exit(1);
 }
 
-console.log(`Normalized ${sourceFiles.length} Shadcnblocks source file(s).`);
+console.log(`Shadcnblocks compatibility ready (${sourceFiles.length} source file(s)). Customize now; do not run shadcn:learn.`);

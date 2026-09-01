@@ -6,7 +6,7 @@
 import "server-only";
 
 import { getRequestAuthHeaders } from "cstd-ts/driveCMS/index.js";
-import { cache, use } from "react";
+import { use } from "react";
 
 import { OptimizedImage } from "./optimized-image.jsx";
 import { loadPrerenderedImage } from "./prerendered-image-runtime.js";
@@ -21,11 +21,12 @@ export const GoogleDriveRemoteStaticImage = function GoogleDriveRemoteStaticImag
 	return <OptimizedImage {...imageProps} src={optimizedImage} />;
 };
 
-const loadGoogleDriveRemoteStaticImage = cache(async (src: string, sizes: string) => {
+async function loadGoogleDriveRemoteStaticImage(src: string, sizes: string) {
+	"use cache";
 	const [fetchDriveCMSHeaders, headersError] = await getRequestAuthHeaders(src);
 	return loadPrerenderedImage({
 		fetchRequestInit: headersError ? undefined : { headers: fetchDriveCMSHeaders },
 		sizes,
 		src,
 	});
-});
+}

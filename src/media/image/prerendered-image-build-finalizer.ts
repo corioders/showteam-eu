@@ -78,11 +78,6 @@ async function injectRouteManifest(projectDirectory: string, htmlFile: string): 
 	if (uniqueKeys.length === 0) {
 		return;
 	}
-	if (!html.includes(PRERENDERED_IMAGE_MANIFEST_PLACEHOLDER)) {
-		// biome-ignore lint/plugin/no-throw: The postbuild command must exit nonzero when the page loader contract is missing.
-		throw new Error(`Route ${htmlFile} renders prerendered images but its page was not wrapped by the cstd-next Turbopack manifest loader.`);
-	}
-
 	const manifest = await readRouteManifest(projectDirectory, uniqueKeys);
 	const encodedManifest = Buffer.from(JSON.stringify(manifest)).toString("base64");
 	const finalHtml = removeManifestMarkers(html.replaceAll(PRERENDERED_IMAGE_MANIFEST_PLACEHOLDER, encodedManifest));
@@ -96,7 +91,7 @@ async function injectRouteManifest(projectDirectory: string, htmlFile: string): 
 
 	let patchedRscFiles = 0;
 	for (const rscFile of rscFiles) {
-		if (await patchRscFile(rscFile, encodedManifest)) {
+		if ((await pathExists(rscFile)) && (await patchRscFile(rscFile, encodedManifest))) {
 			patchedRscFiles += 1;
 		}
 	}

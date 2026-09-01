@@ -4,6 +4,7 @@ import path from "node:path";
 
 import { afterAll, describe, expect, it } from "vitest";
 
+import { checkCanonicalShadcnNormalization } from "../script/shadcn/canonical.js";
 import { applyLearnedPatch, registryItemsFromArguments, writeLearnedPatch } from "../script/shadcn/patches.js";
 import { loadLocalEnvironment, run, snapshotFiles } from "../script/shadcn/session.js";
 
@@ -79,5 +80,36 @@ describe("Shadcnblocks installation snapshots", () => {
 
 	it("extracts only purchased registry items from shadcn arguments", () => {
 		expect(registryItemsFromArguments(["@shadcnblocks/dashboard9", "-y", "button"])).toEqual(["@shadcnblocks/dashboard9"]);
+	});
+
+	it("detects newer normalization in canonical cstd-next", () => {
+		const canonicalRoot = path.join(fixtureDirectory, "canonical-cstd-next");
+		const projectRoot = path.join(fixtureDirectory, "canonical-check-project");
+		const vendoredRoot = path.join(projectRoot, "packages", "cstd-next");
+		for (const root of [canonicalRoot, projectRoot]) {
+			fs.mkdirSync(root, { recursive: true });
+			run("git", ["init", "--initial-branch=main"], { capture: true, cwd: root });
+			run("git", ["config", "user.email", "test@corioders.com"], { capture: true, cwd: root });
+			run("git", ["config", "user.name", "Corioders Test"], { capture: true, cwd: root });
+		}
+		fs.mkdirSync(path.join(canonicalRoot, "script", "shadcn", "patches"), { recursive: true });
+		fs.writeFileSync(path.join(canonicalRoot, "script", "shadcn", "codemods.js"), "export const version = 1;\n");
+		fs.writeFileSync(path.join(canonicalRoot, "script", "shadcn", "patches", "dashboard.json"), "{}\n");
+		run("git", ["add", "."], { cwd: canonicalRoot });
+		run("git", ["commit", "-m", "initial normalization"], { capture: true, cwd: canonicalRoot });
+		fs.cpSync(path.join(canonicalRoot, "script"), path.join(vendoredRoot, "script"), { recursive: true });
+
+		expect(checkCanonicalShadcnNormalization({ canonicalRepository: canonicalRoot, cstdNextRoot: vendoredRoot, gitRoot: projectRoot })).toEqual({
+			error: null,
+			isCurrent: true,
+		});
+
+		fs.writeFileSync(path.join(canonicalRoot, "script", "shadcn", "codemods.js"), "export const version = 2;\n");
+		run("git", ["add", "."], { cwd: canonicalRoot });
+		run("git", ["commit", "-m", "update normalization"], { capture: true, cwd: canonicalRoot });
+		expect(checkCanonicalShadcnNormalization({ canonicalRepository: canonicalRoot, cstdNextRoot: vendoredRoot, gitRoot: projectRoot })).toEqual({
+			error: null,
+			isCurrent: false,
+		});
 	});
 });

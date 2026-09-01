@@ -26,6 +26,7 @@ import type { OptimizedImageDescriptor } from "./optimized-image.jsx";
 import { getDevelopmentPrerenderedImage } from "./prerendered-image-development.js";
 import { getPrerenderedImageMode, getPrerenderedImageRequestKey, type PrerenderedImageRequest } from "./prerendered-image-request.js";
 import { PRERENDERED_IMAGE_DESCRIPTOR_DIRECTORY, type PrerenderedImageResource } from "./prerendered-image-resource.js";
+import { loadCachedPrerenderedImageResource } from "./prerendered-image-resource-cache.js";
 import { getPrerenderedImageFilename, LOCAL_STATIC_IMAGE_PROTOCOL } from "./prerendered-image-source.js";
 
 const FETCH_CONCURRENCY_LIMIT = 3;
@@ -63,9 +64,11 @@ export function loadPrerenderedImage(request: PrerenderedImageServerRequest): Pr
 	return loadPrerenderedImageResource(request).then((resource) => resource.image);
 }
 
-/** Suspends only the server prerender while fetch/Sharp/filesystem work completes. */
 export function usePrerenderedImageResource(request: PrerenderedImageServerRequest): PrerenderedImageResource {
-	return use(loadPrerenderedImageResource(request));
+	if (process.env["NEXT_IS_EXPORT_WORKER"] !== "true" && process.env.NODE_ENV !== "development" && request.runtimeAsset !== undefined) {
+		return { image: request.runtimeAsset };
+	}
+	return use(loadCachedPrerenderedImageResource(request));
 }
 
 export function loadPrerenderedImageResource(request: PrerenderedImageServerRequest): Promise<PrerenderedImageResource> {

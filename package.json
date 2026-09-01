@@ -36,7 +36,8 @@
 	"imports": {
 		"#cstd-next-prerendered-image-runtime": {
 			"types": "./src/media/image/prerendered-image-runtime.ts",
-			"default": "./build/media/image/prerendered-image-runtime.js"
+			"react-server": "./build/media/image/prerendered-image-runtime.js",
+			"default": "./build/media/image/prerendered-image-runtime-browser.js"
 		}
 	},
 	"name": "cstd-next",
@@ -60,6 +61,7 @@
 		"check-types": "tsc --noEmit && tsc --noEmit --project tsconfig.test.json",
 		"clean": "rm -rf build",
 		"dev": "concurrently \"tsc --watch --preserveWatchOutput\" \"tsc-alias --watch\"",
+		"pretest:unit": "pnpm --filter cstd-ts build",
 		"test:unit": "vitest run"
 	},
 	"version": "0.0.0"
