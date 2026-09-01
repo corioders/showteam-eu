@@ -72,12 +72,14 @@ jobs:
           echo "PREVIEW_ALIAS=$SAFE_PREVIEW_ALIAS" >> "$GITHUB_ENV"
 
       - name: Setup Node.js
+        if: runner.environment != 'self-hosted'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 24
           package-manager-cache: false
 
       - name: Setup pnpm
+        if: runner.environment != 'self-hosted'
         run: corepack enable
 
       - name: Restore Turborepo cache
@@ -127,6 +129,12 @@ jobs:
           CACHE_DIRECTORY="/home/runner/_work/.build-cache/next/${GITHUB_REPOSITORY//\//-}"
           mkdir --parents "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next
           ln --symbolic --force --no-dereference "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next/cache
+
+      - name: Use persistent Turborepo cache
+        run: |
+          CACHE_DIRECTORY="/home/runner/_work/.build-cache/turbo/${GITHUB_REPOSITORY//\//-}"
+          mkdir --parents "$CACHE_DIRECTORY"
+          ln --symbolic "$CACHE_DIRECTORY" template.cfworkers/.turbo
 
       - name: Fetch deployment secrets from Infisical
         uses: Infisical/secrets-action@77ab1f4ccd183a543cb5b42435fbd181189f4995 # v1.0.16

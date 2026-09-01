@@ -26,12 +26,14 @@ jobs:
             template.cfworkers
 
       - name: Setup Node.js
+        if: runner.environment != 'self-hosted'
         uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 24
           package-manager-cache: false
 
       - name: Setup pnpm
+        if: runner.environment != 'self-hosted'
         run: corepack enable
 
       - name: Restore pnpm cache
@@ -99,6 +101,13 @@ jobs:
           CACHE_DIRECTORY="/home/runner/_work/.build-cache/next/${GITHUB_REPOSITORY//\//-}"
           mkdir --parents "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next
           ln --symbolic --force --no-dereference "$CACHE_DIRECTORY" template.cfworkers/apps/web/.next/cache
+
+      - name: Use persistent Turborepo cache
+        if: runner.environment == 'self-hosted'
+        run: |
+          CACHE_DIRECTORY="/home/runner/_work/.build-cache/turbo/${GITHUB_REPOSITORY//\//-}"
+          mkdir --parents "$CACHE_DIRECTORY"
+          ln --symbolic "$CACHE_DIRECTORY" template.cfworkers/.turbo
 
       - name: Validate, build, and run browser tests
         run: pnpm validate:ci
