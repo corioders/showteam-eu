@@ -5,7 +5,7 @@
 # bootstrap_project.sh provisions Infisical + GitHub OIDC, Cloudflare cache
 # resources, the deploy token in Infisical staging/prod, and Wrangler bindings.
 #
-# Validation and deploy run together on the isolated `win24-wsl` organization runner.
+# Validation and deploy run on a worker selected by the organization scheduler.
 # The source template repository skips this workflow; initialized project
 # repositories run it normally.
 
@@ -31,9 +31,14 @@ jobs:
     if: github.repository == 'corioders/cstd-nextjs-template'
     uses: ./.github/workflows/validate.yml
 
-  deploy:
+  schedule-deploy:
     if: github.repository != 'corioders/cstd-nextjs-template'
-    runs-on: [self-hosted, win24-wsl]
+    uses: ./.github/workflows/schedule-runner.yml
+
+  deploy:
+    needs: schedule-deploy
+    if: github.repository != 'corioders/cstd-nextjs-template'
+    runs-on: [self-hosted, "${{ needs.schedule-deploy.outputs.runner-label }}"]
     timeout-minutes: 30
     environment: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
     env:
