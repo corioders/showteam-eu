@@ -1,6 +1,7 @@
 {
-	"formatVersion": 1,
+	"formatVersion": 2,
 	"registryItem": "@shadcnblocks/dashboard9",
+	"style": "base-mira",
 	"baselineHashes": {
 		"package.json": "8379c6887c96ac0d1285d02f73cacfe5af7113873e2740fb06b1521c7d7193de",
 		"src/components/dashboard9.tsx": "bd8ee14a2a898a35fd0c5ddd7d3e7fcfcaba6d920fb85711678042c94ff80174",
