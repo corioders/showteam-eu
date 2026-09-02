@@ -57,6 +57,7 @@ export function OptimizedImage({ src: image, alt, decoding = "async", loading, s
 	return (
 		<picture className={pictureClassName}>
 			{sources}
+			{/* biome-ignore lint/plugin/no-native-img: OptimizedImage owns the final native image element behind the project abstraction. */}
 			<img {...imgProps} {...imageAttributes} alt={alt} src={image.img.src} srcSet={image.img.srcSet} />
 		</picture>
 	);

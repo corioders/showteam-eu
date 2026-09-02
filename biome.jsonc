@@ -6,7 +6,7 @@
 	"files": {
 		"includes": ["!script/shadcn/patches"]
 	},
-	"plugins": ["../cstd-ts/config/biome-plugin/no-throw.grit"],
+	"plugins": ["../cstd-ts/config/biome-plugin/no-native-img.grit", "../cstd-ts/config/biome-plugin/no-throw.grit"],
 	"linter": {
 		"rules": {
 			"suspicious": {
