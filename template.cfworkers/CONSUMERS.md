@@ -18,6 +18,8 @@ exact reminder to add that project to this source registry.
 | `corioders/ui` | `ui.cloudflare/apps/web` | shadcn registry generator | Replace Next on Pages and staged-only CI check | Planned | — |
 | `poland2-0/poland20` | `poland20.cloudflare/apps/web` | Lingui routing and Drive CMS | Replace Next on Pages and staged-only CI check | Planned | — |
 
+Shadcn real-block regression migration `9f9f0b2`: in progress for the three active migrated consumers.
+
 ## Migration rule
 
 For every template or `cstd-*` change, update this table first, then make and
