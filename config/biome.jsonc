@@ -68,6 +68,7 @@
 			},
 			"performance": {
 				"noBarrelFile": "warn",
+				"noImgElement": "off",
 				"noReExportAll": "warn",
 				"useTopLevelRegex": "warn"
 			},

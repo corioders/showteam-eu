@@ -1,0 +1,10 @@
+engine biome(1.0)
+language js(typescript, jsx)
+
+or {
+	JsxSelfClosingElement(name=$elementName) as $image,
+	JsxOpeningElement(name=$elementName) as $image
+} where {
+	$elementName <: "img",
+	register_diagnostic(span=$image, message="Native `<img>` is disallowed. Render `StaticImage` or `OptimizedImage` from `cstd-next/media/image` instead.")
+}
