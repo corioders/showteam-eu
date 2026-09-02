@@ -34,6 +34,6 @@ describe("Shadcnblocks codemods", () => {
 		expect(normalized).toContain('salesPipelineData["q1"] ?? []');
 		expect(normalized).toContain("filteredOrders.length > 0 ?");
 		expect(normalized).not.toContain("shippedDateFormatter");
-		expect(normalized).toContain("biome-ignore-all lint/performance/noImgElement");
+		expect(normalized).not.toContain("noImgElement");
 	});
 });
