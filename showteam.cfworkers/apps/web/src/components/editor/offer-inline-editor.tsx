@@ -1,4 +1,3 @@
-// biome-ignore-all lint/performance/noImgElement: The element renders a local blob preview before upload.
 // biome-ignore-all lint/style/noNonNullAssertion: Legacy SHOWteam behavior is preserved during the structural template migration.
 // biome-ignore-all lint/suspicious/noArrayIndexKey: Legacy SHOWteam behavior is preserved during the structural template migration.
 // biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
@@ -625,6 +624,9 @@ export function OfferCover({ offer }: { offer: Offer }) {
 	const [descriptor, setDescriptor] = useState(offer.imageDescriptor);
 	const [uploading, setUploading] = useState(false);
 	const [error, setError] = useState("");
+	const previewDescriptor: OptimizedImageDescriptor | undefined = preview.startsWith("blob:")
+		? { contentHash: preview, height: 0, img: { src: preview }, width: 0 }
+		: descriptor;
 
 	async function upload(file: File | undefined) {
 		if (!file || !offer.cmsId || uploading) {
@@ -655,10 +657,8 @@ export function OfferCover({ offer }: { offer: Offer }) {
 
 	return (
 		<>
-			{preview.startsWith("blob:") ? (
-				<img src={preview} alt={offer.imageAlt} className="absolute inset-0 size-full object-cover" />
-			) : descriptor ? (
-				<OptimizedImage src={descriptor} alt={offer.imageAlt} loading="eager" className="absolute inset-0 size-full object-cover" sizes="100vw" />
+			{previewDescriptor ? (
+				<OptimizedImage src={previewDescriptor} alt={offer.imageAlt} loading="eager" className="absolute inset-0 size-full object-cover" sizes="100vw" />
 			) : (offer.staticImage ?? resolveStaticImage(offer.image)) ? (
 				<StaticImage
 					src={(offer.staticImage ?? resolveStaticImage(offer.image))!}
