@@ -1,22 +1,24 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
 const projectDirectory = path.resolve(import.meta.dirname, "..");
 const biomeBinary = path.join(projectDirectory, "node_modules", ".bin", "biome");
+const configPath = path.join(projectDirectory, "biome.jsonc");
 const fixtureDirectory = path.join(projectDirectory, "script", "fixtures", "biome");
 const nativeImageDiagnostic = /Native `<img>` is disallowed/;
 const projectImageGuidance = /StaticImage.*OptimizedImage/;
 
 function lintFixture(filename) {
 	const fixturePath = path.join(fixtureDirectory, filename);
-	const temporaryDirectory = mkdtempSync(path.join(projectDirectory, "apps", "web", "src", ".biome-plugin-test-"));
+	const temporaryDirectory = mkdtempSync(path.join(os.tmpdir(), "cstd-biome-plugin-"));
 	const temporarySourcePath = path.join(temporaryDirectory, "fixture.tsx");
 	writeFileSync(temporarySourcePath, readFileSync(fixturePath));
 	try {
-		return spawnSync(biomeBinary, ["lint", temporarySourcePath], {
+		return spawnSync(biomeBinary, ["lint", "--config-path", configPath, temporarySourcePath], {
 			cwd: projectDirectory,
 			encoding: "utf8",
 		});
