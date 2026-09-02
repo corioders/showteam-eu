@@ -234,6 +234,7 @@ describe("image pipeline", () => {
 	});
 
 	it("uses source dimensions for development placeholder limits", () => {
+		vi.stubEnv("CORIODERS_DISABLE_PERFORMANCE_PLACEHOLDER", "false");
 		const smallImageInfo = { height: 4096, imageSize: Number.MAX_SAFE_INTEGER, pages: 1, type: "jpeg" as const, width: 4096 };
 		const largeImageInfo = { height: 4096, imageSize: 1, pages: 1, type: "jpeg" as const, width: 4097 };
 		const [smallSources, smallSourcesError] = getPictureSourcesNotSvg(true, "small.jpg", "hash", smallImageInfo, "output", [320]);
