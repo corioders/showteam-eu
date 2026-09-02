@@ -42,12 +42,18 @@ if (styleError) {
 }
 
 const before = snapshotFiles(cwd);
-const installResult = run("pnpm", ["dlx", "shadcn@latest", "add", "--silent", ...shadcnArguments], {
+const sessionDirectory = getSessionDirectory(cwd);
+replaceDirectory(sessionDirectory);
+const preservedFiles = [...before.keys()].filter((relativePath) => relativePath !== "package.json");
+const preservedDirectory = path.join(sessionDirectory, "preserved");
+copyFiles(cwd, preservedFiles, preservedDirectory);
+const installResult = run("pnpm", ["dlx", "shadcn@latest", "add", "--silent", "--overwrite", ...shadcnArguments], {
 	allowFailure: true,
 	capture: true,
 	cwd,
-	input: "n\n",
 });
+copyFiles(preservedDirectory, preservedFiles, cwd);
+fs.rmSync(preservedDirectory, { force: true, recursive: true });
 if (installResult.status !== 0) {
 	process.stderr.write(installResult.stderr);
 	process.stderr.write(installResult.stdout);
@@ -56,8 +62,10 @@ if (installResult.status !== 0) {
 const afterInstall = snapshotFiles(cwd);
 const installedFiles = changedFiles(before, afterInstall);
 const sourceFiles = installedFiles.filter((relativePath) => NORMALIZED_EXTENSIONS.has(path.extname(relativePath)));
-const sessionDirectory = getSessionDirectory(cwd);
-replaceDirectory(sessionDirectory);
+if (registryItems.length > 0 && sourceFiles.length === 0) {
+	console.error(`Shadcn reported success but installed no source files for: ${registryItems.join(", ")}`);
+	process.exit(1);
+}
 copyFiles(cwd, sourceFiles, path.join(sessionDirectory, "raw"));
 
 if (sourceFiles.length > 0) {

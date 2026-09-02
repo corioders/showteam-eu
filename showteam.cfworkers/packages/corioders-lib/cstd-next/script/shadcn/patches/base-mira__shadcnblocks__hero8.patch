@@ -1,0 +1,27 @@
+diff --git a/src/components/hero8.tsx b/src/components/hero8.tsx
+index 78bc17b..4f269ca 100644
+--- a/src/components/hero8.tsx
++++ b/src/components/hero8.tsx
+@@ -1,3 +1,4 @@
++// biome-ignore-all lint/performance/noImgElement: Preserve upstream remote-image behavior without requiring project-specific image hosts.
+ import { ArrowRight } from "lucide-react";
+ 
+ import { Button } from "@/components/ui/button";
+@@ -8,14 +9,14 @@ interface Image {
+ 	alt: string;
+ 	srcDark?: string;
+ }
+-interface Button {
++interface ButtonLink {
+ 	text: string;
+ 	url: string;
+ 	icon?: React.ReactNode;
+ }
+ interface Buttons {
+-	primary?: Button;
+-	secondary?: Button;
++	primary?: ButtonLink;
++	secondary?: ButtonLink;
+ }
+ 
+ interface HeroBasicProps {

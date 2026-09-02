@@ -180,10 +180,15 @@ export function applyLearnedPatch({ cwd, patchDirectory, registryItem, style }) 
 		}
 	}
 
-	const checkResult = run("git", ["apply", "--check", "--whitespace=nowarn", patchPath], { allowFailure: true, capture: true, cwd });
+	const repositoryResult = run("git", ["rev-parse", "--show-toplevel"], { allowFailure: true, capture: true, cwd });
+	const realCwd = fs.realpathSync(cwd);
+	const applyCwd = repositoryResult.status === 0 ? fs.realpathSync(repositoryResult.stdout.trim()) : realCwd;
+	const applyDirectory = path.relative(applyCwd, realCwd);
+	const directoryArguments = applyDirectory === "" ? [] : [`--directory=${applyDirectory}`];
+	const checkResult = run("git", ["apply", "--check", "--whitespace=nowarn", ...directoryArguments, patchPath], { allowFailure: true, capture: true, cwd: applyCwd });
 	if (checkResult.status !== 0) {
-		return { error: `Learned patch no longer applies cleanly for ${registryItem} with style ${style}.`, status: "stale" };
+		return { error: `Learned patch no longer applies cleanly for ${registryItem} with style ${style}: ${checkResult.stderr.trim()}`, status: "stale" };
 	}
-	run("git", ["apply", "--whitespace=nowarn", patchPath], { cwd });
+	run("git", ["apply", "--whitespace=nowarn", ...directoryArguments, patchPath], { cwd: applyCwd });
 	return { changedFiles: manifest.changedFiles, status: "applied" };
 }
