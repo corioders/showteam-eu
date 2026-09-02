@@ -56,6 +56,10 @@ if (installResult.status !== 0) {
 const afterInstall = snapshotFiles(cwd);
 const installedFiles = changedFiles(before, afterInstall);
 const sourceFiles = installedFiles.filter((relativePath) => NORMALIZED_EXTENSIONS.has(path.extname(relativePath)));
+if (registryItems.length > 0 && sourceFiles.length === 0) {
+	console.error(`Shadcn reported success but installed no source files for: ${registryItems.join(", ")}`);
+	process.exit(1);
+}
 const sessionDirectory = getSessionDirectory(cwd);
 replaceDirectory(sessionDirectory);
 copyFiles(cwd, sourceFiles, path.join(sessionDirectory, "raw"));
