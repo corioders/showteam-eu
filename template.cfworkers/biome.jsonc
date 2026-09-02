@@ -2,7 +2,7 @@
 {
 	"$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
 	"extends": ["./packages/corioders-lib/cstd-ts/config/biome.jsonc"],
-	"plugins": ["packages/corioders-lib/cstd-ts/config/biome-plugin/no-throw.grit"],
+	"plugins": ["packages/corioders-lib/cstd-ts/config/biome-plugin/no-native-img.grit", "packages/corioders-lib/cstd-ts/config/biome-plugin/no-throw.grit"],
 	"files": {
 		"includes": [
 			"!skills-lock.json",
@@ -16,7 +16,8 @@
 			"!**/.github",
 			"!**/.idea",
 			"!**/.vscode",
-			"!**/.wrangler"
+			"!**/.wrangler",
+			"!script/fixtures/biome"
 		]
 	}
 }
