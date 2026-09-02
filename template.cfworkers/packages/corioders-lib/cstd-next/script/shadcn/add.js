@@ -46,7 +46,7 @@ const installResult = run("pnpm", ["dlx", "shadcn@latest", "add", "--silent", ..
 	allowFailure: true,
 	capture: true,
 	cwd,
-	input: "n\n",
+	input: "n\n".repeat(256),
 });
 if (installResult.status !== 0) {
 	process.stderr.write(installResult.stderr);
