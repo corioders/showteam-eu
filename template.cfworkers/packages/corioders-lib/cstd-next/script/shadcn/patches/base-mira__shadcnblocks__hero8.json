@@ -1,0 +1,12 @@
+{
+	"formatVersion": 2,
+	"registryItem": "@shadcnblocks/hero8",
+	"style": "base-mira",
+	"baselineHashes": {
+		"src/components/hero8.tsx": "64f2b583ae46e44a6ba58def6823cda0705f32a6e3ff7ca431cbdece207b3705",
+		"src/components/ui/button.tsx": "47c420b7919f17531e7a178f067f614865a5a0aba2ca7a6af3b25e2b87759940"
+	},
+	"changedFiles": [
+		"src/components/hero8.tsx"
+	]
+}
