@@ -46,7 +46,8 @@ describe("Shadcnblocks installation snapshots", () => {
 	it("learns, verifies, and reapplies a complete dashboard9 patch", () => {
 		const baselineRoot = path.join(fixtureDirectory, "dashboard9-baseline");
 		const fixedRoot = path.join(fixtureDirectory, "dashboard9-fixed");
-		const installRoot = path.join(fixtureDirectory, "dashboard9-install");
+		const installRepository = path.join(fixtureDirectory, "dashboard9-install-repository");
+		const installRoot = path.join(installRepository, "apps", "web");
 		const patchDirectory = path.join(fixtureDirectory, "patches");
 		const relativePath = "src/components/dashboard9.tsx";
 		const upstream = 'export const status = "pending";\n';
@@ -59,6 +60,7 @@ describe("Shadcnblocks installation snapshots", () => {
 			fs.mkdirSync(path.join(root, "src/components"), { recursive: true });
 			fs.writeFileSync(path.join(root, relativePath), source);
 		}
+		run("git", ["init", "--initial-branch=main"], { capture: true, cwd: installRepository });
 
 		const [learnedPatch, learningError] = writeLearnedPatch({
 			baselineRoot,
@@ -73,9 +75,8 @@ describe("Shadcnblocks installation snapshots", () => {
 		expect(learnedPatch?.changedFiles).toEqual([relativePath]);
 		expect(fs.readFileSync(learnedPatch?.patchPath ?? "", "utf8")).not.toContain(fixtureDirectory);
 		expect(path.basename(learnedPatch?.patchPath ?? "")).toBe("base-mira__shadcnblocks__dashboard9.patch");
-		expect(applyLearnedPatch({ cwd: installRoot, patchDirectory, registryItem: "@shadcnblocks/dashboard9", style: "base-mira" })).toMatchObject({
-			status: "applied",
-		});
+		const applicationResult = applyLearnedPatch({ cwd: installRoot, patchDirectory, registryItem: "@shadcnblocks/dashboard9", style: "base-mira" });
+		expect(applicationResult).toEqual({ changedFiles: [relativePath], status: "applied" });
 		expect(fs.readFileSync(path.join(installRoot, relativePath), "utf8")).toBe(fixed);
 
 		fs.writeFileSync(path.join(installRoot, relativePath), 'export const status = "upstream-v2";\n');
