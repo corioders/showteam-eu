@@ -1,0 +1,8 @@
+export function NativeImages() {
+	return (
+		<>
+			<img alt="Self-closing" src="/self-closing.png" />
+			<img alt="Closing tag" src="/closing-tag.png"></img>
+		</>
+	);
+}

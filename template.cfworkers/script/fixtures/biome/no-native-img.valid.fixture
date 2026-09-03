@@ -1,0 +1,11 @@
+import { OptimizedImage } from "cstd-next/media/image/optimized-image.jsx";
+import { StaticImage } from "cstd-next/media/image/static-image.jsx";
+
+export function ProjectImages() {
+	return (
+		<>
+			<StaticImage alt="Static" loading="lazy" sizes="100vw" src="/static.png" />
+			<OptimizedImage alt="Optimized" loading="lazy" sizes="100vw" src={{ contentHash: "fixture", height: 1, img: { src: "/optimized.png" }, width: 1 }} />
+		</>
+	);
+}
