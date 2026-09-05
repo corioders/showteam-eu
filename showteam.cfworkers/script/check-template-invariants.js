@@ -207,6 +207,13 @@ for (const [pattern, message] of [
 	[/SHADCN-ONLY UI IS MANDATORY/, "AGENTS.md must require shadcn-only UI."],
 	[/DO NOT RESTYLE REGISTRY CODE/, "AGENTS.md must forbid restyling registry code."],
 	[/Do not create a custom UI component, custom styled substitute, or bespoke visual implementation/, "AGENTS.md must forbid custom UI implementations."],
+	[/treat every generated component and block file as immutable vendor UI/, "AGENTS.md must make installed registry UI immutable."],
+	[/Never hand-create a visual `\.tsx` component/, "AGENTS.md must forbid hand-created TSX UI components."],
+	[/every `className`\/`style` byte-for-byte unchanged from the post-install result/, "AGENTS.md must preserve registry visual code byte-for-byte."],
+	[
+		/Any JSX-structure or visual-style diff outside an approved compatibility patch is a failed implementation/,
+		"AGENTS.md must reject structural or visual registry drift.",
+	],
 	[/If shadcn truly has no applicable primitive, stop and ask the user/, "AGENTS.md must require user direction instead of a custom UI fallback."],
 	[
 		/generic compatibility fixes required after `shadcn:add` reports an unknown or stale incompatibility/,
