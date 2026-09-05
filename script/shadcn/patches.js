@@ -170,13 +170,13 @@ export function applyLearnedPatch({ cwd, patchDirectory, registryItem, style }) 
 	} catch {
 		return { error: `Learned patch manifest is invalid for ${registryItem}.`, status: "invalid" };
 	}
+	const requiresBrowserVerification = manifest.formatVersion === 2;
 	if (
-		manifest.formatVersion !== PATCH_FORMAT_VERSION ||
+		(!requiresBrowserVerification && manifest.formatVersion !== PATCH_FORMAT_VERSION) ||
 		manifest.registryItem !== registryItem ||
 		manifest.style !== style ||
 		typeof manifest.baselineHashes !== "object" ||
-		typeof manifest.verificationTest?.path !== "string" ||
-		typeof manifest.verificationTest.hash !== "string"
+		(!requiresBrowserVerification && (typeof manifest.verificationTest?.path !== "string" || typeof manifest.verificationTest.hash !== "string"))
 	) {
 		return { error: `Learned patch manifest is invalid for ${registryItem}.`, status: "invalid" };
 	}
@@ -198,5 +198,12 @@ export function applyLearnedPatch({ cwd, patchDirectory, registryItem, style }) 
 		return { error: `Learned patch no longer applies cleanly for ${registryItem} with style ${style}: ${checkResult.stderr.trim()}`, status: "stale" };
 	}
 	run("git", ["apply", "--whitespace=nowarn", ...directoryArguments, patchPath], { cwd: applyCwd });
+	if (requiresBrowserVerification) {
+		return {
+			changedFiles: manifest.changedFiles,
+			error: `${registryItem} compatibility for style ${style} predates required browser verification.`,
+			status: "unverified",
+		};
+	}
 	return { changedFiles: manifest.changedFiles, status: "applied" };
 }

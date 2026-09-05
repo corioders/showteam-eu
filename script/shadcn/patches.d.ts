@@ -27,6 +27,10 @@ interface ApplyPatchOptions {
 	style: string;
 }
 
-export type ApplyPatchResult = { status: "missing" } | { status: "applied"; changedFiles: string[] } | { status: "invalid" | "stale"; error: string };
+export type ApplyPatchResult =
+	| { status: "missing" }
+	| { status: "applied"; changedFiles: string[] }
+	| { status: "invalid" | "stale"; error: string }
+	| { status: "unverified"; changedFiles: string[]; error: string };
 
 export function applyLearnedPatch(options: ApplyPatchOptions): ApplyPatchResult;
