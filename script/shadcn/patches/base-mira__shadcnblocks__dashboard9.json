@@ -1,0 +1,30 @@
+{
+	"formatVersion": 2,
+	"registryItem": "@shadcnblocks/dashboard9",
+	"style": "base-mira",
+	"baselineHashes": {
+		"src/components/dashboard9.tsx": "bd8ee14a2a898a35fd0c5ddd7d3e7fcfcaba6d920fb85711678042c94ff80174",
+		"src/components/ui/avatar.tsx": "527aa7ef7cbbfd239ec80c841bead0933db98125fcec83e8869799147e5f786d",
+		"src/components/ui/badge.tsx": "952dcb272d63f181dc2d8a3e25f297a555f1d2fa74560dd98b378dfbddbfc627",
+		"src/components/ui/button.tsx": "8a12c3842a367d1e2f1a37cc7b8b870e23217fb5db6e48f6a2209df7173833ff",
+		"src/components/ui/card.tsx": "b9497ae292da25ad97de7a91ee1b74c25263f6c1ca86c08f21d69b6f9bb60e2a",
+		"src/components/ui/chart.tsx": "f923c5f8dd6efc656ec77375dd21e55af429f1ac848370b50e114aa3d2ba89c8",
+		"src/components/ui/collapsible.tsx": "4b7994bcd30fe27a7f1466dfa179f43898ebed28e86cc2e7ee6d4599bb6179bd",
+		"src/components/ui/dropdown-menu.tsx": "860b68953d2b53aea10c788881a57de0ede58674a2d6cd742b101e9562e5d962",
+		"src/components/ui/input.tsx": "2b3e9a1340f61be5198f2232352d236e3accc037afdd51255f628491598d6eee",
+		"src/components/ui/scroll-area.tsx": "37c45d89b558abae85685546eb7d2ad347f462e8e691b1d585c6d74ab5c04a98",
+		"src/components/ui/select.tsx": "0a86ed0960a60d7858e46fd7c9630b3e74049c5a8600a0a003818b0ebcc6182a",
+		"src/components/ui/separator.tsx": "c3be4b5de10297f61410e3605f6081fbd0cfee6b964dece236c44ba78a753c80",
+		"src/components/ui/sheet.tsx": "72a4ebf08eecdfeb95a6ee6d85fadb20a4a4301f7143775e117419997cbd2a2f",
+		"src/components/ui/sidebar.tsx": "32e7a8254d31593e6076f36504ef6b4812a042863db4ee9d64198a85429b902c",
+		"src/components/ui/skeleton.tsx": "e0bbd036f04b5bd52fa0ea54f423d696efbdf3c5f0a8d82cd3ae3096666f7616",
+		"src/components/ui/table.tsx": "171d34b92660fc5105fc6bf3f62932de13905c39b9c43fa5b90a9baea3c452e8",
+		"src/components/ui/tooltip.tsx": "d12c2d889f5348e26c65609b356f3b064b8e65607b3f76b499cc4688d292fa9f",
+		"src/hooks/use-mobile.ts": "106dce98246cde14a7b1b4d1a3eb7e83e323cdf0a4d553f9e292bde1daa3c525"
+	},
+	"changedFiles": [
+		"src/components/dashboard9.tsx",
+		"src/components/ui/chart.tsx",
+		"src/components/ui/sidebar.tsx"
+	]
+}

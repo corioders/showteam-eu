@@ -1,0 +1,12 @@
+{
+	"formatVersion": 2,
+	"registryItem": "@shadcnblocks/pricing6",
+	"style": "base-mira",
+	"baselineHashes": {
+		"src/components/pricing6.tsx": "a0a379bc52c233aa7d0fd4a7c84885bc6f0d2fe7f2d91213b524048fe4a79f36",
+		"src/components/ui/separator.tsx": "164fb9ee49682be6b7a27fe08c8c5fbd836820e858fb0abecf0906fc03144c73"
+	},
+	"changedFiles": [
+		"src/components/pricing6.tsx"
+	]
+}

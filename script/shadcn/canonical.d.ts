@@ -12,3 +12,7 @@ interface CanonicalShadcnNormalizationCheck {
 }
 
 export function checkCanonicalShadcnNormalization(options: CanonicalShadcnNormalizationOptions): CanonicalShadcnNormalizationCheck;
+
+type CanonicalSynchronizationResult = { error: null; status: "current" | "updated" } | { error: Error; status: "diverged" | "error" };
+
+export function synchronizeCanonicalShadcnNormalization(options: CanonicalShadcnNormalizationOptions): CanonicalSynchronizationResult;

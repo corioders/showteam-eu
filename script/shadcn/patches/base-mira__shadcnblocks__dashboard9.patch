@@ -1,9 +1,8 @@
 diff --git a/src/components/dashboard9.tsx b/src/components/dashboard9.tsx
-index dad96ed..d48f346 100644
+index dad96ed..d384ebb 100644
 --- a/src/components/dashboard9.tsx
 +++ b/src/components/dashboard9.tsx
-@@ -1,3 +1,9 @@
-+// biome-ignore-all lint/performance/noImgElement: The upstream block uses a remote SVG logo; preserving its loading behavior avoids untrusted image-domain configuration.
+@@ -1,5 +1,11 @@
 +// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: The upstream dashboard keeps metric display decisions co-located with the data mapping.
 +// biome-ignore-all lint/style/useNamingConvention: Order-status labels are external display values and must match their source strings.
 +// biome-ignore-all lint/suspicious/noArrayIndexKey: Fulfillment progress is an immutable positional visualisation.
@@ -11,7 +10,10 @@ index dad96ed..d48f346 100644
 +// biome-ignore-all lint/correctness/useExhaustiveDependencies: Preserve upstream React hook dependencies.
  "use client";
  
++import { StaticImage } from "cstd-next/media/image/static-image.jsx";
  import {
+ 	BarChart3,
+ 	Bell,
 @@ -27,7 +33,7 @@ import {
  	Wallet,
  } from "lucide-react";
@@ -34,6 +36,15 @@ index dad96ed..d48f346 100644
  const formatTrendValue = (trendValue: number) => {
  	return trendPercentFormatter.format(trendValue / 100);
  };
+@@ -573,7 +573,7 @@ const SidebarLogo = ({ logo }: { logo: SidebarData["logo"] }) => {
+ 			<SidebarMenuItem>
+ 				<SidebarMenuButton size="lg" tooltip={logo.title}>
+ 					<div className="flex aspect-square size-8 items-center justify-center rounded-sm bg-primary">
+-						<img src={logo.src} alt={logo.alt} width={24} height={24} className="size-6 text-primary-foreground invert dark:invert-0" />
++						<StaticImage alt={logo.alt} className="size-6 text-primary-foreground invert dark:invert-0" loading="eager" sizes="24px" src={logo.src} />
+ 					</div>
+ 					<div className="flex flex-col gap-0.5 leading-none">
+ 						<span className="font-medium">{logo.title}</span>
 @@ -592,7 +592,7 @@ const NavMenuItem = ({ item }: { item: NavItem }) => {
  	if (!hasChildren) {
  		return (
@@ -124,22 +135,23 @@ index dad96ed..d48f346 100644
  	return (
 
 diff --git a/src/components/ui/chart.tsx b/src/components/ui/chart.tsx
-index 2cc75e2..778a3af 100644
+index 50b3799..153291a 100644
 --- a/src/components/ui/chart.tsx
 +++ b/src/components/ui/chart.tsx
-@@ -1,7 +1,10 @@
+@@ -1,8 +1,11 @@
 +// biome-ignore-all lint/security/noDangerouslySetInnerHtml: Chart styles are derived only from the local ChartConfig supplied by application code.
 +// biome-ignore-all lint/suspicious/noArrayIndexKey: Recharts payload entries do not expose a stable unique identifier.
 +// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Tooltip rendering follows the upstream Recharts data model.
  "use client";
  
+ import { cn } from "cn";
  import * as React from "react";
 -import type { TooltipValueType } from "recharts";
 +import type { TooltipContentProps, TooltipValueType } from "recharts";
  import * as RechartsPrimitive from "recharts";
  
- import { cn } from "@/lib/utils";
-@@ -30,6 +33,7 @@ function useChart() {
+ // Format: { THEME_NAME: CSS_SELECTOR }
+@@ -29,6 +32,7 @@ function useChart() {
  	const context = React.useContext(ChartContext);
  
  	if (!context) {
@@ -147,7 +159,7 @@ index 2cc75e2..778a3af 100644
  		throw new Error("useChart must be used within a <ChartContainer />");
  	}
  
-@@ -75,7 +79,7 @@ function ChartContainer({
+@@ -74,7 +78,7 @@ function ChartContainer({
  const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
  	const colorConfig = Object.entries(config).filter(([, config]) => config.theme ?? config.color);
  
@@ -156,7 +168,7 @@ index 2cc75e2..778a3af 100644
  		return null;
  	}
  
-@@ -117,7 +121,7 @@ function ChartTooltipContent({
+@@ -116,7 +120,7 @@ function ChartTooltipContent({
  	color,
  	nameKey,
  	labelKey,
@@ -165,7 +177,7 @@ index 2cc75e2..778a3af 100644
  	React.ComponentProps<"div"> & {
  		hideLabel?: boolean;
  		hideIndicator?: boolean;
-@@ -128,7 +132,7 @@ function ChartTooltipContent({
+@@ -127,7 +131,7 @@ function ChartTooltipContent({
  	const { config } = useChart();
  
  	const tooltipLabel = React.useMemo(() => {
@@ -174,7 +186,7 @@ index 2cc75e2..778a3af 100644
  			return null;
  		}
  
-@@ -148,7 +152,7 @@ function ChartTooltipContent({
+@@ -147,7 +151,7 @@ function ChartTooltipContent({
  		return <div className={cn("font-medium", labelClassName)}>{value}</div>;
  	}, [label, labelFormatter, payload, hideLabel, labelClassName, config, labelKey]);
  
@@ -183,7 +195,7 @@ index 2cc75e2..778a3af 100644
  		return null;
  	}
  
-@@ -232,7 +236,7 @@ function ChartLegendContent({
+@@ -231,7 +235,7 @@ function ChartLegendContent({
  } & RechartsPrimitive.DefaultLegendContentProps) {
  	const { config } = useChart();
  
@@ -194,7 +206,7 @@ index 2cc75e2..778a3af 100644
  
 
 diff --git a/src/components/ui/sidebar.tsx b/src/components/ui/sidebar.tsx
-index acde2c9..b9e4497 100644
+index 8af9137..5f31d53 100644
 --- a/src/components/ui/sidebar.tsx
 +++ b/src/components/ui/sidebar.tsx
 @@ -1,3 +1,5 @@

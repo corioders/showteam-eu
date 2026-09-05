@@ -5,23 +5,28 @@ import path from "node:path";
 
 import { run } from "./session.js";
 
-const PATCH_FORMAT_VERSION = 1;
+const PATCH_FORMAT_VERSION = 3;
 const SHADCNBLOCKS_ITEM = /^@shadcnblocks\/[A-Za-z0-9._-]+$/;
+const SHADCN_STYLE = /^[A-Za-z0-9._-]+$/;
 
 function hashFile(filePath) {
 	return crypto.createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
 }
 
-function patchBaseName(registryItem) {
-	return registryItem.slice(1).replaceAll("/", "__");
+function patchBaseName(registryItem, style) {
+	return `${style}__${registryItem.slice(1).replaceAll("/", "__")}`;
 }
 
-function patchPaths(patchDirectory, registryItem) {
-	const baseName = patchBaseName(registryItem);
+function patchPaths(patchDirectory, registryItem, style) {
+	const baseName = patchBaseName(registryItem, style);
 	return {
 		manifestPath: path.join(patchDirectory, `${baseName}.json`),
 		patchPath: path.join(patchDirectory, `${baseName}.patch`),
 	};
+}
+
+export function learnedPatchPaths(patchDirectory, registryItem, style) {
+	return patchPaths(patchDirectory, registryItem, style);
 }
 
 function createFilePatch(baselinePath, currentPath, relativePath, cwd) {
@@ -80,9 +85,32 @@ export function registryItemsFromArguments(arguments_) {
 	return [...new Set(arguments_.filter((argument) => SHADCNBLOCKS_ITEM.test(argument)))];
 }
 
-export function writeLearnedPatch({ baselineRoot, currentRoot, patchDirectory, registryItem, sourceFiles }) {
+export function readShadcnStyle(cwd) {
+	const componentsPath = path.join(cwd, "components.json");
+	if (!fs.existsSync(componentsPath)) {
+		return [null, new Error(`Missing Shadcn configuration: ${componentsPath}`)];
+	}
+	let components;
+	try {
+		components = JSON.parse(fs.readFileSync(componentsPath, "utf8"));
+	} catch {
+		return [null, new Error(`Invalid Shadcn configuration: ${componentsPath}`)];
+	}
+	if (typeof components.style !== "string" || !SHADCN_STYLE.test(components.style)) {
+		return [null, new Error(`Invalid Shadcn style in ${componentsPath}`)];
+	}
+	return [components.style, null];
+}
+
+export function writeLearnedPatch({ baselineRoot, currentRoot, patchDirectory, registryItem, sourceFiles, style, verificationTest }) {
 	if (!SHADCNBLOCKS_ITEM.test(registryItem)) {
 		return [null, new Error(`Unsupported registry item: ${registryItem}`)];
+	}
+	if (!SHADCN_STYLE.test(style)) {
+		return [null, new Error(`Unsupported Shadcn style: ${style}`)];
+	}
+	if (typeof verificationTest?.path !== "string" || typeof verificationTest.hash !== "string") {
+		return [null, new Error("A passing browser compatibility test is required before learning a Shadcnblocks patch.")];
 	}
 
 	const changedFiles = [];
@@ -115,15 +143,18 @@ export function writeLearnedPatch({ baselineRoot, currentRoot, patchDirectory, r
 	}
 
 	const baselineHashes = Object.fromEntries(sourceFiles.map((relativePath) => [relativePath, hashFile(path.join(baselineRoot, relativePath))]));
-	const { manifestPath, patchPath } = patchPaths(patchDirectory, registryItem);
+	const { manifestPath, patchPath } = patchPaths(patchDirectory, registryItem, style);
 	fs.mkdirSync(patchDirectory, { recursive: true });
 	fs.writeFileSync(patchPath, patch);
-	fs.writeFileSync(manifestPath, `${JSON.stringify({ formatVersion: PATCH_FORMAT_VERSION, registryItem, baselineHashes, changedFiles }, null, "\t")}\n`);
+	fs.writeFileSync(
+		manifestPath,
+		`${JSON.stringify({ formatVersion: PATCH_FORMAT_VERSION, registryItem, style, baselineHashes, changedFiles, verificationTest }, null, "\t")}\n`,
+	);
 	return [{ changedFiles, manifestPath, patchPath }, null];
 }
 
-export function applyLearnedPatch({ cwd, patchDirectory, registryItem }) {
-	const { manifestPath, patchPath } = patchPaths(patchDirectory, registryItem);
+export function applyLearnedPatch({ cwd, patchDirectory, registryItem, style }) {
+	const { manifestPath, patchPath } = patchPaths(patchDirectory, registryItem, style);
 	const manifestExists = fs.existsSync(manifestPath);
 	const patchExists = fs.existsSync(patchPath);
 	if (!manifestExists && !patchExists) {
@@ -139,21 +170,40 @@ export function applyLearnedPatch({ cwd, patchDirectory, registryItem }) {
 	} catch {
 		return { error: `Learned patch manifest is invalid for ${registryItem}.`, status: "invalid" };
 	}
-	if (manifest.formatVersion !== PATCH_FORMAT_VERSION || manifest.registryItem !== registryItem || typeof manifest.baselineHashes !== "object") {
+	const requiresBrowserVerification = manifest.formatVersion === 2;
+	if (
+		(!requiresBrowserVerification && manifest.formatVersion !== PATCH_FORMAT_VERSION) ||
+		manifest.registryItem !== registryItem ||
+		manifest.style !== style ||
+		typeof manifest.baselineHashes !== "object" ||
+		(!requiresBrowserVerification && (typeof manifest.verificationTest?.path !== "string" || typeof manifest.verificationTest.hash !== "string"))
+	) {
 		return { error: `Learned patch manifest is invalid for ${registryItem}.`, status: "invalid" };
 	}
 
 	for (const [relativePath, expectedHash] of Object.entries(manifest.baselineHashes)) {
 		const installedPath = path.join(cwd, relativePath);
 		if (!fs.existsSync(installedPath) || hashFile(installedPath) !== expectedHash) {
-			return { error: `${registryItem} changed upstream at ${relativePath}; revalidate it and run pnpm shadcn:learn.`, status: "stale" };
+			return { error: `${registryItem} changed upstream for style ${style} at ${relativePath}.`, status: "stale" };
 		}
 	}
 
-	const checkResult = run("git", ["apply", "--check", "--whitespace=nowarn", patchPath], { allowFailure: true, capture: true, cwd });
+	const repositoryResult = run("git", ["rev-parse", "--show-toplevel"], { allowFailure: true, capture: true, cwd });
+	const realCwd = fs.realpathSync(cwd);
+	const applyCwd = repositoryResult.status === 0 ? fs.realpathSync(repositoryResult.stdout.trim()) : realCwd;
+	const applyDirectory = path.relative(applyCwd, realCwd);
+	const directoryArguments = applyDirectory === "" ? [] : [`--directory=${applyDirectory}`];
+	const checkResult = run("git", ["apply", "--check", "--whitespace=nowarn", ...directoryArguments, patchPath], { allowFailure: true, capture: true, cwd: applyCwd });
 	if (checkResult.status !== 0) {
-		return { error: `Learned patch no longer applies cleanly for ${registryItem}; revalidate it and run pnpm shadcn:learn.`, status: "stale" };
+		return { error: `Learned patch no longer applies cleanly for ${registryItem} with style ${style}: ${checkResult.stderr.trim()}`, status: "stale" };
 	}
-	run("git", ["apply", "--whitespace=nowarn", patchPath], { cwd });
+	run("git", ["apply", "--whitespace=nowarn", ...directoryArguments, patchPath], { cwd: applyCwd });
+	if (requiresBrowserVerification) {
+		return {
+			changedFiles: manifest.changedFiles,
+			error: `${registryItem} compatibility for style ${style} predates required browser verification.`,
+			status: "unverified",
+		};
+	}
 	return { changedFiles: manifest.changedFiles, status: "applied" };
 }
