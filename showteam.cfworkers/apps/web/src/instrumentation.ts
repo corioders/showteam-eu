@@ -17,7 +17,7 @@ export function register(): void {
 				propagateContextUrls: [everyUrl],
 			},
 		},
-		serviceName: "template-cfworkers-web",
+		serviceName: "showteam-cfworkers-web",
 		traceExporter: new CoriodersTraceExporter(),
 		traceSampler: "always_on",
 	});

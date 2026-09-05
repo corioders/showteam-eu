@@ -14,7 +14,7 @@ import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 const exporter = new OTLPTraceExporter({ url: "/api/telemetry/v1/traces" });
 const provider = new WebTracerProvider({
 	resource: resourceFromAttributes({
-		[ATTR_SERVICE_NAME]: "template-cfworkers-web-browser",
+		[ATTR_SERVICE_NAME]: "showteam-cfworkers-web-browser",
 	}),
 	spanProcessors: [new BatchSpanProcessor(exporter)],
 });
