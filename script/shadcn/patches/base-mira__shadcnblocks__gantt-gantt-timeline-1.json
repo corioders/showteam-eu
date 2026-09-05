@@ -1,0 +1,15 @@
+{
+	"formatVersion": 2,
+	"registryItem": "@shadcnblocks/gantt-gantt-timeline-1",
+	"style": "base-mira",
+	"baselineHashes": {
+		"package.json": "9018702771874382e6c96cafac2e654d594edd8ffae544d9111d5e8f2eaa2be9",
+		"src/components/gantt-timeline-1.tsx": "35239050311d02b21e666bb2ed62b7bc1a300f005976194fd0099770430d88e0",
+		"src/components/kibo-ui/gantt/index.tsx": "045d6bd131b07edd76ffae4f190b07588ae79769a9894b214d50c938bf09a3f9",
+		"src/components/ui/context-menu.tsx": "83976ccf7be09b855fa7fe7ab05f45f28cbea1c2a45111ad20b07a8092b8dfba"
+	},
+	"changedFiles": [
+		"src/components/gantt-timeline-1.tsx",
+		"src/components/kibo-ui/gantt/index.tsx"
+	]
+}
