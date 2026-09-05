@@ -1,4 +1,3 @@
-import { availableParallelism } from "node:os";
 import path from "node:path";
 
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
@@ -10,7 +9,6 @@ import "./src/env.ts";
 
 const scriptPolicy = process.env.NODE_ENV === "production" ? "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'" : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
 const workspaceRoot = path.join(import.meta.dirname, "..", "..");
-const buildParallelism = process.env.NODE_ENV === "production" ? availableParallelism() : 1;
 
 const nextConfig: NextConfig = {
 	...cstdNextConfig,
@@ -42,10 +40,6 @@ const nextConfig: NextConfig = {
 				source: "/(.*)",
 			},
 		];
-	},
-	experimental: {
-		cpus: buildParallelism,
-		staticGenerationMaxConcurrency: buildParallelism,
 	},
 	images: {
 		...cstdNextConfig.images,
