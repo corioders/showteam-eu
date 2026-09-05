@@ -1,9 +1,8 @@
 diff --git a/src/components/dashboard9.tsx b/src/components/dashboard9.tsx
-index dad96ed..d48f346 100644
+index dad96ed..d384ebb 100644
 --- a/src/components/dashboard9.tsx
 +++ b/src/components/dashboard9.tsx
-@@ -1,3 +1,9 @@
-+// biome-ignore-all lint/performance/noImgElement: The upstream block uses a remote SVG logo; preserving its loading behavior avoids untrusted image-domain configuration.
+@@ -1,5 +1,11 @@
 +// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: The upstream dashboard keeps metric display decisions co-located with the data mapping.
 +// biome-ignore-all lint/style/useNamingConvention: Order-status labels are external display values and must match their source strings.
 +// biome-ignore-all lint/suspicious/noArrayIndexKey: Fulfillment progress is an immutable positional visualisation.
@@ -11,7 +10,10 @@ index dad96ed..d48f346 100644
 +// biome-ignore-all lint/correctness/useExhaustiveDependencies: Preserve upstream React hook dependencies.
  "use client";
  
++import { StaticImage } from "cstd-next/media/image/static-image.jsx";
  import {
+ 	BarChart3,
+ 	Bell,
 @@ -27,7 +33,7 @@ import {
  	Wallet,
  } from "lucide-react";
@@ -34,6 +36,15 @@ index dad96ed..d48f346 100644
  const formatTrendValue = (trendValue: number) => {
  	return trendPercentFormatter.format(trendValue / 100);
  };
+@@ -573,7 +573,7 @@ const SidebarLogo = ({ logo }: { logo: SidebarData["logo"] }) => {
+ 			<SidebarMenuItem>
+ 				<SidebarMenuButton size="lg" tooltip={logo.title}>
+ 					<div className="flex aspect-square size-8 items-center justify-center rounded-sm bg-primary">
+-						<img src={logo.src} alt={logo.alt} width={24} height={24} className="size-6 text-primary-foreground invert dark:invert-0" />
++						<StaticImage alt={logo.alt} className="size-6 text-primary-foreground invert dark:invert-0" loading="eager" sizes="24px" src={logo.src} />
+ 					</div>
+ 					<div className="flex flex-col gap-0.5 leading-none">
+ 						<span className="font-medium">{logo.title}</span>
 @@ -592,7 +592,7 @@ const NavMenuItem = ({ item }: { item: NavItem }) => {
  	if (!hasChildren) {
  		return (

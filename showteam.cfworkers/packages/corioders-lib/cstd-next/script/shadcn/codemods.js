@@ -76,7 +76,6 @@ function adaptShadcnBaseUi(source, filePath) {
 
 	if (filePath.endsWith("dashboard9.tsx")) {
 		let normalized = insertBeforeClientDirective(source, [
-			"// biome-ignore-all lint/performance/noImgElement: The upstream block uses a remote SVG logo; preserving its loading behavior avoids untrusted image-domain configuration.",
 			"// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: The upstream dashboard keeps metric display decisions co-located with the data mapping.",
 			"// biome-ignore-all lint/style/useNamingConvention: Order-status labels are external display values and must match their source strings.",
 			"// biome-ignore-all lint/suspicious/noArrayIndexKey: Fulfillment progress is an immutable positional visualisation.",

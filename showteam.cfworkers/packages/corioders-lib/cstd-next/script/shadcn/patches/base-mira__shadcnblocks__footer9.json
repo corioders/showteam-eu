@@ -1,0 +1,11 @@
+{
+	"formatVersion": 2,
+	"registryItem": "@shadcnblocks/footer9",
+	"style": "base-mira",
+	"baselineHashes": {
+		"src/components/footer9.tsx": "e3010da3d55b2a20778282d97b50f87c7287b0200a8b598aafe4d623cdb94e9a"
+	},
+	"changedFiles": [
+		"src/components/footer9.tsx"
+	]
+}

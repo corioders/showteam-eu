@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"postinstall": "[ \"${CI:-}\" = true ] || (lefthook install && turbo telemetry disable)",
-		"dev": "infisical run -- turbo run dev",
+		"dev": "infisical run --env=staging -- dotenv -e apps/web/.env -e apps/web/.env.local -o -- turbo run dev",
 		"build": "turbo run build",
 		"build:worker": "NEXT_PRIVATE_STANDALONE=true turbo run build:worker --filter=web --concurrency=100%",
 		"validate": "NEXT_PRIVATE_STANDALONE=true turbo run build:worker check-types test:unit \"//#lint\" \"//#check-invariants\" --concurrency=100%",
@@ -16,9 +16,9 @@
 		"logs:preview": "infisical run --env=staging -- pnpm --dir apps/web logs:preview",
 		"shadcn:search": "infisical run -- pnpm --dir apps/web shadcn:search",
 		"shadcn:add": "infisical run -- pnpm --dir apps/web shadcn:add",
-		"shadcn:learn": "infisical run -- pnpm --dir apps/web shadcn:learn",
+		"shadcn:patch": "infisical run -- pnpm --dir apps/web shadcn:patch",
 		"check": "turbo run check-types \"//#lint\" \"//#check-invariants\" --concurrency=100%",
-		"check-invariants": "node script/check-template-invariants.js && node --test script/resolve-external-build-inputs.test.js",
+		"check-invariants": "node script/check-template-invariants.js && node --test script/*.test.js",
 		"resolve-build-inputs": "node script/resolve-external-build-inputs.js",
 		"typecheck": "turbo run check-types",
 		"lint": "biome check --error-on-warnings",
@@ -31,6 +31,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.10",
+		"dotenv-cli": "11.0.0",
 		"lefthook": "^2.1.0",
 		"turbo": "^2.8.3"
 	},

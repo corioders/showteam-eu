@@ -1,0 +1,401 @@
+diff --git a/src/components/checkout12.tsx b/src/components/checkout12.tsx
+index 8e0b5f4..819c8ca 100644
+--- a/src/components/checkout12.tsx
++++ b/src/components/checkout12.tsx
+@@ -2,6 +2,7 @@
+ 
+ import { zodResolver } from "@hookform/resolvers/zod";
+ import { ChevronDown, Mail, ShoppingBag, Truck } from "lucide-react";
++import Image from "next/image";
+ import { useEffect, useState } from "react";
+ import type { SubmitHandler } from "react-hook-form";
+ import { Controller, FormProvider, useForm, useFormContext } from "react-hook-form";
+@@ -43,7 +44,7 @@ type Product = {
+ 	details: ProductDetail[];
+ 	price: PriceType;
+ 	quantity: number;
+-	product_id: string;
++	productId: string;
+ };
+ 
+ type ProductDetail = {
+@@ -119,7 +120,7 @@ const CHECKOUT_DATA = {
+ 	],
+ 	products: [
+ 		{
+-			product_id: "product-1",
++			productId: "product-1",
+ 			image: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/ecommerce/clothes/pexels-melvin-buezo-1253763-2529148-1.jpg",
+ 			name: "Minimal White Sneakers",
+ 			details: [
+@@ -134,7 +135,7 @@ const CHECKOUT_DATA = {
+ 			quantity: 1,
+ 		},
+ 		{
+-			product_id: "product-2",
++			productId: "product-2",
+ 			image: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/ecommerce/clothes/Young-Man-in-Hoodie-1.png",
+ 			name: "Oversized Cotton Hoodie",
+ 			details: [
+@@ -150,7 +151,7 @@ const CHECKOUT_DATA = {
+ 		},
+ 
+ 		{
+-			product_id: "product-3",
++			productId: "product-3",
+ 			image: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/ecommerce/clothes/Woman-with-Leather-Tote-1.png",
+ 			name: "Leather Tote Bag",
+ 			details: [
+@@ -165,7 +166,7 @@ const CHECKOUT_DATA = {
+ 			quantity: 1,
+ 		},
+ 		{
+-			product_id: "product-4",
++			productId: "product-4",
+ 			image: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/ecommerce/accessories/Leather-Belt-Close-Up-1.png",
+ 			name: "Classic Leather Belt",
+ 			details: [
+@@ -180,7 +181,7 @@ const CHECKOUT_DATA = {
+ 			quantity: 1,
+ 		},
+ 		{
+-			product_id: "product-",
++			productId: "product-5",
+ 			image: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/ecommerce/clothes/Young-Man-in-Blue-Hoodie-1.png",
+ 			name: "Oversized Cotton Hoodie",
+ 			details: [
+@@ -243,29 +244,29 @@ type StepComponentProps = {
+ type StepConfig = {
+ 	id: string;
+ 	label: string;
+-	Component: React.ComponentType<StepComponentProps>;
++	component: React.ComponentType<StepComponentProps>;
+ };
+ 
+ export const STEPS: StepConfig[] = [
+ 	{
+ 		id: "1",
+ 		label: "Contact",
+-		Component: ContactForm,
++		component: ContactForm,
+ 	},
+ 	{
+ 		id: "2",
+ 		label: "Shipping",
+-		Component: ShippingForm,
++		component: ShippingForm,
+ 	},
+ 	{
+ 		id: "3",
+ 		label: "Payment",
+-		Component: PaymentForm,
++		component: PaymentForm,
+ 	},
+ 	{
+ 		id: "4",
+ 		label: "Review",
+-		Component: Review,
++		component: Review,
+ 	},
+ ];
+ 
+@@ -287,7 +288,7 @@ const checkoutFormSchema = z.object({
+ 	cardHolder: z.string(),
+ 	products: z
+ 		.object({
+-			product_id: z.string(),
++			productId: z.string(),
+ 			quantity: z.number(),
+ 			price: z.number(),
+ 		})
+@@ -306,7 +307,7 @@ const Checkout12 = ({
+ 	const stepsCount = steps.length;
+ 	const [currentStep, setCurrentStep] = useState("1");
+ 	const defaultProducts = products.map((item) => ({
+-		product_id: item.product_id,
++		productId: item.productId,
+ 		price: item.price.sale ?? item.price.regular,
+ 		quantity: item.quantity,
+ 	}));
+@@ -318,16 +319,19 @@ const Checkout12 = ({
+ 		resolver: zodResolver(checkoutFormSchema),
+ 	});
+ 
+-	const ActiveComponent = STEPS[Number(currentStep) - 1].Component;
++	const ActiveComponent = STEPS[Number(currentStep) - 1]?.component;
++	const firstStepId = steps[0]?.id ?? "1";
+ 
+-	const onSubmit: SubmitHandler<CheckoutFormType> = (data: CheckoutFormType) => {
+-		console.log(data);
+-	};
++	const onSubmit: SubmitHandler<CheckoutFormType> = (_data: CheckoutFormType) => {};
+ 
+ 	const handleStepChange = (value: string) => {
+ 		setCurrentStep(value);
+ 	};
+ 
++	if (!ActiveComponent) {
++		return null;
++	}
++
+ 	return (
+ 		<section className={cn("bg-muted-2 bg-secondary/20 py-32", className)}>
+ 			<FormProvider {...form}>
+@@ -337,7 +341,7 @@ const Checkout12 = ({
+ 							<div className="col-span-full max-lg:hidden">
+ 								<h1 className="text-center font-bold text-4xl leading-relaxed tracking-tight">Checkout</h1>
+ 							</div>
+-							<Tabs onValueChange={handleStepChange} defaultValue={steps[0].id} className="contents items-center">
++							<Tabs onValueChange={handleStepChange} defaultValue={firstStepId} className="contents items-center">
+ 								<div className="col-span-full max-lg:container">
+ 									<div className="flex justify-center">
+ 										<TabsList className="relative h-auto w-full max-w-90 bg-transparent p-0">
+@@ -347,7 +351,7 @@ const Checkout12 = ({
+ 											{steps.map((step, index) => (
+ 												<TabsTrigger
+ 													value={step.id}
+-													key={index}
++													key={step.id}
+ 													className="z-10 flex-col rounded-none bg-transparent p-0 group-data-[variant=default]/tabs-list:data-active:bg-transparent group-data-[variant=default]/tabs-list:data-active:shadow-none dark:group-data-[variant=default]/tabs-list:data-active:border-none dark:group-data-[variant=default]/tabs-list:data-active:bg-transparent"
+ 												>
+ 													<Step active={currentStep === step.id} done={Number(step.id) < Number(currentStep)} number={index + 1} label={step.label} />
+@@ -357,8 +361,8 @@ const Checkout12 = ({
+ 									</div>
+ 								</div>
+ 								<div className="max-lg:container lg:col-span-2">
+-									{steps.map((step, index) => (
+-										<TabsContent value={step.id} key={index}>
++									{steps.map((step) => (
++										<TabsContent value={step.id} key={step.id}>
+ 											<ActiveComponent
+ 												data={{
+ 													shippingMethods,
+@@ -407,7 +411,9 @@ const ProductsList = ({ products, summary }: ProductsListProps) => {
+ 		setOpen(isDesktop);
+ 	}, [isDesktop]);
+ 
+-	if (!products) return;
++	if (!products) {
++		return;
++	}
+ 
+ 	const productsCount = products.length;
+ 
+@@ -441,8 +447,8 @@ const ProductsList = ({ products, summary }: ProductsListProps) => {
+ 				<div className="max-lg:px-5">
+ 					<ScrollArea className="h-120 rounded-md border">
+ 						<ItemGroup>
+-							{products.map((product, index) => (
+-								<ProductItem product={product} key={index} />
++							{products.map((product) => (
++								<ProductItem product={product} key={product.productId} />
+ 							))}
+ 						</ItemGroup>
+ 					</ScrollArea>
+@@ -454,7 +460,9 @@ const ProductsList = ({ products, summary }: ProductsListProps) => {
+ };
+ 
+ const ProductItem = ({ product }: ProductItemProps) => {
+-	if (!product) return;
++	if (!product) {
++		return;
++	}
+ 
+ 	const { image, name, price, details } = product;
+ 
+@@ -462,7 +470,7 @@ const ProductItem = ({ product }: ProductItemProps) => {
+ 		<Item role="listitem">
+ 			<ItemMedia variant="image" className="h-auto w-20 flex-none">
+ 				<AspectRatio ratio={0.825} className="overflow-hidden rounded-sm">
+-					<img src={image} alt={name} className="block size-full object-cover object-center" />
++					<Image src={image} alt={name} fill={true} unoptimized={true} className="object-cover object-center" />
+ 				</AspectRatio>
+ 			</ItemMedia>
+ 			<ItemContent>
+@@ -470,7 +478,7 @@ const ProductItem = ({ product }: ProductItemProps) => {
+ 				<div className="line-clamp-none flex flex-col gap-2">
+ 					<ProductDetails details={details} />
+ 					<Price className="self-end text-sm">
+-						<PriceValue price={price.regular} currency={price.currency} />
++						<PriceValue price={price.regular} {...(price.currency ? { currency: price.currency } : {})} />
+ 					</Price>
+ 				</div>
+ 			</ItemContent>
+@@ -479,12 +487,14 @@ const ProductItem = ({ product }: ProductItemProps) => {
+ };
+ 
+ const ProductDetails = ({ details }: ProductDetailsProps) => {
+-	if (!details) return;
++	if (!details) {
++		return;
++	}
+ 
+ 	return (
+ 		<dl className="space-y-1">
+-			{details.map(({ label, text }, index) => (
+-				<div key={index} className="flex items-center gap-1 text-xs">
++			{details.map(({ label, text }) => (
++				<div key={`${label}-${text}`} className="flex items-center gap-1 text-xs">
+ 					<dt className="text-muted-foreground">{label}</dt>
+ 					<dd className="text-foreground">{text}</dd>
+ 				</div>
+@@ -521,7 +531,7 @@ function ContactForm() {
+ 								<FieldContent>
+ 									<FieldLabel htmlFor="form-subscribe-checkbox">Sign me up for emails.</FieldLabel>
+ 									<FieldDescription>
+-										See our <a href="#">privacy policy</a> for details.
++										See our <a href="/privacy">privacy policy</a> for details.
+ 									</FieldDescription>
+ 								</FieldContent>
+ 							</Field>
+@@ -666,8 +676,8 @@ function ShippingForm({ data }: StepComponentProps) {
+ 											<Field orientation="horizontal" data-invalid={fieldState.invalid}>
+ 												<FieldContent className="flex-row gap-4">
+ 													<div className="w-10">
+-														<AspectRatio className="overflow-hidden">
+-															<img src={method.image} alt={method.name} className="block size-full object-cover object-center" />
++														<AspectRatio ratio={1} className="overflow-hidden">
++															<Image src={method.image} alt={method.name} fill={true} unoptimized={true} className="object-cover object-center" />
+ 														</AspectRatio>
+ 													</div>
+ 													<div className="space-y-1.5">
+@@ -830,16 +840,18 @@ function Review() {
+ }
+ 
+ const Summary = ({ summary }: SummaryProps) => {
+-	if (!summary) return;
++	if (!summary) {
++		return;
++	}
+ 
+ 	const summaryItems = [summary.subtotal, summary.shipping, summary.tax, summary.total];
+ 
+ 	return (
+ 		<dl className="py-3">
+ 			{summaryItems.map(
+-				(item, index) =>
++				(item) =>
+ 					typeof item !== "string" && (
+-						<div className="group flex items-center justify-between gap-2 pb-3 text-sm last:border-t last:pt-3" key={index}>
++						<div className="group flex items-center justify-between gap-2 pb-3 text-sm last:border-t last:pt-3" key={item.label}>
+ 							<dt className="font-semibold group-last:text-base">{item.label}</dt>
+ 							<dd>
+ 								{typeof item.value !== "string" ? (
+
+diff --git a/src/components/shadcnblocks/price.tsx b/src/components/shadcnblocks/price.tsx
+index f551280..6ced27f 100644
+--- a/src/components/shadcnblocks/price.tsx
++++ b/src/components/shadcnblocks/price.tsx
+@@ -31,15 +31,18 @@ const formatterCache = new Map<string, Intl.NumberFormat>();
+ 
+ function formatCurrency(value: number, currency = "USD", locale = "en-US") {
+ 	const key = `${locale}-${currency}`;
+-	if (!formatterCache.has(key)) {
+-		formatterCache.set(key, new Intl.NumberFormat(locale, { style: "currency", currency }));
++	const cachedFormatter = formatterCache.get(key);
++	if (cachedFormatter) {
++		return cachedFormatter.format(value);
+ 	}
+-	return formatterCache.get(key)!.format(value);
++	const formatter = new Intl.NumberFormat(locale, { style: "currency", currency });
++	formatterCache.set(key, formatter);
++	return formatter.format(value);
+ }
+ 
+ const Price = ({ className, children, onSale }: PriceProps) => {
+ 	return (
+-		<PriceContext.Provider value={{ onSale }}>
++		<PriceContext.Provider value={onSale === undefined ? {} : { onSale }}>
+ 			<div className={cn("flex flex-wrap items-center gap-x-2", className)}>{children}</div>
+ 		</PriceContext.Provider>
+ 	);
+@@ -48,7 +51,9 @@ const Price = ({ className, children, onSale }: PriceProps) => {
+ const PriceValue = ({ price, currency = "USD", variant = "regular", className }: PriceValueProps) => {
+ 	const { onSale } = usePriceContext();
+ 
+-	if (price == null) return null;
++	if (price == null) {
++		return null;
++	}
+ 
+ 	return (
+ 		<span className={cn("leading-tight", variant === "regular" ? (onSale ? "text-muted-foreground line-through" : "text-foreground") : "text-foreground", className)}>
+
+diff --git a/src/components/ui/field.tsx b/src/components/ui/field.tsx
+index 86aae92..f826597 100644
+--- a/src/components/ui/field.tsx
++++ b/src/components/ui/field.tsx
+@@ -54,6 +54,7 @@ const fieldVariants = cva("group/field flex w-full gap-2 data-[invalid=true]:tex
+ });
+ 
+ function Field({ className, orientation = "vertical", ...props }: React.ComponentProps<"div"> & VariantProps<typeof fieldVariants>) {
++	// biome-ignore lint/a11y/useSemanticElements: Field is a generic layout primitive; semantic groups use FieldSet.
+ 	return <div role="group" data-slot="field" data-orientation={orientation} className={cn(fieldVariants({ orientation }), className)} {...props} />;
+ }
+ 
+@@ -137,17 +138,17 @@ function FieldError({
+ 			return children;
+ 		}
+ 
+-		if (!errors?.length) {
++		if (!errors || errors.length === 0) {
+ 			return null;
+ 		}
+ 
+ 		const uniqueErrors = [...new Map(errors.map((error) => [error?.message, error])).values()];
+ 
+-		if (uniqueErrors?.length == 1) {
++		if (uniqueErrors?.length === 1) {
+ 			return uniqueErrors[0]?.message;
+ 		}
+ 
+-		return <ul className="ml-4 flex list-disc flex-col gap-1">{uniqueErrors.map((error, index) => error?.message && <li key={index}>{error.message}</li>)}</ul>;
++		return <ul className="ml-4 flex list-disc flex-col gap-1">{uniqueErrors.map((error) => error?.message && <li key={error.message}>{error.message}</li>)}</ul>;
+ 	}, [children, errors]);
+ 
+ 	if (!content) {
+
+diff --git a/src/components/ui/item.tsx b/src/components/ui/item.tsx
+index b66b61d..619b2a7 100644
+--- a/src/components/ui/item.tsx
++++ b/src/components/ui/item.tsx
+@@ -6,14 +6,9 @@ import type * as React from "react";
+ import { Separator } from "@/components/ui/separator";
+ import { cn } from "@/lib/utils";
+ 
+-function ItemGroup({ className, ...props }: React.ComponentProps<"div">) {
++function ItemGroup({ className, ...props }: React.ComponentProps<"ul">) {
+ 	return (
+-		<div
+-			role="list"
+-			data-slot="item-group"
+-			className={cn("group/item-group flex w-full flex-col gap-4 has-data-[size=sm]:gap-2.5 has-data-[size=xs]:gap-2", className)}
+-			{...props}
+-		/>
++		<ul data-slot="item-group" className={cn("group/item-group flex w-full flex-col gap-4 has-data-[size=sm]:gap-2.5 has-data-[size=xs]:gap-2", className)} {...props} />
+ 	);
+ }
+ 
+
+diff --git a/src/components/ui/label.tsx b/src/components/ui/label.tsx
+index 23ae4fd..a0a83f3 100644
+--- a/src/components/ui/label.tsx
++++ b/src/components/ui/label.tsx
+@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
+ 
+ function Label({ className, ...props }: React.ComponentProps<"label">) {
+ 	return (
++		// biome-ignore lint/a11y/noLabelWithoutControl: Association is supplied by consumers through htmlFor or nesting.
+ 		<label
+ 			data-slot="label"
+ 			className={cn(
+
+diff --git a/src/hooks/useMediaQuery.ts b/src/hooks/useMediaQuery.ts
+index 05d2e70..5346d01 100644
+--- a/src/hooks/useMediaQuery.ts
++++ b/src/hooks/useMediaQuery.ts
+@@ -1,3 +1,4 @@
++// biome-ignore-all lint/style/useFilenamingConvention: Filename is owned by the installed registry block.
+ import { useEffect, useState } from "react";
+ 
+ export const useMediaQuery = (query: string): boolean => {
