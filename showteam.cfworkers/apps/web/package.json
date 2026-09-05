@@ -27,7 +27,7 @@
 		"logs:preview": "wrangler tail --env preview",
 		"shadcn:search": "cstd-shadcn-search",
 		"shadcn:add": "cstd-shadcn-add",
-		"shadcn:learn": "cstd-shadcn-learn",
+		"shadcn:patch": "cstd-shadcn-patch",
 		"payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
 		"generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
 		"generate:types": "pnpm run generate:types:cloudflare && pnpm run generate:types:payload",
