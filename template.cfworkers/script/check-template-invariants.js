@@ -246,6 +246,11 @@ for (const [pattern, message] of [
 	[/Do not create a custom UI component, custom styled substitute, or bespoke visual implementation/, "AGENTS.md must forbid custom UI implementations."],
 	[/treat every generated component and block file as immutable vendor UI/, "AGENTS.md must make installed registry UI immutable."],
 	[/Never hand-create a visual `\.tsx` component/, "AGENTS.md must forbid hand-created TSX UI components."],
+	[/Application-authored route, feature, and wiring files must not contain visual `className`/, "AGENTS.md must forbid app-authored visual styling."],
+	[
+		/A page assembled from shadcn primitives with new layout classes or bespoke markup is custom UI and is forbidden/,
+		"AGENTS.md must forbid bespoke primitive composition.",
+	],
 	[/every `className`\/`style` byte-for-byte unchanged from the post-install result/, "AGENTS.md must preserve registry visual code byte-for-byte."],
 	[
 		/Any JSX-structure or visual-style diff outside an approved compatibility patch is a failed implementation/,
