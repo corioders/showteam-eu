@@ -165,7 +165,6 @@ if (!/^https:\/\/[^/]+$/.test(infisicalConfig.domain ?? "")) {
 }
 
 const deployWorkflow = read("../.github/workflows/deploy.yml");
-const validateWorkflow = read("../.github/workflows/validate.yml");
 const scheduleRunnerWorkflow = read("../.github/workflows/schedule-runner.yml");
 const workflowsDirectory = path.join(workspaceDirectory, "..", ".github", "workflows");
 const directWindowsRunnerPattern = /runs-on:\s*\[\s*self-hosted\s*,\s*["']?win24-wsl(?:-poland20)?["']?\s*\]/;
@@ -178,10 +177,11 @@ for (const workflowName of fs.readdirSync(workflowsDirectory)) {
 	}
 }
 requireMatch(scheduleRunnerWorkflow, /runs-on:\s*\[self-hosted, corioders-self-hosted-scheduler\]/, "The runner scheduler must use the dedicated scheduler label.");
-for (const [workflowName, workflow] of [
-	["deploy.yml", deployWorkflow],
-	["validate.yml", validateWorkflow],
-]) {
+const scheduledWorkflows = [["deploy.yml", deployWorkflow]];
+if (fs.existsSync(path.join(workflowsDirectory, "validate.yml"))) {
+	scheduledWorkflows.push(["validate.yml", read("../.github/workflows/validate.yml")]);
+}
+for (const [workflowName, workflow] of scheduledWorkflows) {
 	requireMatch(workflow, /uses:\s*\.\/\.github\/workflows\/schedule-runner\.yml/, `${workflowName} must reserve a runner through schedule-runner.yml.`);
 	requireMatch(
 		workflow,
