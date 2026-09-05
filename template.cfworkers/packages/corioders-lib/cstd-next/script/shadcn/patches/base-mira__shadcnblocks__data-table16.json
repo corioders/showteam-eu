@@ -1,0 +1,14 @@
+{
+	"formatVersion": 2,
+	"registryItem": "@shadcnblocks/data-table16",
+	"style": "base-mira",
+	"baselineHashes": {
+		"package.json": "79012161ae09af4082e815ef295fd223c191c2df1c329a34c007689589a13f29",
+		"src/components/data-table16.tsx": "315c2be9dc73e89d9aafd0ca233204af8ac9c4ab8409e503de3d1e4f97fda34a",
+		"src/components/ui/badge.tsx": "952dcb272d63f181dc2d8a3e25f297a555f1d2fa74560dd98b378dfbddbfc627",
+		"src/components/ui/checkbox.tsx": "1c8f393e84b4cb56af53a70c092f89d21a270c47de9c41491dfbacfa1e3adaea"
+	},
+	"changedFiles": [
+		"src/components/data-table16.tsx"
+	]
+}
