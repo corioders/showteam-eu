@@ -227,4 +227,29 @@ describe("Shadcnblocks installation snapshots", () => {
 		expect(divergence.status).toBe("diverged");
 		expect(divergence.error?.message).toContain("An agent must reconcile");
 	});
+
+	it("accepts identical canonical normalization with rewritten subtree history", () => {
+		const canonicalRoot = path.join(fixtureDirectory, "canonical-rewritten-history");
+		const projectRoot = path.join(fixtureDirectory, "canonical-rewritten-history-project");
+		const vendoredRoot = path.join(projectRoot, "packages", "cstd-next");
+		for (const root of [canonicalRoot, projectRoot]) {
+			fs.mkdirSync(root, { recursive: true });
+			run("git", ["init", "--initial-branch=main"], { capture: true, cwd: root });
+			run("git", ["config", "user.email", "test@corioders.com"], { capture: true, cwd: root });
+			run("git", ["config", "user.name", "Corioders Test"], { capture: true, cwd: root });
+		}
+		fs.mkdirSync(path.join(canonicalRoot, "script", "shadcn", "patches"), { recursive: true });
+		fs.writeFileSync(path.join(canonicalRoot, "script", "shadcn", "codemods.js"), "export const version = 1;\n");
+		fs.writeFileSync(path.join(canonicalRoot, "script", "shadcn", "patches", "dashboard.json"), "{}\n");
+		run("git", ["add", "."], { cwd: canonicalRoot });
+		run("git", ["commit", "-m", "canonical normalization"], { capture: true, cwd: canonicalRoot });
+		fs.cpSync(path.join(canonicalRoot, "script"), path.join(vendoredRoot, "script"), { recursive: true });
+		run("git", ["add", "."], { cwd: projectRoot });
+		run("git", ["commit", "-m", "manually vendored normalization"], { capture: true, cwd: projectRoot });
+
+		expect(synchronizeCanonicalShadcnNormalization({ canonicalRepository: canonicalRoot, cstdNextRoot: vendoredRoot, gitRoot: projectRoot })).toEqual({
+			error: null,
+			status: "current",
+		});
+	});
 });
