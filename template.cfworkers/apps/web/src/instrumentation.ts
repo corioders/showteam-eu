@@ -10,20 +10,25 @@ export function register(): void {
 	if (process.env["CORIODERS_TELEMETRY_DISABLED"] === "1") {
 		return;
 	}
-	registerOTel({
-		attributes: {
-			"deployment.environment.name": process.env["APP_ENV"] ?? "development",
-		},
-		instrumentationConfig: {
-			fetch: {
-				ignoreUrls: [telemetryCollectorUrl],
-				propagateContextUrls: [everyUrl],
+	try {
+		registerOTel({
+			attributes: {
+				"deployment.environment.name": process.env["APP_ENV"] ?? "development",
 			},
-		},
-		serviceName: "template-cfworkers-web",
-		traceExporter: new CoriodersTraceExporter(),
-		traceSampler: "always_on",
-	});
+			instrumentationConfig: {
+				fetch: {
+					ignoreUrls: [telemetryCollectorUrl],
+					propagateContextUrls: [everyUrl],
+				},
+			},
+			serviceName: "template-cfworkers-web",
+			traceExporter: new CoriodersTraceExporter(),
+			traceSampler: "always_on",
+		});
+	} catch (error) {
+		// biome-ignore lint/suspicious/noConsole: telemetry startup failures must stay visible without taking down the application
+		console.error("Failed to register OpenTelemetry", error);
+	}
 }
 
 export function onRequestError(error: unknown): void {
