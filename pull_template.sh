@@ -54,6 +54,23 @@ auto_resolve_agent_rules() {
 
 continue_template_merge() {
 	strip_template_maintainer_agent_rules || return
+	if [[ -n $consumer_directory ]]; then
+		local project_name staged_path
+		project_name=${consumer_directory%.cfworkers}
+		while IFS= read -r -d '' staged_path; do
+			[[ -f $staged_path ]] || continue
+			grep -Iq . "$staged_path" || continue
+			sed -i.bak \
+				-e "s/template\\.cfworkers/$consumer_directory/g" \
+				-e "s/template-cfworkers/$project_name-cfworkers/g" \
+				"$staged_path"
+			rm -- "$staged_path.bak"
+			git add -- "$staged_path"
+		done < <(git diff --cached --name-only --diff-filter=ACMR -z -- "$consumer_directory")
+	fi
+	if ! git cat-file -e HEAD:TODO.md 2>/dev/null && [[ -f TODO.md ]]; then
+		git rm --quiet --force -- TODO.md
+	fi
 	GIT_EDITOR=true git merge --continue
 }
 
@@ -123,7 +140,14 @@ while IFS= read -r unmerged_path; do
 		AGENTS.md)
 			auto_resolve_agent_rules || manual_paths+=("$unmerged_path")
 			;;
-		bootstrap_project.sh | encrypt_template_env.sh | template.*workers/CONSUMERS.md | template.*workers/apps/web/.env.age)
+		TODO.md)
+			if git cat-file -e ":2:$unmerged_path" 2>/dev/null; then
+				auto_resolve_bootstrap_replacements "$unmerged_path" || manual_paths+=("$unmerged_path")
+			else
+				git rm --quiet --force -- "$unmerged_path"
+			fi
+			;;
+		bootstrap_project.sh | encrypt_template_env.sh | template.*workers/*)
 			git rm --quiet --force -- "$unmerged_path"
 			;;
 		*.cfworkers/.infisical.json)

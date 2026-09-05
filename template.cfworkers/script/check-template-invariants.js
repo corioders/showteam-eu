@@ -213,6 +213,11 @@ for (const scriptName of ["dev", "preview", "deploy", "logs", "logs:preview", "s
 	}
 }
 
+const expectedDevScript = "infisical run --env=staging -- dotenv -e apps/web/.env -e apps/web/.env.local -o -- turbo run dev --env-mode=loose";
+if (packageJson.scripts?.dev !== expectedDevScript) {
+	errors.push("root dev script must load staging Infisical secrets, allow local dotenv overrides, and preserve injected variables through Turborepo");
+}
+
 const biomeConfig = read("biome.jsonc");
 requireMatch(biomeConfig, /no-throw\.grit/, "biome.jsonc must keep the no-throw plugin.");
 try {

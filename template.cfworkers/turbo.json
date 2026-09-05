@@ -13,7 +13,7 @@
 		"NEXT_PUBLIC_GIT_BRANCH",
 		"NEXT_PUBLIC_IS_DEPLOY"
 	],
-	"globalPassThroughEnv": ["CSTD_D1_PERSIST_PATH"],
+	"globalPassThroughEnv": ["CORIODERS_TELEMETRY_DISABLED", "CSTD_D1_PERSIST_PATH", "NEXT_RUNTIME"],
 	"tasks": {
 		"//#check-invariants": {
 			"cache": false
@@ -52,7 +52,7 @@
 		},
 		"test:e2e": {
 			"dependsOn": ["build"],
-			"env": ["CI", "PLAYWRIGHT_BASE_URL", "PLAYWRIGHT_BROWSERS_PATH", "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"],
+			"env": ["CI", "GITHUB_RUN_ATTEMPT", "GITHUB_RUN_ID", "PLAYWRIGHT_BASE_URL", "PLAYWRIGHT_BROWSERS_PATH", "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"],
 			"outputs": ["playwright-report/**", "test-results/**"]
 		},
 		"clean": {

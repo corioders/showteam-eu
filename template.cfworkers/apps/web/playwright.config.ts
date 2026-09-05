@@ -2,11 +2,13 @@ import { availableParallelism } from "node:os";
 
 import { defineConfig, devices } from "@playwright/test";
 
-const port = 3100;
+const isCi = Boolean(process.env["CI"]);
+const runIdSuffix = Number(process.env["GITHUB_RUN_ID"]?.slice(-4) ?? 0);
+const runAttempt = Number(process.env["GITHUB_RUN_ATTEMPT"] ?? 0);
+const port = isCi ? 20_000 + runIdSuffix + runAttempt : 3100;
 const localBaseUrl = `http://localhost:${port}`;
 const externalBaseUrl = process.env["PLAYWRIGHT_BASE_URL"];
 const chromiumExecutablePath = process.env["PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"];
-const isCi = Boolean(process.env["CI"]);
 
 // biome-ignore lint/style/noDefaultExport: Playwright requires a default configuration export.
 export default defineConfig({
@@ -25,6 +27,7 @@ export default defineConfig({
 		: {
 				webServer: {
 					command: `pnpm start --port ${port}`,
+					env: { ...process.env, ["CORIODERS_TELEMETRY_DISABLED"]: "1" },
 					url: localBaseUrl,
 					reuseExistingServer: false,
 					timeout: 120_000,
