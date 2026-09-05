@@ -16,3 +16,29 @@ test("renders the starter page without browser errors", async ({ page }) => {
 	await expect(page.getByText("pnpm dev", { exact: true })).toBeVisible();
 	expect(browserErrors).toEqual([]);
 });
+
+test("connects a click and its fetch in one browser trace", async ({ page }) => {
+	await page.goto("/");
+	await page.evaluate(() => {
+		const button = document.createElement("button");
+		button.textContent = "Telemetry probe";
+		button.addEventListener("click", () => fetch("/").then(() => undefined));
+		document.body.append(button);
+	});
+
+	const telemetryRequest = page.waitForRequest((request) => request.url().endsWith("/api/telemetry/v1/traces"), { timeout: 15_000 });
+	await page.getByRole("button", { name: "Telemetry probe" }).click();
+	const payload = (await telemetryRequest).postDataJSON() as {
+		resourceSpans: Array<{
+			scopeSpans: Array<{ spans: Array<{ name: string; parentSpanId?: string; spanId: string; traceId: string }> }>;
+		}>;
+	};
+	const spans = payload.resourceSpans.flatMap((resource) => resource.scopeSpans.flatMap((scope) => scope.spans));
+	const clickSpans = spans.filter((span) => span.name.toLowerCase().includes("click"));
+	const fetchSpan = spans.find((span) => clickSpans.some((clickSpan) => clickSpan.spanId === span.parentSpanId));
+	const parentClickSpan = clickSpans.find((span) => span.spanId === fetchSpan?.parentSpanId);
+
+	expect(parentClickSpan).toBeDefined();
+	expect(fetchSpan).toBeDefined();
+	expect(fetchSpan?.traceId).toBe(parentClickSpan?.traceId);
+});

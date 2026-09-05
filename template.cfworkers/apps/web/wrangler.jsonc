@@ -31,6 +31,10 @@
 			"binding": "WORKER_SELF_REFERENCE",
 			// The service must match the "name" of this worker
 			"service": "template-cfworkers-web"
+		},
+		{
+			"binding": "CORIODERS_TELEMETRY",
+			"service": "corioders-dashboard-cfworkers-web"
 		}
 	],
 	"r2_buckets": [
@@ -73,6 +77,10 @@
 				{
 					"binding": "WORKER_SELF_REFERENCE",
 					"service": "template-cfworkers-web-preview"
+				},
+				{
+					"binding": "CORIODERS_TELEMETRY",
+					"service": "corioders-dashboard-cfworkers-web-preview"
 				}
 			],
 			"r2_buckets": [
