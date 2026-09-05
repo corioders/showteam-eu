@@ -25,6 +25,7 @@ export default defineConfig({
 		: {
 				webServer: {
 					command: `pnpm start --port ${port}`,
+					env: { ...process.env, ["CORIODERS_TELEMETRY_DISABLED"]: "1" },
 					url: localBaseUrl,
 					reuseExistingServer: false,
 					timeout: 120_000,
