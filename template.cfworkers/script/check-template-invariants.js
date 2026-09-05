@@ -165,6 +165,30 @@ if (!/^https:\/\/[^/]+$/.test(infisicalConfig.domain ?? "")) {
 }
 
 const deployWorkflow = read("../.github/workflows/deploy.yml");
+const validateWorkflow = read("../.github/workflows/validate.yml");
+const scheduleRunnerWorkflow = read("../.github/workflows/schedule-runner.yml");
+const workflowsDirectory = path.join(workspaceDirectory, "..", ".github", "workflows");
+const directWindowsRunnerPattern = /runs-on:\s*\[\s*self-hosted\s*,\s*["']?win24-wsl(?:-poland20)?["']?\s*\]/;
+for (const workflowName of fs.readdirSync(workflowsDirectory)) {
+	if (!workflowName.endsWith(".yml") && !workflowName.endsWith(".yaml")) {
+		continue;
+	}
+	if (directWindowsRunnerPattern.test(fs.readFileSync(path.join(workflowsDirectory, workflowName), "utf8"))) {
+		errors.push(`${workflowName} must reserve a dynamic worker through schedule-runner.yml instead of targeting win24-wsl directly.`);
+	}
+}
+requireMatch(scheduleRunnerWorkflow, /runs-on:\s*\[self-hosted, corioders-self-hosted-scheduler\]/, "The runner scheduler must use the dedicated scheduler label.");
+for (const [workflowName, workflow] of [
+	["deploy.yml", deployWorkflow],
+	["validate.yml", validateWorkflow],
+]) {
+	requireMatch(workflow, /uses:\s*\.\/\.github\/workflows\/schedule-runner\.yml/, `${workflowName} must reserve a runner through schedule-runner.yml.`);
+	requireMatch(
+		workflow,
+		/runs-on:\s*\[self-hosted, "\$\{\{ needs\.[^.]+\.outputs\.runner-label \}\}"\]/,
+		`${workflowName} must target the scheduler's dynamic runner label.`,
+	);
+}
 if (/opennextjs-cloudflare populateCache remote/.test(deployWorkflow)) {
 	errors.push("The deploy workflow must not use the hanging OpenNext remote cache helper.");
 }
@@ -263,6 +287,7 @@ for (const [pattern, message] of [
 	],
 	[/shadcn:patch` rejects a missing or unchanged test/, "AGENTS.md must require a fresh browser compatibility test before patching."],
 	[/fail on browser `console\.error` or `pageerror`/, "AGENTS.md must require Shadcn compatibility tests to reject browser errors."],
+	[/Never target `win24-wsl` or a concrete worker label directly/, "AGENTS.md must forbid bypassing the dynamic runner scheduler."],
 ]) {
 	requireMatch(agentRules, pattern, message);
 }
