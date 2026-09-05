@@ -28,6 +28,7 @@ export default defineConfig({
 		? undefined
 		: {
 				command: process.env.CI ? `pnpm start --port ${testPort}` : "pnpm dev",
+				env: { ...process.env, ["CORIODERS_TELEMETRY_DISABLED"]: "1" },
 				url: localBaseUrl,
 				reuseExistingServer: !process.env.CI,
 				timeout: 120_000,
