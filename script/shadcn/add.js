@@ -89,7 +89,7 @@ const patchResults = [];
 for (const registryItem of registryItems) {
 	const result = applyLearnedPatch({ cwd, patchDirectory, registryItem, style });
 	patchResults.push({ registryItem, status: result.status });
-	if (result.status === "invalid" || result.status === "stale") {
+	if (result.status === "invalid" || result.status === "stale" || result.status === "unverified") {
 		patchErrors.push(result.error);
 	}
 }

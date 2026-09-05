@@ -101,6 +101,16 @@ describe("Shadcnblocks installation snapshots", () => {
 			status: "stale",
 		});
 		expect(applyLearnedPatch({ cwd: installRoot, patchDirectory, registryItem: "@shadcnblocks/dashboard9", style: "new-york" })).toEqual({ status: "missing" });
+
+		fs.writeFileSync(path.join(installRoot, relativePath), upstream);
+		const legacyManifest = JSON.parse(fs.readFileSync(learnedPatch?.manifestPath ?? "", "utf8"));
+		legacyManifest.formatVersion = 2;
+		delete legacyManifest.verificationTest;
+		fs.writeFileSync(learnedPatch?.manifestPath ?? "", `${JSON.stringify(legacyManifest)}\n`);
+		expect(applyLearnedPatch({ cwd: installRoot, patchDirectory, registryItem: "@shadcnblocks/dashboard9", style: "base-mira" })).toMatchObject({
+			status: "unverified",
+		});
+		expect(fs.readFileSync(path.join(installRoot, relativePath), "utf8")).toBe(fixed);
 	});
 
 	it("refuses to learn a compatibility patch without browser-test evidence", () => {

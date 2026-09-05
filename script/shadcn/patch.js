@@ -78,7 +78,7 @@ const hasCompatibilityChanges = session.sourceFiles.some((relativePath) => {
 	const currentPath = path.join(cwd, relativePath);
 	return !fs.existsSync(baselinePath) || !fs.existsSync(currentPath) || !fs.readFileSync(baselinePath).equals(fs.readFileSync(currentPath));
 });
-const replacesExistingPatch = session.patchResults?.some((result) => result.status === "invalid" || result.status === "stale") ?? false;
+const replacesExistingPatch = session.patchResults?.some((result) => result.status === "invalid" || result.status === "stale" || result.status === "unverified") ?? false;
 if (!hasCompatibilityChanges && !replacesExistingPatch) {
 	console.error("No generic compatibility fixes exist for the latest Shadcnblocks installation.");
 	process.exit(1);
