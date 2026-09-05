@@ -1,9 +1,9 @@
 {
-	"formatVersion": 2,
+	"formatVersion": 3,
 	"registryItem": "@shadcnblocks/dashboard3",
 	"style": "base-mira",
 	"baselineHashes": {
-		"package.json": "4847b8a775ab79b7d7e612d2e42576bbc678ce4bacc3b4901c6dcde29b2cf1a7",
+		"package.json": "9e8b1d74a275a28443511a118db93ae68cf0c1192e7fd9c922334fc866c41624",
 		"src/components/dashboard3.tsx": "eb3550a4d510ad29b57b65e54a8769eb1d8c26ad435b5882dc1ed7bc4cf18595",
 		"src/components/ui/avatar.tsx": "527aa7ef7cbbfd239ec80c841bead0933db98125fcec83e8869799147e5f786d",
 		"src/components/ui/button.tsx": "8a12c3842a367d1e2f1a37cc7b8b870e23217fb5db6e48f6a2209df7173833ff",
@@ -25,5 +25,9 @@
 		"src/components/dashboard3.tsx",
 		"src/components/ui/chart.tsx",
 		"src/components/ui/sidebar.tsx"
-	]
+	],
+	"verificationTest": {
+		"hash": "4a372f193f8f71965b09e7e7fc469725e46b96a81c2e5cf2502bee2a8a3b3a7a",
+		"path": "tests/e2e/shadcn/dashboard3.spec.ts"
+	}
 }
