@@ -6,7 +6,7 @@ import { afterAll, describe, expect, it } from "vitest";
 
 import { checkCanonicalShadcnNormalization, synchronizeCanonicalShadcnNormalization } from "../script/shadcn/canonical.js";
 import { applyLearnedPatch, readShadcnStyle, registryItemsFromArguments, writeLearnedPatch } from "../script/shadcn/patches.js";
-import { loadLocalEnvironment, run, snapshotFiles } from "../script/shadcn/session.js";
+import { compatibilityTestPath, fileHash, loadLocalEnvironment, run, snapshotFiles } from "../script/shadcn/session.js";
 
 const fixtureDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "cstd-shadcn-session-"));
 
@@ -43,6 +43,18 @@ describe("Shadcnblocks installation snapshots", () => {
 		expect(result.stdout).toBe("n\n");
 	});
 
+	it("uses one deterministic browser test per registry block and detects changes", () => {
+		const testPath = compatibilityTestPath("@shadcnblocks/dashboard3");
+		const absoluteTestPath = path.join(fixtureDirectory, testPath);
+		expect(testPath).toBe("tests/e2e/shadcn/dashboard3.spec.ts");
+		expect(fileHash(absoluteTestPath)).toBeNull();
+		fs.mkdirSync(path.dirname(absoluteTestPath), { recursive: true });
+		fs.writeFileSync(absoluteTestPath, "test v1\n");
+		const firstHash = fileHash(absoluteTestPath);
+		fs.writeFileSync(absoluteTestPath, "test v2\n");
+		expect(fileHash(absoluteTestPath)).not.toBe(firstHash);
+	});
+
 	it("learns, verifies, and reapplies a complete dashboard9 patch", () => {
 		const baselineRoot = path.join(fixtureDirectory, "dashboard9-baseline");
 		const fixedRoot = path.join(fixtureDirectory, "dashboard9-fixed");
@@ -69,12 +81,17 @@ describe("Shadcnblocks installation snapshots", () => {
 			registryItem: "@shadcnblocks/dashboard9",
 			sourceFiles: [relativePath],
 			style: "base-mira",
+			verificationTest: { hash: "browser-test-hash", path: "tests/e2e/shadcn/dashboard9.spec.ts" },
 		});
 
 		expect(learningError).toBeNull();
 		expect(learnedPatch?.changedFiles).toEqual([relativePath]);
 		expect(fs.readFileSync(learnedPatch?.patchPath ?? "", "utf8")).not.toContain(fixtureDirectory);
 		expect(path.basename(learnedPatch?.patchPath ?? "")).toBe("base-mira__shadcnblocks__dashboard9.patch");
+		expect(JSON.parse(fs.readFileSync(learnedPatch?.manifestPath ?? "", "utf8")).verificationTest).toEqual({
+			hash: "browser-test-hash",
+			path: "tests/e2e/shadcn/dashboard9.spec.ts",
+		});
 		const applicationResult = applyLearnedPatch({ cwd: installRoot, patchDirectory, registryItem: "@shadcnblocks/dashboard9", style: "base-mira" });
 		expect(applicationResult).toEqual({ changedFiles: [relativePath], status: "applied" });
 		expect(fs.readFileSync(path.join(installRoot, relativePath), "utf8")).toBe(fixed);
@@ -84,6 +101,22 @@ describe("Shadcnblocks installation snapshots", () => {
 			status: "stale",
 		});
 		expect(applyLearnedPatch({ cwd: installRoot, patchDirectory, registryItem: "@shadcnblocks/dashboard9", style: "new-york" })).toEqual({ status: "missing" });
+	});
+
+	it("refuses to learn a compatibility patch without browser-test evidence", () => {
+		const [learnedPatch, learningError] = writeLearnedPatch({
+			baselineRoot: fixtureDirectory,
+			currentRoot: fixtureDirectory,
+			patchDirectory: fixtureDirectory,
+			registryItem: "@shadcnblocks/dashboard3",
+			sourceFiles: [],
+			style: "base-mira",
+			// @ts-expect-error Runtime validation protects JavaScript callers and stale sessions.
+			verificationTest: undefined,
+		});
+
+		expect(learnedPatch).toBeNull();
+		expect(learningError?.message).toContain("browser compatibility test is required");
 	});
 
 	it("reads and validates the components.json style", () => {

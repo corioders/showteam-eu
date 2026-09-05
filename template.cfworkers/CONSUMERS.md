@@ -9,15 +9,15 @@ exact reminder to add that project to this source registry.
 
 | Repository | App directory | Preserve | Migration blocker | Status | Template revision |
 | --- | --- | --- | --- | --- | --- |
-| `corioders/corioders-dashboard` | `corioders-dashboard.cfworkers/apps/web` | Telemetry collector, trace storage and observability UI | — | Migrated | `bb0d55d` (`75a1217`) |
-| `corioders/corioders.com` | `corioders.cfworkers/apps/web` | Lingui routing and typed env | Reconcile application bindings | Planned | — |
-| `corioders/impact-speaker-tracker` | `impact.cfworkers/apps/web` | Firebase, Drive CMS, uploads and document workflows | Reconcile Firebase and cache bindings | Planned | Partial D1 isolation capability: `18a4f7a` |
-| `corioders/impact-new-agenda` | `impact-new-agenda.cfworkers/apps/web` | — | — | Migrated | `bb0d55d` (`2421900`) |
-| `corioders/showteam-eu` | `showteam.cfworkers/apps/web` | Payload, D1/R2 migrations, fixtures, tests and reminder Worker | — | Migrated | `bb0d55d` (`6ca1719`) |
-| `corioders/corioders-tickets` | `corioders-tickets.cfworkers/apps/web` | Active dashboard implementation | — | Migrated | `bb0d55d` (`d42e0a3`) |
-| `corioders/handbook` | `handbook.cloudflare/apps/web` | Nextra and Pagefind | Replace Next on Pages with OpenNext | Planned | — |
-| `corioders/ui` | `ui.cloudflare/apps/web` | shadcn registry generator | Replace Next on Pages and staged-only CI check | Planned | — |
-| `poland2-0/poland20` | `poland20.cloudflare/apps/web` | Lingui routing and Drive CMS | Replace Next on Pages and staged-only CI check | Planned | — |
+| `corioders/corioders-dashboard` | `corioders-dashboard.cfworkers/apps/web` | Telemetry collector, trace storage and observability UI | — | Migrating browser-verified Shadcn flow | — |
+| `corioders/corioders.com` | `corioders.cfworkers/apps/web` | Lingui routing and typed env | Reconcile application bindings | Migrating browser-verified Shadcn flow | — |
+| `corioders/impact-speaker-tracker` | `impact.cfworkers/apps/web` | Firebase, Drive CMS, uploads and document workflows | Reconcile Firebase and cache bindings | Migrating browser-verified Shadcn flow | — |
+| `corioders/impact-new-agenda` | `impact-new-agenda.cfworkers/apps/web` | — | — | Migrating browser-verified Shadcn flow | — |
+| `corioders/showteam-eu` | `showteam.cfworkers/apps/web` | Payload, D1/R2 migrations, fixtures, tests and reminder Worker | — | Migrating browser-verified Shadcn flow | — |
+| `corioders/corioders-tickets` | `corioders-tickets.cfworkers/apps/web` | Active dashboard implementation | — | Migrating browser-verified Shadcn flow | — |
+| `corioders/handbook` | `handbook.cloudflare/apps/web` | Nextra and Pagefind | Replace Next on Pages with OpenNext | Migrating browser-verified Shadcn flow | — |
+| `corioders/ui` | `ui.cloudflare/apps/web` | shadcn registry generator | Replace Next on Pages and staged-only CI check | Migrating browser-verified Shadcn flow | — |
+| `poland2-0/poland20` | `poland20.cloudflare/apps/web` | Lingui routing and Drive CMS | Replace Next on Pages and staged-only CI check | Migrating browser-verified Shadcn flow | — |
 
 ## Migration rule
 
