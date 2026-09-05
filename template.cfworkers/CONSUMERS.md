@@ -9,6 +9,7 @@ exact reminder to add that project to this source registry.
 
 | Repository | App directory | Preserve | Migration blocker | Status | Template revision |
 | --- | --- | --- | --- | --- | --- |
+| `corioders/corioders-dashboard` | `corioders-dashboard.cfworkers/apps/web` | Telemetry collector, trace storage and observability UI | — | Planned | — |
 | `corioders/corioders.com` | `corioders.cfworkers/apps/web` | Lingui routing and typed env | Reconcile application bindings | Planned | — |
 | `corioders/impact-speaker-tracker` | `impact.cfworkers/apps/web` | Firebase, Drive CMS, uploads and document workflows | Reconcile Firebase and cache bindings | Planned | Partial D1 isolation capability: `18a4f7a` |
 | `corioders/impact-new-agenda` | `impact-new-agenda.cfworkers/apps/web` | — | — | Migrated | `b566b60` (`bd41b97`) |

@@ -33,7 +33,20 @@
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.1.0",
+		"@opentelemetry/api": "^1.9.1",
+		"@opentelemetry/context-zone": "^2.11.0",
+		"@opentelemetry/exporter-trace-otlp-http": "^0.222.0",
+		"@opentelemetry/instrumentation": "^0.222.0",
+		"@opentelemetry/instrumentation-document-load": "^0.67.0",
+		"@opentelemetry/instrumentation-fetch": "^0.222.0",
+		"@opentelemetry/instrumentation-user-interaction": "^0.66.0",
+		"@opentelemetry/otlp-transformer": "^0.222.0",
+		"@opentelemetry/resources": "^2.11.0",
+		"@opentelemetry/sdk-trace-base": "^2.11.0",
+		"@opentelemetry/sdk-trace-web": "^2.11.0",
+		"@opentelemetry/semantic-conventions": "^1.43.0",
 		"@t3-oss/env-nextjs": "^0.13.11",
+		"@vercel/otel": "^2.1.3",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"cstd-next": "workspace:*",
@@ -47,7 +60,8 @@
 		"sonner": "^2.0.7",
 		"tailwind-merge": "^3.3.1",
 		"tw-animate-css": "^1.3.6",
-		"zod": "^4.4.3"
+		"zod": "^4.4.3",
+		"zone.js": "^0.16.3"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.10",

@@ -1,0 +1,9 @@
+- [ ] Zbudować pełny system telemetryczny dla template'u i centralny Corioders Dashboard na Cloudflare.
+  - [ ] Trzymać checkout dashboardu w `/Users/wiktorjurkiewicz/repos/PROJECT/corioders/02_CODE/internal/corioders-dashboard`.
+  - [ ] Spike: potwierdzić działanie OTel SDK i propagacji W3C w Next 16/OpenNext/Workers.
+  - [ ] Zdefiniować kontrakt telemetryczny, redakcję PII i jawne wyniki `scope.ok()` / `scope.fail(error)` / `unconfirmed`.
+  - [ ] Dodać browser auto-instrumentation: document/navigation, click, fetch/XHR, Web Vitals i błędy globalne.
+  - [ ] Dodać Next auto-instrumentation i ręczne scope'y dla logiki biznesowej; zachować trace context browser → server → downstream.
+  - [ ] Zbudować prywatny collector Worker z batch ingestem i centralnym D1 (`traces`, `spans`, `events`) oraz retencją.
+  - [ ] Zbudować Corioders Dashboard: lista błędów, filtry, widok waterfall całego trace'a i szczegóły błędu/logów.
+  - [ ] Dodać konfigurację bootstrap/deploy, osobne preview/production, test E2E trace'a i migrację wszystkich konsumentów template'u.
