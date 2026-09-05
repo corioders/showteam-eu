@@ -9,6 +9,7 @@ interface LearnedPatchOptions {
 	registryItem: string;
 	sourceFiles: string[];
 	style: string;
+	verificationTest: { hash: string; path: string };
 }
 
 interface LearnedPatchResult {

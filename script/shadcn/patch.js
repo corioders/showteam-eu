@@ -6,7 +6,7 @@ import path from "node:path";
 
 import { CSTD_NEXT_CANONICAL_REPOSITORY } from "./canonical.js";
 import { learnedPatchPaths, readShadcnStyle, writeLearnedPatch } from "./patches.js";
-import { getSessionDirectory, run } from "./session.js";
+import { compatibilityTestPath, fileHash, getSessionDirectory, run } from "./session.js";
 
 const cwd = process.cwd();
 const sessionDirectory = getSessionDirectory(cwd);
@@ -31,14 +31,40 @@ if (session.style !== currentStyle) {
 	process.exit(1);
 }
 
+const compatibilityTest = compatibilityTestPath(session.registryItems[0]);
+const compatibilityTestAbsolutePath = path.join(cwd, compatibilityTest);
+if (session.compatibilityTestHashes === undefined) {
+	console.error("The latest Shadcnblocks installation session predates browser verification. Run shadcn:add again before patching.");
+	process.exit(1);
+}
+const previousCompatibilityTestHash = session.compatibilityTestHashes?.[compatibilityTest] ?? null;
+const currentCompatibilityTestHash = fileHash(compatibilityTestAbsolutePath);
+if (currentCompatibilityTestHash === null || currentCompatibilityTestHash === previousCompatibilityTestHash) {
+	console.error(
+		`Add or update ${compatibilityTest} after shadcn:add. It must render the installed block, exercise every interactive state, and fail on browser console or page errors.`,
+	);
+	process.exit(1);
+}
+
 const existingSourceFiles = session.sourceFiles.filter((relativePath) => fs.existsSync(path.join(cwd, relativePath)));
-const biomeResult = run("pnpm", ["exec", "biome", "check", "--error-on-warnings", "--no-errors-on-unmatched", ...existingSourceFiles], {
+const biomeResult = run("pnpm", ["exec", "biome", "check", "--error-on-warnings", "--no-errors-on-unmatched", ...existingSourceFiles, compatibilityTest], {
 	allowFailure: true,
 	cwd,
 });
 const typecheckResult = run("pnpm", ["run", "check-types"], { allowFailure: true, cwd });
 if (biomeResult.status !== 0 || typecheckResult.status !== 0) {
 	console.error("The installed block still fails compatibility checks. Fix every generic error without customization before creating its patch.");
+	process.exit(1);
+}
+
+const buildResult = run("pnpm", ["run", "build"], { allowFailure: true, cwd });
+if (buildResult.status !== 0) {
+	console.error("The installed block failed the production build; the compatibility patch was not created.");
+	process.exit(1);
+}
+const browserTestResult = run("pnpm", ["exec", "playwright", "test", compatibilityTest], { allowFailure: true, cwd });
+if (browserTestResult.status !== 0) {
+	console.error(`The installed block failed ${compatibilityTest}; the compatibility patch was not created.`);
 	process.exit(1);
 }
 
@@ -69,6 +95,7 @@ if (hasCompatibilityChanges) {
 		registryItem: session.registryItems[0],
 		sourceFiles: session.sourceFiles,
 		style: session.style,
+		verificationTest: { hash: currentCompatibilityTestHash, path: compatibilityTest },
 	});
 	if (learningError) {
 		fs.rmSync(temporaryPatchDirectory, { force: true, recursive: true });
