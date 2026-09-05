@@ -203,9 +203,6 @@ export interface Offer {
         id?: string | null;
       }[]
     | null;
-  /**
-   * Opcjonalne. Bez nowego zdjęcia zostanie obecna fotografia SHOWteam.
-   */
   cover?: (number | null) | Media;
   published?: boolean | null;
   staticImage: 'lake' | 'snow' | 'training' | 'stay';

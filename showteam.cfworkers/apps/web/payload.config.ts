@@ -84,7 +84,7 @@ const collections = [
 export default buildConfig({
 	admin: {
 		user: Users.slug,
-		importMap: { baseDir: dirname },
+		importMap: { autoGenerate: false, baseDir: dirname },
 		meta: {
 			titleSuffix: " — Panel SHOWteam",
 			manifest: "/admin.webmanifest",
@@ -114,7 +114,7 @@ export default buildConfig({
 	graphQL: { disable: true },
 	editor: lexicalEditor(),
 	secret: payloadSecret,
-	typescript: { outputFile: path.resolve(dirname, "payload-types.ts") },
+	typescript: { autoGenerate: false, outputFile: path.resolve(dirname, "payload-types.ts") },
 	db: sqliteD1Adapter({ binding: cloudflare.env.D1, afterSchemaInit: [preserveOperationalTables], push: false }),
 	plugins: [
 		r2Storage({ bucket: cloudflare.env.R2, collections: { media: true } }),
