@@ -126,6 +126,13 @@ while IFS= read -r unmerged_path; do
 		AGENTS.md)
 			auto_resolve_agent_rules || manual_paths+=("$unmerged_path")
 			;;
+		TODO.md)
+			if git cat-file -e ":2:$unmerged_path" 2>/dev/null; then
+				auto_resolve_bootstrap_replacements "$unmerged_path" || manual_paths+=("$unmerged_path")
+			else
+				git rm --quiet --force -- "$unmerged_path"
+			fi
+			;;
 		bootstrap_project.sh | encrypt_template_env.sh | template.*workers/*)
 			git rm --quiet --force -- "$unmerged_path"
 			;;
