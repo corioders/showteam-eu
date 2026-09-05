@@ -172,6 +172,21 @@ requireMatch(
 	/name: Deploy production[\s\S]+?run: OPEN_NEXT_DEPLOY=true pnpm exec wrangler deploy/,
 	"The production deployment must consume the OpenNext artifact already produced by validation.",
 );
+requireMatch(deployWorkflow, /id-token:\s*write/, "The deploy workflow must grant GitHub OIDC token access.");
+requireMatch(deployWorkflow, /Infisical\/secrets-action@[0-9a-f]{40}/, "The deploy workflow must load secrets from a pinned Infisical action.");
+if (/secrets\.(?:CLOUDFLARE_API_TOKEN|PAYLOAD_SECRET)/.test(deployWorkflow)) {
+	errors.push("The deploy workflow must load deployment secrets from Infisical instead of GitHub Secrets.");
+}
+const infisicalConfig = JSON.parse(read(".infisical.json"));
+if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(infisicalConfig.workspaceId ?? "")) {
+	errors.push(".infisical.json must link a valid Infisical project ID.");
+}
+if (infisicalConfig.defaultEnvironment !== "dev") {
+	errors.push(".infisical.json must default to the dev environment.");
+}
+if (!/^https:\/\/[^/]+$/.test(infisicalConfig.domain ?? "")) {
+	errors.push(".infisical.json must pin an HTTPS Infisical domain.");
+}
 const packageJson = JSON.parse(read("package.json"));
 if (packageJson.scripts?.["resolve-build-inputs"] !== "node script/resolve-external-build-inputs.js") {
 	errors.push("package.json must expose the external build-input resolver.");

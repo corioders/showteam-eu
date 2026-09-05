@@ -2,15 +2,8 @@
 # Pull requests upload an isolated preview and deploy the latest build to a shared
 # Worker with observable logs; the 'deploy' branch publishes production.
 #
-# Required setup:
-# 1. Create a Cloudflare API token at https://dash.cloudflare.com/profile/api-tokens
-#    ("Edit Cloudflare Workers" template, or a custom token with:
-#     Account - Workers Scripts - Edit, Workers R2 Storage - Edit, D1 - Edit,
-#     Zone - Workers Routes - Edit if you use a custom domain).
-# 2. Repository Settings > Environments: create 'preview' and 'production'.
-#    Add CLOUDFLARE_API_TOKEN as a secret to both.
-#    Add CLOUDFLARE_WORKERS_DEV_SUBDOMAIN as a variable to 'preview'.
-# 3. Preserve the durable D1/R2 resources named in apps/web/wrangler.jsonc.
+# Infisical supplies deployment secrets through the repository's OIDC identity.
+# Preserve the durable D1/R2 resources named in apps/web/wrangler.jsonc.
 #
 # Validation and deploy run on a worker selected by the organization scheduler.
 # The source template repository skips this workflow; initialized project
@@ -27,6 +20,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -123,6 +117,15 @@ jobs:
             touch "$INSTALL_MARKER"
           fi
         working-directory: showteam.cfworkers
+
+      - name: Fetch deployment secrets from Infisical
+        uses: Infisical/secrets-action@77ab1f4ccd183a543cb5b42435fbd181189f4995 # v1.0.16
+        with:
+          method: oidc
+          identity-id: ${{ vars.INFISICAL_IDENTITY_ID }}
+          project-slug: ${{ github.event.repository.name }}
+          env-slug: ${{ github.ref_name == 'deploy' && 'prod' || 'staging' }}
+          domain: ${{ vars.INFISICAL_DOMAIN }}
 
       - name: Use persistent Next.js cache
         run: |
@@ -239,9 +242,7 @@ jobs:
           echo "cache_hit=false" >> "$GITHUB_OUTPUT"
         working-directory: showteam.cfworkers/apps/web
         env:
-          PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Ensure preview Worker exists
         if: github.ref_name != 'deploy' && steps.preview-cache.outputs.cache_hit != 'true'
@@ -274,7 +275,6 @@ jobs:
           esac
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Check isolated preview D1 snapshot
         if: github.ref_name != 'deploy' && steps.preview-cache.outputs.cache_hit != 'true'
@@ -289,31 +289,22 @@ jobs:
             echo "cache-hit=false" >> "$GITHUB_OUTPUT"
           fi
         working-directory: showteam.cfworkers/apps/web
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Migrate isolated preview D1
         if: github.ref_name != 'deploy' && steps.preview-cache.outputs.cache_hit != 'true' && steps.preview-d1.outputs.cache-hit != 'true'
         run: pnpm deploy:database:preview
         working-directory: showteam.cfworkers/apps/web
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Seed isolated preview D1
         if: github.ref_name != 'deploy' && steps.preview-cache.outputs.cache_hit != 'true' && steps.preview-d1.outputs.cache-hit != 'true'
         run: pnpm seed:preview
         working-directory: showteam.cfworkers/apps/web
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
 
       - name: Mark isolated preview D1 snapshot
         if: github.ref_name != 'deploy' && steps.preview-cache.outputs.cache_hit != 'true' && steps.preview-d1.outputs.cache-hit != 'true'
         run: |
           pnpm exec wrangler d1 execute D1 --remote --env preview --command "INSERT OR IGNORE INTO _cstd_ci_snapshots (hash) VALUES ('$CSTD_BUILD_INPUTS_HASH');"
         working-directory: showteam.cfworkers/apps/web
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Upload preview
         if: github.ref_name != 'deploy' && steps.preview-cache.outputs.cache_hit != 'true'
@@ -358,8 +349,6 @@ jobs:
           mv "${SHARED_MARKER_FILE}.tmp" "$SHARED_MARKER_FILE"
         working-directory: showteam.cfworkers/apps/web
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET }}
           PREVIEW_MARKER_FILE: ${{ steps.preview-cache.outputs.marker_file }}
           SHARED_MARKER_FILE: ${{ steps.preview-cache.outputs.shared_marker_file }}
           WORKER_BUILD_HASH: ${{ steps.preview-cache.outputs.worker_build_hash }}
@@ -373,7 +362,6 @@ jobs:
           mv "${SHARED_MARKER_FILE}.tmp" "$SHARED_MARKER_FILE"
         working-directory: showteam.cfworkers/apps/web
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           VERSION_ID: ${{ steps.preview-cache.outputs.version_id }}
           SHARED_MARKER_FILE: ${{ steps.preview-cache.outputs.shared_marker_file }}
 
@@ -381,8 +369,6 @@ jobs:
         if: github.ref_name == 'deploy'
         run: OPEN_NEXT_DEPLOY=true pnpm exec wrangler deploy
         working-directory: showteam.cfworkers/apps/web
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Display preview URLs
         if: success() && github.ref_name != 'deploy'
