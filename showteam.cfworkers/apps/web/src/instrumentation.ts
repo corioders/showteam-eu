@@ -6,7 +6,12 @@ export async function register(): Promise<void> {
 		return;
 	}
 	try {
-		const [{ registerOTel }, { CoriodersTraceExporter }] = await Promise.all([import("@vercel/otel"), import("@/telemetry/server-exporter")]);
+		const [{ registerOTel }, { SimpleSpanProcessor }, { CoriodersTraceExporter }] = await Promise.all([
+			import("@vercel/otel"),
+			import("@opentelemetry/sdk-trace-base"),
+			import("@/telemetry/server-exporter"),
+		]);
+		const traceExporter = new CoriodersTraceExporter();
 		registerOTel({
 			attributes: {
 				"deployment.environment.name": process.env["APP_ENV"] ?? "development",
@@ -18,7 +23,7 @@ export async function register(): Promise<void> {
 				},
 			},
 			serviceName: "showteam-cfworkers-web",
-			traceExporter: new CoriodersTraceExporter(),
+			spanProcessors: [new SimpleSpanProcessor(traceExporter)],
 			traceSampler: "always_on",
 		});
 	} catch (error) {
