@@ -54,6 +54,20 @@ auto_resolve_agent_rules() {
 
 continue_template_merge() {
 	strip_template_maintainer_agent_rules || return
+	if [[ -n $consumer_directory ]]; then
+		local project_name staged_path
+		project_name=${consumer_directory%.cfworkers}
+		while IFS= read -r -d '' staged_path; do
+			[[ -f $staged_path ]] || continue
+			grep -Iq . "$staged_path" || continue
+			sed -i.bak \
+				-e "s/template\\.cfworkers/$consumer_directory/g" \
+				-e "s/template-cfworkers/$project_name-cfworkers/g" \
+				"$staged_path"
+			rm -- "$staged_path.bak"
+			git add -- "$staged_path"
+		done < <(git diff --cached --name-only --diff-filter=ACMR -z -- "$consumer_directory")
+	fi
 	if ! git cat-file -e HEAD:TODO.md 2>/dev/null && [[ -f TODO.md ]]; then
 		git rm --quiet --force -- TODO.md
 	fi
