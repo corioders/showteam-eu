@@ -7,4 +7,3 @@
   - [ ] Zbudować prywatny collector Worker z batch ingestem i centralnym D1 (`traces`, `spans`, `events`) oraz retencją.
   - [ ] Zbudować Corioders Dashboard: lista błędów, filtry, widok waterfall całego trace'a i szczegóły błędu/logów.
   - [ ] Dodać konfigurację bootstrap/deploy, osobne preview/production, test E2E trace'a i migrację wszystkich konsumentów template'u.
-  - [ ] Naprawić `pull_template.sh`, aby migracje konsumentów nie importowały plików maintainer-only i automatycznie rozwiązywały mapowanie przemianowanego katalogu template'u.
