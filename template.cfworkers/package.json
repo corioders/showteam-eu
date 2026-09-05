@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"postinstall": "[ \"${CI:-}\" = true ] || (lefthook install && turbo telemetry disable)",
-		"dev": "infisical run -- turbo run dev",
+		"dev": "infisical run --env=staging -- dotenv -e apps/web/.env -e apps/web/.env.local -o -- turbo run dev --env-mode=loose",
 		"build": "turbo run build",
 		"build:worker": "NEXT_PRIVATE_STANDALONE=true turbo run build:worker --filter=web --concurrency=100%",
 		"validate": "NEXT_PRIVATE_STANDALONE=true turbo run build:worker check-types test:unit \"//#lint\" \"//#check-invariants\" --concurrency=100%",
@@ -31,6 +31,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.10",
+		"dotenv-cli": "11.0.0",
 		"lefthook": "^2.1.0",
 		"turbo": "^2.8.3"
 	},

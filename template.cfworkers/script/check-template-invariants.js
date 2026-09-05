@@ -204,10 +204,15 @@ const packageJson = JSON.parse(read("package.json"));
 if (packageJson.scripts?.["resolve-build-inputs"] !== "node script/resolve-external-build-inputs.js") {
 	errors.push("package.json must expose the external build-input resolver.");
 }
-for (const scriptName of ["dev", "preview", "deploy", "logs", "logs:preview", "shadcn:search", "shadcn:add", "shadcn:patch"]) {
+for (const scriptName of ["preview", "deploy", "logs", "logs:preview", "shadcn:search", "shadcn:add", "shadcn:patch"]) {
 	if (!/^infisical run(?: --env=[a-z]+)? -- /.test(packageJson.scripts?.[scriptName] ?? "")) {
 		errors.push(`package.json script ${scriptName} must inject Infisical secrets.`);
 	}
+}
+
+const expectedDevScript = "infisical run --env=staging -- dotenv -e apps/web/.env -e apps/web/.env.local -o -- turbo run dev --env-mode=loose";
+if (packageJson.scripts?.dev !== expectedDevScript) {
+	errors.push("root dev script must load staging Infisical secrets, allow local dotenv overrides, and preserve injected variables through Turborepo");
 }
 
 const biomeConfig = read("biome.jsonc");
