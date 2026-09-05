@@ -54,6 +54,9 @@ auto_resolve_agent_rules() {
 
 continue_template_merge() {
 	strip_template_maintainer_agent_rules || return
+	if ! git cat-file -e HEAD:TODO.md 2>/dev/null && [[ -f TODO.md ]]; then
+		git rm --quiet --force -- TODO.md
+	fi
 	GIT_EDITOR=true git merge --continue
 }
 
@@ -123,7 +126,7 @@ while IFS= read -r unmerged_path; do
 		AGENTS.md)
 			auto_resolve_agent_rules || manual_paths+=("$unmerged_path")
 			;;
-		bootstrap_project.sh | encrypt_template_env.sh | template.*workers/CONSUMERS.md | template.*workers/apps/web/.env.age)
+		bootstrap_project.sh | encrypt_template_env.sh | template.*workers/*)
 			git rm --quiet --force -- "$unmerged_path"
 			;;
 		*.cfworkers/.infisical.json)
