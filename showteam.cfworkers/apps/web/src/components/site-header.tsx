@@ -29,7 +29,6 @@ export function SiteHeader() {
 			<div className="site-container flex h-20 items-center justify-between">
 				<Link
 					href="/"
-					prefetch={true}
 					className="inline-flex min-h-11 items-center bg-orange-500 px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
 					aria-label="SHOWteam — strona główna"
 				>
@@ -39,7 +38,7 @@ export function SiteHeader() {
 				<nav className="hidden items-center gap-1 2xl:flex" aria-label="Główna nawigacja">
 					{links.map((link) => (
 						<Button asChild={true} variant="ghost" size="sm" key={link.href} className={pathname === link.href ? "bg-white/10 text-orange-400" : undefined}>
-							<Link href={link.href} prefetch={true} aria-current={pathname === link.href ? "page" : undefined}>
+							<Link href={link.href} aria-current={pathname === link.href ? "page" : undefined}>
 								{link.label}
 							</Link>
 						</Button>
@@ -48,9 +47,7 @@ export function SiteHeader() {
 
 				<div className="ml-auto flex items-center gap-2">
 					<Button asChild={true} size="sm" className="hidden min-[360px]:inline-flex">
-						<Link href={applicationLink.href} prefetch={true}>
-							{applicationLink.label}
-						</Link>
+						<Link href={applicationLink.href}>{applicationLink.label}</Link>
 					</Button>
 					<Button asChild={true} size="sm" className="hidden 2xl:inline-flex">
 						<a href="tel:+48500128090">
@@ -78,7 +75,6 @@ export function SiteHeader() {
 									<SheetClose asChild={true} key={link.href}>
 										<Link
 											href={link.href}
-											prefetch={true}
 											aria-current={pathname === link.href ? "page" : undefined}
 											className={`group flex min-h-20 flex-col justify-between border-white/10 border-r border-b p-3 font-black font-display uppercase transition-colors hover:bg-orange-500 hover:text-black focus-visible:bg-orange-500 focus-visible:text-black focus-visible:outline-none sm:min-h-24 ${pathname === link.href ? "bg-orange-500 text-black" : ""}`}
 										>
