@@ -76,11 +76,11 @@ export function synchronizeCanonicalShadcnNormalization({ canonicalRepository = 
 	const canonicalCommit = run("git", ["rev-parse", "FETCH_HEAD"], { capture: true, cwd: gitRoot }).stdout.trim();
 	const localTree = run("git", ["rev-parse", `${localSubtreeCommit}^{tree}`], { capture: true, cwd: gitRoot }).stdout.trim();
 	const canonicalTree = run("git", ["rev-parse", `${canonicalCommit}^{tree}`], { capture: true, cwd: gitRoot }).stdout.trim();
-	if (localSubtreeCommit === canonicalCommit || localTree === canonicalTree) {
+	if (localSubtreeCommit === canonicalCommit) {
 		return { error: null, status: "current" };
 	}
 	const ancestryResult = run("git", ["merge-base", "--is-ancestor", localSubtreeCommit, "FETCH_HEAD"], { allowFailure: true, capture: true, cwd: gitRoot });
-	if (ancestryResult.status !== 0) {
+	if (localTree !== canonicalTree && ancestryResult.status !== 0) {
 		return {
 			error: new Error(`Local cstd-next and ${canonicalRepository} main diverged. An agent must reconcile the subtree before installing the block.`),
 			status: "diverged",
