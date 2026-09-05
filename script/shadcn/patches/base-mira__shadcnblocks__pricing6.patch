@@ -1,0 +1,26 @@
+diff --git a/src/components/pricing6.tsx b/src/components/pricing6.tsx
+index 56ed5f3..c7d9077 100644
+--- a/src/components/pricing6.tsx
++++ b/src/components/pricing6.tsx
+@@ -1,9 +1,12 @@
++// biome-ignore-all lint/suspicious/noArrayIndexKey: Upstream feature groups and rows are immutable positional content.
+ import { Check } from "lucide-react";
+ 
+ import { Button } from "@/components/ui/button";
+ import { Separator } from "@/components/ui/separator";
+ import { cn } from "@/lib/utils";
+ 
++const CURRENCY_PREFIX_REGEX = /^\$/;
++
+ interface PricingSinglePlan {
+ 	name: string;
+ 	description: string;
+@@ -77,7 +80,7 @@ const Pricing6 = (props: Props) => {
+ 					<div className="mx-auto mt-4 flex w-full flex-col rounded-lg border p-6 sm:w-fit sm:min-w-100">
+ 						<div className="flex justify-center">
+ 							<span className="font-semibold text-lg">$</span>
+-							<span className="font-medium text-6xl tracking-tighter lg:text-7xl">{plan.monthlyPrice.replace(/^\$/, "")}</span>
++							<span className="font-medium text-6xl tracking-tighter lg:text-7xl">{plan.monthlyPrice.replace(CURRENCY_PREFIX_REGEX, "")}</span>
+ 							<span className="self-end text-muted-foreground">{periodMonthly}</span>
+ 						</div>
+ 						<div className="my-6">

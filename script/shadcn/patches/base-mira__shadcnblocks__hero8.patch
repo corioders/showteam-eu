@@ -1,0 +1,59 @@
+diff --git a/src/components/hero8.tsx b/src/components/hero8.tsx
+index 78bc17b..7b7b482 100644
+--- a/src/components/hero8.tsx
++++ b/src/components/hero8.tsx
+@@ -1,3 +1,4 @@
++import { StaticImage } from "cstd-next/media/image/static-image.jsx";
+ import { ArrowRight } from "lucide-react";
+ 
+ import { Button } from "@/components/ui/button";
+@@ -8,14 +9,14 @@ interface Image {
+ 	alt: string;
+ 	srcDark?: string;
+ }
+-interface Button {
++interface ButtonLink {
+ 	text: string;
+ 	url: string;
+ 	icon?: React.ReactNode;
+ }
+ interface Buttons {
+-	primary?: Button;
+-	secondary?: Button;
++	primary?: ButtonLink;
++	secondary?: ButtonLink;
+ }
+ 
+ interface HeroBasicProps {
+@@ -80,22 +81,28 @@ const Hero8 = (props: Props) => {
+ 					</div>
+ 					{image.srcDark ? (
+ 						<>
+-							<img
++							<StaticImage
+ 								src={image.src}
+ 								alt={image.alt}
+ 								className="mx-auto mt-16 aspect-3/4 w-full rounded-t-lg border-border border-x border-t object-cover object-top-left shadow-[0_10px_36px_-10px_rgb(0_0_0/0.08),inset_0_-24px_48px_-24px_rgb(0_0_0/0.05)] md:aspect-video md:object-top dark:hidden"
++								loading="eager"
++								sizes="100vw"
+ 							/>
+-							<img
++							<StaticImage
+ 								src={image.srcDark}
+ 								alt={image.alt}
+ 								className="mx-auto mt-16 hidden aspect-3/4 w-full rounded-t-lg border-border border-x border-t object-cover object-top-left shadow-[0_10px_36px_-10px_rgb(0_0_0/0.22),inset_0_-24px_48px_-24px_rgb(0_0_0/0.14)] md:aspect-video md:object-top dark:block"
++								loading="eager"
++								sizes="100vw"
+ 							/>
+ 						</>
+ 					) : (
+-						<img
++						<StaticImage
+ 							src={image.src}
+ 							alt={image.alt}
+ 							className="mx-auto mt-16 aspect-3/4 w-full rounded-t-lg border-border border-x border-t object-cover object-top-left shadow-[0_10px_36px_-10px_rgb(0_0_0/0.08),inset_0_-24px_48px_-24px_rgb(0_0_0/0.05)] md:aspect-video md:object-top dark:shadow-[0_10px_36px_-10px_rgb(0_0_0/0.22),inset_0_-24px_48px_-24px_rgb(0_0_0/0.14)]"
++							loading="eager"
++							sizes="100vw"
+ 						/>
+ 					)}
+ 				</div>

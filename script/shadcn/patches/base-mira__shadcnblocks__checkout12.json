@@ -1,0 +1,33 @@
+{
+	"formatVersion": 2,
+	"registryItem": "@shadcnblocks/checkout12",
+	"style": "base-mira",
+	"baselineHashes": {
+		"package.json": "d1c73b00c2aa1c9acddd58ab3a5f413f8931d6852c91e701f827eeedffc964e2",
+		"src/components/checkout12.tsx": "a95b98bd9d286b2e406d052c818ac57fd8e6e647d36f1c4c4d9cd0fe84a05a7e",
+		"src/components/shadcnblocks/price.tsx": "21f95be13e2ea1d52960d0864a6ca339aaa7ffdafd67eec10432a90935344541",
+		"src/components/ui/aspect-ratio.tsx": "c1a716d3338a12b8523a5e533542eefeef999794ab5c274e0838fdc51c9ba7fa",
+		"src/components/ui/button.tsx": "47c420b7919f17531e7a178f067f614865a5a0aba2ca7a6af3b25e2b87759940",
+		"src/components/ui/checkbox.tsx": "396f699b597fc3ceaf2c50c141f09362e94449fd90510acf30208e50efda576e",
+		"src/components/ui/collapsible.tsx": "4b7994bcd30fe27a7f1466dfa179f43898ebed28e86cc2e7ee6d4599bb6179bd",
+		"src/components/ui/field.tsx": "eab345b32432a89d1a00084c6ff7bd8902299eed4d439ba47a3d79c31b369067",
+		"src/components/ui/input.tsx": "1e27f21af8d811b40ff299c9528a53bf4744915ed958b81ffd3fd503d294f857",
+		"src/components/ui/item.tsx": "df65bd31de44da06ed43cd8dcc9840e893d1a03f890bf56bd4abefb7b91f9ca0",
+		"src/components/ui/label.tsx": "36ac0a8c9f4f522d6fbed1d3cd2a9e023879ef7e14377940168d82a6b3d472c7",
+		"src/components/ui/progress.tsx": "bfc7172426534e02319f3c8abe3f4885886fb1edc95923aa5c8aef9fbf9841bc",
+		"src/components/ui/radio-group.tsx": "70d09e2ceec23ab8cc6902d9d7a4dfab5ea49bedf1029c6684836e7b2c5bd5a3",
+		"src/components/ui/scroll-area.tsx": "e6683fc0a911ebef00a68fe51553edb7e2a0c19608458fd4ca0c4d6205793c15",
+		"src/components/ui/select.tsx": "b85e3fee6dc52c7b6c39d58f7ab7fea31b573b17614f9444e0f2a94ddbde905c",
+		"src/components/ui/separator.tsx": "164fb9ee49682be6b7a27fe08c8c5fbd836820e858fb0abecf0906fc03144c73",
+		"src/components/ui/tabs.tsx": "6ab2ffd50c7556dab49c0b91858a0701828a31ac28145bde6e3ad3f099c33d15",
+		"src/hooks/useMediaQuery.ts": "79097267349fd224822e5a187efd9645a62ce0d3ffe32f11613b5775bf0411e9"
+	},
+	"changedFiles": [
+		"src/components/checkout12.tsx",
+		"src/components/shadcnblocks/price.tsx",
+		"src/components/ui/field.tsx",
+		"src/components/ui/item.tsx",
+		"src/components/ui/label.tsx",
+		"src/hooks/useMediaQuery.ts"
+	]
+}

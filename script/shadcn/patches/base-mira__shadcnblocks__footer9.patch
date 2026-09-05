@@ -1,0 +1,10 @@
+diff --git a/src/components/footer9.tsx b/src/components/footer9.tsx
+index aa4f9db..fc09da0 100644
+--- a/src/components/footer9.tsx
++++ b/src/components/footer9.tsx
+@@ -1,3 +1,5 @@
++// biome-ignore-all lint/a11y/useValidAnchor: Upstream links are intentional placeholders for project customization.
++// biome-ignore-all lint/suspicious/noArrayIndexKey: Upstream navigation sections and links are immutable positional content.
+ import { CircleCheck, LifeBuoy, Linkedin } from "lucide-react";
+ 
+ import { Button } from "@/components/ui/button";
