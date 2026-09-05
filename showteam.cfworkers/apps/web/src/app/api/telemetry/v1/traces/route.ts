@@ -3,6 +3,9 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 const maximumPayloadBytes = 1_000_000;
 
 export async function POST(request: Request): Promise<Response> {
+	if (process.env["CORIODERS_TELEMETRY_DISABLED"] === "1") {
+		return new Response(null, { status: 204 });
+	}
 	if (request.headers.get("content-type")?.startsWith("application/json") !== true) {
 		return new Response(null, { status: 415 });
 	}

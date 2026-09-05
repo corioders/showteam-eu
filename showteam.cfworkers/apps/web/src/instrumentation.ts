@@ -7,6 +7,9 @@ const everyUrl = /.*/;
 const telemetryCollectorUrl = /corioders-telemetry\.invalid/;
 
 export function register(): void {
+	if (process.env["CORIODERS_TELEMETRY_DISABLED"] === "1") {
+		return;
+	}
 	registerOTel({
 		attributes: {
 			"deployment.environment.name": process.env["APP_ENV"] ?? "development",
