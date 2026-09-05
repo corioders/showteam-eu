@@ -228,7 +228,7 @@ describe("Shadcnblocks installation snapshots", () => {
 		expect(divergence.error?.message).toContain("An agent must reconcile");
 	});
 
-	it("accepts identical canonical normalization with rewritten subtree history", () => {
+	it("records canonical ancestry when identical subtree content has rewritten history", () => {
 		const canonicalRoot = path.join(fixtureDirectory, "canonical-rewritten-history");
 		const projectRoot = path.join(fixtureDirectory, "canonical-rewritten-history-project");
 		const vendoredRoot = path.join(projectRoot, "packages", "cstd-next");
@@ -249,7 +249,7 @@ describe("Shadcnblocks installation snapshots", () => {
 
 		expect(synchronizeCanonicalShadcnNormalization({ canonicalRepository: canonicalRoot, cstdNextRoot: vendoredRoot, gitRoot: projectRoot })).toEqual({
 			error: null,
-			status: "current",
+			status: "updated",
 		});
 	});
 });
