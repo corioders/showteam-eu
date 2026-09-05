@@ -78,7 +78,7 @@ const hasCompatibilityChanges = session.sourceFiles.some((relativePath) => {
 	const currentPath = path.join(cwd, relativePath);
 	return !fs.existsSync(baselinePath) || !fs.existsSync(currentPath) || !fs.readFileSync(baselinePath).equals(fs.readFileSync(currentPath));
 });
-const replacesExistingPatch = session.patchResults?.some((result) => result.status === "invalid" || result.status === "stale") ?? false;
+const replacesExistingPatch = session.patchResults?.some((result) => result.status === "invalid" || result.status === "stale" || result.status === "unverified") ?? false;
 if (!hasCompatibilityChanges && !replacesExistingPatch) {
 	console.error("No generic compatibility fixes exist for the latest Shadcnblocks installation.");
 	process.exit(1);
@@ -126,9 +126,11 @@ if (temporaryPatch && temporaryPatchDirectory) {
 }
 
 const repositoryPatchPaths = [manifestPath, patchPath].map((filePath) => path.relative(repositoryRoot, filePath));
+const canonicalPatchPaths = [manifestPath, patchPath].map((filePath) => path.relative(cstdNextRoot, filePath));
 const registryName = session.registryItems[0].slice("@shadcnblocks/".length);
+const commitMessage = `fix(cstd-next): patch ${registryName} for ${session.style}`;
 run("git", ["add", "--all", "--", ...repositoryPatchPaths], { cwd: repositoryRoot });
-const commitResult = run("git", ["commit", "--only", "-m", `fix(cstd-next): patch ${registryName} for ${session.style}`, "--", ...repositoryPatchPaths], {
+const commitResult = run("git", ["commit", "--only", "-m", commitMessage, "--", ...repositoryPatchPaths], {
 	allowFailure: true,
 	cwd: repositoryRoot,
 });
@@ -137,10 +139,40 @@ if (commitResult.status !== 0) {
 	process.exit(1);
 }
 
-const pushResult =
-	cstdNextPrefix === "."
-		? run("git", ["push", CSTD_NEXT_CANONICAL_REPOSITORY, "HEAD:main"], { allowFailure: true, cwd: repositoryRoot })
-		: run("git", ["subtree", "push", "--prefix", cstdNextPrefix, CSTD_NEXT_CANONICAL_REPOSITORY, "main"], { allowFailure: true, cwd: repositoryRoot });
+let pushResult;
+if (cstdNextPrefix === ".") {
+	pushResult = run("git", ["push", CSTD_NEXT_CANONICAL_REPOSITORY, "HEAD:main"], { allowFailure: true, cwd: repositoryRoot });
+} else {
+	const fetchResult = run("git", ["fetch", "--quiet", "--no-tags", CSTD_NEXT_CANONICAL_REPOSITORY, "main"], { allowFailure: true, cwd: repositoryRoot });
+	if (fetchResult.status !== 0) {
+		console.error("The patch commit exists locally, but canonical cstd-next could not be fetched.");
+		process.exit(1);
+	}
+	const canonicalWorktree = fs.mkdtempSync(path.join(os.tmpdir(), "cstd-shadcn-canonical-"));
+	const addWorktreeResult = run("git", ["worktree", "add", "--detach", canonicalWorktree, "FETCH_HEAD"], { allowFailure: true, capture: true, cwd: repositoryRoot });
+	if (addWorktreeResult.status !== 0) {
+		fs.rmSync(canonicalWorktree, { force: true, recursive: true });
+		console.error("The patch commit exists locally, but a canonical cstd-next worktree could not be created.");
+		process.exit(1);
+	}
+	for (const canonicalPatchPath of canonicalPatchPaths) {
+		const sourcePath = path.join(cstdNextRoot, canonicalPatchPath);
+		const destinationPath = path.join(canonicalWorktree, canonicalPatchPath);
+		if (fs.existsSync(sourcePath)) {
+			fs.mkdirSync(path.dirname(destinationPath), { recursive: true });
+			fs.copyFileSync(sourcePath, destinationPath);
+		} else {
+			fs.rmSync(destinationPath, { force: true });
+		}
+	}
+	run("git", ["add", "--all", "--", ...canonicalPatchPaths], { cwd: canonicalWorktree });
+	const canonicalCommitResult = run("git", ["commit", "-m", commitMessage, "--", ...canonicalPatchPaths], { allowFailure: true, cwd: canonicalWorktree });
+	pushResult =
+		canonicalCommitResult.status === 0
+			? run("git", ["push", CSTD_NEXT_CANONICAL_REPOSITORY, "HEAD:main"], { allowFailure: true, cwd: canonicalWorktree })
+			: canonicalCommitResult;
+	run("git", ["worktree", "remove", "--force", canonicalWorktree], { allowFailure: true, capture: true, cwd: repositoryRoot });
+}
 if (pushResult.status !== 0) {
 	console.error("The patch commit exists locally, but canonical cstd-next rejected the push. Reconcile canonical main before any project customization.");
 	process.exit(1);
