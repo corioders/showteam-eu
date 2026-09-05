@@ -2,6 +2,7 @@
 
 - Use `pnpm`. Never `npm` or `yarn`.
 - Run checks with `pnpm check` (template invariants + biome + tsc) before committing. `pnpm check-biome-fix` applies safe fixes.
+- Keep CI jobs behind `.github/workflows/schedule-runner.yml` and its dynamic `runner-label` output. Never target `win24-wsl` or a concrete worker label directly; bypassing the scheduler can strand jobs when a host sleeps or a relay token cannot see a repository.
 - After creating any commit, immediately push the current branch to `origin`, monitor its CI run, and fix it until green. Do not declare committed work complete while local `HEAD` is absent from `origin` or its CI is pending, canceled, or failing.
 - `packages/corioders-lib/cstd-ts` and `cstd-next` are git subtrees of the shared libraries. Change them here only when the fix belongs upstream. Before declaring such work complete, commit it and push the matching subtree to the canonical `cstd` remote — see the root README.
 
