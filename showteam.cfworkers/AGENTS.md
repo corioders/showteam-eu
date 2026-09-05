@@ -51,8 +51,7 @@ return [session, null];
 - After a successful exact-block install, inspect only changed filenames, the exported component, and identifiers relevant to the requested copy, data or branding. Use `git diff --name-only`, `rg` and narrow ranges; do not dump or read the whole generated block unless a concrete error or ambiguity requires it.
 - Keep the installed UI skills. Do not invoke frontend-design to invent or restyle UI governed by this policy. Performance guidance may be used for non-visual React architecture without changing installed UI.
 - Wire the exported block, make only the allowed non-visual application edits, then run `pnpm check`.
-- Authentication is injected by the workspace wrappers from Infisical. Never read, print, export or write `SHADCNBLOCKS_API_KEY`; authenticate with Infisical when the wrapper reports access is missing.
-<!-- BEGIN:template-env-agent-rule -->
+- Authentication is loaded by the wrappers from `apps/web/.env`. Never read, print, source or manually export `SHADCNBLOCKS_API_KEY`; request it only when the wrapper reports it missing.
 
 # Cloudflare infrastructure
 

@@ -202,6 +202,20 @@ try {
 	errors.push(`biome.jsonc must remain valid JSONC: ${error instanceof Error ? error.message : String(error)}.`);
 }
 
+const agentRules = read("AGENTS.md");
+for (const [pattern, message] of [
+	[/SHADCN-ONLY UI IS MANDATORY/, "AGENTS.md must require shadcn-only UI."],
+	[/DO NOT RESTYLE REGISTRY CODE/, "AGENTS.md must forbid restyling registry code."],
+	[/Do not create a custom UI component, custom styled substitute, or bespoke visual implementation/, "AGENTS.md must forbid custom UI implementations."],
+	[/If shadcn truly has no applicable primitive, stop and ask the user/, "AGENTS.md must require user direction instead of a custom UI fallback."],
+	[
+		/generic compatibility fixes required after `shadcn:add` reports an unknown or stale incompatibility/,
+		"AGENTS.md must limit registry edits to compatibility patches.",
+	],
+]) {
+	requireMatch(agentRules, pattern, message);
+}
+
 const appPackage = JSON.parse(read("apps/web/package.json"));
 if (!appPackage.scripts?.prebuild?.includes("cstd-next-clean-images")) {
 	errors.push("apps/web/package.json must keep cstd-next-clean-images in prebuild.");
