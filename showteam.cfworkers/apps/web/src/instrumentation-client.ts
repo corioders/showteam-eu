@@ -1,6 +1,3 @@
-import "zone.js";
-
-import { ZoneContextManager } from "@opentelemetry/context-zone";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { registerInstrumentations } from "@opentelemetry/instrumentation";
 import { DocumentLoadInstrumentation } from "@opentelemetry/instrumentation-document-load";
@@ -19,7 +16,7 @@ const provider = new WebTracerProvider({
 	spanProcessors: [new BatchSpanProcessor(exporter)],
 });
 
-provider.register({ contextManager: new ZoneContextManager() });
+provider.register();
 registerInstrumentations({
 	instrumentations: [
 		new DocumentLoadInstrumentation(),
