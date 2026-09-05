@@ -2,7 +2,7 @@ const everyUrl = /.*/;
 const telemetryCollectorUrl = /corioders-telemetry\.invalid/;
 
 export async function register(): Promise<void> {
-	if (process.env["CORIODERS_TELEMETRY_DISABLED"] === "1") {
+	if (process.env["NEXT_RUNTIME"] !== "nodejs" || process.env["CORIODERS_TELEMETRY_DISABLED"] === "1") {
 		return;
 	}
 	try {
@@ -28,6 +28,9 @@ export async function register(): Promise<void> {
 }
 
 export async function onRequestError(error: unknown): Promise<void> {
+	if (process.env["NEXT_RUNTIME"] !== "nodejs") {
+		return;
+	}
 	const { SpanStatusCode, trace } = await import("@opentelemetry/api");
 	const span = trace.getActiveSpan();
 	span?.recordException(error instanceof Error ? error : new Error(String(error)));
