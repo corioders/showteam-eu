@@ -60,6 +60,17 @@ export function changedFiles(before, after) {
 	return [...after].filter(([relativePath, hash]) => before.get(relativePath) !== hash).map(([relativePath]) => relativePath);
 }
 
+export function compatibilityTestPath(registryItem) {
+	return path.join("tests", "e2e", "shadcn", `${registryItem.slice("@shadcnblocks/".length)}.spec.ts`);
+}
+
+export function fileHash(filePath) {
+	if (!fs.existsSync(filePath)) {
+		return null;
+	}
+	return crypto.createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
+}
+
 export function getSessionDirectory(cwd) {
 	const result = run("git", ["rev-parse", "--path-format=absolute", "--git-dir"], { capture: true, cwd });
 	return path.join(result.stdout.trim(), "cstd-shadcn", "latest");

@@ -5,7 +5,7 @@ import path from "node:path";
 
 import { run } from "./session.js";
 
-const PATCH_FORMAT_VERSION = 2;
+const PATCH_FORMAT_VERSION = 3;
 const SHADCNBLOCKS_ITEM = /^@shadcnblocks\/[A-Za-z0-9._-]+$/;
 const SHADCN_STYLE = /^[A-Za-z0-9._-]+$/;
 
@@ -102,12 +102,15 @@ export function readShadcnStyle(cwd) {
 	return [components.style, null];
 }
 
-export function writeLearnedPatch({ baselineRoot, currentRoot, patchDirectory, registryItem, sourceFiles, style }) {
+export function writeLearnedPatch({ baselineRoot, currentRoot, patchDirectory, registryItem, sourceFiles, style, verificationTest }) {
 	if (!SHADCNBLOCKS_ITEM.test(registryItem)) {
 		return [null, new Error(`Unsupported registry item: ${registryItem}`)];
 	}
 	if (!SHADCN_STYLE.test(style)) {
 		return [null, new Error(`Unsupported Shadcn style: ${style}`)];
+	}
+	if (typeof verificationTest?.path !== "string" || typeof verificationTest.hash !== "string") {
+		return [null, new Error("A passing browser compatibility test is required before learning a Shadcnblocks patch.")];
 	}
 
 	const changedFiles = [];
@@ -143,7 +146,10 @@ export function writeLearnedPatch({ baselineRoot, currentRoot, patchDirectory, r
 	const { manifestPath, patchPath } = patchPaths(patchDirectory, registryItem, style);
 	fs.mkdirSync(patchDirectory, { recursive: true });
 	fs.writeFileSync(patchPath, patch);
-	fs.writeFileSync(manifestPath, `${JSON.stringify({ formatVersion: PATCH_FORMAT_VERSION, registryItem, style, baselineHashes, changedFiles }, null, "\t")}\n`);
+	fs.writeFileSync(
+		manifestPath,
+		`${JSON.stringify({ formatVersion: PATCH_FORMAT_VERSION, registryItem, style, baselineHashes, changedFiles, verificationTest }, null, "\t")}\n`,
+	);
 	return [{ changedFiles, manifestPath, patchPath }, null];
 }
 
@@ -168,7 +174,9 @@ export function applyLearnedPatch({ cwd, patchDirectory, registryItem, style }) 
 		manifest.formatVersion !== PATCH_FORMAT_VERSION ||
 		manifest.registryItem !== registryItem ||
 		manifest.style !== style ||
-		typeof manifest.baselineHashes !== "object"
+		typeof manifest.baselineHashes !== "object" ||
+		typeof manifest.verificationTest?.path !== "string" ||
+		typeof manifest.verificationTest.hash !== "string"
 	) {
 		return { error: `Learned patch manifest is invalid for ${registryItem}.`, status: "invalid" };
 	}
