@@ -23,7 +23,7 @@ registerInstrumentations({
 		new UserInteractionInstrumentation({ eventNames: ["click", "submit"] }),
 		new FetchInstrumentation({
 			ignoreUrls: [/\/api\/telemetry\/v1\/traces$/],
-			propagateTraceHeaderCorsUrls: [/.*/],
+			propagateTraceHeaderCorsUrls: [window.location.origin],
 		}),
 	],
 });
