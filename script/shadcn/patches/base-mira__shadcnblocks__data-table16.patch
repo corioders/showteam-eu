@@ -1,0 +1,108 @@
+diff --git a/src/components/data-table16.tsx b/src/components/data-table16.tsx
+index 545f10e..e7a564e 100644
+--- a/src/components/data-table16.tsx
++++ b/src/components/data-table16.tsx
+@@ -1,7 +1,10 @@
++// biome-ignore-all lint/style/useNamingConvention: Registry demo payload mirrors a snake_case API response.
+ "use client";
+ 
+-import type { Column, ColumnDef, Row, RowSelectionState, SortingState } from "@tanstack/react-table";
+-import { flexRender, getCoreRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
++import type { RowData, RowSelectionState, SortingState } from "@tanstack/react-table";
++import { flexRender } from "@tanstack/react-table";
++import type { LegacyColumn as Column, LegacyColumnDef as ColumnDef, LegacyRow as Row } from "@tanstack/react-table/legacy";
++import { getCoreRowModel, getSortedRowModel, useLegacyTable as useReactTable } from "@tanstack/react-table/legacy";
+ import {
+ 	ArrowDown,
+ 	ArrowUp,
+@@ -29,9 +32,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
+ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+ import { cn } from "@/lib/utils";
+ 
+-type UseDataTableOptions<TData> = {
+-	data: Array<TData>;
+-	columns: Array<ColumnDef<TData, unknown>>;
++type UseDataTableOptions<TData extends RowData> = {
++	data: TData[];
++	columns: ColumnDef<TData, unknown>[];
+ 	getRowId?: (row: TData) => string;
+ 	initialSorting?: SortingState;
+ 	initialGlobalFilter?: string;
+@@ -39,7 +42,7 @@ type UseDataTableOptions<TData> = {
+ 	enableRowSelection?: boolean;
+ };
+ 
+-export function useDataTable<TData>(options: UseDataTableOptions<TData>) {
++export function useDataTable<TData extends RowData>(options: UseDataTableOptions<TData>) {
+ 	const { data, columns, getRowId, initialSorting = [], initialGlobalFilter = "", initialSelection = {}, enableRowSelection = true } = options;
+ 
+ 	const [sorting, setSorting] = React.useState<SortingState>(initialSorting);
+@@ -51,7 +54,7 @@ export function useDataTable<TData>(options: UseDataTableOptions<TData>) {
+ 	const table = useReactTable({
+ 		data,
+ 		columns,
+-		getRowId,
++		...(getRowId === undefined ? {} : { getRowId }),
+ 		state: {
+ 			sorting,
+ 			globalFilter,
+@@ -75,12 +78,12 @@ export function useDataTable<TData>(options: UseDataTableOptions<TData>) {
+ 	};
+ }
+ 
+-type DataTableColumnHeaderProps<TData, TValue> = {
++type DataTableColumnHeaderProps<TData extends RowData, TValue> = {
+ 	column: Column<TData, TValue>;
+ 	title: string;
+ };
+ 
+-export const DataTableColumnHeader = <TData, TValue>({ column, title }: DataTableColumnHeaderProps<TData, TValue>) => {
++export const DataTableColumnHeader = <TData extends RowData, TValue>({ column, title }: DataTableColumnHeaderProps<TData, TValue>) => {
+ 	const canSort = column.getCanSort();
+ 	const sorted = column.getIsSorted();
+ 
+@@ -101,14 +104,14 @@ export const DataTableColumnHeader = <TData, TValue>({ column, title }: DataTabl
+ 	);
+ };
+ 
+-interface DataTableRowActionsProps<TData> {
++interface DataTableRowActionsProps<TData extends RowData> {
+ 	row: Row<TData>;
+ 	schema: z.ZodSchema;
+ 	itemName: string;
+ 	idField?: string;
+ }
+ 
+-export function DataTableRowActions<TData>({ row, schema, itemName, idField = "id" }: DataTableRowActionsProps<TData>) {
++export function DataTableRowActions<TData extends RowData>({ row, schema, itemName, idField = "id" }: DataTableRowActionsProps<TData>) {
+ 	const item = schema.parse(row.original) as TData;
+ 	const itemRecord = item as Record<string, unknown>;
+ 
+@@ -120,7 +123,7 @@ export function DataTableRowActions<TData>({ row, schema, itemName, idField = "i
+ 			</DropdownMenuTrigger>
+ 			<DropdownMenuContent align="end" className="w-[160px]">
+ 				<DropdownMenuLabel>Actions</DropdownMenuLabel>
+-				<DropdownMenuItem onClick={() => navigator.clipboard.writeText(String(itemRecord[idField] || itemRecord.id))}>Copy {itemName} ID</DropdownMenuItem>
++				<DropdownMenuItem onClick={() => navigator.clipboard.writeText(String(itemRecord[idField] || itemRecord["id"]))}>Copy {itemName} ID</DropdownMenuItem>
+ 				<DropdownMenuSeparator />
+ 				<DropdownMenuItem>Edit {itemName}</DropdownMenuItem>
+ 				<DropdownMenuItem>View details</DropdownMenuItem>
+@@ -578,7 +581,8 @@ export const columns: ColumnDef<Order>[] = [
+ 		id: "select",
+ 		header: ({ table }) => (
+ 			<Checkbox
+-				checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
++				checked={table.getIsAllPageRowsSelected()}
++				indeterminate={table.getIsSomePageRowsSelected()}
+ 				onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+ 				aria-label="Select all"
+ 				className="translate-y-[2px]"
+@@ -704,7 +708,7 @@ export function DataTable16({ className }: { className?: string }) {
+ 								))}
+ 							</TableHeader>
+ 							<TableBody>
+-								{table.getRowModel().rows?.length ? (
++								{table.getRowModel().rows.length > 0 ? (
+ 									table.getRowModel().rows.map((row) => (
+ 										<React.Fragment key={row.id}>
+ 											<TableRow data-state={row.getIsSelected() && "selected"}>

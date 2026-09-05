@@ -1,0 +1,154 @@
+diff --git a/src/components/gantt-timeline-1.tsx b/src/components/gantt-timeline-1.tsx
+index 6e084c2..4155713 100644
+--- a/src/components/gantt-timeline-1.tsx
++++ b/src/components/gantt-timeline-1.tsx
+@@ -36,4 +36,4 @@ const Example = () => (
+ 	</GanttProvider>
+ );
+ 
+-export default Example;
++export { Example as GanttTimeline1 };
+
+diff --git a/src/components/kibo-ui/gantt/index.tsx b/src/components/kibo-ui/gantt/index.tsx
+index f299ffa..c11de29 100644
+--- a/src/components/kibo-ui/gantt/index.tsx
++++ b/src/components/kibo-ui/gantt/index.tsx
+@@ -75,7 +75,7 @@ export type GanttContextProps = {
+ 	sidebarWidth: number;
+ 	headerHeight: number;
+ 	rowHeight: number;
+-	onAddItem: ((date: Date) => void) | undefined;
++	onAddItem?: (date: Date) => void;
+ 	placeholderLength: number;
+ 	timelineData: TimelineData;
+ 	ref: RefObject<HTMLDivElement | null> | null;
+@@ -144,7 +144,7 @@ const getAddRange = (range: Range) => {
+ };
+ 
+ const getDateByMousePosition = (context: GanttContextProps, mouseX: number) => {
+-	const timelineStartDate = new Date(context.timelineData[0].year, 0, 1);
++	const timelineStartDate = new Date(context.timelineData.at(0)?.year ?? new Date().getFullYear(), 0, 1);
+ 	const columnWidth = (context.columnWidth * context.zoom) / 100;
+ 	const offset = Math.floor(mouseX / columnWidth);
+ 	const daysIn = getsDaysIn(context.range);
+@@ -255,11 +255,9 @@ const GanttContext = createContext<GanttContextProps>({
+ 	headerHeight: 60,
+ 	sidebarWidth: 300,
+ 	rowHeight: 36,
+-	onAddItem: undefined,
+ 	placeholderLength: 2,
+ 	timelineData: [],
+ 	ref: null,
+-	scrollToFeature: undefined,
+ });
+ 
+ export type GanttContentHeaderProps = {
+@@ -290,6 +288,7 @@ export const GanttContentHeader: FC<GanttContentHeaderProps> = ({ title, columns
+ 				}}
+ 			>
+ 				{Array.from({ length: columns }).map((_, index) => (
++					// biome-ignore lint/suspicious/noArrayIndexKey: Timeline column positions are stable by index.
+ 					<div className="shrink-0 border-border/50 border-b py-1 text-center text-xs" key={`${id}-${index}`}>
+ 						{renderHeaderItem(index)}
+ 					</div>
+@@ -306,6 +305,7 @@ const DailyHeader: FC = () => {
+ 		year.quarters
+ 			.flatMap((quarter) => quarter.months)
+ 			.map((month, index) => (
++				// biome-ignore lint/suspicious/noArrayIndexKey: Calendar months are stable by index.
+ 				<div className="relative flex flex-col" key={`${year.year}-${index}`}>
+ 					<GanttContentHeader
+ 						columns={month.days}
+@@ -343,6 +343,7 @@ const QuarterlyHeader: FC = () => {
+ 
+ 	return gantt.timelineData.map((year) =>
+ 		year.quarters.map((quarter, quarterIndex) => (
++			// biome-ignore lint/suspicious/noArrayIndexKey: Calendar quarters are stable by index.
+ 			<div className="relative flex flex-col" key={`${year.year}-${quarterIndex}`}>
+ 				<GanttContentHeader
+ 					columns={quarter.months.length}
+@@ -406,12 +407,12 @@ export const GanttSidebarItem: FC<GanttSidebarItemProps> = ({ feature, onSelectI
+ 	};
+ 
+ 	return (
++		// biome-ignore lint/a11y/useSemanticElements: The draggable registry item has button keyboard behavior.
+ 		<div
+ 			className={cn("relative flex items-center gap-2.5 p-2.5 text-xs hover:bg-secondary", className)}
+ 			key={feature.id}
+ 			onClick={handleClick}
+ 			onKeyDown={handleKeyDown}
+-			// biome-ignore lint/a11y/useSemanticElements: "This is a clickable item"
+ 			role="button"
+ 			style={{
+ 				height: "var(--gantt-row-height)",
+@@ -525,7 +526,6 @@ export const GanttColumn: FC<GanttColumnProps> = ({ index, isColumnSecondary })
+ 
+ 	return (
+ 		// biome-ignore lint/a11y/noStaticElementInteractions: "This is a clickable column"
+-		// biome-ignore lint/nursery/noNoninteractiveElementInteractions: "This is a clickable column"
+ 		<div
+ 			className={cn("group relative h-full overflow-hidden", isColumnSecondary?.(index) ? "bg-secondary" : "")}
+ 			onMouseEnter={handleMouseEnter}
+@@ -553,7 +553,8 @@ export const GanttColumns: FC<GanttColumnsProps> = ({ columns, isColumnSecondary
+ 			}}
+ 		>
+ 			{Array.from({ length: columns }).map((_, index) => (
+-				<GanttColumn index={index} isColumnSecondary={isColumnSecondary} key={`${id}-${index}`} />
++				// biome-ignore lint/suspicious/noArrayIndexKey: Timeline column positions are stable by index.
++				<GanttColumn index={index} {...(isColumnSecondary === undefined ? {} : { isColumnSecondary })} key={`${id}-${index}`} />
+ 			))}
+ 		</div>
+ 	);
+@@ -788,14 +789,14 @@ export const GanttFeatureRow: FC<GanttFeatureRowProps> = ({ features, onMove, ch
+ 	const sortedFeatures = [...features].sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
+ 
+ 	// Calculate sub-row positions for overlapping features using a proper algorithm
+-	const featureWithPositions = [];
++	const featureWithPositions: (GanttFeature & { subRow: number })[] = [];
+ 	const subRowEndTimes: Date[] = []; // Track when each sub-row becomes free
+ 
+ 	for (const feature of sortedFeatures) {
+ 		let subRow = 0;
+ 
+ 		// Find the first sub-row that's free (doesn't overlap)
+-		while (subRow < subRowEndTimes.length && subRowEndTimes[subRow] > feature.startAt) {
++		while (subRow < subRowEndTimes.length && (subRowEndTimes[subRow]?.getTime() ?? 0) > feature.startAt.getTime()) {
+ 			subRow++;
+ 		}
+ 
+@@ -829,7 +830,7 @@ export const GanttFeatureRow: FC<GanttFeatureRowProps> = ({ features, onMove, ch
+ 						height: `${subRowHeight}px`,
+ 					}}
+ 				>
+-					<GanttFeatureItem {...feature} onMove={onMove}>
++					<GanttFeatureItem {...feature} {...(onMove === undefined ? {} : { onMove })}>
+ 						{children ? children(feature) : <p className="flex-1 truncate text-xs">{feature.name}</p>}
+ 					</GanttFeatureItem>
+ 				</div>
+@@ -1062,7 +1063,7 @@ export const GanttProvider: FC<GanttProviderProps> = ({ zoom = 100, range = "mon
+ 			}
+ 
+ 			// Calculate timeline start date from timelineData
+-			const timelineStartDate = new Date(timelineData[0].year, 0, 1);
++			const timelineStartDate = new Date(timelineData.at(0)?.year ?? new Date().getFullYear(), 0, 1);
+ 
+ 			// Calculate the horizontal offset for the feature's start date
+ 			const offset = getOffset(feature.startAt, timelineStartDate, {
+@@ -1072,7 +1073,7 @@ export const GanttProvider: FC<GanttProviderProps> = ({ zoom = 100, range = "mon
+ 				sidebarWidth,
+ 				headerHeight,
+ 				rowHeight,
+-				onAddItem,
++				...(onAddItem === undefined ? {} : { onAddItem }),
+ 				placeholderLength: 2,
+ 				timelineData,
+ 				ref: scrollRef,
+@@ -1098,7 +1099,7 @@ export const GanttProvider: FC<GanttProviderProps> = ({ zoom = 100, range = "mon
+ 				columnWidth,
+ 				sidebarWidth,
+ 				rowHeight,
+-				onAddItem,
++				...(onAddItem === undefined ? {} : { onAddItem }),
+ 				timelineData,
+ 				placeholderLength: 2,
+ 				ref: scrollRef,
