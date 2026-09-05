@@ -17,10 +17,14 @@ export async function POST(request: Request): Promise<Response> {
 		return new Response(null, { status: 204 });
 	}
 
-	const response = await env.CORIODERS_TELEMETRY.fetch("https://corioders-telemetry.invalid/v1/traces", {
-		body: payload,
-		headers: { "content-type": "application/json" },
-		method: "POST",
-	});
-	return new Response(response.body, response);
+	try {
+		const response = await env.CORIODERS_TELEMETRY.fetch("https://corioders-telemetry.invalid/v1/traces", {
+			body: payload,
+			headers: { "content-type": "application/json" },
+			method: "POST",
+		});
+		return new Response(response.body, response);
+	} catch {
+		return new Response(null, { status: 204 });
+	}
 }
