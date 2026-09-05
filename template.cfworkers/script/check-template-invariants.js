@@ -204,7 +204,7 @@ const packageJson = JSON.parse(read("package.json"));
 if (packageJson.scripts?.["resolve-build-inputs"] !== "node script/resolve-external-build-inputs.js") {
 	errors.push("package.json must expose the external build-input resolver.");
 }
-if (packageJson.scripts?.dev !== "infisical run --env=staging -- dotenv -e apps/web/.env -e apps/web/.env.local -o -- turbo run dev") {
+if (packageJson.scripts?.dev !== "infisical run --env=staging -- dotenv -e apps/web/.env -e apps/web/.env.local -o -- turbo run dev --env-mode=loose") {
 	errors.push("package.json dev must load staging secrets and then apply local environment overrides.");
 }
 for (const scriptName of ["dev", "preview", "deploy", "logs", "logs:preview", "shadcn:search", "shadcn:add", "shadcn:patch"]) {
