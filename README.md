@@ -110,9 +110,10 @@ Same for `cstd-next` with `git@github.com:corioders/cstd-next.git`.
 ## Project secrets
 
 The committed `template.cfworkers/.infisical.json` links this repository to its Infisical EU project. `pnpm dev` injects the same
-`staging` secrets used by preview, then lets `apps/web/.env` and `apps/web/.env.local` override individual values without copying secrets.
-Bootstrap commits a project-specific `.infisical.json`. Developers authenticate with their own Infisical accounts; CI uses short-lived
-GitHub OIDC credentials and loads deployment secrets directly from Infisical.
+`staging` secrets used by preview, then applies optional `apps/web/.env` and `apps/web/.env.local` overrides in that order without
+writing vault values to disk. Other secret-dependent local commands use the Infisical `dev` environment. Bootstrap commits a
+project-specific `.infisical.json`. Developers authenticate with their own Infisical accounts; CI uses short-lived GitHub OIDC
+credentials and loads deployment secrets directly from Infisical.
 
 <!-- END:template-env-docs -->
 
