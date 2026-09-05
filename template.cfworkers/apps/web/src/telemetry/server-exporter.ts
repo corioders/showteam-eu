@@ -28,7 +28,7 @@ export class CoriodersTraceExporter implements SpanExporter {
 			return;
 		}
 		await env.CORIODERS_TELEMETRY.fetch("https://corioders-telemetry.invalid/v1/traces", {
-			body: payload,
+			body: Uint8Array.from(payload).buffer,
 			headers: { "content-type": "application/json" },
 			method: "POST",
 		});
