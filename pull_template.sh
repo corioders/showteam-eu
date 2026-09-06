@@ -168,6 +168,38 @@ auto_resolve_renamed_template_path() {
 		"$base_file" "$theirs_file"
 	rm -- "$base_file.bak" "$theirs_file.bak"
 
+	if node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'
+import fs from "node:fs";
+
+const [basePath, oursPath, theirsPath] = process.argv.slice(2);
+const guard = '!process.env["CLOUDFLARE_API_TOKEN"]';
+const base = fs.readFileSync(basePath, "utf8");
+let ours = fs.readFileSync(oursPath, "utf8");
+const theirs = fs.readFileSync(theirsPath, "utf8");
+const normalize = (value) => value.replace(` || ${guard}`, "").replace(/\s+/g, " ").trim();
+
+if (base.includes(guard) || ours.includes(guard) || !theirs.includes(guard) || normalize(base) !== normalize(theirs)) {
+	process.exit(1);
+}
+
+const cloudflareContext = /(const cloudflare: CloudflareContext[^=]*=\s*)([\s\S]*?)(\?\s*await getCloudflareContextFromWrangler\(\)\s*:\s*await getCloudflareContext\(\{ async: true \}\);)/;
+const match = ours.match(cloudflareContext);
+if (!match) {
+	process.exit(1);
+}
+
+const condition = match[2].replace(/\s+/g, " ").trim();
+ours = ours.replace(cloudflareContext, `${match[1]}${condition} || ${guard}\n\t\t? await getCloudflareContextFromWrangler()\n\t\t: await getCloudflareContext({ async: true });`);
+fs.writeFileSync(oursPath, ours);
+NODE
+	then
+		cp "$ours_file" "$target_path"
+		git add -- "$target_path"
+		git rm --quiet --force -- "$template_path"
+		rm -r -- "$temporary_directory"
+		return 0
+	fi
+
 	if git merge-file --quiet --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file"; then
 		cp "$result_file" "$target_path"
 		git add -- "$target_path"
