@@ -140,15 +140,20 @@ import fs from "node:fs";
 const [basePath, oursPath, theirsPath] = process.argv.slice(2);
 const oldValidation = '      - name: Validate, build, and run browser tests\n        env:\n          CSTD_D1_PERSIST_PATH: ${{ runner.temp }}/cstd-d1-${{ github.run_id }}-${{ github.run_attempt }}\n        run: pnpm validate:ci';
 const inlineValidation = '      - name: Validate, build, and run browser tests\n        run: CSTD_D1_PERSIST_PATH="${{ runner.temp }}/cstd-d1-${{ github.run_id }}-${{ github.run_attempt }}" pnpm validate:ci';
+const localValidation = '      - name: Validate, build, and run browser tests\n        run: CSTD_D1_PERSIST_PATH=".wrangler/state" pnpm validate:ci';
 const base = fs.readFileSync(basePath, "utf8");
 let ours = fs.readFileSync(oursPath, "utf8");
 const theirs = fs.readFileSync(theirsPath, "utf8");
 
-if (!base.includes(oldValidation) || !ours.includes(oldValidation) || !theirs.includes(inlineValidation) || theirs.replace(inlineValidation, oldValidation) !== base) {
+const migration = [
+	[oldValidation, inlineValidation],
+	[inlineValidation, localValidation],
+].find(([from, to]) => base.includes(from) && ours.includes(from) && theirs.includes(to) && theirs.replace(to, from) === base);
+if (!migration) {
 	process.exit(1);
 }
 
-ours = ours.replace(oldValidation, inlineValidation);
+ours = ours.replace(migration[0], migration[1]);
 fs.writeFileSync(oursPath, ours);
 NODE
 	then
