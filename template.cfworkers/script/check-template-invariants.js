@@ -206,6 +206,20 @@ for (const reusableWorkflow of ["_schedule-runner.yml", "_deploy.yml"]) {
 const sharedDeployWorkflow = read("../.github/workflows/_deploy.yml");
 requireMatch(sharedDeployWorkflow, /payload-local-admin-username:[\s\S]*default:\s*core users/, "Shared validation must default the local Payload username.");
 requireMatch(sharedDeployWorkflow, /payload-local-admin-password:[\s\S]*default:\s*admin/, "Shared validation must default the local Payload password.");
+requireMatch(sharedDeployWorkflow, /runtime-secret-names:[\s\S]*default:\s*""/, "Shared deploys must accept explicit runtime secret names.");
+requireMatch(
+	sharedDeployWorkflow,
+	/Prepare runtime secrets[\s\S]*Required runtime secret is missing/,
+	"Declared runtime secrets must fail validation when Infisical does not provide them.",
+);
+const runtimeSecretFlagCount = [...sharedDeployWorkflow.matchAll(/SECRETS_ARGUMENTS=\(--secrets-file "\$RUNTIME_SECRETS_FILE"\)/g)].length;
+if (
+	runtimeSecretFlagCount !== 2 ||
+	!/wrangler versions upload[^\n]*"\$\{SECRETS_ARGUMENTS\[@\]\}"/.test(sharedDeployWorkflow) ||
+	!/wrangler deploy "\$\{SECRETS_ARGUMENTS\[@\]\}"/.test(sharedDeployWorkflow)
+) {
+	errors.push("Declared runtime secrets must be included in preview and production deployments.");
+}
 requireMatch(
 	sharedDeployWorkflow,
 	/Validate, build, and run browser tests[\s\S]*PAYLOAD_ADMIN_USERNAME:/,
