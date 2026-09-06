@@ -31,7 +31,7 @@ export default defineConfig({
 						...process.env,
 						["CORIODERS_TELEMETRY_DISABLED"]: "1",
 						["PAYLOAD_ADMIN_PASSWORD"]: "admin",
-						["PAYLOAD_ADMIN_USERNAME"]: "corioders",
+						["PAYLOAD_ADMIN_USERNAME"]: "core users",
 						["PAYLOAD_COOKIE_SECURE"]: "false",
 						["PAYLOAD_SECRET"]: "local-template-secret",
 					},

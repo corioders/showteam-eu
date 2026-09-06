@@ -36,7 +36,7 @@ export const disposeCloudflareContext = cloudflare.dispose?.bind(cloudflare);
 
 export default buildConfig({
 	admin: {
-		autoLogin: isProduction ? false : { password: "admin", prefillOnly: true, username: "corioders" },
+		autoLogin: isProduction ? false : { password: "admin", prefillOnly: true, username: "core users" },
 		importMap: { autoGenerate: false, baseDir: dirname },
 		user: Users.slug,
 	},

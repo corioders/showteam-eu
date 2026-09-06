@@ -3,7 +3,7 @@ import config, { disposeCloudflareContext } from "@payload-config";
 import { getPayload } from "payload";
 
 const isProduction = process.env.NODE_ENV === "production";
-const username = process.env["PAYLOAD_ADMIN_USERNAME"] ?? (isProduction ? undefined : "corioders");
+const username = process.env["PAYLOAD_ADMIN_USERNAME"] ?? (isProduction ? undefined : "core users");
 const password = process.env["PAYLOAD_ADMIN_PASSWORD"] ?? (isProduction ? undefined : "admin");
 
 if (!username || !password) {
