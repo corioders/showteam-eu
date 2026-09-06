@@ -87,6 +87,14 @@ on:
         description: Optional local Payload fixture administrator password.
         default: ""
         type: string
+      payload-local-admin-username:
+        description: Local Payload administrator username used by validation.
+        default: corioders
+        type: string
+      payload-local-admin-password:
+        description: Local Payload administrator password used by validation.
+        default: admin
+        type: string
 
 permissions:
   contents: read
@@ -188,6 +196,8 @@ jobs:
             {
               git ls-files --stage -- "$APP_DIRECTORY/pnpm-lock.yaml" "$APP_DIRECTORY/apps/web/migrations" "$APP_DIRECTORY/apps/web/payload.config.ts" "$APP_DIRECTORY/apps/web/scripts" "$APP_DIRECTORY/apps/web/src/collections" "$APP_DIRECTORY/apps/web/src/globals"
               printf '%s' "E2E_ADMIN_EMAIL=${{ inputs.e2e-admin-email }}"
+              printf '%s' "PAYLOAD_ADMIN_USERNAME=${{ inputs.payload-local-admin-username }}"
+              printf '%s' "PAYLOAD_ADMIN_PASSWORD=${{ inputs.payload-local-admin-password }}"
             } | sha256sum | cut -d' ' -f1
           )
           echo "CSTD_BUILD_INPUTS_HASH=$BUILD_INPUTS_HASH" >> "$GITHUB_ENV"
@@ -214,6 +224,8 @@ jobs:
         env:
           E2E_ADMIN_EMAIL: ${{ inputs.e2e-admin-email }}
           E2E_ADMIN_PASSWORD: ${{ inputs.e2e-admin-password }}
+          PAYLOAD_ADMIN_USERNAME: ${{ inputs.payload-local-admin-username }}
+          PAYLOAD_ADMIN_PASSWORD: ${{ inputs.payload-local-admin-password }}
 
       - name: Save local Payload D1 snapshot
         if: inputs.payload && steps.restore-payload-d1.outputs.cache_hit != 'true'
@@ -229,6 +241,9 @@ jobs:
       - name: Validate, build, and run browser tests
         run: CSTD_D1_PERSIST_PATH=".wrangler/state/v3" pnpm validate:ci
         working-directory: ${{ inputs.app-directory }}
+        env:
+          PAYLOAD_ADMIN_USERNAME: ${{ inputs.payload-local-admin-username }}
+          PAYLOAD_ADMIN_PASSWORD: ${{ inputs.payload-local-admin-password }}
 
       - name: Apply telemetry database migrations
         if: inputs.deploy-enabled && inputs.telemetry-d1-binding != ''
@@ -516,4 +531,3 @@ jobs:
             echo ""
             echo "Published ${{ github.sha }} from the deploy branch."
           } >> "$GITHUB_STEP_SUMMARY"
-
