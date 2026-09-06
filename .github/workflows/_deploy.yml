@@ -159,7 +159,10 @@ jobs:
 
       - name: Install Playwright browsers
         if: inputs.install-playwright
-        run: pnpm --dir apps/web exec playwright install chromium webkit
+        run: |
+          PLAYWRIGHT_CACHE="$RUNNER_TEMP/ms-playwright"
+          echo "PLAYWRIGHT_BROWSERS_PATH=$PLAYWRIGHT_CACHE" >> "$GITHUB_ENV"
+          PLAYWRIGHT_BROWSERS_PATH="$PLAYWRIGHT_CACHE" pnpm --dir apps/web exec playwright install chromium webkit
         working-directory: ${{ inputs.app-directory }}
 
       - name: Use persistent Next.js cache
