@@ -125,6 +125,31 @@ for candidate in ./*.cfworkers; do
 	consumer_directory=${candidate#./}
 done
 
+normalize_deploy_invariant_transition() {
+	local base_file=$1 ours_file=$2 theirs_file=$3
+	node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'
+import fs from "node:fs";
+
+const [basePath, oursPath, theirsPath] = process.argv.slice(2);
+let base = fs.readFileSync(basePath, "utf8");
+let ours = fs.readFileSync(oursPath, "utf8");
+const theirs = fs.readFileSync(theirsPath, "utf8");
+const sharedInvariant = /shared scheduler and deploy workflow/;
+if (sharedInvariant.test(base) || sharedInvariant.test(ours) || !sharedInvariant.test(theirs)) {
+	process.exit(0);
+}
+const sectionPattern = /const deployWorkflow = read\("\.\.\/\.github\/workflows\/deploy\.yml"\);[\s\S]*?(?=const packageJson =)/;
+const sharedSection = theirs.match(sectionPattern)?.[0];
+if (!sharedSection || !sectionPattern.test(base) || !sectionPattern.test(ours)) {
+	process.exit(1);
+}
+base = base.replace(sectionPattern, sharedSection);
+ours = ours.replace(sectionPattern, sharedSection);
+fs.writeFileSync(basePath, base);
+fs.writeFileSync(oursPath, ours);
+NODE
+}
+
 auto_resolve_bootstrap_replacements() {
 	local unmerged_path=$1
 	local temporary_directory base_file ours_file theirs_file result_file project_name
@@ -143,11 +168,118 @@ auto_resolve_bootstrap_replacements() {
 	git show ":1:$unmerged_path" >"$base_file"
 	git show ":2:$unmerged_path" >"$ours_file"
 	git show ":3:$unmerged_path" >"$theirs_file"
+
+	if [[ $unmerged_path == *.cfworkers/script/check-template-invariants.js ]]; then
+		normalize_deploy_invariant_transition "$base_file" "$ours_file" "$theirs_file" || {
+			rm -r -- "$temporary_directory"
+			return 1
+		}
+	fi
 	sed -i.bak \
 		-e "s/template\\.cfworkers/$consumer_directory/g" \
 		-e "s/template-cfworkers/$project_name-cfworkers/g" \
 		"$base_file" "$theirs_file"
 	rm -- "$base_file.bak" "$theirs_file.bak"
+
+	if [[ $unmerged_path == .github/workflows/deploy.yml ]] && node - "$base_file" "$ours_file" "$theirs_file" "$consumer_directory" <<'NODE'
+import fs from "node:fs";
+import path from "node:path";
+
+const [basePath, oursPath, theirsPath, consumerDirectory] = process.argv.slice(2);
+const base = fs.readFileSync(basePath, "utf8");
+const ours = fs.readFileSync(oursPath, "utf8");
+let result = fs.readFileSync(theirsPath, "utf8");
+const sharedWorkflowPattern = /uses:\s*corioders\/cstd-next\/\.github\/workflows\/deploy\.yml@[0-9a-f]{40}/;
+if (sharedWorkflowPattern.test(base) || sharedWorkflowPattern.test(ours) || !sharedWorkflowPattern.test(result)) {
+	process.exit(1);
+}
+
+const webDirectory = path.join(consumerDirectory, "apps", "web");
+const packageJson = JSON.parse(fs.readFileSync(path.join(webDirectory, "package.json"), "utf8"));
+const wrangler = fs.readFileSync(path.join(webDirectory, "wrangler.jsonc"), "utf8");
+const scripts = packageJson.scripts ?? {};
+const workerNames = [...wrangler.matchAll(/"name"\s*:\s*"([^"]+)"/g)].map((match) => match[1]);
+const productionWorkerName = workerNames[0];
+const previewWorkerName = workerNames[1] ?? (productionWorkerName ? `${productionWorkerName}-preview` : null);
+const cacheBuckets = [...wrangler.matchAll(/"binding"\s*:\s*"NEXT_INC_CACHE_R2_BUCKET"[\s\S]*?"bucket_name"\s*:\s*"([^"]+)"/g)].map((match) => match[1]);
+if (!productionWorkerName || !previewWorkerName || cacheBuckets.length < 2) {
+	process.exit(1);
+}
+
+function setInput(name, value) {
+	const pattern = new RegExp(`^(\\s+${name}:)\\s*.+$`, "m");
+	if (!pattern.test(result)) {
+		process.exit(1);
+	}
+	result = result.replace(pattern, `$1 ${value}`);
+}
+
+setInput("app-directory", consumerDirectory);
+setInput("worker-name", productionWorkerName);
+setInput("preview-worker-name", previewWorkerName);
+setInput("production-cache-bucket", cacheBuckets[0]);
+setInput("preview-cache-bucket", cacheBuckets[1]);
+
+const extraInputs = [];
+const payload = fs.existsSync(path.join(webDirectory, "payload.config.ts"));
+setInput("payload", String(payload));
+if (payload) {
+	const payloadBinding = /"binding"\s*:\s*"PAYLOAD_DB"/.test(wrangler) ? "PAYLOAD_DB" : /"binding"\s*:\s*"D1"/.test(wrangler) ? "D1" : null;
+	if (!payloadBinding) {
+		process.exit(1);
+	}
+	if (payloadBinding !== "PAYLOAD_DB") {
+		extraInputs.push(`      payload-d1-binding: ${payloadBinding}`);
+	}
+	const commands = [
+		["payload-local-migrate-command", "payload:migrate:local", "migrate:local"],
+		["payload-local-seed-command", "payload:seed:local", "seed:local"],
+		["payload-preview-migrate-command", "payload:migrate:preview", "deploy:database:preview"],
+		["payload-preview-seed-command", "payload:seed:preview", "seed:preview"],
+		["payload-production-migrate-command", "payload:migrate:production", "deploy:database"],
+	];
+	for (const [inputName, standardScript, fallbackScript] of commands) {
+		const selectedScript = scripts[standardScript] ? standardScript : scripts[fallbackScript] ? fallbackScript : null;
+		if (!selectedScript) {
+			process.exit(1);
+		}
+		if (selectedScript !== standardScript) {
+			extraInputs.push(`      ${inputName}: pnpm ${selectedScript}`);
+		}
+	}
+	if (!scripts["payload:seed:production"]) {
+		extraInputs.push("      payload-seed-production: false");
+	}
+}
+if (/"binding"\s*:\s*"CORIODERS_TELEMETRY_DB"/.test(wrangler)) {
+	extraInputs.push("      telemetry-d1-binding: CORIODERS_TELEMETRY_DB");
+}
+if (/name:\s*Install Playwright browsers/.test(ours)) {
+	extraInputs.push("      install-playwright: true");
+}
+const adminEmail = ours.match(/E2E_ADMIN_EMAIL:\s*([^\s]+)/)?.[1];
+const adminPassword = ours.match(/E2E_ADMIN_PASSWORD:\s*([^\s]+)/)?.[1];
+if (adminEmail) {
+	extraInputs.push(`      e2e-admin-email: ${adminEmail}`);
+}
+if (adminPassword) {
+	extraInputs.push(`      e2e-admin-password: ${adminPassword}`);
+}
+const productionHealthUrl = ours.match(/name:\s*Check deployed production[\s\S]*?(https:\/\/[^"'\s\\]+)/)?.[1];
+if (productionHealthUrl) {
+	extraInputs.push(`      production-health-url: ${productionHealthUrl}`);
+}
+if (extraInputs.length > 0) {
+	result = result.replace(/^(\s+payload:\s*(?:true|false))$/m, `$1\n${extraInputs.join("\n")}`);
+}
+fs.writeFileSync(oursPath, result);
+NODE
+	then
+		cp "$ours_file" "$unmerged_path"
+		git add -- "$unmerged_path"
+		rm -r -- "$temporary_directory"
+		return 0
+	fi
 
 	if [[ $unmerged_path == .github/workflows/deploy.yml ]] && node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'
 import fs from "node:fs";
@@ -287,6 +419,13 @@ auto_resolve_renamed_template_path() {
 		"$base_file" "$theirs_file"
 	rm -- "$base_file.bak" "$theirs_file.bak"
 
+	if [[ $target_path == *.cfworkers/script/check-template-invariants.js ]]; then
+		normalize_deploy_invariant_transition "$base_file" "$ours_file" "$theirs_file" || {
+			rm -r -- "$temporary_directory"
+			return 1
+		}
+	fi
+
 	if node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'
 import fs from "node:fs";
 
@@ -372,6 +511,9 @@ while IFS= read -r unmerged_path; do
 			fi
 			;;
 		bootstrap_project.sh | encrypt_template_env.sh)
+			git rm --quiet --force -- "$unmerged_path"
+			;;
+		.github/workflows/schedule-runner.yml | .github/workflows/validate.yml)
 			git rm --quiet --force -- "$unmerged_path"
 			;;
 		template.cfworkers/*)
