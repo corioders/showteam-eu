@@ -322,6 +322,32 @@ NODE
 		:
 	fi
 
+	if [[ $unmerged_path == *.cfworkers/apps/web/payload.config.ts ]] && node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'
+import fs from "node:fs";
+
+const [basePath, oursPath, theirsPath] = process.argv.slice(2);
+const guard = '!process.env["CLOUDFLARE_API_TOKEN"]';
+const scopedGuard = `(isNextBuild && ${guard})`;
+const base = fs.readFileSync(basePath, "utf8");
+let ours = fs.readFileSync(oursPath, "utf8");
+const theirs = fs.readFileSync(theirsPath, "utf8");
+const normalize = (value) => value.replace(/\s+/g, " ").trim();
+const scopeGuard = (value) => value.replace(` || ${guard}`, ` || ${scopedGuard}`);
+
+if (!base.includes(` || ${guard}`) || !ours.includes(` || ${guard}`) || !theirs.includes(` || ${scopedGuard}`) || normalize(scopeGuard(base)) !== normalize(theirs)) {
+	process.exit(1);
+}
+
+ours = scopeGuard(ours);
+fs.writeFileSync(oursPath, ours);
+NODE
+	then
+		cp "$ours_file" "$unmerged_path"
+		git add -- "$unmerged_path"
+		rm -r -- "$temporary_directory"
+		return 0
+	fi
+
 	if git merge-file --quiet --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file"; then
 		cp "$result_file" "$unmerged_path"
 		git add -- "$unmerged_path"
@@ -511,6 +537,33 @@ const productionWorkerName = normalizedWorkerName.endsWith("-cfworkers") ? norma
 ours = ours
 	.replaceAll(currentWorkerName, productionWorkerName)
 	.replaceAll(oldTelemetryWorkerName, nextTelemetryWorkerName);
+fs.writeFileSync(oursPath, ours);
+NODE
+	then
+		cp "$ours_file" "$target_path"
+		git add -- "$target_path"
+		git rm --quiet --force -- "$template_path"
+		rm -r -- "$temporary_directory"
+		return 0
+	fi
+
+	if [[ $target_path == *.cfworkers/apps/web/payload.config.ts ]] && node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'
+import fs from "node:fs";
+
+const [basePath, oursPath, theirsPath] = process.argv.slice(2);
+const guard = '!process.env["CLOUDFLARE_API_TOKEN"]';
+const scopedGuard = `(isNextBuild && ${guard})`;
+const base = fs.readFileSync(basePath, "utf8");
+let ours = fs.readFileSync(oursPath, "utf8");
+const theirs = fs.readFileSync(theirsPath, "utf8");
+const normalize = (value) => value.replace(/\s+/g, " ").trim();
+const scopeGuard = (value) => value.replace(` || ${guard}`, ` || ${scopedGuard}`);
+
+if (!base.includes(` || ${guard}`) || !ours.includes(` || ${guard}`) || !theirs.includes(` || ${scopedGuard}`) || normalize(scopeGuard(base)) !== normalize(theirs)) {
+	process.exit(1);
+}
+
+ours = scopeGuard(ours);
 fs.writeFileSync(oursPath, ours);
 NODE
 	then

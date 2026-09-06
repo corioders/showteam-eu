@@ -71,7 +71,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		);
 		write(
 			path.join(templateRoot, "template.cfworkers/apps/web/payload.config.ts"),
-			'const isCLI = process.argv.some((value) => value.endsWith("seed-payload-admin.ts"));\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env["CSTD_D1_PERSIST_PATH"] ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });\n',
+			'const isCLI = process.argv.some((value) => value.endsWith("seed-payload-admin.ts"));\nconst isNextBuild = process.env["NEXT_PHASE"] === "phase-production-build";\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env["CSTD_D1_PERSIST_PATH"] || !process.env["CLOUDFLARE_API_TOKEN"] ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });\n',
 		);
 		git(templateRoot, "add", ".");
 		git(templateRoot, "commit", "-m", "initial template");
@@ -103,7 +103,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		fs.chmodSync(path.join(consumerRoot, "pull_template.sh"), 0o755);
 		write(
 			path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"),
-			'const isCLI = process.argv.some((value) => value.endsWith("seed-ci.ts"));\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env.CSTD_D1_PERSIST_PATH ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });\n',
+			'const isCLI = process.argv.some((value) => value.endsWith("seed-ci.ts"));\nconst isNextBuild = process.env["NEXT_PHASE"] === "phase-production-build";\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env.CSTD_D1_PERSIST_PATH || !process.env["CLOUDFLARE_API_TOKEN"] ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });\n',
 		);
 		write(
 			path.join(consumerRoot, "showteam.cfworkers/apps/web/package.json"),
@@ -134,7 +134,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		);
 		write(
 			path.join(templateRoot, "template.cfworkers/apps/web/payload.config.ts"),
-			'const isCLI = process.argv.some((value) => value.endsWith("seed-payload-admin.ts"));\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env["CSTD_D1_PERSIST_PATH"] || !process.env["CLOUDFLARE_API_TOKEN"]\n\t\t? await getCloudflareContextFromWrangler()\n\t\t: await getCloudflareContext({ async: true });\n',
+			'const isCLI = process.argv.some((value) => value.endsWith("seed-payload-admin.ts"));\nconst isNextBuild = process.env["NEXT_PHASE"] === "phase-production-build";\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env["CSTD_D1_PERSIST_PATH"] || (isNextBuild && !process.env["CLOUDFLARE_API_TOKEN"])\n\t\t? await getCloudflareContextFromWrangler()\n\t\t: await getCloudflareContext({ async: true });\n',
 		);
 		write(path.join(templateRoot, "template.cfworkers/script/pull-template.test.js"), 'const templateDirectory = "template.cfworkers";\n');
 		git(templateRoot, "add", ".");

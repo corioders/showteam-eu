@@ -28,7 +28,7 @@ if (!payloadSecret) {
 }
 
 const cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =
-	isCLI || !isProduction || process.env["CSTD_D1_PERSIST_PATH"] || !process.env["CLOUDFLARE_API_TOKEN"]
+	isCLI || !isProduction || process.env["CSTD_D1_PERSIST_PATH"] || (isNextBuild && !process.env["CLOUDFLARE_API_TOKEN"])
 		? await getCloudflareContextFromWrangler()
 		: await getCloudflareContext({ async: true });
 
