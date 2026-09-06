@@ -43,6 +43,30 @@ on:
         description: Seed the Payload administrator after production migration.
         default: true
         type: boolean
+      payload-local-migrate-command:
+        description: Command that migrates local Payload D1.
+        default: pnpm payload:migrate:local
+        type: string
+      payload-local-seed-command:
+        description: Command that seeds local Payload D1.
+        default: pnpm payload:seed:local
+        type: string
+      payload-preview-migrate-command:
+        description: Command that migrates preview Payload D1.
+        default: pnpm payload:migrate:preview
+        type: string
+      payload-preview-seed-command:
+        description: Command that seeds preview Payload D1.
+        default: pnpm payload:seed:preview
+        type: string
+      payload-production-migrate-command:
+        description: Command that migrates production Payload D1.
+        default: pnpm payload:migrate:production
+        type: string
+      payload-production-seed-command:
+        description: Command that seeds production Payload D1.
+        default: pnpm payload:seed:production
+        type: string
       telemetry-d1-binding:
         description: Optional telemetry D1 binding whose migrations run before deploy.
         default: ""
@@ -180,12 +204,12 @@ jobs:
 
       - name: Migrate local Payload D1
         if: inputs.payload && steps.restore-payload-d1.outputs.cache_hit != 'true'
-        run: pnpm payload:migrate:local
+        run: ${{ inputs.payload-local-migrate-command }}
         working-directory: ${{ inputs.app-directory }}/apps/web
 
       - name: Seed local Payload D1
         if: inputs.payload && steps.restore-payload-d1.outputs.cache_hit != 'true'
-        run: pnpm payload:seed:local
+        run: ${{ inputs.payload-local-seed-command }}
         working-directory: ${{ inputs.app-directory }}/apps/web
         env:
           E2E_ADMIN_EMAIL: ${{ inputs.e2e-admin-email }}
@@ -298,12 +322,12 @@ jobs:
 
       - name: Migrate preview Payload D1
         if: inputs.deploy-enabled && inputs.payload && github.ref_name != 'deploy' && steps.preview-cache.outputs.cache_hit != 'true' && steps.preview-payload-d1.outputs.cache_hit != 'true'
-        run: pnpm payload:migrate:preview
+        run: ${{ inputs.payload-preview-migrate-command }}
         working-directory: ${{ inputs.app-directory }}/apps/web
 
       - name: Seed preview Payload D1
         if: inputs.deploy-enabled && inputs.payload && github.ref_name != 'deploy' && steps.preview-cache.outputs.cache_hit != 'true' && steps.preview-payload-d1.outputs.cache_hit != 'true'
-        run: pnpm payload:seed:preview
+        run: ${{ inputs.payload-preview-seed-command }}
         working-directory: ${{ inputs.app-directory }}/apps/web
 
       - name: Mark preview Payload D1 snapshot
@@ -412,12 +436,12 @@ jobs:
 
       - name: Migrate production Payload D1
         if: inputs.deploy-enabled && inputs.payload && github.ref_name == 'deploy'
-        run: pnpm payload:migrate:production
+        run: ${{ inputs.payload-production-migrate-command }}
         working-directory: ${{ inputs.app-directory }}/apps/web
 
       - name: Seed production Payload D1
         if: inputs.deploy-enabled && inputs.payload && inputs.payload-seed-production && github.ref_name == 'deploy'
-        run: pnpm payload:seed:production
+        run: ${{ inputs.payload-production-seed-command }}
         working-directory: ${{ inputs.app-directory }}/apps/web
 
       - name: Deploy production
