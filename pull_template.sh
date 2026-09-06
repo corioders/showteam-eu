@@ -134,6 +134,30 @@ auto_resolve_bootstrap_replacements() {
 		"$base_file" "$theirs_file"
 	rm -- "$base_file.bak" "$theirs_file.bak"
 
+	if [[ $unmerged_path == .github/workflows/deploy.yml ]] && node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'
+import fs from "node:fs";
+
+const [basePath, oursPath, theirsPath] = process.argv.slice(2);
+const oldValidation = '      - name: Validate, build, and run browser tests\n        env:\n          CSTD_D1_PERSIST_PATH: ${{ runner.temp }}/cstd-d1-${{ github.run_id }}-${{ github.run_attempt }}\n        run: pnpm validate:ci';
+const inlineValidation = '      - name: Validate, build, and run browser tests\n        run: CSTD_D1_PERSIST_PATH="${{ runner.temp }}/cstd-d1-${{ github.run_id }}-${{ github.run_attempt }}" pnpm validate:ci';
+const base = fs.readFileSync(basePath, "utf8");
+let ours = fs.readFileSync(oursPath, "utf8");
+const theirs = fs.readFileSync(theirsPath, "utf8");
+
+if (!base.includes(oldValidation) || !ours.includes(oldValidation) || !theirs.includes(inlineValidation) || theirs.replace(inlineValidation, oldValidation) !== base) {
+	process.exit(1);
+}
+
+ours = ours.replace(oldValidation, inlineValidation);
+fs.writeFileSync(oursPath, ours);
+NODE
+	then
+		cp "$ours_file" "$unmerged_path"
+		git add -- "$unmerged_path"
+		rm -r -- "$temporary_directory"
+		return 0
+	fi
+
 	if git merge-file --quiet --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file"; then
 		cp "$result_file" "$unmerged_path"
 		git add -- "$unmerged_path"
