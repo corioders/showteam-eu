@@ -149,6 +149,106 @@ auto_resolve_bootstrap_replacements() {
 		"$base_file" "$theirs_file"
 	rm -- "$base_file.bak" "$theirs_file.bak"
 
+	if [[ $unmerged_path == .github/workflows/deploy.yml ]] && node - "$base_file" "$ours_file" "$theirs_file" "$consumer_directory" <<'NODE'
+import fs from "node:fs";
+import path from "node:path";
+
+const [basePath, oursPath, theirsPath, consumerDirectory] = process.argv.slice(2);
+const base = fs.readFileSync(basePath, "utf8");
+const ours = fs.readFileSync(oursPath, "utf8");
+let result = fs.readFileSync(theirsPath, "utf8");
+const sharedWorkflowPattern = /uses:\s*corioders\/cstd-next\/\.github\/workflows\/deploy\.yml@[0-9a-f]{40}/;
+if (sharedWorkflowPattern.test(base) || sharedWorkflowPattern.test(ours) || !sharedWorkflowPattern.test(result)) {
+	process.exit(1);
+}
+
+const webDirectory = path.join(consumerDirectory, "apps", "web");
+const packageJson = JSON.parse(fs.readFileSync(path.join(webDirectory, "package.json"), "utf8"));
+const wrangler = fs.readFileSync(path.join(webDirectory, "wrangler.jsonc"), "utf8");
+const scripts = packageJson.scripts ?? {};
+const workerNames = [...wrangler.matchAll(/"name"\s*:\s*"([^"]+)"/g)].map((match) => match[1]);
+const productionWorkerName = workerNames[0];
+const previewWorkerName = workerNames[1] ?? (productionWorkerName ? `${productionWorkerName}-preview` : null);
+const cacheBuckets = [...wrangler.matchAll(/"binding"\s*:\s*"NEXT_INC_CACHE_R2_BUCKET"[\s\S]*?"bucket_name"\s*:\s*"([^"]+)"/g)].map((match) => match[1]);
+if (!productionWorkerName || !previewWorkerName || cacheBuckets.length < 2) {
+	process.exit(1);
+}
+
+function setInput(name, value) {
+	const pattern = new RegExp(`^(\\s+${name}:)\\s*.+$`, "m");
+	if (!pattern.test(result)) {
+		process.exit(1);
+	}
+	result = result.replace(pattern, `$1 ${value}`);
+}
+
+setInput("app-directory", consumerDirectory);
+setInput("worker-name", productionWorkerName);
+setInput("preview-worker-name", previewWorkerName);
+setInput("production-cache-bucket", cacheBuckets[0]);
+setInput("preview-cache-bucket", cacheBuckets[1]);
+
+const extraInputs = [];
+const payload = fs.existsSync(path.join(webDirectory, "payload.config.ts"));
+setInput("payload", String(payload));
+if (payload) {
+	const payloadBinding = /"binding"\s*:\s*"PAYLOAD_DB"/.test(wrangler) ? "PAYLOAD_DB" : /"binding"\s*:\s*"D1"/.test(wrangler) ? "D1" : null;
+	if (!payloadBinding) {
+		process.exit(1);
+	}
+	if (payloadBinding !== "PAYLOAD_DB") {
+		extraInputs.push(`      payload-d1-binding: ${payloadBinding}`);
+	}
+	const commands = [
+		["payload-local-migrate-command", "payload:migrate:local", "migrate:local"],
+		["payload-local-seed-command", "payload:seed:local", "seed:local"],
+		["payload-preview-migrate-command", "payload:migrate:preview", "deploy:database:preview"],
+		["payload-preview-seed-command", "payload:seed:preview", "seed:preview"],
+		["payload-production-migrate-command", "payload:migrate:production", "deploy:database"],
+	];
+	for (const [inputName, standardScript, fallbackScript] of commands) {
+		const selectedScript = scripts[standardScript] ? standardScript : scripts[fallbackScript] ? fallbackScript : null;
+		if (!selectedScript) {
+			process.exit(1);
+		}
+		if (selectedScript !== standardScript) {
+			extraInputs.push(`      ${inputName}: pnpm ${selectedScript}`);
+		}
+	}
+	if (!scripts["payload:seed:production"]) {
+		extraInputs.push("      payload-seed-production: false");
+	}
+}
+if (/"binding"\s*:\s*"CORIODERS_TELEMETRY_DB"/.test(wrangler)) {
+	extraInputs.push("      telemetry-d1-binding: CORIODERS_TELEMETRY_DB");
+}
+if (/name:\s*Install Playwright browsers/.test(ours)) {
+	extraInputs.push("      install-playwright: true");
+}
+const adminEmail = ours.match(/E2E_ADMIN_EMAIL:\s*([^\s]+)/)?.[1];
+const adminPassword = ours.match(/E2E_ADMIN_PASSWORD:\s*([^\s]+)/)?.[1];
+if (adminEmail) {
+	extraInputs.push(`      e2e-admin-email: ${adminEmail}`);
+}
+if (adminPassword) {
+	extraInputs.push(`      e2e-admin-password: ${adminPassword}`);
+}
+const productionHealthUrl = ours.match(/name:\s*Check deployed production[\s\S]*?(https:\/\/[^"'\s\\]+)/)?.[1];
+if (productionHealthUrl) {
+	extraInputs.push(`      production-health-url: ${productionHealthUrl}`);
+}
+if (extraInputs.length > 0) {
+	result = result.replace(/^(\s+payload:\s*(?:true|false))$/m, `$1\n${extraInputs.join("\n")}`);
+}
+fs.writeFileSync(oursPath, result);
+NODE
+	then
+		cp "$ours_file" "$unmerged_path"
+		git add -- "$unmerged_path"
+		rm -r -- "$temporary_directory"
+		return 0
+	fi
+
 	if [[ $unmerged_path == .github/workflows/deploy.yml ]] && node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'
 import fs from "node:fs";
 
