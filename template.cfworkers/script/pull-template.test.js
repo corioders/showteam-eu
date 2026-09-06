@@ -51,16 +51,21 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		);
 		write(path.join(templateRoot, "TODO.md"), "updated template task\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true, remoteBindings: true };\nexport default options;\n");
+		write(path.join(templateRoot, "template.cfworkers/script/pull-template.test.js"), 'const templateDirectory = "template.cfworkers";\n');
 		git(templateRoot, "add", ".");
 		git(templateRoot, "commit", "-m", "update template");
 
 		const result = spawnSync(pullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
 		assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
 		assert.equal(fs.existsSync(path.join(consumerRoot, "TODO.md")), false);
-		assert.equal(fs.existsSync(path.join(consumerRoot, "template.cfworkers")), false);
+		assert.equal(spawnSync("git", ["ls-files", "template.cfworkers"], { cwd: consumerRoot, encoding: "utf8" }).stdout, "");
 		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), consumerWorkflowNamePattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), payloadBranchPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/next.config.ts"), "utf8"), remoteBindingsPattern);
+		assert.equal(
+			fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/script/pull-template.test.js"), "utf8"),
+			'const templateDirectory = "template.cfworkers";\n',
+		);
 		assert.equal(spawnSync("git", ["diff", "--name-only", "--diff-filter=U"], { cwd: consumerRoot, encoding: "utf8" }).stdout, "");
 	} finally {
 		fs.rmSync(fixtureRoot, { force: true, recursive: true });

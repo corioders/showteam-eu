@@ -84,6 +84,7 @@ continue_template_merge() {
 		done < <(git diff --cached --name-only --diff-filter=A -z -- template.cfworkers)
 		while IFS= read -r -d '' staged_path; do
 			[[ -f $staged_path ]] || continue
+			[[ $staged_path == "$consumer_directory/script/pull-template.test.js" ]] && continue
 			grep -Iq . "$staged_path" || continue
 			sed -i.bak \
 				-e "s/template\\.cfworkers/$consumer_directory/g" \
