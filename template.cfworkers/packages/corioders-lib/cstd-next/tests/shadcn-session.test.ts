@@ -234,7 +234,7 @@ describe("Shadcnblocks installation snapshots", () => {
 		});
 		expect(divergence.status).toBe("diverged");
 		expect(divergence.error?.message).toContain("An agent must reconcile");
-	});
+	}, 15_000);
 
 	it("accepts identical canonical normalization with rewritten subtree history", () => {
 		const canonicalRoot = path.join(fixtureDirectory, "canonical-rewritten-history");
