@@ -9,12 +9,12 @@ exact reminder to add that project to this source registry.
 
 | Repository | App directory | Preserve | Migration blocker | Status | Template revision |
 | --- | --- | --- | --- | --- | --- |
-| `corioders/corioders-dashboard` | `corioders-dashboard.cfworkers/apps/web` | Telemetry collector, trace storage and observability UI | Payload artifact invariant | Migration pending | `de6f202` (`c3863ef`) |
+| `corioders/corioders-dashboard` | `corioders-dashboard.cfworkers/apps/web` | Telemetry collector, trace storage and observability UI | — | Migrated | `8bbff38` (`338f435`) |
 | `corioders/corioders.com` | `corioders.cfworkers/apps/web` | Lingui routing and typed env | Reconcile application bindings | Planned | — |
 | `corioders/impact-speaker-tracker` | `impact.cfworkers/apps/web` | Firebase, Drive CMS, uploads and document workflows | Reconcile Firebase and cache bindings | Planned | Partial D1 isolation capability: `18a4f7a` |
-| `corioders/impact-new-agenda` | `impact-new-agenda.cfworkers/apps/web` | — | Payload artifact invariant | Migration pending | `de6f202` (`7cf9b0d`) |
-| `corioders/showteam-eu` | `showteam.cfworkers/apps/web` | Payload, D1/R2 migrations, fixtures, tests and reminder Worker | Payload artifact invariant | Migration pending | `de6f202` (`5359531`) |
-| `corioders/corioders-tickets` | `corioders-tickets.cfworkers/apps/web` | Active dashboard implementation | Payload artifact invariant | Migration pending | `de6f202` (`23627b9`) |
+| `corioders/impact-new-agenda` | `impact-new-agenda.cfworkers/apps/web` | — | — | Migrated | `8bbff38` (`b675e6f`) |
+| `corioders/showteam-eu` | `showteam.cfworkers/apps/web` | Payload, D1/R2 migrations, fixtures, tests and reminder Worker | — | Migrated | `8bbff38` (`41f99fb`) |
+| `corioders/corioders-tickets` | `corioders-tickets.cfworkers/apps/web` | Active dashboard implementation | — | Migrated | `8bbff38` (`d1202a0`) |
 | `corioders/handbook` | `handbook.cloudflare/apps/web` | Nextra and Pagefind | Replace Next on Pages with OpenNext | Planned | — |
 | `corioders/ui` | `ui.cloudflare/apps/web` | shadcn registry generator | Replace Next on Pages and staged-only CI check | Planned | — |
 | `poland2-0/poland20` | `poland20.cloudflare/apps/web` | Lingui routing and Drive CMS | Replace Next on Pages and staged-only CI check | Planned | — |
