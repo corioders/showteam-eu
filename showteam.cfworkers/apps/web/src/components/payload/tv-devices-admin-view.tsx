@@ -2,9 +2,14 @@
 // biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 "use client";
 
-import { Monitor, RefreshCw, Unplug } from "lucide-react";
+import { Monitor, Unplug } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Spinner } from "@/components/ui/spinner";
 
 type TvDevice = { id: string; name: string; created_at: number };
 
@@ -51,18 +56,18 @@ export function TvDevicesAdminView() {
 					<h1>Połączone telewizory</h1>
 					<p>Telewizor pozostaje zalogowany bez terminu ważności. Dostęp możesz cofnąć tutaj w każdej chwili.</p>
 				</div>
-				<Link href="/a/tv" target="_blank">
+				<Link href="/a/tv" target="_blank" className={buttonVariants({ variant: "outline" })}>
 					Otwórz ekran TV
 				</Link>
 			</header>
 			{loading ? (
 				<p className="tv-devices-status">
-					<RefreshCw aria-hidden="true" /> Ładuję urządzenia…
+					<Spinner /> Ładuję urządzenia…
 				</p>
 			) : error ? (
-				<p role="alert" className="tv-devices-error">
-					{error}
-				</p>
+				<Alert variant="destructive" className="tv-devices-error">
+					<AlertDescription>{error}</AlertDescription>
+				</Alert>
 			) : devices.length > 0 ? (
 				<div className="tv-devices-list">
 					{devices.map((device) => (
@@ -72,16 +77,24 @@ export function TvDevicesAdminView() {
 								<strong>{device.name}</strong>
 								<p>Połączono {new Intl.DateTimeFormat("pl-PL", { dateStyle: "long", timeStyle: "short" }).format(device.created_at)}</p>
 							</div>
-							<button type="button" onClick={() => revoke(device)}>
-								<Unplug aria-hidden="true" /> Cofnij dostęp
-							</button>
+							<Button type="button" variant="destructive" onClick={() => revoke(device)}>
+								<Unplug data-icon="inline-start" aria-hidden="true" /> Cofnij dostęp
+							</Button>
 						</article>
 					))}
 				</div>
 			) : (
-				<p className="tv-devices-empty">
-					Brak połączonych telewizorów. Otwórz <strong>/a/tv</strong> na ekranie bazy i zeskanuj kod QR.
-				</p>
+				<Empty className="tv-devices-empty">
+					<EmptyHeader>
+						<EmptyMedia variant="icon">
+							<Monitor />
+						</EmptyMedia>
+						<EmptyTitle>Brak połączonych telewizorów</EmptyTitle>
+						<EmptyDescription>
+							Otwórz <strong>/a/tv</strong> na ekranie bazy i zeskanuj kod QR.
+						</EmptyDescription>
+					</EmptyHeader>
+				</Empty>
 			)}
 		</main>
 	);

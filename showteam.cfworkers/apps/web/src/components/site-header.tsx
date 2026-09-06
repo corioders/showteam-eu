@@ -57,10 +57,8 @@ export function SiteHeader() {
 				</div>
 
 				<Sheet>
-					<SheetTrigger asChild={true}>
-						<Button variant="ghost" size="icon" className="2xl:hidden" aria-label="Otwórz menu">
-							<Menu className="size-6" />
-						</Button>
+					<SheetTrigger render={<Button variant="ghost" size="icon" className="2xl:hidden" aria-label="Otwórz menu" />}>
+						<Menu />
 					</SheetTrigger>
 					<SheetContent className="sm:left-auto sm:w-[min(42rem,100vw)]">
 						<div className="flex h-svh flex-col overflow-y-auto px-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-6">
@@ -72,17 +70,21 @@ export function SiteHeader() {
 							<span className="eyebrow mt-8 mb-4">Idź do</span>
 							<nav className="grid grid-cols-2 border-white/10 border-t border-l" aria-label="Menu mobilne">
 								{[...links, applicationLink].map((link, index) => (
-									<SheetClose asChild={true} key={link.href}>
-										<Link
-											href={link.href}
-											aria-current={pathname === link.href ? "page" : undefined}
-											className={`group flex min-h-20 flex-col justify-between border-white/10 border-r border-b p-3 font-black font-display uppercase transition-colors hover:bg-orange-500 hover:text-black focus-visible:bg-orange-500 focus-visible:text-black focus-visible:outline-none sm:min-h-24 ${pathname === link.href ? "bg-orange-500 text-black" : ""}`}
-										>
-											<span className="font-mono text-[.6rem] text-white/30 tracking-wider group-hover:text-black/55 group-focus-visible:text-black/55">
-												{String(index + 1).padStart(2, "0")}
-											</span>
-											<span className="text-[1.35rem] leading-none tracking-[-.03em] sm:text-[1.65rem]">{link.label}</span>
-										</Link>
+									<SheetClose
+										key={link.href}
+										nativeButton={false}
+										render={
+											<Link
+												href={link.href}
+												aria-current={pathname === link.href ? "page" : undefined}
+												className={`group flex min-h-20 flex-col justify-between border-white/10 border-r border-b p-3 font-black font-display uppercase transition-colors hover:bg-orange-500 hover:text-black focus-visible:bg-orange-500 focus-visible:text-black focus-visible:outline-none sm:min-h-24 ${pathname === link.href ? "bg-orange-500 text-black" : ""}`}
+											/>
+										}
+									>
+										<span className="font-mono text-[.6rem] text-white/30 tracking-wider group-hover:text-black/55 group-focus-visible:text-black/55">
+											{String(index + 1).padStart(2, "0")}
+										</span>
+										<span className="text-[1.35rem] leading-none tracking-[-.03em] sm:text-[1.65rem]">{link.label}</span>
 									</SheetClose>
 								))}
 							</nav>

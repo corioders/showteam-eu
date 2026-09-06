@@ -42,10 +42,8 @@ export function EditorToolbar() {
 				<span className="hidden sm:inline">{visible ? "Ukryj przyciski" : "Pokaż przyciski"}</span>
 			</Button>
 			<Sheet>
-				<SheetTrigger asChild={true}>
-					<Button type="button" size="sm">
-						<Settings2 className="size-4" /> Narzędzia
-					</Button>
+				<SheetTrigger render={<Button type="button" size="sm" />}>
+					<Settings2 data-icon="inline-start" /> Narzędzia
 				</SheetTrigger>
 				<SheetContent className="sm:left-auto sm:w-[26rem]">
 					<div className="flex h-full flex-col px-5 pt-[calc(4rem+env(safe-area-inset-top))] pb-[calc(1.25rem+env(safe-area-inset-bottom))]">

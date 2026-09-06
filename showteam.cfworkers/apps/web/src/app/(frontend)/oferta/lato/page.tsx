@@ -111,7 +111,7 @@ async function SummerContent() {
 							<OfferText field="summerBaseAccent" fallback="na miejscu?" />
 						</h2>
 					</div>
-					<Accordion type="single" collapsible={true} className="w-full">
+					<Accordion className="w-full">
 						<AccordionItem value="sprzet">
 							<AccordionTrigger>
 								<OfferText field="summerFaqEquipmentTitle" fallback="Sprzęt i instruktorzy" />
