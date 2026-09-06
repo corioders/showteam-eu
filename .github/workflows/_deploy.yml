@@ -459,16 +459,18 @@ jobs:
             echo "Unable to extract the Worker version ID from the upload output." >&2
             exit 1
           fi
-          if [[ -z "${{ vars.CLOUDFLARE_WORKERS_DEV_SUBDOMAIN }}" ]]; then
-            echo "CLOUDFLARE_WORKERS_DEV_SUBDOMAIN is not configured for the preview environment." >&2
+          VERSION_PREVIEW_URL=$(grep -oP 'Version Preview URL: \Khttps://[^ ]+' deploy-output.log | tail -n 1)
+          VERSION_PREFIX=${VERSION_ID%%-*}
+          VERSION_PREVIEW_HOST=${VERSION_PREVIEW_URL#https://}
+          PREVIEW_HOST=${VERSION_PREVIEW_HOST#"$VERSION_PREFIX-"}
+          if [[ -z "$VERSION_PREVIEW_URL" || "$PREVIEW_HOST" == "$VERSION_PREVIEW_HOST" || "$PREVIEW_HOST" != *.workers.dev ]]; then
+            echo "Unable to extract the shared preview hostname from the upload output." >&2
             exit 1
           fi
 
           OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions deploy "$VERSION_ID@100%" --env preview --yes
           OPEN_NEXT_DEPLOY=true pnpm exec wrangler triggers deploy --env preview
 
-          VERSION_PREFIX=${VERSION_ID%%-*}
-          PREVIEW_HOST="$PREVIEW_WORKER_NAME.${{ vars.CLOUDFLARE_WORKERS_DEV_SUBDOMAIN }}.workers.dev"
           HTTP_STATUS=$(curl --silent --show-error --location --retry 5 --retry-delay 2 --retry-all-errors --max-time 20 --output /dev/null --write-out '%{http_code}' "https://$PREVIEW_HOST/")
           if [[ "$HTTP_STATUS" != "200" ]]; then
             echo "Shared preview verification failed with HTTP $HTTP_STATUS." >&2
