@@ -11,7 +11,7 @@ driven by pnpm, biome and lefthook, with `cstd-ts` / `cstd-next` vendored as git
 AGENTS.md               repository delivery rules; template-only rules are removed by bootstrap
 lefthook.yml           pre-commit invariant and biome checks
 bootstrap_project.sh   one-shot project/repository/Cloudflare bootstrap
-.template-branch       template variant followed by pull_template.sh
+.template-branch       template variant followed by the internal migration utility
 template.cfworkers/    the monorepo
 ├── CONSUMERS.toml     repositories updated by `co update-consumers`
 ├── apps/web/          Next.js app, deployed as a Cloudflare Worker
@@ -55,8 +55,8 @@ Existing durable resources are reused by name and never deleted. GitHub producti
 when the private-repository plan does not expose deployment protection rules.
 The new repository adds one initialization commit followed by one registration
 commit for each pullable `cstd` subtree. Template ancestry is retained so later
-updates work through `./pull_template.sh template`. The script reads the selected variant from
-`.template-branch`; passing `main` or `payload` explicitly switches the tracked variant.
+updates are applied by the internal `co update-consumers` command. Consumers record the selected
+variant in `.template-branch` but do not retain template maintenance utilities.
 
 <!-- END:template-bootstrap-docs -->
 
