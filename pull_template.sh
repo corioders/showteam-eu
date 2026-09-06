@@ -415,7 +415,12 @@ auto_resolve_renamed_template_path() {
 	git cat-file -e ":3:$template_path" 2>/dev/null || return 1
 	target_path=$consumer_directory/${template_path#template.cfworkers/}
 	if [[ ! -f $target_path ]]; then
-		if [[ $target_path == */apps/web/tests/e2e/payload.spec.ts && -f ${target_path%/payload.spec.ts}/payload-auth.spec.ts ]]; then
+		if [[ $target_path == */apps/web/tests/e2e/payload.spec.ts ]] &&
+			[[ -f ${target_path%/payload.spec.ts}/payload-auth.spec.ts || -f ${target_path%/payload.spec.ts}/admin.spec.ts ]]; then
+			git rm --quiet --force -- "$template_path"
+			return 0
+		fi
+		if [[ $target_path == */apps/web/scripts/seed-payload-admin.ts && -f ${target_path%/seed-payload-admin.ts}/seed-ci.ts ]]; then
 			git rm --quiet --force -- "$template_path"
 			return 0
 		fi
@@ -453,7 +458,7 @@ let ours = fs.readFileSync(oursPath, "utf8");
 const theirs = fs.readFileSync(theirsPath, "utf8");
 const previousUsername = '"corioders"';
 const nextUsername = '"core users"';
-if (base.replaceAll(previousUsername, nextUsername) !== theirs || !ours.includes(previousUsername)) {
+if (base.replaceAll(previousUsername, nextUsername) !== theirs) {
 	process.exit(1);
 }
 ours = ours.replaceAll(previousUsername, nextUsername);
