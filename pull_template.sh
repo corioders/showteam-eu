@@ -182,14 +182,17 @@ if (base.includes(guard) || ours.includes(guard) || !theirs.includes(guard) || n
 	process.exit(1);
 }
 
-const cloudflareContext = /(const cloudflare: CloudflareContext[^=]*=\s*)([\s\S]*?)(\?\s*await getCloudflareContextFromWrangler\(\)\s*:\s*await getCloudflareContext\(\{ async: true \}\);)/;
+const cloudflareContext = /(const cloudflare: CloudflareContext[^\n]* =)\s*([\s\S]*?)(\?\s*await getCloudflareContextFromWrangler\(\)\s*:\s*await getCloudflareContext\(\{ async: true \}\);)/;
 const match = ours.match(cloudflareContext);
 if (!match) {
 	process.exit(1);
 }
 
 const condition = match[2].replace(/\s+/g, " ").trim();
-ours = ours.replace(cloudflareContext, `${match[1]}${condition} || ${guard}\n\t\t? await getCloudflareContextFromWrangler()\n\t\t: await getCloudflareContext({ async: true });`);
+ours = ours.replace(
+	cloudflareContext,
+	`${match[1].trimEnd()}\n\t${condition} || ${guard}\n\t\t? await getCloudflareContextFromWrangler()\n\t\t: await getCloudflareContext({ async: true });`,
+);
 fs.writeFileSync(oursPath, ours);
 NODE
 	then
