@@ -23,6 +23,16 @@ if [[ $template_branch != main && $template_branch != payload ]]; then
 	exit 1
 fi
 
+if [[ -z ${CSTD_TEMPLATE_PULL_BOOTSTRAPPED:-} ]]; then
+	git fetch --quiet template "$template_branch" || exit
+	latest_script_hash=$(git show FETCH_HEAD:pull_template.sh | git hash-object --stdin) || exit
+	current_script_hash=$(git hash-object "$0") || exit
+	if [[ $latest_script_hash != "$current_script_hash" ]]; then
+		git show FETCH_HEAD:pull_template.sh | CSTD_TEMPLATE_PULL_BOOTSTRAPPED=1 bash -s -- template "$template_branch"
+		exit $?
+	fi
+fi
+
 strip_template_maintainer_agent_rules() {
 	local begin_marker='<!-- BEGIN:template-maintainer-agent-rules -->'
 	local end_marker='<!-- END:template-maintainer-agent-rules -->'
