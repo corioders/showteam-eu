@@ -127,6 +127,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 			`# Deploys template.cfworkers\non:\n  push:\n    branches:\n      - main\n      - payload\n      - deploy\nsteps:\n  - name: Validate, build, and run browser tests\n    run: CSTD_D1_PERSIST_PATH="${runnerTempExpression}/cstd-d1-${runIdExpression}-${runAttemptExpression}" pnpm validate:ci\n    working-directory: template.cfworkers\n  - name: Template-only payload migration\n`,
 		);
 		write(path.join(templateRoot, "TODO.md"), "updated template task\n");
+		write(path.join(templateRoot, "template.cfworkers/CONSUMERS.toml"), "version = 1\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true, remoteBindings: true };\nexport default options;\n");
 		write(
 			path.join(templateRoot, "template.cfworkers/script/check-template-invariants.js"),
@@ -231,6 +232,7 @@ jobs:
 		const sharedWorkflowResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8", env: cleanBootstrapEnvironment });
 		assert.equal(sharedWorkflowResult.status, 0, `${sharedWorkflowResult.stdout}${sharedWorkflowResult.stderr}`);
 		assert.equal(fs.existsSync(path.join(consumerRoot, "TODO.md")), false);
+		assert.equal(fs.existsSync(path.join(consumerRoot, "showteam.cfworkers/CONSUMERS.toml")), false);
 		assert.equal(fs.readFileSync(path.join(consumerRoot, "pull_template.sh"), "utf8"), fs.readFileSync(pullTemplate, "utf8"));
 		assert.equal(spawnSync("git", ["ls-files", "template.cfworkers"], { cwd: consumerRoot, encoding: "utf8" }).stdout, "");
 		const sharedWorkflow = fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8");

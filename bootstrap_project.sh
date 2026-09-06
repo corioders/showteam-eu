@@ -128,7 +128,7 @@ if [[ -d template.cfworkers ]]; then
 		-e "s/\`Template (/\`$APP_TITLE (/g" \
 		"$PROJECT_NAME.cfworkers/apps/web/src/app/layout.tsx"
 	rm -- "$PROJECT_NAME.cfworkers/apps/web/src/app/layout.tsx.bak"
-	rm -- "$PROJECT_NAME.cfworkers/CONSUMERS.md"
+	rm -- "$PROJECT_NAME.cfworkers/CONSUMERS.toml"
 fi
 
 PROJECT_DIRECTORY=""
@@ -592,4 +592,4 @@ register_subtree \
 git push -u origin HEAD:main
 
 echo "Bootstrapped $REPOSITORY."
-echo "Add $REPOSITORY to template.cfworkers/CONSUMERS.md in corioders/cstd-nextjs-template."
+echo "Add $REPOSITORY to template.cfworkers/CONSUMERS.toml in corioders/cstd-nextjs-template."

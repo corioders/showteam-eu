@@ -1,0 +1,59 @@
+version = 1
+
+[[consumer]]
+repository = "corioders/corioders-dashboard"
+template_branch = "payload"
+app_directory = "corioders-dashboard.cfworkers/apps/web"
+preserve = "Telemetry collector, trace storage and observability UI"
+
+[[consumer]]
+repository = "corioders/corioders.com"
+template_branch = "main"
+app_directory = "corioders.cfworkers/apps/web"
+preserve = "Lingui routing and typed env"
+blocker = "Reconcile application bindings"
+
+[[consumer]]
+repository = "corioders/impact-speaker-tracker"
+template_branch = "main"
+app_directory = "impact.cfworkers/apps/web"
+preserve = "Firebase, Drive CMS, uploads and document workflows"
+blocker = "Reconcile Firebase and cache bindings"
+
+[[consumer]]
+repository = "corioders/impact-new-agenda"
+template_branch = "main"
+app_directory = "impact-new-agenda.cfworkers/apps/web"
+
+[[consumer]]
+repository = "corioders/showteam-eu"
+template_branch = "payload"
+app_directory = "showteam.cfworkers/apps/web"
+preserve = "Payload, D1/R2 migrations, fixtures, tests and reminder Worker"
+
+[[consumer]]
+repository = "corioders/corioders-tickets"
+template_branch = "main"
+app_directory = "corioders-tickets.cfworkers/apps/web"
+preserve = "Active dashboard implementation"
+
+[[consumer]]
+repository = "corioders/handbook"
+template_branch = "main"
+app_directory = "handbook.cloudflare/apps/web"
+preserve = "Nextra and Pagefind"
+blocker = "Replace Next on Pages with OpenNext"
+
+[[consumer]]
+repository = "corioders/ui"
+template_branch = "main"
+app_directory = "ui.cloudflare/apps/web"
+preserve = "shadcn registry generator"
+blocker = "Replace Next on Pages and staged-only CI check"
+
+[[consumer]]
+repository = "poland2-0/poland20"
+template_branch = "main"
+app_directory = "poland20.cloudflare/apps/web"
+preserve = "Lingui routing and Drive CMS"
+blocker = "Replace Next on Pages and staged-only CI check"
