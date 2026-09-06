@@ -291,8 +291,7 @@ for (const [pattern, message] of [
 		/generic compatibility fixes required after `shadcn:add` reports an unknown or stale incompatibility/,
 		"AGENTS.md must limit registry edits to compatibility patches.",
 	],
-	[/shadcn:patch` rejects a missing or unchanged test/, "AGENTS.md must require a fresh browser compatibility test before patching."],
-	[/fail on browser `console\.error` or `pageerror`/, "AGENTS.md must require Shadcn compatibility tests to reject browser errors."],
+	[/shadcn:patch` rejects a missing, unchanged, or failing unit test/, "AGENTS.md must require a fresh cstd-next unit test before patching."],
 	[/Never target `win24-wsl` or a concrete worker label directly/, "AGENTS.md must forbid bypassing the dynamic runner scheduler."],
 ]) {
 	requireMatch(agentRules, pattern, message);

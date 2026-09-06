@@ -1,0 +1,1 @@
+- [ ] Zmergować ukończone branche tej pracy do `main` we wszystkich pięciu repozytoriach, usunąć robocze branche lokalnie i zdalnie (zachowując trwały `template/payload`) oraz potwierdzić czyste checkouty w `~/repos`.
