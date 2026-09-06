@@ -112,7 +112,6 @@ jobs:
   deploy:
     runs-on: [self-hosted, "${{ inputs.runner-label }}"]
     timeout-minutes: 30
-    environment: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
     env:
       APP_DIRECTORY: ${{ inputs.app-directory }}
       APP_ENV: ${{ github.ref_name == 'deploy' && 'production' || 'preview' }}
