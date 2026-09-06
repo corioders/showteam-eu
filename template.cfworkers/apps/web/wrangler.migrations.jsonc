@@ -1,0 +1,39 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "template-cfworkers-payload-migrations",
+	"compatibility_date": "2026-05-05",
+	"d1_databases": [
+		{
+			"binding": "PAYLOAD_DB",
+			"database_id": "REPLACE_WITH_PRODUCTION_PAYLOAD_D1_DATABASE_ID",
+			"database_name": "template-cfworkers-payload-d1",
+			"remote": true
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "PAYLOAD_MEDIA",
+			"bucket_name": "template-cfworkers-payload-media-r2",
+			"remote": true
+		}
+	],
+	"env": {
+		"preview": {
+			"d1_databases": [
+				{
+					"binding": "PAYLOAD_DB",
+					"database_id": "REPLACE_WITH_PREVIEW_PAYLOAD_D1_DATABASE_ID",
+					"database_name": "template-cfworkers-preview-payload-d1",
+					"remote": true
+				}
+			],
+			"r2_buckets": [
+				{
+					"binding": "PAYLOAD_MEDIA",
+					"bucket_name": "template-cfworkers-preview-payload-media-r2",
+					"remote": true
+				}
+			]
+		}
+	}
+}

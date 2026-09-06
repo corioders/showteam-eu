@@ -4,7 +4,8 @@
 		"lib": ["dom", "dom.iterable", "esnext"],
 		"noEmit": true,
 		"paths": {
-			"@/*": ["./src/*"]
+			"@/*": ["./src/*"],
+			"@payload-config": ["./payload.config.ts"]
 		},
 		"plugins": [
 			{

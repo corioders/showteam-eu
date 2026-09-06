@@ -482,7 +482,15 @@ ensure_r2_bucket "$PRODUCTION_PREFIX-next-inc-cache-r2-bucket"
 ensure_r2_bucket "$PREVIEW_PREFIX-next-inc-cache-r2-bucket"
 PRODUCTION_D1_ID=$(ensure_d1_database "$PRODUCTION_PREFIX-next-tag-cache-d1")
 PREVIEW_D1_ID=$(ensure_d1_database "$PREVIEW_PREFIX-next-tag-cache-d1")
-for database_id in "$PRODUCTION_D1_ID" "$PREVIEW_D1_ID"; do
+database_ids=("$PRODUCTION_D1_ID" "$PREVIEW_D1_ID")
+if [[ "$TEMPLATE_BRANCH" == payload ]]; then
+	ensure_r2_bucket "$PRODUCTION_PREFIX-payload-media-r2"
+	ensure_r2_bucket "$PREVIEW_PREFIX-payload-media-r2"
+	PRODUCTION_PAYLOAD_D1_ID=$(ensure_d1_database "$PRODUCTION_PREFIX-payload-d1")
+	PREVIEW_PAYLOAD_D1_ID=$(ensure_d1_database "$PREVIEW_PREFIX-payload-d1")
+	database_ids+=("$PRODUCTION_PAYLOAD_D1_ID" "$PREVIEW_PAYLOAD_D1_ID")
+fi
+for database_id in "${database_ids[@]}"; do
 	if [[ ! "$database_id" =~ ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$ ]]; then
 		echo "Cloudflare returned an invalid D1 database ID: ${database_id:-<empty>}." >&2
 		exit 1
@@ -514,13 +522,28 @@ for environment_name in preview production; do
 done
 
 INFISICAL_TEMP_DIRECTORY=$(mktemp -d)
-trap 'rm -f -- "$INFISICAL_TEMP_DIRECTORY/deploy.env"; rmdir "$INFISICAL_TEMP_DIRECTORY"' EXIT
+trap 'rm -f -- "$INFISICAL_TEMP_DIRECTORY/deploy.env" "$INFISICAL_TEMP_DIRECTORY/payload.env"; rmdir "$INFISICAL_TEMP_DIRECTORY"' EXIT
 printf 'CLOUDFLARE_API_TOKEN=%s\n' "$DEPLOY_TOKEN" >"$INFISICAL_TEMP_DIRECTORY/deploy.env"
 for infisical_environment in staging prod; do
 	INFISICAL_TOKEN="$INFISICAL_ACCESS_TOKEN" infisical secrets set --silent --domain "$INFISICAL_API_URL" \
 		--projectId "$INFISICAL_PROJECT_ID" --env "$infisical_environment" --file "$INFISICAL_TEMP_DIRECTORY/deploy.env" >/dev/null
 done
 rm -f -- "$INFISICAL_TEMP_DIRECTORY/deploy.env"
+if [[ "$TEMPLATE_BRANCH" == payload ]]; then
+	for infisical_environment in staging prod; do
+		PAYLOAD_SECRET=$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')
+		PAYLOAD_ADMIN_PASSWORD=$(node -e 'process.stdout.write(require("node:crypto").randomBytes(24).toString("base64url"))')
+		{
+			printf 'PAYLOAD_SECRET=%s\n' "$PAYLOAD_SECRET"
+			printf 'PAYLOAD_ADMIN_USERNAME=corioders\n'
+			printf 'PAYLOAD_ADMIN_PASSWORD=%s\n' "$PAYLOAD_ADMIN_PASSWORD"
+		} >"$INFISICAL_TEMP_DIRECTORY/payload.env"
+		INFISICAL_TOKEN="$INFISICAL_ACCESS_TOKEN" infisical secrets set --silent --domain "$INFISICAL_API_URL" \
+			--projectId "$INFISICAL_PROJECT_ID" --env "$infisical_environment" --file "$INFISICAL_TEMP_DIRECTORY/payload.env" >/dev/null
+	done
+	rm -f -- "$INFISICAL_TEMP_DIRECTORY/payload.env"
+	unset PAYLOAD_ADMIN_PASSWORD PAYLOAD_SECRET
+fi
 rmdir "$INFISICAL_TEMP_DIRECTORY"
 trap - EXIT
 
@@ -534,6 +557,15 @@ sed -i.bak \
 	-e "s/REPLACE_WITH_PREVIEW_D1_DATABASE_ID/$PREVIEW_D1_ID/g" \
 	"$WRANGLER_CONFIG"
 rm -- "$WRANGLER_CONFIG.bak"
+if [[ "$TEMPLATE_BRANCH" == payload ]]; then
+	for payload_wrangler_config in "$WRANGLER_CONFIG" "$PROJECT_DIRECTORY/apps/web/wrangler.migrations.jsonc"; do
+		sed -i.bak \
+			-e "s/REPLACE_WITH_PRODUCTION_PAYLOAD_D1_DATABASE_ID/$PRODUCTION_PAYLOAD_D1_ID/g" \
+			-e "s/REPLACE_WITH_PREVIEW_PAYLOAD_D1_DATABASE_ID/$PREVIEW_PAYLOAD_D1_ID/g" \
+			"$payload_wrangler_config"
+		rm -- "$payload_wrangler_config.bak"
+	done
+fi
 
 node "$PROJECT_DIRECTORY/script/check-template-invariants.js"
 

@@ -153,6 +153,24 @@ jobs:
         run: pnpm validate:ci
         working-directory: template.cfworkers
 
+      - name: Apply Payload database migrations
+        run: |
+          if [[ "$APP_ENV" == "production" ]]; then
+            pnpm payload:migrate:production
+          else
+            pnpm payload:migrate:preview
+          fi
+        working-directory: template.cfworkers/apps/web
+
+      - name: Seed Payload administrator
+        run: |
+          if [[ "$APP_ENV" == "production" ]]; then
+            pnpm payload:seed:production
+          else
+            pnpm payload:seed:preview
+          fi
+        working-directory: template.cfworkers/apps/web
+
       - name: Check deployed preview
         if: github.ref_name != 'deploy'
         id: preview-cache

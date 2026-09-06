@@ -16,7 +16,8 @@
 	},
 	"assets": {
 		"directory": ".open-next/assets",
-		"binding": "ASSETS"
+		"binding": "ASSETS",
+		"run_worker_first": ["/admin*", "/api/*"]
 	},
 	"observability": {
 		"enabled": true,
@@ -42,6 +43,10 @@
 		{
 			"binding": "NEXT_INC_CACHE_R2_BUCKET",
 			"bucket_name": "template-cfworkers-next-inc-cache-r2-bucket"
+		},
+		{
+			"binding": "PAYLOAD_MEDIA",
+			"bucket_name": "template-cfworkers-payload-media-r2"
 		}
 	],
 	"d1_databases": [
@@ -50,6 +55,11 @@
 			"binding": "NEXT_TAG_CACHE_D1",
 			"database_id": "REPLACE_WITH_PRODUCTION_D1_DATABASE_ID",
 			"database_name": "template-cfworkers-next-tag-cache-d1"
+		},
+		{
+			"binding": "PAYLOAD_DB",
+			"database_id": "REPLACE_WITH_PRODUCTION_PAYLOAD_D1_DATABASE_ID",
+			"database_name": "template-cfworkers-payload-d1"
 		}
 	],
 	// Custom domain, uncomment and set once DNS is on Cloudflare.
@@ -71,7 +81,8 @@
 			},
 			"assets": {
 				"directory": ".open-next/assets",
-				"binding": "ASSETS"
+				"binding": "ASSETS",
+				"run_worker_first": ["/admin*", "/api/*"]
 			},
 			"services": [
 				{
@@ -88,6 +99,10 @@
 				{
 					"binding": "NEXT_INC_CACHE_R2_BUCKET",
 					"bucket_name": "template-cfworkers-preview-next-inc-cache-r2-bucket"
+				},
+				{
+					"binding": "PAYLOAD_MEDIA",
+					"bucket_name": "template-cfworkers-preview-payload-media-r2"
 				}
 			],
 			"d1_databases": [
@@ -96,6 +111,11 @@
 					"binding": "NEXT_TAG_CACHE_D1",
 					"database_id": "REPLACE_WITH_PREVIEW_D1_DATABASE_ID",
 					"database_name": "template-cfworkers-preview-next-tag-cache-d1"
+				},
+				{
+					"binding": "PAYLOAD_DB",
+					"database_id": "REPLACE_WITH_PREVIEW_PAYLOAD_D1_DATABASE_ID",
+					"database_name": "template-cfworkers-preview-payload-d1"
 				}
 			]
 		}

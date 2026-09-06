@@ -1,6 +1,7 @@
 import path from "node:path";
 
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
+import { withPayload } from "@payloadcms/next/withPayload";
 import { nextConfig as cstdNextConfig } from "cstd-next/config/next.config.js";
 import type { NextConfig } from "next";
 
@@ -17,6 +18,7 @@ const nextConfig: NextConfig = {
 		"/*": ["../../packages/corioders-lib/cstd-ts/config/tsconfig.json"],
 	},
 	reactCompiler: true,
+	serverExternalPackages: ["pg-cloudflare"],
 };
 
 initOpenNextCloudflareForDev({
@@ -24,4 +26,4 @@ initOpenNextCloudflareForDev({
 });
 
 // biome-ignore lint/style/noDefaultExport: Nextjs requirement
-export default nextConfig;
+export default withPayload(nextConfig, { devBundleServerPackages: false });

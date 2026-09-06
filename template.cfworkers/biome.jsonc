@@ -17,6 +17,8 @@
 			"!**/.idea",
 			"!**/.vscode",
 			"!**/.wrangler",
+			"!apps/web/payload-types.ts",
+			"!apps/web/src/migrations",
 			"!script/fixtures/biome"
 		]
 	}

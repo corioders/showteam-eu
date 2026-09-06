@@ -26,8 +26,15 @@ export default defineConfig({
 		? {}
 		: {
 				webServer: {
-					command: `pnpm start --port ${port}`,
-					env: { ...process.env, ["CORIODERS_TELEMETRY_DISABLED"]: "1" },
+					command: `pnpm payload:migrate:local && pnpm payload:seed:local && pnpm start --port ${port}`,
+					env: {
+						...process.env,
+						["CORIODERS_TELEMETRY_DISABLED"]: "1",
+						["PAYLOAD_ADMIN_PASSWORD"]: "admin",
+						["PAYLOAD_ADMIN_USERNAME"]: "corioders",
+						["PAYLOAD_COOKIE_SECURE"]: "false",
+						["PAYLOAD_SECRET"]: "local-template-secret",
+					},
 					url: localBaseUrl,
 					reuseExistingServer: false,
 					timeout: 120_000,
