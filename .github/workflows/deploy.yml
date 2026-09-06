@@ -41,13 +41,6 @@ jobs:
       payload-preview-seed-command: pnpm seed:preview
       payload-production-migrate-command: pnpm deploy:database
       payload-seed-production: false
-      payload-d1-binding: D1
-      payload-local-migrate-command: pnpm migrate:local
-      payload-local-seed-command: pnpm seed:local
-      payload-preview-migrate-command: pnpm deploy:database:preview
-      payload-preview-seed-command: pnpm seed:preview
-      payload-production-migrate-command: pnpm deploy:database
-      payload-seed-production: false
       e2e-admin-email: ci-admin@showteam.invalid
       e2e-admin-password: showteam-ci-password-2026
     secrets: inherit
