@@ -43,6 +43,8 @@ test("pulls template updates across consumer renames without manual conflicts", 
 			path.join(templateRoot, ".github/workflows/deploy.yml"),
 			`# Deploys template.cfworkers\non:\n  push:\n    branches:\n      - deploy\nsteps:\n  - name: Validate, build, and run browser tests\n    env:\n      CSTD_D1_PERSIST_PATH: ${runnerTempExpression}/cstd-d1-${runIdExpression}-${runAttemptExpression}\n    run: pnpm validate:ci\n    working-directory: template.cfworkers\n  - name: Template-only payload migration\n`,
 		);
+		fs.copyFileSync(pullTemplate, path.join(templateRoot, "pull_template.sh"));
+		fs.chmodSync(path.join(templateRoot, "pull_template.sh"), 0o755);
 		write(path.join(templateRoot, "TODO.md"), "template task\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true };\nexport default options;\n");
 		write(
@@ -65,6 +67,14 @@ test("pulls template updates across consumer renames without manual conflicts", 
 			path.join(consumerRoot, ".github/workflows/deploy.yml"),
 			`# Deploys showteam.cfworkers\non:\n  push:\n    branches:\n      - deploy\nsteps:\n  - name: Validate, build, and run browser tests\n    env:\n      CSTD_D1_PERSIST_PATH: ${runnerTempExpression}/cstd-d1-${runIdExpression}-${runAttemptExpression}\n    run: pnpm validate:ci\n    working-directory: showteam.cfworkers\n    env:\n      PAYLOAD_SECRET: local-ci-secret\n`,
 		);
+		write(
+			path.join(consumerRoot, "pull_template.sh"),
+			fs
+				.readFileSync(path.join(consumerRoot, "pull_template.sh"), "utf8")
+				.replace("./template.cfworkers", "./showteam.cfworkers")
+				.replace("s/template-cfworkers/", "s/showteam-cfworkers/"),
+		);
+		fs.chmodSync(path.join(consumerRoot, "pull_template.sh"), 0o755);
 		write(
 			path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"),
 			'const isCLI = process.argv.some((value) => value.endsWith("seed-ci.ts"));\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env.CSTD_D1_PERSIST_PATH ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });\n',
@@ -106,6 +116,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		const localStateResult = spawnSync(pullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
 		assert.equal(localStateResult.status, 0, `${localStateResult.stdout}${localStateResult.stderr}`);
 		assert.equal(fs.existsSync(path.join(consumerRoot, "TODO.md")), false);
+		assert.equal(fs.readFileSync(path.join(consumerRoot, "pull_template.sh"), "utf8"), fs.readFileSync(pullTemplate, "utf8"));
 		assert.equal(spawnSync("git", ["ls-files", "template.cfworkers"], { cwd: consumerRoot, encoding: "utf8" }).stdout, "");
 		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), consumerWorkflowNamePattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), payloadBranchPattern);

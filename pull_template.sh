@@ -72,6 +72,11 @@ auto_resolve_agent_rules() {
 
 continue_template_merge() {
 	strip_template_maintainer_agent_rules || return
+	if [[ -n $consumer_directory ]] && git cat-file -e MERGE_HEAD:pull_template.sh 2>/dev/null; then
+		git show MERGE_HEAD:pull_template.sh >pull_template.sh
+		chmod +x pull_template.sh
+		git add -- pull_template.sh
+	fi
 	printf '%s\n' "$template_branch" >.template-branch
 	git add -- .template-branch
 	if [[ -n $consumer_directory ]]; then
