@@ -414,7 +414,13 @@ auto_resolve_renamed_template_path() {
 	git cat-file -e ":1:$template_path" 2>/dev/null || return 1
 	git cat-file -e ":3:$template_path" 2>/dev/null || return 1
 	target_path=$consumer_directory/${template_path#template.cfworkers/}
-	[[ -f $target_path ]] || return 1
+	if [[ ! -f $target_path ]]; then
+		if [[ $target_path == */apps/web/tests/e2e/payload.spec.ts && -f ${target_path%/payload.spec.ts}/payload-auth.spec.ts ]]; then
+			git rm --quiet --force -- "$template_path"
+			return 0
+		fi
+		return 1
+	fi
 
 	project_name=${consumer_directory%.cfworkers}
 	temporary_directory=$(mktemp -d)
