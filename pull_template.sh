@@ -143,6 +143,41 @@ auto_resolve_bootstrap_replacements() {
 	return 1
 }
 
+auto_resolve_renamed_template_path() {
+	local template_path=$1 temporary_directory base_file ours_file theirs_file result_file target_path project_name
+
+	[[ -n $consumer_directory && $template_path == template.cfworkers/* ]] || return 1
+	git cat-file -e ":1:$template_path" 2>/dev/null || return 1
+	git cat-file -e ":3:$template_path" 2>/dev/null || return 1
+	target_path=$consumer_directory/${template_path#template.cfworkers/}
+	[[ -f $target_path ]] || return 1
+
+	project_name=${consumer_directory%.cfworkers}
+	temporary_directory=$(mktemp -d)
+	base_file=$temporary_directory/base
+	ours_file=$temporary_directory/ours
+	theirs_file=$temporary_directory/theirs
+	result_file=$temporary_directory/result
+	git show ":1:$template_path" >"$base_file"
+	cp "$target_path" "$ours_file"
+	git show ":3:$template_path" >"$theirs_file"
+	sed -i.bak \
+		-e "s/template\\.cfworkers/$consumer_directory/g" \
+		-e "s/template-cfworkers/$project_name-cfworkers/g" \
+		"$base_file" "$theirs_file"
+	rm -- "$base_file.bak" "$theirs_file.bak"
+
+	if git merge-file --quiet --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file"; then
+		cp "$result_file" "$target_path"
+		git add -- "$target_path"
+		git rm --quiet --force -- "$template_path"
+		rm -r -- "$temporary_directory"
+		return 0
+	fi
+	rm -r -- "$temporary_directory"
+	return 1
+}
+
 pull_output=$(git -c merge.directoryRenames=true pull --no-rebase --no-commit --no-ff --autostash template "$template_branch" 2>&1)
 pull_status=$?
 if (( pull_status == 0 )); then
@@ -172,8 +207,11 @@ while IFS= read -r unmerged_path; do
 				git rm --quiet --force -- "$unmerged_path"
 			fi
 			;;
-		bootstrap_project.sh | encrypt_template_env.sh | template.*workers/*)
+		bootstrap_project.sh | encrypt_template_env.sh)
 			git rm --quiet --force -- "$unmerged_path"
+			;;
+		template.cfworkers/*)
+			auto_resolve_renamed_template_path "$unmerged_path" || manual_paths+=("$unmerged_path")
 			;;
 		*.cfworkers/.infisical.json)
 			git checkout --ours -- "$unmerged_path"
