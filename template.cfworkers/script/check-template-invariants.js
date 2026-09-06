@@ -170,7 +170,6 @@ if (!/^https:\/\/[^/]+$/.test(infisicalConfig.domain ?? "")) {
 }
 
 const deployWorkflow = read("../.github/workflows/deploy.yml");
-const scheduleRunnerWorkflow = read("../.github/workflows/schedule-runner.yml");
 requireMatch(
 	deployWorkflow,
 	/push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+- payload\s*\n\s+- deploy/,
@@ -186,57 +185,34 @@ for (const workflowName of fs.readdirSync(workflowsDirectory)) {
 		errors.push(`${workflowName} must reserve a dynamic worker through schedule-runner.yml instead of targeting win24-wsl directly.`);
 	}
 }
-requireMatch(scheduleRunnerWorkflow, /runs-on:\s*\[self-hosted, corioders-self-hosted-scheduler\]/, "The runner scheduler must use the dedicated scheduler label.");
-const scheduledWorkflows = [["deploy.yml", deployWorkflow]];
-if (fs.existsSync(path.join(workflowsDirectory, "validate.yml"))) {
-	scheduledWorkflows.push(["validate.yml", read("../.github/workflows/validate.yml")]);
+for (const obsoleteWorkflow of ["schedule-runner.yml", "validate.yml"]) {
+	if (fs.existsSync(path.join(workflowsDirectory, obsoleteWorkflow))) {
+		errors.push(`${obsoleteWorkflow} must live only in cstd-next; applications keep one thin deploy workflow.`);
+	}
 }
-for (const [workflowName, workflow] of scheduledWorkflows) {
-	requireMatch(workflow, /uses:\s*\.\/\.github\/workflows\/schedule-runner\.yml/, `${workflowName} must reserve a runner through schedule-runner.yml.`);
-	requireMatch(
-		workflow,
-		/runs-on:\s*\[self-hosted, "\$\{\{ needs\.[^.]+\.outputs\.runner-label \}\}"\]/,
-		`${workflowName} must target the scheduler's dynamic runner label.`,
-	);
+const schedulerReference = deployWorkflow.match(/uses:\s*corioders\/cstd-next\/\.github\/workflows\/schedule-runner\.yml@([0-9a-f]{40})/);
+const deployReference = deployWorkflow.match(/uses:\s*corioders\/cstd-next\/\.github\/workflows\/deploy\.yml@([0-9a-f]{40})/);
+if (!schedulerReference || !deployReference || schedulerReference[1] !== deployReference[1]) {
+	errors.push("The deploy workflow must pin the shared scheduler and deploy workflow to the same cstd-next commit SHA.");
 }
-if (/opennextjs-cloudflare populateCache remote/.test(deployWorkflow)) {
-	errors.push("The deploy workflow must not use the hanging OpenNext remote cache helper.");
-}
-requireMatch(deployWorkflow, /wrangler r2 object put/, "The deploy workflow must upload preview cache entries through Wrangler.");
-requireMatch(deployWorkflow, /xargs[^\n]+--max-procs/, "The deploy workflow must upload preview cache entries concurrently.");
-requireMatch(deployWorkflow, /wrangler d1 execute NEXT_TAG_CACHE_D1/, "The deploy workflow must initialize the preview tag cache.");
-requireMatch(deployWorkflow, /curl --silent --show-error --location --retry 5/, "The preview healthcheck must follow redirects.");
-requireMatch(deployWorkflow, /Shared preview verification failed/, "The deploy workflow must verify the deployed shared preview.");
+requireMatch(deployWorkflow, /needs:\s*schedule/, "The application workflow must wait for the shared scheduler.");
 requireMatch(
 	deployWorkflow,
-	/name: Validate, build, and run browser tests\s+run: CSTD_D1_PERSIST_PATH="\.wrangler\/state\/v3"/,
-	"The deploy workflow must isolate D1 during validation while leaving deployment bindings remote.",
+	/runner-label:\s*\$\{\{ needs\.schedule\.outputs\.runner-label \}\}/,
+	"The application workflow must pass the reserved runner label to the shared deploy workflow.",
 );
-requireMatch(
-	deployWorkflow,
-	/name: Resolve external build inputs\s+run: pnpm resolve-build-inputs/,
-	"The deploy workflow must resolve external build inputs before building.",
-);
-if (deployWorkflow.indexOf("name: Resolve external build inputs") > deployWorkflow.indexOf("name: Validate, build, and run browser tests")) {
-	errors.push("The deploy workflow must resolve external build inputs before cache lookup and build.");
+for (const inputName of ["app-directory", "worker-name", "preview-worker-name", "production-cache-bucket", "preview-cache-bucket", "deploy-enabled", "payload"]) {
+	requireMatch(deployWorkflow, new RegExp(`\\s${inputName}:\\s*\\S+`), `The application workflow must explicitly set ${inputName}.`);
 }
-requireMatch(
-	deployWorkflow,
-	/APP_ENV: \$\{\{ github\.ref_name == 'deploy' && 'production' \|\| 'preview' \}\}/,
-	"The deploy workflow must build and upload with the same deployment environment.",
-);
-requireMatch(
-	deployWorkflow,
-	/name: Normalize preview alias[\s\S]+?PREVIEW_ALIAS=\$SAFE_PREVIEW_ALIAS/,
-	"The deploy workflow must normalize branch names before using them as Cloudflare preview aliases.",
-);
-if (/pnpm --workspace-root build:worker/.test(deployWorkflow)) {
-	errors.push("The deploy workflow must upload the OpenNext artifact already produced by validation without rebuilding it.");
+requireMatch(deployWorkflow, /secrets:\s*inherit/, "The application workflow must pass deployment secrets to the shared workflow.");
+if (/\bruns-on:|\bsteps:/.test(deployWorkflow)) {
+	errors.push("The application deploy workflow must remain a thin reusable-workflow caller.");
 }
+const expectsPayload = fs.existsSync(path.join(workspaceDirectory, "apps/web/payload.config.ts"));
 requireMatch(
 	deployWorkflow,
-	/name: Deploy production[\s\S]+?run: OPEN_NEXT_DEPLOY=true pnpm exec wrangler deploy/,
-	"The production deployment must consume the OpenNext artifact already produced by validation.",
+	new RegExp(`payload:\\s*${expectsPayload ? "true" : "false"}`),
+	`The application workflow must declare payload: ${expectsPayload} for its selected template profile.`,
 );
 
 const packageJson = JSON.parse(read("package.json"));
