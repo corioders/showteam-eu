@@ -28,6 +28,7 @@ import * as migration20260816220000ApplicationWorkflow from "./20260816_220000_a
 import * as migration20260816230000Notifications from "./20260816_230000_notifications";
 import * as migration20260816240000StayBookings from "./20260816_240000_stay_bookings";
 import * as migration20260816250000BrandingAndOffers from "./20260816_250000_branding_and_offers";
+import * as migration20260825220000RemoveStaleLockedDocumentRelations from "./20260825_220000_remove_stale_locked_document_relations";
 import * as migration20260825230000CstdImages from "./20260825_230000_cstd_images";
 
 export const migrations = [
@@ -180,6 +181,11 @@ export const migrations = [
 		up: migration20260816250000BrandingAndOffers.up,
 		down: migration20260816250000BrandingAndOffers.down,
 		name: "20260816_250000_branding_and_offers",
+	},
+	{
+		up: migration20260825220000RemoveStaleLockedDocumentRelations.up,
+		down: migration20260825220000RemoveStaleLockedDocumentRelations.down,
+		name: "20260825_220000_remove_stale_locked_document_relations",
 	},
 	{
 		up: migration20260825230000CstdImages.up,
