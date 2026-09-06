@@ -35,7 +35,8 @@
 		},
 		{
 			"binding": "CORIODERS_TELEMETRY",
-			"service": "corioders-dashboard-cfworkers-web"
+			"service": "corioders-dashboard-cfworkers-web",
+			"remote": true
 		}
 	],
 	"r2_buckets": [
@@ -91,7 +92,7 @@
 				},
 				{
 					"binding": "CORIODERS_TELEMETRY",
-					"service": "corioders-dashboard-cfworkers-web-preview"
+					"service": "corioders-dashboard-cfworkers-web"
 				}
 			],
 			"r2_buckets": [
