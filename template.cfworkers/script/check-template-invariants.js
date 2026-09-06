@@ -209,7 +209,7 @@ requireMatch(sharedDeployWorkflow, /payload-local-admin-password:[\s\S]*default:
 requireMatch(sharedDeployWorkflow, /runtime-secret-names:[\s\S]*default:\s*""/, "Shared deploys must accept explicit runtime secret names.");
 requireMatch(
 	sharedDeployWorkflow,
-	/production-custom-domain:[\s\S]*Attach production custom domain[\s\S]*workers\/domains/,
+	/production-custom-domain:[\s\S]*Attach production custom domain[\s\S]*override_existing_origin: true[\s\S]*workers\/domains/,
 	"Shared production deploys must attach custom domains through the account-level Workers Domains API.",
 );
 requireMatch(
