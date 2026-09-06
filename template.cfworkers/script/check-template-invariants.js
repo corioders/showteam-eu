@@ -206,6 +206,7 @@ requireMatch(
 	"Shared validation must isolate local Payload credentials from Infisical deployment credentials.",
 );
 requireMatch(sharedDeployWorkflow, /PLAYWRIGHT_CACHE="\$RUNNER_TEMP\/ms-playwright"/, "Shared Playwright installation must use writable runner storage.");
+requireMatch(sharedDeployWorkflow, /format\('deploy-preview-\{0\}', github\.ref\)/, "Shared preview concurrency must be isolated per Git ref.");
 requireMatch(deployWorkflow, /needs:\s*schedule/, "The application workflow must wait for the shared scheduler.");
 requireMatch(
 	deployWorkflow,
