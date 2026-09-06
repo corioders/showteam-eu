@@ -9,15 +9,15 @@ exact reminder to add that project to this source registry.
 
 | Repository | Template branch | App directory | Preserve | Migration blocker | Status | Template revision |
 | --- | --- | --- | --- | --- | --- | --- |
-| `corioders/corioders-dashboard` | `payload` | `corioders-dashboard.cfworkers/apps/web` | Telemetry collector, trace storage and observability UI | — | Migrated | `d9a566b` (`eda66d1`) |
-| `corioders/corioders.com` | `main` | `corioders.cfworkers/apps/web` | Lingui routing and typed env | Reconcile application bindings | Planned | — |
+| `corioders/corioders-dashboard` | `payload` | `corioders-dashboard.cfworkers/apps/web` | Telemetry collector, trace storage and observability UI | — | Migrated | `ca4b041` (`969fc8e`) |
+| `corioders/corioders.com` | `main` | `corioders.cfworkers/apps/web` | Lingui routing and typed env | Reconcile application bindings | Planned | Skills-only `e358410` (`5d08f8b`) |
 | `corioders/impact-speaker-tracker` | `main` | `impact.cfworkers/apps/web` | Firebase, Drive CMS, uploads and document workflows | Reconcile Firebase and cache bindings | Planned | Partial D1 isolation capability: `18a4f7a` |
-| `corioders/impact-new-agenda` | `main` | `impact-new-agenda.cfworkers/apps/web` | — | — | Migrated | `8a59031` (`ed6f473`) |
-| `corioders/showteam-eu` | `payload` | `showteam.cfworkers/apps/web` | Payload, D1/R2 migrations, fixtures, tests and reminder Worker | — | Migrated | `d9a566b` (`01ea057`) |
-| `corioders/corioders-tickets` | `main` | `corioders-tickets.cfworkers/apps/web` | Active dashboard implementation | — | Migrated | `8a59031` (`6f8a958`) |
+| `corioders/impact-new-agenda` | `main` | `impact-new-agenda.cfworkers/apps/web` | — | — | Migrated | `e358410` (`e2408f5`) |
+| `corioders/showteam-eu` | `payload` | `showteam.cfworkers/apps/web` | Payload, D1/R2 migrations, fixtures, tests and reminder Worker | — | Migrated | `ca4b041` (`f423266`) |
+| `corioders/corioders-tickets` | `main` | `corioders-tickets.cfworkers/apps/web` | Active dashboard implementation | — | Migrated | `e358410` (`314b69a`) |
 | `corioders/handbook` | `main` | `handbook.cloudflare/apps/web` | Nextra and Pagefind | Replace Next on Pages with OpenNext | Planned | — |
 | `corioders/ui` | `main` | `ui.cloudflare/apps/web` | shadcn registry generator | Replace Next on Pages and staged-only CI check | Planned | — |
-| `poland2-0/poland20` | `main` | `poland20.cloudflare/apps/web` | Lingui routing and Drive CMS | Replace Next on Pages and staged-only CI check | Planned | — |
+| `poland2-0/poland20` | `main` | `poland20.cloudflare/apps/web` | Lingui routing and Drive CMS | Replace Next on Pages and staged-only CI check | Planned | Skills-only `e358410` (`909a95a4`) |
 
 ## Migration rule
 
