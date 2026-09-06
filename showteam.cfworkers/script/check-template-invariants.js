@@ -159,6 +159,12 @@ if (tagCacheIds.length !== 2) {
 }
 
 const deployWorkflow = read("../.github/workflows/deploy.yml");
+const deployInputs = deployWorkflow.match(/\n {4}with:\n(?<inputs>(?: {6}[^\n]*\n)+)/)?.groups?.inputs ?? "";
+const deployInputNames = [...deployInputs.matchAll(/^ {6}([a-z0-9-]+):/gm)].map((match) => match[1]);
+const duplicateDeployInputs = deployInputNames.filter((name, index) => deployInputNames.indexOf(name) !== index);
+if (duplicateDeployInputs.length > 0) {
+	errors.push(`The application deploy workflow must not repeat inputs: ${[...new Set(duplicateDeployInputs)].join(", ")}.`);
+}
 requireMatch(
 	deployWorkflow,
 	/push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+- payload\s*\n\s+- deploy/,
