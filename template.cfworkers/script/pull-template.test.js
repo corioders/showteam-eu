@@ -6,7 +6,6 @@ import path from "node:path";
 import test from "node:test";
 
 const pullTemplate = path.resolve(import.meta.dirname, "..", "..", "pull_template.sh");
-const consumerWorkflowNamePattern = /Deploys showteam\.cfworkers/;
 const payloadBranchPattern = /- payload/;
 const remoteBindingsPattern = /remoteBindings: true/;
 const cloudflareTokenGuardPattern = /process\.env\["CLOUDFLARE_API_TOKEN"\]/;
@@ -17,6 +16,11 @@ const customValidationEnvironmentPattern = /PAYLOAD_SECRET: local-ci-secret/;
 const localValidationPathPattern = /CSTD_D1_PERSIST_PATH="\.wrangler\/state\/v3"/;
 const consumerD1SnapshotPattern = /Consumer-only D1 snapshot/;
 const templatePayloadSeedPattern = /New template Payload seed/;
+const sharedDeployWorkflowPattern = /corioders\/cstd-next\/\.github\/workflows\/deploy\.yml@1{40}/;
+const consumerDeployInputsPattern = /worker-name: showteam-eu[\s\S]+preview-worker-name: showteam-eu-preview[\s\S]+payload: true/;
+const consumerPayloadCommandsPattern = /payload-d1-binding: D1[\s\S]+payload-local-migrate-command: pnpm migrate:local[\s\S]+payload-seed-production: false/;
+const installPlaywrightInputPattern = /install-playwright: true/;
+const productionHealthInputPattern = /production-health-url: https:\/\/showteam\.example\/health/;
 const dollarSign = String.fromCharCode(36);
 const runnerTempExpression = `${dollarSign}{{ runner.temp }}`;
 const runIdExpression = `${dollarSign}{{ github.run_id }}`;
@@ -82,6 +86,14 @@ test("pulls template updates across consumer renames without manual conflicts", 
 			path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"),
 			'const isCLI = process.argv.some((value) => value.endsWith("seed-ci.ts"));\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env.CSTD_D1_PERSIST_PATH ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });\n',
 		);
+		write(
+			path.join(consumerRoot, "showteam.cfworkers/apps/web/package.json"),
+			'{"scripts":{"migrate:local":"payload migrate","seed:local":"tsx scripts/seed-ci.ts","deploy:database:preview":"payload migrate","seed:preview":"tsx scripts/seed-ci.ts","deploy:database":"payload migrate"}}\n',
+		);
+		write(
+			path.join(consumerRoot, "showteam.cfworkers/apps/web/wrangler.jsonc"),
+			'{"name":"showteam-eu","r2_buckets":[{"binding":"NEXT_INC_CACHE_R2_BUCKET","bucket_name":"showteam-next-cache"}],"d1_databases":[{"binding":"D1"}],"env":{"preview":{"name":"showteam-eu-preview","r2_buckets":[{"binding":"NEXT_INC_CACHE_R2_BUCKET","bucket_name":"showteam-preview-next-cache"}]}}}\n',
+		);
 		write(path.join(consumerRoot, "showteam.cfworkers/script/check-template-invariants.js"), "requireMatch(deployWorkflow, /APP_ENV/);\n");
 		fs.rmSync(path.join(consumerRoot, "TODO.md"));
 		git(consumerRoot, "add", "-A");
@@ -138,16 +150,61 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		git(templateRoot, "commit", "-m", "use Wrangler v3 state");
 		const versionedLocalStateResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
 		assert.equal(versionedLocalStateResult.status, 0, `${versionedLocalStateResult.stdout}${versionedLocalStateResult.stderr}`);
+		const monolithicWorkflow = fs.readFileSync(consumerWorkflowPath, "utf8");
+		assert.match(monolithicWorkflow, customValidationEnvironmentPattern);
+		assert.match(monolithicWorkflow, localValidationPathPattern);
+		assert.match(monolithicWorkflow, consumerD1SnapshotPattern);
+		assert.match(monolithicWorkflow, templatePayloadSeedPattern);
+		write(
+			consumerWorkflowPath,
+			monolithicWorkflow
+				.replace("steps:\n", "steps:\n  - name: Install Playwright browsers\n")
+				.concat("  - name: Check deployed production\n    run: curl https://showteam.example/health\n"),
+		);
+		git(consumerRoot, "add", ".github/workflows/deploy.yml");
+		git(consumerRoot, "commit", "-m", "customize deployment inputs");
+		write(
+			templateWorkflowPath,
+			`name: Deploy
+on:
+  push:
+    branches:
+      - main
+      - payload
+      - deploy
+jobs:
+  schedule:
+    uses: corioders/cstd-next/.github/workflows/schedule-runner.yml@${"1".repeat(40)}
+  application:
+    needs: schedule
+    uses: corioders/cstd-next/.github/workflows/deploy.yml@${"1".repeat(40)}
+    with:
+      runner-label: ${runnerTempExpression}
+      app-directory: template.cfworkers
+      worker-name: template-cfworkers-web
+      preview-worker-name: template-cfworkers-web-preview
+      production-cache-bucket: template-cfworkers-next-inc-cache-r2-bucket
+      preview-cache-bucket: template-cfworkers-preview-next-inc-cache-r2-bucket
+      deploy-enabled: true
+      payload: false
+    secrets: inherit
+`,
+		);
+		git(templateRoot, "add", ".github/workflows/deploy.yml");
+		git(templateRoot, "commit", "-m", "use shared deploy workflow");
+		const sharedWorkflowResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
+		assert.equal(sharedWorkflowResult.status, 0, `${sharedWorkflowResult.stdout}${sharedWorkflowResult.stderr}`);
 		assert.equal(fs.existsSync(path.join(consumerRoot, "TODO.md")), false);
 		assert.equal(fs.readFileSync(path.join(consumerRoot, "pull_template.sh"), "utf8"), fs.readFileSync(pullTemplate, "utf8"));
 		assert.equal(spawnSync("git", ["ls-files", "template.cfworkers"], { cwd: consumerRoot, encoding: "utf8" }).stdout, "");
-		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), consumerWorkflowNamePattern);
-		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), payloadBranchPattern);
-		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), customValidationEnvironmentPattern);
-		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), localValidationPathPattern);
-		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), consumerD1SnapshotPattern);
-		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), templatePayloadSeedPattern);
-		assert.equal(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8").includes("Template-only payload migration"), false);
+		const sharedWorkflow = fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8");
+		assert.match(sharedWorkflow, payloadBranchPattern);
+		assert.match(sharedWorkflow, sharedDeployWorkflowPattern);
+		assert.match(sharedWorkflow, consumerDeployInputsPattern);
+		assert.match(sharedWorkflow, consumerPayloadCommandsPattern);
+		assert.match(sharedWorkflow, installPlaywrightInputPattern);
+		assert.match(sharedWorkflow, productionHealthInputPattern);
+		assert.equal(sharedWorkflow.includes("Template-only payload migration"), false);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/next.config.ts"), "utf8"), remoteBindingsPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), cloudflareTokenGuardPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), consumerPayloadCliPattern);
