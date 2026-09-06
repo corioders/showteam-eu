@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
 
 initOpenNextCloudflareForDev({
 	...(process.env["CSTD_D1_PERSIST_PATH"] ? { persist: { path: process.env["CSTD_D1_PERSIST_PATH"] } } : {}),
+	remoteBindings: Boolean(process.env["CLOUDFLARE_API_TOKEN"]),
 });
 
 // biome-ignore lint/style/noDefaultExport: Nextjs requirement

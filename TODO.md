@@ -1,0 +1,1 @@
+- [ ] Wyłączać zdalne bindingi podczas bezsekretnej walidacji template, zachowując je dla `pnpm dev` uruchamianego przez Infisical.

@@ -1,6 +1,6 @@
 # Deploys template.cfworkers to Cloudflare Workers.
-# Pull requests upload an isolated preview and deploy the latest build to a shared
-# Worker with observable logs; the 'deploy' branch publishes production.
+# Main/payload pushes and pull requests validate and upload previews; the
+# 'deploy' branch publishes production.
 #
 # bootstrap_project.sh provisions Infisical + GitHub OIDC, Cloudflare cache
 # resources, the deploy token in Infisical staging/prod, and Wrangler bindings.
@@ -14,6 +14,8 @@ name: Deploy
 on:
   push:
     branches:
+      - main
+      - payload
       - deploy
   pull_request:
   workflow_dispatch:
