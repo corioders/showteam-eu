@@ -118,7 +118,7 @@ jobs:
       PRODUCTION_CACHE_BUCKET: ${{ inputs.production-cache-bucket }}
       PREVIEW_CACHE_BUCKET: ${{ inputs.preview-cache-bucket }}
     concurrency:
-      group: ${{ github.ref_name == 'deploy' && format('deploy-production-{0}', github.run_id) || 'deploy-shared-preview' }}
+      group: ${{ github.ref_name == 'deploy' && format('deploy-production-{0}', github.run_id) || format('deploy-preview-{0}', github.ref) }}
       cancel-in-progress: ${{ github.ref_name != 'deploy' }}
 
     steps:
