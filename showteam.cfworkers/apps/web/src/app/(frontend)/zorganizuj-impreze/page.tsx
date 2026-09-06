@@ -41,9 +41,10 @@ async function OrganizeEventContent() {
 						field="title"
 						multiline={true}
 						render={
-							<h1 className="mt-5 max-w-6xl whitespace-pre-line font-black font-display text-[clamp(4rem,11vw,9rem)] uppercase leading-[.82] tracking-[-.04em]">
-								{pageContent.values.title}
-							</h1>
+							<h1
+								aria-label={pageContent.values.title}
+								className="mt-5 max-w-6xl whitespace-pre-line font-black font-display text-[clamp(4rem,11vw,9rem)] uppercase leading-[.82] tracking-[-.04em]"
+							/>
 						}
 					/>
 					<Editable field="description" render={<p className="mt-7 max-w-2xl text-lg text-white/65 leading-8" />} />

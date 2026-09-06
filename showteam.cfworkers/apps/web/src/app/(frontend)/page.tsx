@@ -192,7 +192,7 @@ async function HomeContent() {
 						<Editable field="aboutEyebrow" render={<span className="eyebrow" />} />
 						<Editable
 							field="aboutTitle"
-							render={<h2 className="mt-5 font-black font-display text-6xl uppercase leading-[0.87] tracking-[-0.04em] sm:text-8xl">{content.aboutTitle}</h2>}
+							render={<h2 aria-label={content.aboutTitle} className="mt-5 font-black font-display text-6xl uppercase leading-[0.87] tracking-[-0.04em] sm:text-8xl" />}
 						/>
 						<Editable field="aboutBody" render={<p className="mt-8 max-w-2xl text-lg text-white/60 leading-8" />} />
 						<Button asChild={true} variant="outline" className="mt-8">
@@ -210,14 +210,14 @@ async function HomeContent() {
 						<Editable field="partnersEyebrow" render={<span className="eyebrow" />} />
 						<Editable
 							field="partnersTitle"
-							render={<h2 className="mt-4 font-black font-display text-6xl uppercase leading-[.87] tracking-tight sm:text-8xl">{content.partnersTitle}</h2>}
+							render={<h2 aria-label={content.partnersTitle} className="mt-4 font-black font-display text-6xl uppercase leading-[.87] tracking-tight sm:text-8xl" />}
 						/>
 						<Editable field="partnersBody" render={<p className="mt-7 max-w-xl text-white/55 leading-7" />} />
 					</div>
 					<article className="poster-cut flex min-h-80 flex-col justify-between bg-sky-300 p-7 text-black sm:p-10">
 						<Plane className="size-10" />
 						<div>
-							<Editable field="droneTitle" render={<h3 className="font-black font-display text-4xl uppercase sm:text-6xl">{content.droneTitle}</h3>} />
+							<Editable field="droneTitle" render={<h3 aria-label={content.droneTitle} className="font-black font-display text-4xl uppercase sm:text-6xl" />} />
 							<Editable field="droneBody" render={<p className="mt-5 max-w-2xl text-black/65 leading-7" />} />
 							<Button asChild={true} className="mt-7 bg-black text-white hover:bg-black/80">
 								<a href="mailto:biuro@showteam.eu?subject=Filmowanie%20dronem">
@@ -236,7 +236,7 @@ async function HomeContent() {
 							<Editable field="galleryEyebrow" render={<span className="eyebrow" />} />
 							<Editable
 								field="galleryTitle"
-								render={<h2 className="mt-3 font-black font-display text-5xl uppercase tracking-tight sm:text-7xl">{content.galleryTitle}</h2>}
+								render={<h2 aria-label={content.galleryTitle} className="mt-3 font-black font-display text-5xl uppercase tracking-tight sm:text-7xl" />}
 							/>
 						</div>
 						<div className="flex gap-2">

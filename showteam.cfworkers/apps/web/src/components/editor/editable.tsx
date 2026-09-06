@@ -1,8 +1,20 @@
 "use client";
 
-import { cloneElement, type FormEvent, type HTMLAttributes, type KeyboardEvent, type MouseEvent, type ReactElement, useContext } from "react";
+import {
+	type AnchorHTMLAttributes,
+	cloneElement,
+	type FormEvent,
+	type HTMLAttributes,
+	type KeyboardEvent,
+	type MouseEvent,
+	type ReactElement,
+	type ReactNode,
+	useContext,
+} from "react";
 
 import { PageContentContext } from "./page-content-context";
+
+const PHONE_SEPARATOR_PATTERN = /[^\d+]/g;
 
 type EditableElementProps = HTMLAttributes<HTMLElement> & {
 	"data-editable-field"?: string;
@@ -39,6 +51,23 @@ export function Editable({
 		},
 		value,
 	);
+}
+
+export function PageContentLink({
+	field,
+	protocol,
+	render,
+	children,
+}: {
+	field: string;
+	protocol: "mailto" | "tel";
+	render: ReactElement<AnchorHTMLAttributes<HTMLAnchorElement>>;
+	children: ReactNode;
+}) {
+	const content = useContext(PageContentContext);
+	const value = content?.values[field];
+	const href = value ? (protocol === "tel" ? `tel:${value.replace(PHONE_SEPARATOR_PATTERN, "")}` : `mailto:${value}`) : render.props.href;
+	return cloneElement(render, href ? { href } : {}, children);
 }
 
 function blockNavigation(event: MouseEvent<HTMLElement>) {

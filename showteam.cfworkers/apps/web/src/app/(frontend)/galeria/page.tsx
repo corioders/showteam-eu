@@ -36,9 +36,10 @@ async function GalleryContent() {
 								field="title"
 								multiline={true}
 								render={
-									<h1 className="mt-4 whitespace-pre-line font-black font-display text-7xl uppercase leading-[0.82] tracking-[-0.055em] sm:text-9xl">
-										{pageContent.values.title}
-									</h1>
+									<h1
+										aria-label={pageContent.values.title}
+										className="mt-4 whitespace-pre-line font-black font-display text-7xl uppercase leading-[0.82] tracking-[-0.055em] sm:text-9xl"
+									/>
 								}
 							/>
 						</div>

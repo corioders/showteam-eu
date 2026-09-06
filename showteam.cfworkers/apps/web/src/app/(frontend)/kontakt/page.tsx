@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
-import { Editable } from "@/components/editor/editable";
+import { Editable, PageContentLink } from "@/components/editor/editable";
 import { PageContentEditor } from "@/components/editor/page-content-editor";
 import { Button } from "@/components/ui/button";
 import { getPageContent } from "@/lib/page-content";
@@ -26,7 +26,6 @@ export default function ContactPage() {
 async function ContactContent() {
 	const pageContent = await getPageContent("contact");
 	const content = pageContent.values;
-	const phoneLink = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
 	return (
 		<PageContentEditor page="contact" initial={content} initialMedia={pageContent.media}>
 			<section className="min-h-screen bg-orange-500 pt-32 pb-16 text-neutral-950 md:pt-40 md:pb-24">
@@ -43,38 +42,60 @@ async function ContactContent() {
 								field="title"
 								multiline={true}
 								render={
-									<h1 className="mt-5 whitespace-pre-line font-black font-display text-[clamp(5rem,14vw,11rem)] uppercase leading-[0.76] tracking-[-0.06em]">
-										{content.title}
-									</h1>
+									<h1
+										aria-label={content.title}
+										className="mt-5 whitespace-pre-line font-black font-display text-[clamp(5rem,14vw,11rem)] uppercase leading-[0.76] tracking-[-0.06em]"
+									/>
 								}
 							/>
 							<Editable field="intro" render={<p className="mt-10 max-w-xl border-black border-l-2 pl-5 text-lg text-neutral-800 leading-8" />} />
 						</div>
 						<div className="poster-cut overflow-hidden bg-neutral-950 text-white">
-							<a
-								href={phoneLink(content.joannaPhone)}
-								className="group flex items-center justify-between border-white/10 border-b p-6 transition hover:bg-white/5 sm:p-8"
+							<PageContentLink
+								field="joannaPhone"
+								protocol="tel"
+								render={
+									<a
+										href={`tel:${content.joannaPhone.replace(/[^\d+]/g, "")}`}
+										className="group flex items-center justify-between border-white/10 border-b p-6 transition hover:bg-white/5 sm:p-8"
+									/>
+								}
 							>
 								<div>
 									<Editable field="joannaName" render={<span className="text-white/40 text-xs uppercase tracking-[0.16em]" />} />
 									<Editable field="joannaPhone" render={<p className="mt-2 font-black font-display text-3xl" />} />
 								</div>
 								<Phone className="size-6 text-orange-400" />
-							</a>
-							<a href={phoneLink(content.adamPhone)} className="group flex items-center justify-between border-white/10 border-b p-6 transition hover:bg-white/5 sm:p-8">
+							</PageContentLink>
+							<PageContentLink
+								field="adamPhone"
+								protocol="tel"
+								render={
+									<a
+										href={`tel:${content.adamPhone.replace(/[^\d+]/g, "")}`}
+										className="group flex items-center justify-between border-white/10 border-b p-6 transition hover:bg-white/5 sm:p-8"
+									/>
+								}
+							>
 								<div>
 									<Editable field="adamName" render={<span className="text-white/40 text-xs uppercase tracking-[0.16em]" />} />
 									<Editable field="adamPhone" render={<p className="mt-2 font-black font-display text-3xl" />} />
 								</div>
 								<Phone className="size-6 text-orange-400" />
-							</a>
-							<a href={`mailto:${content.email}`} className="flex items-center justify-between border-white/10 border-b p-6 transition hover:bg-white/5 sm:p-8">
+							</PageContentLink>
+							<PageContentLink
+								field="email"
+								protocol="mailto"
+								render={
+									<a href={`mailto:${content.email}`} className="flex items-center justify-between border-white/10 border-b p-6 transition hover:bg-white/5 sm:p-8" />
+								}
+							>
 								<div>
 									<span className="text-white/40 text-xs uppercase tracking-[0.16em]">E-mail</span>
 									<Editable field="email" render={<p className="mt-2 font-semibold text-lg" />} />
 								</div>
 								<Mail className="size-6 text-orange-400" />
-							</a>
+							</PageContentLink>
 							<a href={content.mapUrl} target="_blank" rel="noreferrer" className="flex items-center justify-between p-6 transition hover:bg-white/5 sm:p-8">
 								<div>
 									<Editable field="locationName" render={<span className="text-white/40 text-xs uppercase tracking-[0.16em]" />} />
@@ -107,11 +128,7 @@ async function ContactContent() {
 								<Editable field="aboutEyebrow" render={<span className="font-bold text-xs uppercase tracking-[0.2em]" />} />
 								<Editable
 									field="aboutTitle"
-									render={
-										<h2 id="o-nas" className="mt-4 font-black font-display text-5xl uppercase leading-[.9] sm:text-7xl">
-											{content.aboutTitle}
-										</h2>
-									}
+									render={<h2 id="o-nas" aria-label={content.aboutTitle} className="mt-4 font-black font-display text-5xl uppercase leading-[.9] sm:text-7xl" />}
 								/>
 							</div>
 							<div className="max-w-3xl space-y-5 text-lg text-neutral-800 leading-8">

@@ -394,6 +394,16 @@ test("inline page editing preserves host elements and pending drafts", async ({ 
 	await primaryCta.click();
 	await expect(primaryCta).toBeFocused();
 	expect(page.url()).toBe(homeUrl);
+
+	await page.goto("/kontakt");
+	const joannaPhone = page.getByLabel("Edytuj: joannaPhone");
+	await joannaPhone.fill("+48 600 111 222");
+	await joannaPhone.press("Tab");
+	await expect(page.locator("a").filter({ has: joannaPhone })).toHaveAttribute("href", "tel:+48600111222");
+	const email = page.getByLabel("Edytuj: email");
+	await email.fill("nowy@showteam.eu");
+	await email.press("Tab");
+	await expect(page.locator("a").filter({ has: email })).toHaveAttribute("href", "mailto:nowy@showteam.eu");
 });
 
 test("page link fields are edited from the shared sheet", async ({ page }) => {
