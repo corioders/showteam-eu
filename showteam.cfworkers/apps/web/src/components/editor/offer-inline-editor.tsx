@@ -533,7 +533,7 @@ export function OfferText({ field, fallback, multiline = false }: { field: strin
 		onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => editor.updatePageContent(field, event.target.value),
 		onClick: (event: React.MouseEvent) => event.stopPropagation(),
 		onKeyDown: (event: React.KeyboardEvent) => event.stopPropagation(),
-		className: "inline-page-content",
+		className: "inline-offer-content",
 		"aria-label": `Edytuj: ${fallback.slice(0, 40)}`,
 	};
 	return multiline ? <textarea {...props} rows={3} /> : <input {...props} />;
@@ -610,7 +610,7 @@ export function OfferCtaTitle() {
 	return (
 		<textarea
 			rows={2}
-			className="inline-page-content"
+			className="inline-offer-content"
 			value={editor.value.ctaTitle}
 			onChange={(event) => editor.update("ctaTitle", event.target.value)}
 			aria-label="Hasło nad przyciskiem zgłoszenia"

@@ -114,7 +114,7 @@ button {
 	object-position: var(--mobile-position, 50% 50%);
 }
 
-.inline-page-content {
+.inline-offer-content {
 	width: 100%;
 	min-width: 0;
 	max-width: 100%;
@@ -129,7 +129,7 @@ button {
 	outline: none;
 }
 
-.inline-page-content:focus {
+.inline-offer-content:focus {
 	border-style: solid;
 	border-color: rgb(249 115 22);
 	box-shadow: 0 0 0 2px rgb(249 115 22 / 0.35);
@@ -144,41 +144,10 @@ button {
 	outline: 2px solid rgb(249 115 22);
 }
 
-textarea.inline-page-content {
+textarea.inline-offer-content {
 	display: block;
 	width: 100%;
 	resize: vertical;
-}
-
-.inline-page-url {
-	display: grid;
-	gap: 0.25rem;
-	border: 1px solid rgb(251 146 60 / 0.55);
-	background: rgb(10 10 10 / 0.92);
-	padding: 0.5rem;
-	color: white;
-	font:
-		700 0.68rem / 1.2 var(--font-mono),
-		monospace;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-}
-
-.inline-page-url input {
-	min-width: 0;
-	border: 1px solid rgb(255 255 255 / 0.25);
-	background: #171717;
-	padding: 0.6rem;
-	color: white;
-	font:
-		500 0.8rem / 1.2 system-ui,
-		sans-serif;
-	text-transform: none;
-}
-
-.inline-page-url input:focus {
-	outline: 2px solid #f97316;
-	outline-offset: 2px;
 }
 
 @media (min-width: 768px) {

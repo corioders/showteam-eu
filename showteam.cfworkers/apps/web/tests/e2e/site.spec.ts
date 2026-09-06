@@ -357,6 +357,52 @@ test("gallery opens a keyboard-accessible lightbox", async ({ page }) => {
 	await expect(page.getByRole("dialog")).toBeHidden();
 });
 
+test("inline page editing preserves host elements and pending drafts", async ({ page }) => {
+	await page.route("**/api/admin/session", (route) => route.fulfill({ json: { user: { email: "asia@showteam.eu", name: "Asia" } } }));
+	let savedEyebrow = "";
+	await page.route("**/api/admin/page-content/stays", async (route) => {
+		const values = (await route.request().postDataJSON()) as Record<string, string>;
+		savedEyebrow = values.eyebrow;
+		await route.fulfill({ json: { message: "Treść strony została zapisana." } });
+	});
+
+	await page.goto("/noclegi");
+	const eyebrow = page.getByLabel("Edytuj: eyebrow");
+	const originalEyebrow = await eyebrow.textContent();
+	expect(await eyebrow.evaluate((element) => element.tagName)).toBe("P");
+	await expect(eyebrow).toHaveAttribute("contenteditable", "plaintext-only");
+	await eyebrow.fill("Szkic noclegów");
+	await page.reload();
+	await expect(page.getByLabel("Edytuj: eyebrow")).toHaveText("Szkic noclegów");
+	await page.getByRole("button", { name: "Cofnij zmiany" }).click();
+	await expect(page.getByLabel("Edytuj: eyebrow")).toHaveText(originalEyebrow ?? "");
+	await page.getByLabel("Edytuj: eyebrow").fill("Noclegi po zmianie");
+	await page.getByRole("button", { name: "Zapisz zmiany" }).click();
+	await expect.poll(() => savedEyebrow).toBe("Noclegi po zmianie");
+});
+
+test("page link fields are edited from the shared sheet", async ({ page }) => {
+	await page.route("**/api/admin/session", (route) => route.fulfill({ json: { user: { email: "asia@showteam.eu", name: "Asia" } } }));
+	let savedMapUrl = "";
+	await page.route("**/api/admin/page-content/contact", async (route) => {
+		const values = (await route.request().postDataJSON()) as Record<string, string>;
+		savedMapUrl = values.mapUrl;
+		await route.fulfill({ json: { message: "Treść strony została zapisana." } });
+	});
+
+	await page.goto("/kontakt");
+	await page.getByRole("button", { name: "Edytuj linki" }).click();
+	const sheet = page.getByRole("dialog", { name: "Edytuj linki strony" });
+	await expect(sheet.getByLabel("Link do mapy")).toBeVisible();
+	await expect(sheet.getByLabel("Link do Instagrama")).toBeVisible();
+	await expect(sheet.getByLabel("Link do TikToka")).toBeVisible();
+	await expect(sheet.getByLabel("Link do Facebooka")).toBeVisible();
+	await sheet.getByLabel("Link do mapy").fill("https://example.com/mapa");
+	await sheet.getByRole("button", { name: "Zamknij menu" }).click();
+	await page.getByRole("button", { name: "Zapisz zmiany" }).click();
+	await expect.poll(() => savedMapUrl).toBe("https://example.com/mapa");
+});
+
 test.describe("mobile", () => {
 	test.use({ viewport: { width: 390, height: 844 } });
 

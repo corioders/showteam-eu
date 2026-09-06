@@ -9,6 +9,7 @@ import { useContext, useEffect, useState } from "react";
 
 import { useEditor } from "@/components/editor/editor-provider";
 import { type ContentValues, type MediaReference, PageContentContext } from "@/components/editor/page-content-context";
+import { PageContentPanel } from "@/components/editor/page-content-panel";
 import { Button } from "@/components/ui/button";
 import { appendOptimizedImage } from "@/lib/client-image-upload";
 import type { PageContentName } from "@/lib/page-content-schema";
@@ -106,6 +107,7 @@ export function PageContentEditor({
 								{errors[0] ?? message}
 							</p>
 						) : null}
+						<PageContentPanel />
 						<Button type="button" variant="ghost" size="sm" onClick={clear}>
 							<RotateCcw className="size-4" /> Cofnij zmiany
 						</Button>
@@ -118,34 +120,6 @@ export function PageContentEditor({
 			) : null}
 			{children}
 		</PageContentContext.Provider>
-	);
-}
-
-export function EditableText({ field, multiline = false, className }: { field: string; multiline?: boolean; className?: string }) {
-	const content = useContext(PageContentContext);
-	const value = content?.values[field] ?? "";
-	if (!content?.editing) {
-		return <>{value}</>;
-	}
-	const shared = {
-		value,
-		onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => content.update(field, event.target.value),
-		className: `inline-page-content ${className ?? ""}`,
-		"aria-label": `Edytuj: ${field}`,
-	};
-	return multiline ? <textarea {...shared} rows={3} /> : <input {...shared} />;
-}
-
-export function EditableUrl({ field, label }: { field: string; label: string }) {
-	const content = useContext(PageContentContext);
-	if (!content?.editing) {
-		return null;
-	}
-	return (
-		<label className="inline-page-url">
-			<span>{label}</span>
-			<input type="url" inputMode="url" value={content.values[field] ?? ""} onChange={(event) => content.update(field, event.target.value)} />
-		</label>
 	);
 }
 

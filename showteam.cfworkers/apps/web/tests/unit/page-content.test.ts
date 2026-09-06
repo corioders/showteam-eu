@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { pageContentLinkFields } from "../../src/lib/page-content-fields";
 import { pageContentDefaults, parsePageContent } from "../../src/lib/page-content-schema";
 
 describe("page content", () => {
@@ -25,5 +26,10 @@ describe("page content", () => {
 		expect(parsePageContent("stays", pageContentDefaults.stays).data?.heroImageUrl).toBe("/media/base-life.jpg");
 		expect(parsePageContent("application", pageContentDefaults.application).data?.titleAccent).toBe("z nami?");
 		expect(parsePageContent("eventInquiry", pageContentDefaults.eventInquiry).data?.heroImageUrl).toBe("/media/summer-wake-aerial.jpg");
+	});
+
+	it("lists the seven non-media links edited in the shared panel", () => {
+		expect(Object.keys(pageContentLinkFields.home ?? {})).toEqual(["locationPorebaUrl", "locationDolomityUrl", "locationAndorraUrl"]);
+		expect(Object.keys(pageContentLinkFields.contact ?? {})).toEqual(["mapUrl", "instagramUrl", "tiktokUrl", "facebookUrl"]);
 	});
 });

@@ -2,7 +2,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { EditableImage, EditableText, PageContentEditor } from "@/components/editor/page-content-editor";
+import { Editable } from "@/components/editor/editable";
+import { EditableImage, PageContentEditor } from "@/components/editor/page-content-editor";
 import { ReservationFlow } from "@/components/reservation-flow";
 import { getBookableEquipment } from "@/lib/equipment";
 import { getPageContent } from "@/lib/page-content";
@@ -30,15 +31,17 @@ async function ReservationsContent() {
 				<EditableImage field="heroImageUrl" alt="Aktywności SHOWteam" sizes="100vw" className="object-cover" />
 				<div className="absolute inset-0 bg-black/75" />
 				<div className="site-container relative">
-					<p className="eyebrow">
-						<EditableText field="eyebrow" />
-					</p>
-					<h1 className="mt-5 max-w-5xl whitespace-pre-line font-black font-display text-[clamp(4rem,11vw,9rem)] uppercase leading-[.82] tracking-[-.04em]">
-						<EditableText field="title" multiline={true} />
-					</h1>
-					<p className="mt-7 max-w-2xl text-base text-white/60 leading-7 sm:text-lg">
-						<EditableText field="description" multiline={true} />
-					</p>
+					<Editable field="eyebrow" render={<p className="eyebrow" />} />
+					<Editable
+						field="title"
+						multiline={true}
+						render={
+							<h1 className="mt-5 max-w-5xl whitespace-pre-line font-black font-display text-[clamp(4rem,11vw,9rem)] uppercase leading-[.82] tracking-[-.04em]">
+								{pageContent.values.title}
+							</h1>
+						}
+					/>
+					<Editable field="description" render={<p className="mt-7 max-w-2xl text-base text-white/60 leading-7 sm:text-lg" />} />
 				</div>
 			</section>
 			<section className="py-12 sm:py-20">
