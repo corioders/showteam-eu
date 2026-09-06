@@ -23,6 +23,16 @@ if [[ $template_branch != main && $template_branch != payload ]]; then
 	exit 1
 fi
 
+if [[ -z ${CSTD_TEMPLATE_PULL_BOOTSTRAPPED:-} ]]; then
+	git fetch --quiet template "$template_branch" || exit
+	latest_script_hash=$(git show FETCH_HEAD:pull_template.sh | git hash-object --stdin) || exit
+	current_script_hash=$(git hash-object "$0") || exit
+	if [[ $latest_script_hash != "$current_script_hash" ]]; then
+		git show FETCH_HEAD:pull_template.sh | CSTD_TEMPLATE_PULL_BOOTSTRAPPED=1 bash -s -- template "$template_branch"
+		exit $?
+	fi
+fi
+
 strip_template_maintainer_agent_rules() {
 	local begin_marker='<!-- BEGIN:template-maintainer-agent-rules -->'
 	local end_marker='<!-- END:template-maintainer-agent-rules -->'
@@ -146,6 +156,7 @@ const [basePath, oursPath, theirsPath] = process.argv.slice(2);
 const oldValidation = '      - name: Validate, build, and run browser tests\n        env:\n          CSTD_D1_PERSIST_PATH: ${{ runner.temp }}/cstd-d1-${{ github.run_id }}-${{ github.run_attempt }}\n        run: pnpm validate:ci';
 const inlineValidation = '      - name: Validate, build, and run browser tests\n        run: CSTD_D1_PERSIST_PATH="${{ runner.temp }}/cstd-d1-${{ github.run_id }}-${{ github.run_attempt }}" pnpm validate:ci';
 const localValidation = '      - name: Validate, build, and run browser tests\n        run: CSTD_D1_PERSIST_PATH=".wrangler/state" pnpm validate:ci';
+const versionedLocalValidation = '      - name: Validate, build, and run browser tests\n        run: CSTD_D1_PERSIST_PATH=".wrangler/state/v3" pnpm validate:ci';
 const base = fs.readFileSync(basePath, "utf8");
 let ours = fs.readFileSync(oursPath, "utf8");
 const theirs = fs.readFileSync(theirsPath, "utf8");
@@ -153,19 +164,18 @@ const theirs = fs.readFileSync(theirsPath, "utf8");
 const migration = [
 	[oldValidation, inlineValidation],
 	[inlineValidation, localValidation],
-].find(([from, to]) => base.includes(from) && ours.includes(from) && theirs.includes(to) && theirs.replace(to, from) === base);
+	[localValidation, versionedLocalValidation],
+].find(([from, to]) => base.includes(from) && ours.includes(from) && theirs.includes(to));
 if (!migration) {
 	process.exit(1);
 }
 
+fs.writeFileSync(basePath, base.replace(migration[0], migration[1]));
 ours = ours.replace(migration[0], migration[1]);
 fs.writeFileSync(oursPath, ours);
 NODE
 	then
-		cp "$ours_file" "$unmerged_path"
-		git add -- "$unmerged_path"
-		rm -r -- "$temporary_directory"
-		return 0
+		:
 	fi
 
 	if git merge-file --quiet --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file"; then
@@ -173,6 +183,73 @@ NODE
 		git add -- "$unmerged_path"
 		rm -r -- "$temporary_directory"
 		return 0
+	fi
+	if [[ $unmerged_path == .github/workflows/deploy.yml ]]; then
+		git merge-file --diff3 --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file" || true
+		if node - "$result_file" <<'NODE'
+import fs from "node:fs";
+
+const [resultPath] = process.argv.slice(2);
+const source = fs.readFileSync(resultPath, "utf8");
+const conflictPattern = /^<<<<<<<.*\n([\s\S]*?)^\|\|\|\|\|\|\|.*\n([\s\S]*?)^=======\n([\s\S]*?)^>>>>>>>.*$/gm;
+let conflictCount = 0;
+let valid = true;
+
+function parseSteps(section, allowConsumerPrefix = false) {
+	const firstStep = section.search(/^\s+- name: /m);
+	if (firstStep < 0) {
+		return allowConsumerPrefix ? { blocks: [], prefix: section, steps: new Map() } : null;
+	}
+	if (!allowConsumerPrefix && section.slice(0, firstStep).trim()) {
+		return null;
+	}
+	const prefix = section.slice(0, firstStep);
+	const blocks = section.slice(firstStep).split(/(?=^\s+- name: )/m);
+	const steps = new Map();
+	for (const block of blocks) {
+		const name = block.match(/^\s+- name: (.+)$/m)?.[1];
+		if (!name || steps.has(name)) {
+			return null;
+		}
+		steps.set(name, block);
+	}
+	return { blocks, prefix, steps };
+}
+
+const resolved = source.replace(conflictPattern, (_match, oursSection, baseSection, theirsSection) => {
+	conflictCount += 1;
+	const ours = parseSteps(oursSection, true);
+	const base = parseSteps(baseSection);
+	const theirs = parseSteps(theirsSection);
+	if (!ours || !base || !theirs) {
+		valid = false;
+		return _match;
+	}
+	for (const [name, theirsBlock] of theirs.steps) {
+		const baseBlock = base.steps.get(name);
+		if (baseBlock && baseBlock !== theirsBlock) {
+			valid = false;
+			return _match;
+		}
+	}
+	const additions = theirs.blocks.filter((block) => {
+		const name = block.match(/^\s+- name: (.+)$/m)?.[1];
+		return name && !base.steps.has(name) && !ours.steps.has(name);
+	});
+	return `${ours.prefix}${ours.blocks.join("")}${additions.join("")}`;
+});
+
+if (!valid || conflictCount === 0 || resolved.includes("<<<<<<<")) {
+	process.exit(1);
+}
+fs.writeFileSync(resultPath, resolved);
+NODE
+		then
+			cp "$result_file" "$unmerged_path"
+			git add -- "$unmerged_path"
+			rm -r -- "$temporary_directory"
+			return 0
+		fi
 	fi
 	if [[ $unmerged_path == *.cfworkers/script/check-template-invariants.js ]] &&
 		git merge-file --union --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file" &&

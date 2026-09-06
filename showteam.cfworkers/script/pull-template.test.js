@@ -14,7 +14,9 @@ const consumerPayloadCliPattern = /seed-ci\.ts/;
 const formattedCloudflareContextPattern = /CloudflareContext[^\n]* =\n\tisCLI/;
 const isolatedValidationPattern = /CSTD_D1_PERSIST_PATH/;
 const customValidationEnvironmentPattern = /PAYLOAD_SECRET: local-ci-secret/;
-const localValidationPathPattern = /CSTD_D1_PERSIST_PATH="\.wrangler\/state"/;
+const localValidationPathPattern = /CSTD_D1_PERSIST_PATH="\.wrangler\/state\/v3"/;
+const consumerD1SnapshotPattern = /Consumer-only D1 snapshot/;
+const templatePayloadSeedPattern = /New template Payload seed/;
 const dollarSign = String.fromCharCode(36);
 const runnerTempExpression = `${dollarSign}{{ runner.temp }}`;
 const runIdExpression = `${dollarSign}{{ github.run_id }}`;
@@ -34,6 +36,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 	const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cstd-pull-template-"));
 	const templateRoot = path.join(fixtureRoot, "template");
 	const consumerRoot = path.join(fixtureRoot, "consumer");
+	const consumerPullTemplate = path.join(consumerRoot, "pull_template.sh");
 	try {
 		fs.mkdirSync(templateRoot);
 		git(templateRoot, "init", "--initial-branch=main");
@@ -102,7 +105,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		git(templateRoot, "add", ".");
 		git(templateRoot, "commit", "-m", "update template");
 
-		const result = spawnSync(pullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
+		const result = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
 		assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
 		const templateWorkflowPath = path.join(templateRoot, ".github/workflows/deploy.yml");
 		write(
@@ -113,8 +116,28 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		);
 		git(templateRoot, "add", ".github/workflows/deploy.yml");
 		git(templateRoot, "commit", "-m", "align local D1 state");
-		const localStateResult = spawnSync(pullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
+		const localStateResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
 		assert.equal(localStateResult.status, 0, `${localStateResult.stdout}${localStateResult.stderr}`);
+		const consumerWorkflowPath = path.join(consumerRoot, ".github/workflows/deploy.yml");
+		write(
+			consumerWorkflowPath,
+			fs
+				.readFileSync(consumerWorkflowPath, "utf8")
+				.replace("  - name: Validate, build, and run browser tests", "  - name: Consumer-only D1 snapshot\n  - name: Validate, build, and run browser tests"),
+		);
+		git(consumerRoot, "add", ".github/workflows/deploy.yml");
+		git(consumerRoot, "commit", "-m", "customize consumer D1 workflow");
+		write(
+			templateWorkflowPath,
+			fs
+				.readFileSync(templateWorkflowPath, "utf8")
+				.replace('CSTD_D1_PERSIST_PATH=".wrangler/state"', 'CSTD_D1_PERSIST_PATH=".wrangler/state/v3"')
+				.concat("  - name: New template Payload seed\n"),
+		);
+		git(templateRoot, "add", ".github/workflows/deploy.yml");
+		git(templateRoot, "commit", "-m", "use Wrangler v3 state");
+		const versionedLocalStateResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
+		assert.equal(versionedLocalStateResult.status, 0, `${versionedLocalStateResult.stdout}${versionedLocalStateResult.stderr}`);
 		assert.equal(fs.existsSync(path.join(consumerRoot, "TODO.md")), false);
 		assert.equal(fs.readFileSync(path.join(consumerRoot, "pull_template.sh"), "utf8"), fs.readFileSync(pullTemplate, "utf8"));
 		assert.equal(spawnSync("git", ["ls-files", "template.cfworkers"], { cwd: consumerRoot, encoding: "utf8" }).stdout, "");
@@ -122,6 +145,8 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), payloadBranchPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), customValidationEnvironmentPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), localValidationPathPattern);
+		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), consumerD1SnapshotPattern);
+		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), templatePayloadSeedPattern);
 		assert.equal(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8").includes("Template-only payload migration"), false);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/next.config.ts"), "utf8"), remoteBindingsPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), cloudflareTokenGuardPattern);

@@ -199,7 +199,7 @@ jobs:
           touch "$CACHE_DIRECTORY/.complete"
 
       - name: Validate, build, and run browser tests
-        run: CSTD_D1_PERSIST_PATH=".wrangler/state" pnpm validate:ci
+        run: CSTD_D1_PERSIST_PATH=".wrangler/state/v3" pnpm validate:ci
         working-directory: showteam.cfworkers
 
       - name: Check deployed preview

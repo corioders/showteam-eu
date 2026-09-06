@@ -193,7 +193,7 @@ if (/opennextjs-cloudflare populateCache remote/.test(deployWorkflow)) {
 }
 requireMatch(
 	deployWorkflow,
-	/name: Validate, build, and run browser tests\s+run: CSTD_D1_PERSIST_PATH="\.wrangler\/state"/,
+	/name: Validate, build, and run browser tests\s+run: CSTD_D1_PERSIST_PATH="\.wrangler\/state\/v3"/,
 	"The deploy workflow must isolate D1 during validation while leaving deployment bindings remote.",
 );
 requireMatch(
