@@ -135,6 +135,15 @@ button {
 	box-shadow: 0 0 0 2px rgb(249 115 22 / 0.35);
 }
 
+[data-editable-field] {
+	outline: 1px dashed rgb(251 146 60 / 0.75);
+	outline-offset: 2px;
+}
+
+[data-editable-field]:focus {
+	outline: 2px solid rgb(249 115 22);
+}
+
 textarea.inline-page-content {
 	display: block;
 	width: 100%;

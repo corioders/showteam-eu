@@ -5,25 +5,14 @@ import { OptimizedImage, type OptimizedImageDescriptor } from "cstd-next/media/i
 import { StaticImage } from "cstd-next/media/image/static-image.jsx";
 import { LoaderCircle, RotateCcw, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 
 import { useEditor } from "@/components/editor/editor-provider";
+import { type ContentValues, type MediaReference, PageContentContext } from "@/components/editor/page-content-context";
 import { Button } from "@/components/ui/button";
 import { appendOptimizedImage } from "@/lib/client-image-upload";
 import type { PageContentName } from "@/lib/page-content-schema";
 import { resolveStaticImage } from "@/lib/static-images";
-
-type ContentValues = Record<string, string>;
-type MediaReference = { mediaId: number; descriptor: OptimizedImageDescriptor };
-type PageContentContextValue = {
-	editing: boolean;
-	media: Record<string, MediaReference>;
-	page: PageContentName;
-	values: ContentValues;
-	update: (field: string, value: string) => void;
-	updateMedia: (field: string, value: MediaReference) => void;
-};
-const PageContentContext = createContext<PageContentContextValue | null>(null);
 
 export function PageContentEditor({
 	page,
@@ -42,6 +31,7 @@ export function PageContentEditor({
 	const storageKey = `showteam:inline-page:${page}`;
 	const [values, setValues] = useState(initial);
 	const [media, setMedia] = useState(initialMedia);
+	const [generation, setGeneration] = useState(0);
 	const [saving, setSaving] = useState(false);
 	const [message, setMessage] = useState<string | null>(null);
 	const [errors, setErrors] = useState<string[]>([]);
@@ -50,7 +40,10 @@ export function PageContentEditor({
 		if (!editing) {
 			return;
 		}
-		const restoreDraft = window.setTimeout(() => setValues(restore(storageKey, initial)), 0);
+		const restoreDraft = window.setTimeout(() => {
+			setValues(restore(storageKey, initial));
+			setGeneration((current) => current + 1);
+		}, 0);
 		return () => window.clearTimeout(restoreDraft);
 	}, [editing, initial, storageKey]);
 
@@ -62,9 +55,14 @@ export function PageContentEditor({
 		setErrors([]);
 	}
 
+	function storeDraft(field: string, value: string) {
+		localStorage.setItem(storageKey, JSON.stringify({ ...values, [field]: value }));
+	}
+
 	function clear() {
 		localStorage.removeItem(storageKey);
 		setValues(initial);
+		setGeneration((current) => current + 1);
 		setMessage(null);
 		setErrors([]);
 	}
@@ -86,8 +84,10 @@ export function PageContentEditor({
 
 	const context = {
 		editing,
+		generation,
 		media,
 		page,
+		storeDraft,
 		values,
 		update,
 		updateMedia: (field: string, value: MediaReference) => setMedia((current) => ({ ...current, [field]: value })),
