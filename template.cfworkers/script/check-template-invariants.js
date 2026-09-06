@@ -264,6 +264,7 @@ if (fs.existsSync(path.join(workspaceDirectory, "apps/web/payload.config.ts"))) 
 		"Payload import-map generation must be explicit instead of rewriting files during development.",
 	);
 	requireMatch(payloadConfig, /typescript:\s*\{[^}]*autoGenerate:\s*false/, "Payload type generation must be explicit instead of rewriting files during development.");
+	requireMatch(payloadConfig, /!process\.env\["CLOUDFLARE_API_TOKEN"\]/, "Payload builds without Cloudflare authentication must use local bindings.");
 }
 
 const biomeConfig = read("biome.jsonc");
