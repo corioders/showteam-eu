@@ -1,0 +1,3 @@
+- [ ] Odtworzyć wzorzec Payload CMS z SHOWteam jako reusable skill w template.
+- [ ] Dodać Payload CMS do Corioders Dashboard z domyślnym loginem `corioders` / `admin`.
+- [ ] Zmigrować Payload skill do wszystkich właściwych consumerów template i potwierdzić ich CI.
