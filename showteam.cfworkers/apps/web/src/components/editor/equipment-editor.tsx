@@ -143,11 +143,9 @@ export function EquipmentEditor({ equipment, compact = false, className }: { equ
 	const label = equipment ? `Edytuj ${equipment.name}` : "Dodaj aktywność";
 	return (
 		<Sheet onOpenChange={openChanged}>
-			<SheetTrigger asChild={true}>
-				<button type="button" className={cn("editor-action", compact && "min-h-10 px-3", className)}>
-					{equipment ? <Pencil className="size-4" /> : <Plus className="size-4" />}
-					{compact ? <span className="sr-only">{label}</span> : label}
-				</button>
+			<SheetTrigger render={<button type="button" className={cn("editor-action", compact && "min-h-10 px-3", className)} />}>
+				{equipment ? <Pencil className="size-4" /> : <Plus className="size-4" />}
+				{compact ? <span className="sr-only">{label}</span> : label}
 			</SheetTrigger>
 			<SheetContent
 				title={label}

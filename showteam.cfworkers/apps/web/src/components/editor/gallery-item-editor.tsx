@@ -127,11 +127,9 @@ export function GalleryItemEditor({ photo, className }: { photo: GalleryPhoto; c
 
 	return (
 		<Sheet onOpenChange={openChanged}>
-			<SheetTrigger asChild={true}>
-				<button type="button" className={cn("editor-action min-h-10 px-3", className)}>
-					<Pencil className="size-4" />
-					<span className="sr-only">Edytuj {photo.caption}</span>
-				</button>
+			<SheetTrigger render={<button type="button" className={cn("editor-action min-h-10 px-3", className)} />}>
+				<Pencil className="size-4" />
+				<span className="sr-only">Edytuj {photo.caption}</span>
 			</SheetTrigger>
 			<SheetContent
 				title={`Edytuj ${photo.caption}`}

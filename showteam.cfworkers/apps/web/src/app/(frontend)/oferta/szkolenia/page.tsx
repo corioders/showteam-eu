@@ -128,7 +128,7 @@ async function TrainingContent() {
 							<BadgeCheck className="size-5 text-orange-400" /> <OfferText field="trainingDatesNote" fallback="Terminy ustalamy bezpośrednio" />
 						</div>
 					</div>
-					<Accordion type="single" collapsible={true}>
+					<Accordion>
 						<AccordionItem value="age">
 							<AccordionTrigger>
 								<OfferText field="trainingAgeTitle" fallback="Od jakiego wieku?" />

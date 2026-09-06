@@ -124,7 +124,7 @@ async function WinterContent() {
 							</div>
 						</div>
 					</div>
-					<Accordion type="single" collapsible={true}>
+					<Accordion>
 						<AccordionItem value="ski">
 							<AccordionTrigger>
 								<OfferText field="winterAndorraSkiTitle" fallback="5 dni na nartach" />

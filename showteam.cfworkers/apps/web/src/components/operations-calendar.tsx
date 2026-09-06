@@ -3,6 +3,7 @@
 // biome-ignore-all lint/a11y/useKeyWithClickEvents: Legacy SHOWteam behavior is preserved during the structural template migration.
 // biome-ignore-all lint/style/noNonNullAssertion: Legacy SHOWteam behavior is preserved during the structural template migration.
 // biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
+// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Calendar rendering coordinates FullCalendar callbacks and the selected-event dialog.
 "use client";
 
 import type { EventSourceFuncArg } from "@fullcalendar/core";
@@ -12,10 +13,12 @@ import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import { Ban, Clock3, Mail, Pencil, Phone, X } from "lucide-react";
+import { Ban, Clock3, Mail, Pencil, Phone } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import styles from "@/components/calendar.module.css";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type CalendarEvent = {
 	id: string;
@@ -98,22 +101,21 @@ export function OperationsCalendar({
 				eventClick={(info) => setSelected(info.event.toPlainObject() as CalendarEvent)}
 				eventTimeFormat={{ hour: "2-digit", minute: "2-digit", hour12: false }}
 			/>
-			{selected && (
-				<div className={styles.overlay} onClick={() => setSelected(null)}>
-					<div role="dialog" aria-modal="true" aria-label="Szczegóły rezerwacji" className={styles.dialog} onClick={(event) => event.stopPropagation()}>
-						<button className={styles.close} onClick={() => setSelected(null)} aria-label="Zamknij">
-							<X />
-						</button>
-						<p className={styles.reference}>
-							{selected.extendedProps.status === "blocked" ? (
-								<>
-									<Ban size={14} /> Blokuje bazę
-								</>
-							) : (
-								selected.extendedProps.reference
-							)}
-						</p>
-						<h2 className={styles.eventTitle}>{selected.title}</h2>
+			<Dialog open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>
+				{selected ? (
+					<DialogContent className={styles.dialog}>
+						<DialogHeader>
+							<DialogDescription className={styles.reference}>
+								{selected.extendedProps.status === "blocked" ? (
+									<>
+										<Ban size={14} /> Blokuje bazę
+									</>
+								) : (
+									selected.extendedProps.reference
+								)}
+							</DialogDescription>
+							<DialogTitle className={styles.eventTitle}>{selected.title}</DialogTitle>
+						</DialogHeader>
 						<p className={styles.detail}>
 							<Clock3 size={16} />
 							{selected.start.slice(0, 10)}
@@ -133,7 +135,7 @@ export function OperationsCalendar({
 						)}
 						{selected.extendedProps.notes && <p className={styles.notes}>{selected.extendedProps.notes}</p>}
 						{onEditStaffEvent && selected.extendedProps.staffEventId ? (
-							<button
+							<Button
 								className={styles.edit}
 								type="button"
 								onClick={() => {
@@ -141,12 +143,12 @@ export function OperationsCalendar({
 									setSelected(null);
 								}}
 							>
-								<Pencil size={16} /> Edytuj wydarzenie
-							</button>
+								<Pencil data-icon="inline-start" /> Edytuj wydarzenie
+							</Button>
 						) : null}
-					</div>
-				</div>
-			)}
+					</DialogContent>
+				) : null}
+			</Dialog>
 		</div>
 	);
 }

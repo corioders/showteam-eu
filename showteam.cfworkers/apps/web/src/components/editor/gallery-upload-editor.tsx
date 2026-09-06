@@ -15,10 +15,8 @@ export function GalleryUploadEditor() {
 	}
 	return (
 		<Sheet>
-			<SheetTrigger asChild={true}>
-				<button type="button" className="editor-action">
-					<ImagePlus className="size-4" /> Dodaj zdjęcia lub filmy
-				</button>
+			<SheetTrigger render={<button type="button" className="editor-action" />}>
+				<ImagePlus className="size-4" /> Dodaj zdjęcia lub filmy
 			</SheetTrigger>
 			<SheetContent
 				title="Dodaj zdjęcia lub filmy"

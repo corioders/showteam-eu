@@ -4,13 +4,18 @@
 // biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 "use client";
 
-import * as Dialog from "@radix-ui/react-dialog";
 import { OptimizedImage } from "cstd-next/media/image/optimized-image.jsx";
 import { StaticImage } from "cstd-next/media/image/static-image.jsx";
-import { ArrowUpRight, ChevronLeft, ChevronRight, LoaderCircle, Play, X } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Images, Play, X } from "lucide-react";
 import { type CSSProperties, type PointerEvent, useEffect, useState } from "react";
 
 import { GalleryItemEditor } from "@/components/editor/gallery-item-editor";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Spinner } from "@/components/ui/spinner";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { GalleryPage, GalleryPhoto } from "@/lib/gallery";
 import { galleryLayoutClass, galleryMobileClass } from "@/lib/gallery-layout";
 
@@ -129,19 +134,29 @@ export function GalleryGrid({
 	return (
 		<>
 			{filtersEnabled ? (
-				<div className="mb-8 flex flex-wrap border-white/15 border-t border-l" aria-label="Filtry galerii">
+				<ToggleGroup
+					value={[filter]}
+					onValueChange={(values) => {
+						const nextFilter = values[0] as (typeof filters)[number] | undefined;
+						if (nextFilter) {
+							void selectFilter(nextFilter);
+						}
+					}}
+					variant="outline"
+					spacing={0}
+					aria-label="Filtry galerii"
+					className="mb-8 flex-wrap"
+				>
 					{filters.map((item) => (
-						<button
+						<ToggleGroupItem
 							key={item}
-							type="button"
-							onClick={() => void selectFilter(item)}
-							aria-pressed={filter === item}
-							className="min-h-11 border-white/15 border-r border-b px-5 py-3 font-bold font-mono text-xs uppercase tracking-wider transition-colors hover:bg-white hover:text-black aria-pressed:bg-orange-500 aria-pressed:text-black"
+							value={item}
+							className="min-h-11 px-5 py-3 font-bold font-mono text-xs uppercase tracking-wider hover:bg-white hover:text-black data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
 						>
 							{item}
-						</button>
+						</ToggleGroupItem>
 					))}
-				</div>
+				</ToggleGroup>
 			) : null}
 			<div
 				className={
@@ -154,25 +169,36 @@ export function GalleryGrid({
 			</div>
 			{filtersEnabled && current && current.page < current.totalPages ? (
 				<div className="mt-8 flex justify-center">
-					<button
-						type="button"
+					<Button
+						variant="outline"
+						size="lg"
 						disabled={loading}
 						onClick={() => void loadPage(filter, current.page + 1, true)}
-						className="inline-flex min-w-48 items-center justify-center gap-2 border border-white/25 px-6 py-4 font-bold font-mono text-xs uppercase tracking-wider transition hover:border-orange-500 hover:text-orange-400 disabled:opacity-50"
+						className="min-w-48 font-bold font-mono text-xs uppercase tracking-wider"
 					>
-						{loading ? <LoaderCircle className="size-4 animate-spin" /> : null}
+						{loading ? <Spinner data-icon="inline-start" aria-label="Ładowanie zdjęć" /> : null}
 						{loading ? "Ładuję…" : "Pokaż więcej"}
-					</button>
+					</Button>
 				</div>
 			) : null}
 			{loadError ? (
-				<p role="status" className="mt-5 border-orange-500 border-l-2 py-2 pl-4 text-sm text-white/65">
-					Nie udało się pobrać kolejnych zdjęć. Spróbuj ponownie.
-				</p>
+				<Alert variant="destructive" className="mt-5">
+					<AlertDescription>Nie udało się pobrać kolejnych zdjęć. Spróbuj ponownie.</AlertDescription>
+				</Alert>
 			) : null}
-			{visible.length === 0 ? <p className="border-orange-500 border-l-2 py-2 pl-4 text-white/55">Brak opublikowanych materiałów w tej kategorii.</p> : null}
+			{visible.length === 0 ? (
+				<Empty className="border">
+					<EmptyHeader>
+						<EmptyMedia variant="icon">
+							<Images />
+						</EmptyMedia>
+						<EmptyTitle>Brak materiałów</EmptyTitle>
+						<EmptyDescription>W tej kategorii nie ma jeszcze opublikowanych zdjęć ani filmów.</EmptyDescription>
+					</EmptyHeader>
+				</Empty>
+			) : null}
 
-			<Dialog.Root
+			<Dialog
 				open={Boolean(selected)}
 				onOpenChange={(open) => {
 					if (!open) {
@@ -180,72 +206,73 @@ export function GalleryGrid({
 					}
 				}}
 			>
-				<Dialog.Portal>
-					<Dialog.Overlay className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm" />
-					<Dialog.Content
-						onPointerDown={pointerDown}
-						onPointerUp={pointerUp}
-						className="fixed inset-0 z-[101] grid touch-pan-y grid-rows-[1fr_auto] bg-black p-3 pt-[calc(.75rem+env(safe-area-inset-top))] pb-[calc(.75rem+env(safe-area-inset-bottom))] text-white outline-none sm:p-6"
-					>
-						<Dialog.Title className="sr-only">{selected?.caption || "Zdjęcie SHOWteam"}</Dialog.Title>
-						<Dialog.Description className="sr-only">Pełnoekranowy podgląd. Przesuń palcem albo użyj strzałek, aby zmienić zdjęcie.</Dialog.Description>
-						{selected ? (
-							<div className="relative min-h-0">
-								{selected.type === "video" ? (
-									<video
-										src={selected.src}
-										controls={true}
-										controlsList="nodownload noremoteplayback"
-										disablePictureInPicture={true}
-										autoPlay={true}
-										playsInline={true}
-										className="size-full object-contain"
-									/>
-								) : (
-									<ResponsiveImage photo={selected} sizes="100vw" className="object-contain" />
-								)}
-							</div>
+				<DialogContent
+					showCloseButton={false}
+					overlayClassName="bg-black/95 backdrop-blur-sm"
+					onPointerDown={pointerDown}
+					onPointerUp={pointerUp}
+					className="fixed inset-0 top-0 left-0 z-[101] grid w-full max-w-none translate-x-0 translate-y-0 touch-pan-y grid-rows-[1fr_auto] rounded-none bg-black p-3 pt-[calc(.75rem+env(safe-area-inset-top))] pb-[calc(.75rem+env(safe-area-inset-bottom))] text-white outline-none ring-0 sm:max-w-none sm:p-6"
+				>
+					<DialogTitle className="sr-only">{selected?.caption || "Zdjęcie SHOWteam"}</DialogTitle>
+					<DialogDescription className="sr-only">Pełnoekranowy podgląd. Przesuń palcem albo użyj strzałek, aby zmienić zdjęcie.</DialogDescription>
+					{selected ? (
+						<div className="relative min-h-0">
+							{selected.type === "video" ? (
+								<video
+									src={selected.src}
+									controls={true}
+									controlsList="nodownload noremoteplayback"
+									disablePictureInPicture={true}
+									autoPlay={true}
+									playsInline={true}
+									className="size-full object-contain"
+								/>
+							) : (
+								<ResponsiveImage photo={selected} sizes="100vw" className="object-contain" />
+							)}
+						</div>
+					) : null}
+					<footer className="flex min-h-16 items-center justify-between gap-4 px-2">
+						<div className="min-w-0">
+							<p className="truncate font-black font-display text-xl uppercase">{selected?.caption}</p>
+							<p className="font-mono text-[.65rem] text-white/45">
+								{selectedIndex + 1} / {visible.length}
+							</p>
+						</div>
+						{selected?.sourceUrl ? (
+							<a href={selected.sourceUrl} target="_blank" rel="noreferrer" className="shrink-0 font-bold font-mono text-orange-400 text-xs uppercase">
+								Źródło ↗
+							</a>
 						) : null}
-						<footer className="flex min-h-16 items-center justify-between gap-4 px-2">
-							<div className="min-w-0">
-								<p className="truncate font-black font-display text-xl uppercase">{selected?.caption}</p>
-								<p className="font-mono text-[.65rem] text-white/45">
-									{selectedIndex + 1} / {visible.length}
-								</p>
-							</div>
-							{selected?.sourceUrl ? (
-								<a href={selected.sourceUrl} target="_blank" rel="noreferrer" className="shrink-0 font-bold font-mono text-orange-400 text-xs uppercase">
-									Źródło ↗
-								</a>
-							) : null}
-						</footer>
-						{visible.length > 1 ? (
-							<>
-								<button
-									type="button"
-									onClick={() => move(-1)}
-									aria-label="Poprzednie zdjęcie"
-									className="absolute top-1/2 left-3 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-black/70 ring-1 ring-white/25 sm:left-6"
-								>
-									<ChevronLeft />
-								</button>
-								<button
-									type="button"
-									onClick={() => move(1)}
-									aria-label="Następne zdjęcie"
-									className="absolute top-1/2 right-3 grid size-12 -translate-y-1/2 place-items-center rounded-full bg-black/70 ring-1 ring-white/25 sm:right-6"
-								>
-									<ChevronRight />
-								</button>
-							</>
-						) : null}
-						<Dialog.Close className="absolute top-[calc(.75rem+env(safe-area-inset-top))] right-3 grid size-12 place-items-center rounded-full bg-black/70 ring-1 ring-white/25 sm:top-6 sm:right-6">
-							<X />
-							<span className="sr-only">Zamknij podgląd</span>
-						</Dialog.Close>
-					</Dialog.Content>
-				</Dialog.Portal>
-			</Dialog.Root>
+					</footer>
+					{visible.length > 1 ? (
+						<>
+							<Button
+								variant="secondary"
+								size="icon-lg"
+								onClick={() => move(-1)}
+								aria-label="Poprzednie zdjęcie"
+								className="absolute top-1/2 left-3 -translate-y-1/2 rounded-full bg-black/70 text-white ring-1 ring-white/25 hover:bg-black/90 sm:left-6"
+							>
+								<ChevronLeft />
+							</Button>
+							<Button
+								variant="secondary"
+								size="icon-lg"
+								onClick={() => move(1)}
+								aria-label="Następne zdjęcie"
+								className="absolute top-1/2 right-3 -translate-y-1/2 rounded-full bg-black/70 text-white ring-1 ring-white/25 hover:bg-black/90 sm:right-6"
+							>
+								<ChevronRight />
+							</Button>
+						</>
+					) : null}
+					<DialogClose className="absolute top-[calc(.75rem+env(safe-area-inset-top))] right-3 grid size-12 place-items-center rounded-full bg-black/70 ring-1 ring-white/25 sm:top-6 sm:right-6">
+						<X />
+						<span className="sr-only">Zamknij podgląd</span>
+					</DialogClose>
+				</DialogContent>
+			</Dialog>
 		</>
 	);
 }

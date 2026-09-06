@@ -1,10 +1,17 @@
 // biome-ignore-all lint/plugin/no-throw: These framework callback contracts report failures through exceptions.
 "use client";
 
-import { Check, LoaderCircle, Mail, Phone } from "lucide-react";
+import { Check, Mail, Phone } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { type StayBookingStatus, stayBookingStatusLabels } from "@/lib/stay-bookings";
 
 type Booking = {
@@ -66,17 +73,29 @@ export function StayBookingsAdminView() {
 				<p className="mt-4 max-w-2xl text-white/55">Potwierdzaj dostępność i zapisuj ustalenia z gośćmi.</p>
 			</header>
 			{loading ? (
-				<p className="mt-10 flex gap-2 text-white/55">
-					<LoaderCircle className="size-4 animate-spin" /> Ładuję…
-				</p>
+				<div className="mt-10 grid gap-4">
+					<Skeleton className="h-48 w-full" />
+					<Skeleton className="h-48 w-full" />
+				</div>
 			) : null}
-			{error ? <p className="mt-8 border border-red-500/40 p-4 text-red-200">{error}</p> : null}
+			{error ? (
+				<Alert variant="destructive" className="mt-8">
+					<AlertDescription>{error}</AlertDescription>
+				</Alert>
+			) : null}
 			<div className="mt-10 grid gap-4">
 				{bookings.map((booking) => (
 					<StayCard key={booking.id} booking={booking} onChanged={load} />
 				))}
 			</div>
-			{!loading && bookings.length === 0 ? <p className="mt-10 border border-white/15 p-8 text-white/55">Nie ma jeszcze rezerwacji noclegów.</p> : null}
+			{!loading && bookings.length === 0 ? (
+				<Empty className="mt-10 border border-white/15">
+					<EmptyHeader>
+						<EmptyTitle>Brak rezerwacji</EmptyTitle>
+						<EmptyDescription>Nie ma jeszcze rezerwacji noclegów.</EmptyDescription>
+					</EmptyHeader>
+				</Empty>
+			) : null}
 		</main>
 	);
 }
@@ -107,7 +126,7 @@ function StayCard({ booking, onChanged }: { booking: Booking; onChanged: () => P
 						<span className="font-mono text-orange-400 text-xs">{booking.reference}</span>
 						<h2 className="mt-2 font-black text-xl">{booking.customerName}</h2>
 					</div>
-					<span className="border border-current px-2 py-1 font-bold text-orange-300 text-xs uppercase">{stayBookingStatusLabels[booking.status]}</span>
+					<Badge variant="outline">{stayBookingStatusLabels[booking.status]}</Badge>
 				</div>
 				<p className="mt-4 font-bold text-lg">
 					{booking.checkIn.slice(0, 10)} – {booking.checkOut.slice(0, 10)}
@@ -116,35 +135,35 @@ function StayCard({ booking, onChanged }: { booking: Booking; onChanged: () => P
 					{booking.accommodationTypes.join(" lub ")} · {booking.guests} {booking.guests === 1 ? "gość" : "gości"}
 				</p>
 				<div className="mt-4 flex flex-wrap gap-2">
-					<a href={`tel:${booking.phone}`} className="inline-flex min-h-11 items-center gap-2 border border-white/20 px-3">
+					<a href={`tel:${booking.phone}`} className={buttonVariants({ variant: "outline" })}>
 						<Phone className="size-4" /> {booking.phone}
 					</a>
-					<a href={`mailto:${booking.email}`} className="inline-flex min-h-11 items-center gap-2 border border-white/20 px-3">
+					<a href={`mailto:${booking.email}`} className={buttonVariants({ variant: "outline" })}>
 						<Mail className="size-4" /> {booking.email}
 					</a>
 				</div>
 				{booking.customerNotes ? <p className="mt-4 border-orange-500 border-l-2 pl-3 text-white/65">{booking.customerNotes}</p> : null}
 			</div>
-			<div className="grid content-start gap-3">
-				<label className="editor-field">
-					<span>Status</span>
-					<select value={status} onChange={(event) => setStatus(event.target.value as StayBookingStatus)}>
+			<FieldGroup className="content-start gap-3">
+				<Field>
+					<FieldLabel htmlFor={`stay-status-${booking.id}`}>Status</FieldLabel>
+					<NativeSelect id={`stay-status-${booking.id}`} value={status} onChange={(event) => setStatus(event.target.value as StayBookingStatus)}>
 						{Object.entries(stayBookingStatusLabels).map(([value, label]) => (
-							<option key={value} value={value}>
+							<NativeSelectOption key={value} value={value}>
 								{label}
-							</option>
+							</NativeSelectOption>
 						))}
-					</select>
-				</label>
-				<label className="editor-field">
-					<span>Notatka dla obsługi</span>
-					<textarea rows={5} maxLength={2000} value={notes} onChange={(event) => setNotes(event.target.value)} />
-				</label>
+					</NativeSelect>
+				</Field>
+				<Field>
+					<FieldLabel htmlFor={`stay-notes-${booking.id}`}>Notatka dla obsługi</FieldLabel>
+					<Textarea id={`stay-notes-${booking.id}`} rows={5} maxLength={2000} value={notes} onChange={(event) => setNotes(event.target.value)} />
+				</Field>
 				<Button onClick={() => void save()} disabled={working}>
-					<Check className="size-4" /> {working ? "Zapisuję…" : "Zapisz"}
+					<Check data-icon="inline-start" /> {working ? "Zapisuję…" : "Zapisz"}
 				</Button>
 				{message ? <p className="text-orange-100 text-sm">{message}</p> : null}
-			</div>
+			</FieldGroup>
 		</article>
 	);
 }
