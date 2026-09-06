@@ -205,6 +205,7 @@ requireMatch(
 	/Validate, build, and run browser tests[\s\S]*PAYLOAD_ADMIN_USERNAME:/,
 	"Shared validation must isolate local Payload credentials from Infisical deployment credentials.",
 );
+requireMatch(sharedDeployWorkflow, /PLAYWRIGHT_CACHE="\$RUNNER_TEMP\/ms-playwright"/, "Shared Playwright installation must use writable runner storage.");
 requireMatch(deployWorkflow, /needs:\s*schedule/, "The application workflow must wait for the shared scheduler.");
 requireMatch(
 	deployWorkflow,
