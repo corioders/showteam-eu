@@ -41,7 +41,7 @@ jobs:
           package-manager-cache: false
 
       - name: Setup pnpm
-        run: corepack enable
+        run: corepack enable && corepack install --global pnpm@11.24.0
 
       - name: Create shared workspace
         working-directory: workspace
