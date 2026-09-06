@@ -283,7 +283,11 @@ if (fs.existsSync(path.join(workspaceDirectory, "apps/web/payload.config.ts"))) 
 		"Payload import-map generation must be explicit instead of rewriting files during development.",
 	);
 	requireMatch(payloadConfig, /typescript:\s*\{[^}]*autoGenerate:\s*false/, "Payload type generation must be explicit instead of rewriting files during development.");
-	requireMatch(payloadConfig, /!process\.env\["CLOUDFLARE_API_TOKEN"\]/, "Payload builds without Cloudflare authentication must use local bindings.");
+	requireMatch(
+		payloadConfig,
+		/isNextBuild\s*&&\s*!process\.env\["CLOUDFLARE_API_TOKEN"\]/,
+		"Payload builds without Cloudflare authentication must use local bindings without selecting Wrangler in the deployed Worker.",
+	);
 }
 
 const biomeConfig = read("biome.jsonc");
