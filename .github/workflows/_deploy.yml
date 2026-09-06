@@ -71,6 +71,10 @@ on:
         description: Optional telemetry D1 binding whose migrations run before deploy.
         default: ""
         type: string
+      runtime-secret-names:
+        description: Space-separated Infisical variables uploaded as encrypted Worker runtime secrets.
+        default: ""
+        type: string
       production-health-url:
         description: Optional URL checked after a production deploy.
         default: ""
@@ -231,6 +235,29 @@ jobs:
       - name: Resolve external build inputs
         run: pnpm resolve-build-inputs
         working-directory: ${{ inputs.app-directory }}
+
+      - name: Prepare runtime secrets
+        if: inputs.deploy-enabled && inputs.runtime-secret-names != ''
+        run: |
+          RUNTIME_SECRETS_FILE="$RUNNER_TEMP/runtime-secrets-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}.json"
+          printf '{}' > "$RUNTIME_SECRETS_FILE"
+          for SECRET_NAME in $RUNTIME_SECRET_NAMES; do
+            if [[ ! "$SECRET_NAME" =~ ^[A-Z_][A-Z0-9_]*$ ]]; then
+              echo "Invalid runtime secret name: $SECRET_NAME" >&2
+              exit 1
+            fi
+            SECRET_VALUE=${!SECRET_NAME:-}
+            if [[ -z "$SECRET_VALUE" ]]; then
+              echo "Required runtime secret is missing: $SECRET_NAME" >&2
+              exit 1
+            fi
+            UPDATED_SECRETS_FILE="${RUNTIME_SECRETS_FILE}.tmp"
+            jq --arg name "$SECRET_NAME" --arg value "$SECRET_VALUE" '. + {($name): $value}' "$RUNTIME_SECRETS_FILE" > "$UPDATED_SECRETS_FILE"
+            mv "$UPDATED_SECRETS_FILE" "$RUNTIME_SECRETS_FILE"
+          done
+          echo "RUNTIME_SECRETS_FILE=$RUNTIME_SECRETS_FILE" >> "$GITHUB_ENV"
+        env:
+          RUNTIME_SECRET_NAMES: ${{ inputs.runtime-secret-names }}
 
       - name: Restore local Payload D1 snapshot
         if: inputs.payload
@@ -414,7 +441,11 @@ jobs:
             R2_PID=$!
           fi
 
-          OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions upload --env preview --preview-alias "$PREVIEW_ALIAS" 2>&1 | tee deploy-output.log
+          SECRETS_ARGUMENTS=()
+          if [[ -n "${RUNTIME_SECRETS_FILE:-}" ]]; then
+            SECRETS_ARGUMENTS=(--secrets-file "$RUNTIME_SECRETS_FILE")
+          fi
+          OPEN_NEXT_DEPLOY=true pnpm exec wrangler versions upload --env preview --preview-alias "$PREVIEW_ALIAS" "${SECRETS_ARGUMENTS[@]}" 2>&1 | tee deploy-output.log
           wait "$D1_PID"
           if [[ -n "$R2_PID" ]]; then
             wait "$R2_PID"
@@ -513,7 +544,11 @@ jobs:
 
           wait "$D1_PID"
           wait "$R2_PID"
-          OPEN_NEXT_DEPLOY=true pnpm exec wrangler deploy
+          SECRETS_ARGUMENTS=()
+          if [[ -n "${RUNTIME_SECRETS_FILE:-}" ]]; then
+            SECRETS_ARGUMENTS=(--secrets-file "$RUNTIME_SECRETS_FILE")
+          fi
+          OPEN_NEXT_DEPLOY=true pnpm exec wrangler deploy "${SECRETS_ARGUMENTS[@]}"
         working-directory: ${{ inputs.app-directory }}/apps/web
 
       - name: Check deployed production
