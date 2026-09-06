@@ -379,6 +379,21 @@ test("inline page editing preserves host elements and pending drafts", async ({ 
 	await page.getByLabel("Edytuj: eyebrow").fill("Noclegi po zmianie");
 	await page.getByRole("button", { name: "Zapisz zmiany" }).click();
 	await expect.poll(() => savedEyebrow).toBe("Noclegi po zmianie");
+
+	await page.goto("/");
+	const homeUrl = page.url();
+	const primaryCta = page.getByLabel("Edytuj: heroPrimaryCta");
+	await page.locator('a[href="#oferta"] svg').click();
+	expect(page.url()).toBe(homeUrl);
+	const secondaryCta = page.getByLabel("Edytuj: heroSecondaryCta");
+	await page
+		.locator('a[href="/kontakt"]')
+		.filter({ has: secondaryCta })
+		.click({ position: { x: 4, y: 4 } });
+	expect(page.url()).toBe(homeUrl);
+	await primaryCta.click();
+	await expect(primaryCta).toBeFocused();
+	expect(page.url()).toBe(homeUrl);
 });
 
 test("page link fields are edited from the shared sheet", async ({ page }) => {

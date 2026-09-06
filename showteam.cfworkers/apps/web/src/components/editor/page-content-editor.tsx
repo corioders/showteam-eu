@@ -48,6 +48,14 @@ export function PageContentEditor({
 		return () => window.clearTimeout(restoreDraft);
 	}, [editing, initial, storageKey]);
 
+	useEffect(() => {
+		if (!editing) {
+			return;
+		}
+		document.addEventListener("click", blockEditableLink, true);
+		return () => document.removeEventListener("click", blockEditableLink, true);
+	}, [editing]);
+
 	function update(field: string, value: string) {
 		const next = { ...values, [field]: value };
 		setValues(next);
@@ -221,5 +229,20 @@ function restore(key: string, initial: ContentValues) {
 	} catch {
 		localStorage.removeItem(key);
 		return initial;
+	}
+}
+
+function blockEditableLink(event: MouseEvent) {
+	if (!(event.target instanceof Element)) {
+		return;
+	}
+	const link = event.target.closest("a");
+	if (!link || (!link.matches("[data-editable-field]") && !link.querySelector("[data-editable-field]"))) {
+		return;
+	}
+	const clickedEditableField = event.target.closest("[data-editable-field]");
+	event.preventDefault();
+	if (!clickedEditableField) {
+		event.stopPropagation();
 	}
 }

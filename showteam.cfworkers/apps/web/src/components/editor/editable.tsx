@@ -43,6 +43,7 @@ export function Editable({
 
 function blockNavigation(event: MouseEvent<HTMLElement>) {
 	event.preventDefault();
+	event.stopPropagation();
 }
 
 function blockEnter(event: KeyboardEvent<HTMLElement>) {
