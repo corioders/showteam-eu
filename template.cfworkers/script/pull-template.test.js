@@ -13,6 +13,11 @@ const cloudflareTokenGuardPattern = /process\.env\["CLOUDFLARE_API_TOKEN"\]/;
 const consumerPayloadCliPattern = /seed-ci\.ts/;
 const formattedCloudflareContextPattern = /CloudflareContext[^\n]* =\n\tisCLI/;
 const isolatedValidationPattern = /CSTD_D1_PERSIST_PATH/;
+const customValidationEnvironmentPattern = /PAYLOAD_SECRET: local-ci-secret/;
+const dollarSign = String.fromCharCode(36);
+const runnerTempExpression = `${dollarSign}{{ runner.temp }}`;
+const runIdExpression = `${dollarSign}{{ github.run_id }}`;
+const runAttemptExpression = `${dollarSign}{{ github.run_attempt }}`;
 
 function git(cwd, ...args) {
 	const result = spawnSync("git", args, { cwd, encoding: "utf8" });
@@ -33,7 +38,10 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		git(templateRoot, "init", "--initial-branch=main");
 		git(templateRoot, "config", "user.email", "test@corioders.com");
 		git(templateRoot, "config", "user.name", "Corioders Test");
-		write(path.join(templateRoot, ".github/workflows/deploy.yml"), "# Deploys template.cfworkers\non:\n  push:\n    branches:\n      - deploy\n");
+		write(
+			path.join(templateRoot, ".github/workflows/deploy.yml"),
+			`# Deploys template.cfworkers\non:\n  push:\n    branches:\n      - deploy\nsteps:\n  - name: Validate, build, and run browser tests\n    env:\n      CSTD_D1_PERSIST_PATH: ${runnerTempExpression}/cstd-d1-${runIdExpression}-${runAttemptExpression}\n    run: pnpm validate:ci\n    working-directory: template.cfworkers\n  - name: Template-only payload migration\n`,
+		);
 		write(path.join(templateRoot, "TODO.md"), "template task\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true };\nexport default options;\n");
 		write(
@@ -52,7 +60,10 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		git(consumerRoot, "config", "user.name", "Corioders Test");
 		git(consumerRoot, "remote", "rename", "origin", "template");
 		fs.renameSync(path.join(consumerRoot, "template.cfworkers"), path.join(consumerRoot, "showteam.cfworkers"));
-		write(path.join(consumerRoot, ".github/workflows/deploy.yml"), "# Deploys showteam.cfworkers\non:\n  push:\n    branches:\n      - deploy\n");
+		write(
+			path.join(consumerRoot, ".github/workflows/deploy.yml"),
+			`# Deploys showteam.cfworkers\non:\n  push:\n    branches:\n      - deploy\nsteps:\n  - name: Validate, build, and run browser tests\n    env:\n      CSTD_D1_PERSIST_PATH: ${runnerTempExpression}/cstd-d1-${runIdExpression}-${runAttemptExpression}\n    run: pnpm validate:ci\n    working-directory: showteam.cfworkers\n    env:\n      PAYLOAD_SECRET: local-ci-secret\n`,
+		);
 		write(
 			path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"),
 			'const isCLI = process.argv.some((value) => value.endsWith("seed-ci.ts"));\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env.CSTD_D1_PERSIST_PATH ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });\n',
@@ -64,7 +75,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 
 		write(
 			path.join(templateRoot, ".github/workflows/deploy.yml"),
-			"# Deploys template.cfworkers\non:\n  push:\n    branches:\n      - main\n      - payload\n      - deploy\n",
+			`# Deploys template.cfworkers\non:\n  push:\n    branches:\n      - main\n      - payload\n      - deploy\nsteps:\n  - name: Validate, build, and run browser tests\n    run: CSTD_D1_PERSIST_PATH="${runnerTempExpression}/cstd-d1-${runIdExpression}-${runAttemptExpression}" pnpm validate:ci\n    working-directory: template.cfworkers\n  - name: Template-only payload migration\n`,
 		);
 		write(path.join(templateRoot, "TODO.md"), "updated template task\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true, remoteBindings: true };\nexport default options;\n");
@@ -86,6 +97,8 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		assert.equal(spawnSync("git", ["ls-files", "template.cfworkers"], { cwd: consumerRoot, encoding: "utf8" }).stdout, "");
 		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), consumerWorkflowNamePattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), payloadBranchPattern);
+		assert.match(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8"), customValidationEnvironmentPattern);
+		assert.equal(fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8").includes("Template-only payload migration"), false);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/next.config.ts"), "utf8"), remoteBindingsPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), cloudflareTokenGuardPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), consumerPayloadCliPattern);
