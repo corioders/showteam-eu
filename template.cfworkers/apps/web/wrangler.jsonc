@@ -1,7 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": ".open-next/worker.js",
-	"name": "template-cfworkers-web",
+	"name": "template-cfworkers",
 	"compatibility_date": "2026-05-05",
 	"compatibility_flags": [
 		// Enable Node.js API
@@ -30,11 +30,11 @@
 		{
 			"binding": "WORKER_SELF_REFERENCE",
 			// The service must match the "name" of this worker
-			"service": "template-cfworkers-web"
+			"service": "template-cfworkers"
 		},
 		{
 			"binding": "CORIODERS_TELEMETRY",
-			"service": "corioders-dashboard-cfworkers-web",
+			"service": "corioders-dashboard-cfworkers",
 			"remote": true
 		}
 	],
@@ -77,11 +77,11 @@
 			"services": [
 				{
 					"binding": "WORKER_SELF_REFERENCE",
-					"service": "template-cfworkers-web-preview"
+					"service": "template-cfworkers-preview"
 				},
 				{
 					"binding": "CORIODERS_TELEMETRY",
-					"service": "corioders-dashboard-cfworkers-web"
+					"service": "corioders-dashboard-cfworkers"
 				}
 			],
 			"r2_buckets": [

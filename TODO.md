@@ -1,0 +1,2 @@
+- [ ] Naprawić maskowane, nieklikalne URL-e i komendę logów w podsumowaniu preview deployu oraz zmigrować consumerów.
+- [ ] Ustandaryzować nazwy Workerów Cloudflare jako <projekt>-cfworkers i <projekt>-cfworkers-preview we wszystkich consumerach.
