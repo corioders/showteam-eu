@@ -36,6 +36,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 	const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "cstd-pull-template-"));
 	const templateRoot = path.join(fixtureRoot, "template");
 	const consumerRoot = path.join(fixtureRoot, "consumer");
+	const consumerPullTemplate = path.join(consumerRoot, "pull_template.sh");
 	try {
 		fs.mkdirSync(templateRoot);
 		git(templateRoot, "init", "--initial-branch=main");
@@ -104,7 +105,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		git(templateRoot, "add", ".");
 		git(templateRoot, "commit", "-m", "update template");
 
-		const result = spawnSync(pullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
+		const result = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
 		assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
 		const templateWorkflowPath = path.join(templateRoot, ".github/workflows/deploy.yml");
 		write(
@@ -115,7 +116,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		);
 		git(templateRoot, "add", ".github/workflows/deploy.yml");
 		git(templateRoot, "commit", "-m", "align local D1 state");
-		const localStateResult = spawnSync(pullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
+		const localStateResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
 		assert.equal(localStateResult.status, 0, `${localStateResult.stdout}${localStateResult.stderr}`);
 		const consumerWorkflowPath = path.join(consumerRoot, ".github/workflows/deploy.yml");
 		write(
@@ -135,7 +136,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		);
 		git(templateRoot, "add", ".github/workflows/deploy.yml");
 		git(templateRoot, "commit", "-m", "use Wrangler v3 state");
-		const versionedLocalStateResult = spawnSync(pullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
+		const versionedLocalStateResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
 		assert.equal(versionedLocalStateResult.status, 0, `${versionedLocalStateResult.stdout}${versionedLocalStateResult.stderr}`);
 		assert.equal(fs.existsSync(path.join(consumerRoot, "TODO.md")), false);
 		assert.equal(fs.readFileSync(path.join(consumerRoot, "pull_template.sh"), "utf8"), fs.readFileSync(pullTemplate, "utf8"));
