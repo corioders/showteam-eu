@@ -5,6 +5,24 @@ if [[ ${1:-} != template ]]; then
 	exec git pull "$@"
 fi
 
+shift
+if [[ $# -gt 1 ]]; then
+	echo "usage: ./pull_template.sh template [branch]" >&2
+	exit 1
+fi
+template_branch=${1:-}
+if [[ -z $template_branch ]]; then
+	if [[ ! -f .template-branch ]]; then
+		echo "Missing .template-branch; pass main or payload once." >&2
+		exit 1
+	fi
+	template_branch=$(tr -d '[:space:]' <.template-branch)
+fi
+if [[ $template_branch != main && $template_branch != payload ]]; then
+	echo "Template branch must be 'main' or 'payload'." >&2
+	exit 1
+fi
+
 strip_template_maintainer_agent_rules() {
 	local begin_marker='<!-- BEGIN:template-maintainer-agent-rules -->'
 	local end_marker='<!-- END:template-maintainer-agent-rules -->'
@@ -54,9 +72,16 @@ auto_resolve_agent_rules() {
 
 continue_template_merge() {
 	strip_template_maintainer_agent_rules || return
+	printf '%s\n' "$template_branch" >.template-branch
+	git add -- .template-branch
 	if [[ -n $consumer_directory ]]; then
-		local project_name staged_path
+		local project_name staged_path template_path target_path
 		project_name=${consumer_directory%.cfworkers}
+		while IFS= read -r -d '' template_path; do
+			target_path=$consumer_directory/${template_path#template.cfworkers/}
+			mkdir -p -- "$(dirname "$target_path")"
+			git mv -- "$template_path" "$target_path"
+		done < <(git diff --cached --name-only --diff-filter=A -z -- template.cfworkers)
 		while IFS= read -r -d '' staged_path; do
 			[[ -f $staged_path ]] || continue
 			grep -Iq . "$staged_path" || continue
@@ -118,7 +143,7 @@ auto_resolve_bootstrap_replacements() {
 	return 1
 }
 
-pull_output=$(git -c merge.directoryRenames=true pull --no-rebase --no-commit --no-ff --autostash "$@" 2>&1)
+pull_output=$(git -c merge.directoryRenames=true pull --no-rebase --no-commit --no-ff --autostash template "$template_branch" 2>&1)
 pull_status=$?
 if (( pull_status == 0 )); then
 	printf '%s\n' "$pull_output"

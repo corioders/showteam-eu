@@ -4,7 +4,7 @@ set -euo pipefail
 
 usage() {
 	cat >&2 <<'EOF'
-usage: ./bootstrap_project.sh [project-name]
+usage: ./bootstrap_project.sh [--template-branch main|payload] [project-name]
 
 Run once from the template repository root. Requires authenticated gh and Infisical
 CLIs, curl, jq, git, and macOS security. A new Infisical project receives the shared
@@ -13,12 +13,43 @@ Keychain; generated project tokens are rotated on resumed runs.
 EOF
 }
 
+cd "$(dirname "$0")"
+
+TEMPLATE_BRANCH=""
+if [[ ${1:-} == --template-branch ]]; then
+	if [[ $# -lt 2 ]]; then
+		usage
+		exit 1
+	fi
+	TEMPLATE_BRANCH=$2
+	shift 2
+fi
 if [[ $# -gt 1 ]]; then
 	usage
 	exit 1
 fi
-
-cd "$(dirname "$0")"
+if [[ -f .template-branch ]]; then
+	CONFIGURED_TEMPLATE_BRANCH=$(tr -d '[:space:]' <.template-branch)
+	if [[ -n "$TEMPLATE_BRANCH" && "$TEMPLATE_BRANCH" != "$CONFIGURED_TEMPLATE_BRANCH" && ! -d template.cfworkers ]]; then
+		echo "This bootstrap already selected template branch '$CONFIGURED_TEMPLATE_BRANCH'." >&2
+		exit 1
+	fi
+	TEMPLATE_BRANCH=${TEMPLATE_BRANCH:-$CONFIGURED_TEMPLATE_BRANCH}
+fi
+TEMPLATE_BRANCH=${TEMPLATE_BRANCH:-main}
+if [[ "$TEMPLATE_BRANCH" != main && "$TEMPLATE_BRANCH" != payload ]]; then
+	echo "Template branch must be 'main' or 'payload'." >&2
+	exit 1
+fi
+if [[ -d template.cfworkers ]]; then
+	if ! git remote get-url template >/dev/null 2>&1; then
+		echo "Missing template git remote." >&2
+		exit 1
+	fi
+	git fetch --no-tags template "$TEMPLATE_BRANCH"
+	git merge --ff-only "template/$TEMPLATE_BRANCH"
+	printf '%s\n' "$TEMPLATE_BRANCH" >.template-branch
+fi
 
 PROJECT_NAME=${1:-}
 if [[ -z "$PROJECT_NAME" ]]; then

@@ -11,6 +11,7 @@ driven by pnpm, biome and lefthook, with `cstd-ts` / `cstd-next` vendored as git
 AGENTS.md               repository delivery rules; template-only rules are removed by bootstrap
 lefthook.yml           pre-commit invariant and biome checks
 bootstrap_project.sh   one-shot project/repository/Cloudflare bootstrap
+.template-branch       template variant followed by pull_template.sh
 template.cfworkers/    the monorepo
 ├── apps/web/          Next.js app, deployed as a Cloudflare Worker
 ├── packages/
@@ -39,7 +40,9 @@ cd myproject
 ```
 
 The script proposes the clone directory name as the project name and asks for confirmation;
-an explicit name can still be passed as `./bootstrap_project.sh myproject`. It registers
+an explicit name can still be passed as `./bootstrap_project.sh myproject`. Use
+`./bootstrap_project.sh --template-branch payload myproject` for a Payload-ready application;
+the default is `main`. It registers
 the renamed `cstd-ts` and `cstd-next` directories as pullable git subtrees, creates or resumes a delete-protected Infisical project
 with the same name, copies the template's `dev` secrets, and configures a read-only GitHub Actions identity using OIDC. It discovers
 the GitHub owner, Cloudflare account and workers.dev subdomain (prompting when a value is missing or ambiguous), creates the private
@@ -51,7 +54,8 @@ Existing durable resources are reused by name and never deleted. GitHub producti
 when the private-repository plan does not expose deployment protection rules.
 The new repository adds one initialization commit followed by one registration
 commit for each pullable `cstd` subtree. Template ancestry is retained so later
-updates work through `git pull template main`.
+updates work through `./pull_template.sh template`. The script reads the selected variant from
+`.template-branch`; passing `main` or `payload` explicitly switches the tracked variant.
 
 <!-- END:template-bootstrap-docs -->
 

@@ -1,3 +1,1 @@
-- [ ] Odtworzyć wzorzec Payload CMS z SHOWteam jako reusable skill w template.
-- [ ] Dodać Payload CMS do Corioders Dashboard z domyślnym loginem `corioders` / `admin`.
-- [ ] Zmigrować Payload skill do wszystkich właściwych consumerów template i potwierdzić ich CI.
+- [ ] Zastąpić Payload skill utrzymywanym branchem `payload`, dodać wybór/zapis brancha w bootstrapie i automatyczny branch w `pull_template.sh`; tylko `corioders-dashboard` i `showteam-eu` przełączyć na `template/payload`, a `impact-new-agenda` i `corioders-tickets` pozostawić na `template/main` bez Payload skilla.
