@@ -152,7 +152,7 @@ jobs:
         working-directory: template.cfworkers
 
       - name: Validate, build, and run browser tests
-        run: CSTD_D1_PERSIST_PATH=".wrangler/state" pnpm validate:ci
+        run: CSTD_D1_PERSIST_PATH=".wrangler/state/v3" pnpm validate:ci
         working-directory: template.cfworkers
 
       - name: Apply Payload database migrations

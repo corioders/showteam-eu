@@ -14,7 +14,7 @@ const consumerPayloadCliPattern = /seed-ci\.ts/;
 const formattedCloudflareContextPattern = /CloudflareContext[^\n]* =\n\tisCLI/;
 const isolatedValidationPattern = /CSTD_D1_PERSIST_PATH/;
 const customValidationEnvironmentPattern = /PAYLOAD_SECRET: local-ci-secret/;
-const localValidationPathPattern = /CSTD_D1_PERSIST_PATH="\.wrangler\/state"/;
+const localValidationPathPattern = /CSTD_D1_PERSIST_PATH="\.wrangler\/state\/v3"/;
 const dollarSign = String.fromCharCode(36);
 const runnerTempExpression = `${dollarSign}{{ runner.temp }}`;
 const runIdExpression = `${dollarSign}{{ github.run_id }}`;
@@ -115,6 +115,14 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		git(templateRoot, "commit", "-m", "align local D1 state");
 		const localStateResult = spawnSync(pullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
 		assert.equal(localStateResult.status, 0, `${localStateResult.stdout}${localStateResult.stderr}`);
+		write(
+			templateWorkflowPath,
+			fs.readFileSync(templateWorkflowPath, "utf8").replace('CSTD_D1_PERSIST_PATH=".wrangler/state"', 'CSTD_D1_PERSIST_PATH=".wrangler/state/v3"'),
+		);
+		git(templateRoot, "add", ".github/workflows/deploy.yml");
+		git(templateRoot, "commit", "-m", "use Wrangler v3 state");
+		const versionedLocalStateResult = spawnSync(pullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
+		assert.equal(versionedLocalStateResult.status, 0, `${versionedLocalStateResult.stdout}${versionedLocalStateResult.stderr}`);
 		assert.equal(fs.existsSync(path.join(consumerRoot, "TODO.md")), false);
 		assert.equal(fs.readFileSync(path.join(consumerRoot, "pull_template.sh"), "utf8"), fs.readFileSync(pullTemplate, "utf8"));
 		assert.equal(spawnSync("git", ["ls-files", "template.cfworkers"], { cwd: consumerRoot, encoding: "utf8" }).stdout, "");
