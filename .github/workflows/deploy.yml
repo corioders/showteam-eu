@@ -1,4 +1,4 @@
-# Common implementation: corioders/cstd-next/.github/workflows/{schedule-runner,deploy}.yml
+# Common implementation is versioned beside this caller and distributed by pull_template.sh.
 name: Deploy
 
 on:
@@ -20,11 +20,11 @@ concurrency:
 
 jobs:
   schedule:
-    uses: corioders/cstd-next/.github/workflows/schedule-runner.yml@68e23bef45a1e671dcac77c9ae33465b6da2e8fd
+    uses: ./.github/workflows/_schedule-runner.yml
 
   application:
     needs: schedule
-    uses: corioders/cstd-next/.github/workflows/deploy.yml@68e23bef45a1e671dcac77c9ae33465b6da2e8fd
+    uses: ./.github/workflows/_deploy.yml
     with:
       runner-label: ${{ needs.schedule.outputs.runner-label }}
       app-directory: template.cfworkers

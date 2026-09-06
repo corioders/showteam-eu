@@ -189,7 +189,7 @@ const [basePath, oursPath, theirsPath, consumerDirectory] = process.argv.slice(2
 const base = fs.readFileSync(basePath, "utf8");
 const ours = fs.readFileSync(oursPath, "utf8");
 let result = fs.readFileSync(theirsPath, "utf8");
-const sharedWorkflowPattern = /uses:\s*corioders\/cstd-next\/\.github\/workflows\/deploy\.yml@[0-9a-f]{40}/;
+const sharedWorkflowPattern = /uses:\s*(?:corioders\/cstd-next\/\.github\/workflows\/deploy\.yml@[0-9a-f]{40}|\.\/\.github\/workflows\/_deploy\.yml)/;
 if (sharedWorkflowPattern.test(base) || sharedWorkflowPattern.test(ours) || !sharedWorkflowPattern.test(result)) {
 	process.exit(1);
 }
