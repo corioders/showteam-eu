@@ -188,7 +188,7 @@ requireMatch(
 );
 if (deployWorkflow.indexOf("name: Resolve external build inputs") > deployWorkflow.indexOf("name: Validate, build, and run browser tests")) {
 	errors.push("The deploy workflow must resolve external build inputs before cache lookup and build.");
-	}
+}
 requireMatch(
 	deployWorkflow,
 	/APP_ENV: \$\{\{ github\.ref_name == 'deploy' && 'production' \|\| 'preview' \}\}/,
