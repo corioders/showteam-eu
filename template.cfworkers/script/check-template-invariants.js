@@ -197,6 +197,14 @@ for (const reusableWorkflow of ["_schedule-runner.yml", "_deploy.yml"]) {
 		errors.push(`${reusableWorkflow} must be distributed with the template.`);
 	}
 }
+const sharedDeployWorkflow = read("../.github/workflows/_deploy.yml");
+requireMatch(sharedDeployWorkflow, /payload-local-admin-username:[\s\S]*default:\s*corioders/, "Shared validation must default the local Payload username.");
+requireMatch(sharedDeployWorkflow, /payload-local-admin-password:[\s\S]*default:\s*admin/, "Shared validation must default the local Payload password.");
+requireMatch(
+	sharedDeployWorkflow,
+	/Validate, build, and run browser tests[\s\S]*PAYLOAD_ADMIN_USERNAME:/,
+	"Shared validation must isolate local Payload credentials from Infisical deployment credentials.",
+);
 requireMatch(deployWorkflow, /needs:\s*schedule/, "The application workflow must wait for the shared scheduler.");
 requireMatch(
 	deployWorkflow,
