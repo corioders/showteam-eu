@@ -38,6 +38,7 @@ const realpath = (value: string) => (fs.existsSync(value) ? fs.realpathSync(valu
 const isCLI = process.argv.some((value) => realpath(value).endsWith(path.join("payload", "bin.js")) || value.endsWith("seed-ci.ts"));
 const isProduction = process.env.NODE_ENV === "production";
 const isCI = process.env.CI === "true";
+const isPayloadSync = process.env.PAYLOAD_SYNC === "true";
 const isNextBuild = process.env.NEXT_PHASE === "phase-production-build";
 const payloadSecret = process.env.PAYLOAD_SECRET ?? (!isProduction || isNextBuild ? "local-showteam-development-secret-change-me" : undefined);
 
@@ -128,7 +129,7 @@ export default buildConfig({
 		}),
 	],
 	onInit:
-		isProduction || isCI
+		isProduction || isCI || isPayloadSync
 			? undefined
 			: async (payload) => {
 					await seedOffers(payload);

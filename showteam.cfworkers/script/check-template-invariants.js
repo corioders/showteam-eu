@@ -200,6 +200,17 @@ const expectedDevScript = "infisical run --env=staging -- dotenv -e apps/web/.en
 if (packageJson.scripts?.dev !== expectedDevScript) {
 	errors.push("root dev script must load staging Infisical secrets, allow local dotenv overrides, and preserve injected variables through Turborepo");
 }
+
+if (fs.existsSync(path.join(workspaceDirectory, "apps/web/payload.config.ts"))) {
+	const payloadConfig = read("apps/web/payload.config.ts");
+	requireMatch(
+		payloadConfig,
+		/importMap:\s*\{[^}]*autoGenerate:\s*false/,
+		"Payload import-map generation must be explicit instead of rewriting files during development.",
+	);
+	requireMatch(payloadConfig, /typescript:\s*\{[^}]*autoGenerate:\s*false/, "Payload type generation must be explicit instead of rewriting files during development.");
+}
+
 const biomeConfig = read("biome.jsonc");
 requireMatch(biomeConfig, /no-throw\.grit/, "biome.jsonc must keep the no-throw plugin.");
 try {

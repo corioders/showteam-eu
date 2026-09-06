@@ -14,7 +14,7 @@
 		"NEXT_PUBLIC_IS_DEPLOY",
 		"PAYLOAD_SECRET"
 	],
-	"globalPassThroughEnv": ["CORIODERS_TELEMETRY_DISABLED", "CSTD_D1_PERSIST_PATH", "NEXT_RUNTIME"],
+	"globalPassThroughEnv": ["CORIODERS_TELEMETRY_DISABLED", "CSTD_D1_PERSIST_PATH", "NEXT_RUNTIME", "PAYLOAD_SYNC_SOURCE_URL"],
 	"tasks": {
 		"//#check-invariants": {
 			"cache": false

@@ -12,6 +12,7 @@
 - Do not weaken shared Biome, TypeScript, environment-validation, build, or test rules to make new code pass. Use a narrow, justified suppression only where the underlying boundary requires it.
 - Treat build and framework deprecation warnings as required work, but do not mechanically rename working `middleware.ts` to `proxy.ts`: the current OpenNext Cloudflare adapter does not support Next.js Node Proxy. Preserve Edge Middleware required by the application until the adapter supports Proxy; do not add either boundary when the application does not need one.
 - Preserve existing providers and other starter capabilities unless the project explicitly removes them. Do not register a global service worker when only one feature needs its scope.
+- Payload applications must disable `typescript.autoGenerate` and `admin.importMap.autoGenerate`. Regenerate and commit `payload-types.ts` and the import map explicitly when their source configuration changes; `pnpm dev` must not rewrite versioned artifacts.
 
 # Error handling
 

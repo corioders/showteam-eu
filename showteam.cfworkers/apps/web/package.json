@@ -4,8 +4,9 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"predev": "pnpm --workspace-root turbo run build --filter=cstd-next",
+		"predev": "pnpm --workspace-root turbo run build --filter=cstd-next && pnpm run migrate:local && pnpm run sync:payload",
 		"dev": "cross-env NODE_OPTIONS=--no-deprecation next dev --experimental-next-config-strip-types",
+		"sync:payload": "cross-env NODE_OPTIONS=--no-deprecation PAYLOAD_SYNC=true tsx scripts/sync-preview-payload.ts",
 		"prebuild": "cstd-next-clean-images",
 		"build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build --experimental-next-config-strip-types",
 		"postbuild": "cstd-next-finalize-images",
