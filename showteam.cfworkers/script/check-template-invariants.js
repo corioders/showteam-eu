@@ -223,6 +223,10 @@ if (!/^https:\/\/[^/]+$/.test(infisicalConfig.domain ?? "")) {
 	errors.push(".infisical.json must pin an HTTPS Infisical domain.");
 }
 const packageJson = JSON.parse(read("package.json"));
+const turboConfig = JSON.parse(read("turbo.json"));
+if (!turboConfig.globalPassThroughEnv?.includes("CLOUDFLARE_API_TOKEN")) {
+	errors.push("turbo.json must pass CLOUDFLARE_API_TOKEN through to builds using remote Cloudflare bindings.");
+}
 if (packageJson.scripts?.["resolve-build-inputs"] !== "node script/resolve-external-build-inputs.js") {
 	errors.push("package.json must expose the external build-input resolver.");
 }
