@@ -23,6 +23,7 @@ const consumerPayloadCommandsPattern = /payload-d1-binding: D1[\s\S]+payload-loc
 const installPlaywrightInputPattern = /install-playwright: true/;
 const productionHealthInputPattern = /production-health-url: https:\/\/showteam\.example\/health/;
 const payloadAuthTestPattern = /template Payload login/;
+const coreUsersPattern = /"core users"/;
 const dollarSign = String.fromCharCode(36);
 const runnerTempExpression = `${dollarSign}{{ runner.temp }}`;
 const runIdExpression = `${dollarSign}{{ github.run_id }}`;
@@ -58,6 +59,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		write(path.join(templateRoot, "TODO.md"), "template task\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true };\nexport default options;\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/tests/e2e/payload.spec.ts"), 'test("template Payload login", () => {});\n');
+		write(path.join(templateRoot, "template.cfworkers/apps/web/playwright.config.ts"), 'const username = "corioders";\n');
 		write(
 			path.join(templateRoot, "template.cfworkers/apps/web/wrangler.jsonc"),
 			'{"name":"template-cfworkers-web","services":[{"binding":"WORKER_SELF_REFERENCE","service":"template-cfworkers-web"},{"binding":"CORIODERS_TELEMETRY","service":"corioders-dashboard-cfworkers-web"}],"env":{"preview":{"name":"template-cfworkers-web-preview","services":[{"binding":"WORKER_SELF_REFERENCE","service":"template-cfworkers-web-preview"}]}}}\n',
@@ -212,6 +214,7 @@ jobs:
 			'{"name":"template-cfworkers","services":[{"binding":"WORKER_SELF_REFERENCE","service":"template-cfworkers"},{"binding":"CORIODERS_TELEMETRY","service":"corioders-dashboard-cfworkers"}],"env":{"preview":{"name":"template-cfworkers-preview","services":[{"binding":"WORKER_SELF_REFERENCE","service":"template-cfworkers-preview"}]}}}\n',
 		);
 		write(path.join(templateRoot, "template.cfworkers/apps/web/tests/e2e/payload.spec.ts"), 'test("updated template Payload login", () => {});\n');
+		write(path.join(templateRoot, "template.cfworkers/apps/web/playwright.config.ts"), 'const username = "core users";\n');
 		fs.rmSync(path.join(templateRoot, ".github/workflows/validate.yml"));
 		write(
 			path.join(templateRoot, "template.cfworkers/script/check-template-invariants.js"),
@@ -234,6 +237,7 @@ jobs:
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/wrangler.jsonc"), "utf8"), normalizedWorkerNamesPattern);
 		assert.equal(fs.existsSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/tests/e2e/payload.spec.ts")), false);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/tests/e2e/payload-auth.spec.ts"), "utf8"), payloadAuthTestPattern);
+		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/playwright.config.ts"), "utf8"), coreUsersPattern);
 		assert.equal(sharedWorkflow.includes("Template-only payload migration"), false);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/next.config.ts"), "utf8"), remoteBindingsPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), cloudflareTokenGuardPattern);
