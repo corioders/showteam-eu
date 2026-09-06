@@ -1,5 +1,5 @@
 {
-	"formatVersion": 3,
+	"formatVersion": 4,
 	"registryItem": "@shadcnblocks/dashboard3",
 	"style": "base-mira",
 	"baselineHashes": {
@@ -26,8 +26,8 @@
 		"src/components/ui/chart.tsx",
 		"src/components/ui/sidebar.tsx"
 	],
-	"verificationTest": {
-		"hash": "4a372f193f8f71965b09e7e7fc469725e46b96a81c2e5cf2502bee2a8a3b3a7a",
-		"path": "tests/e2e/shadcn/dashboard3.spec.ts"
+	"unitTest": {
+		"hash": "10844e522a32d5817e2e9a8a0c374d60cecceedaf9e13d3a9684bcf5dd58d2c9",
+		"path": "script/shadcn/patches/base-mira__shadcnblocks__dashboard3.test.js"
 	}
 }
