@@ -13,6 +13,7 @@ lefthook.yml           pre-commit invariant and biome checks
 bootstrap_project.sh   one-shot project/repository/Cloudflare bootstrap
 .template-branch       template variant followed by pull_template.sh
 template.cfworkers/    the monorepo
+├── CONSUMERS.toml     repositories updated by `co update-consumers`
 ├── apps/web/          Next.js app, deployed as a Cloudflare Worker
 ├── packages/
 │   └── corioders-lib/ cstd-ts, cstd-next — git subtrees

@@ -92,7 +92,14 @@ continue_template_merge() {
 	if [[ -n $consumer_directory ]]; then
 		local project_name staged_path template_path target_path
 		project_name=${consumer_directory%.cfworkers}
+		if [[ -e $consumer_directory/CONSUMERS.toml ]]; then
+			git rm --quiet --force -- "$consumer_directory/CONSUMERS.toml"
+		fi
 		while IFS= read -r -d '' template_path; do
+			if [[ $template_path == template.cfworkers/CONSUMERS.toml ]]; then
+				git rm --quiet --force -- "$template_path"
+				continue
+			fi
 			target_path=$consumer_directory/${template_path#template.cfworkers/}
 			mkdir -p -- "$(dirname "$target_path")"
 			git mv -- "$template_path" "$target_path"
