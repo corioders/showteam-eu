@@ -209,7 +209,7 @@ requireMatch(deployWorkflow, /curl --silent --show-error --location --retry 5/, 
 requireMatch(deployWorkflow, /Shared preview verification failed/, "The deploy workflow must verify the deployed shared preview.");
 requireMatch(
 	deployWorkflow,
-	/name: Validate, build, and run browser tests\s+run: CSTD_D1_PERSIST_PATH="\$\{\{ runner\.temp \}\}/,
+	/name: Validate, build, and run browser tests\s+run: CSTD_D1_PERSIST_PATH="\.wrangler\/state"/,
 	"The deploy workflow must isolate D1 during validation while leaving deployment bindings remote.",
 );
 requireMatch(
