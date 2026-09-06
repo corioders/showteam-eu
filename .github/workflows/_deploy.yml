@@ -560,7 +560,7 @@ jobs:
         run: |
           RESPONSE_FILE=$(mktemp)
           trap 'rm -f "$RESPONSE_FILE"' EXIT
-          HTTP_STATUS=$(curl --silent --show-error --retry 5 --retry-all-errors --retry-delay 1 --retry-max-time 30 --output "$RESPONSE_FILE" --write-out '%{http_code}' --request PUT --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --header "Content-Type: application/json" --data "$(jq --null-input --arg hostname "$PRODUCTION_CUSTOM_DOMAIN" --arg service "$WORKER_NAME" '{hostname: $hostname, service: $service}')" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/domains")
+          HTTP_STATUS=$(curl --silent --show-error --retry 5 --retry-all-errors --retry-delay 1 --retry-max-time 30 --output "$RESPONSE_FILE" --write-out '%{http_code}' --request PUT --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --header "Content-Type: application/json" --data "$(jq --null-input --arg hostname "$PRODUCTION_CUSTOM_DOMAIN" --arg service "$WORKER_NAME" '{hostname: $hostname, service: $service, override_existing_origin: true}')" "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/domains")
           if [[ "$HTTP_STATUS" != "200" ]] || ! jq --exit-status '.success == true' "$RESPONSE_FILE" >/dev/null; then
             echo "Cloudflare custom domain attachment failed with HTTP $HTTP_STATUS." >&2
             jq '{errors}' "$RESPONSE_FILE" >&2
