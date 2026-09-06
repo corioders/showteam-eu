@@ -454,11 +454,13 @@ if (!(baseWorkerName && nextWorkerName && currentWorkerName)) {
 }
 
 function normalizeTemplateWorkerNames(source, workerName, telemetryWorkerName) {
+	const projectResourcePrefix = workerName.replace(/-web$/, "");
 	return source
-		.replaceAll(`${workerName}-preview`, "__SELF_PREVIEW__")
-		.replaceAll(workerName, "__SELF_PRODUCTION__")
-		.replaceAll(`${telemetryWorkerName}-preview`, "__TELEMETRY_PREVIEW__")
-		.replaceAll(telemetryWorkerName, "__TELEMETRY_PRODUCTION__");
+		.replaceAll(`"${workerName}-preview"`, '"__SELF_PREVIEW__"')
+		.replaceAll(`"${workerName}"`, '"__SELF_PRODUCTION__"')
+		.replaceAll(projectResourcePrefix, "__PROJECT_RESOURCE__")
+		.replaceAll(`"${telemetryWorkerName}-preview"`, '"__TELEMETRY_PREVIEW__"')
+		.replaceAll(`"${telemetryWorkerName}"`, '"__TELEMETRY_PRODUCTION__"');
 }
 
 const oldTelemetryWorkerName = "corioders-dashboard-cfworkers-web";
