@@ -20,11 +20,11 @@ concurrency:
 
 jobs:
   schedule:
-    uses: corioders/cstd-next/.github/workflows/schedule-runner.yml@6cfc58f4dd667e7b280f5622e0636845d339b04e
+    uses: corioders/cstd-next/.github/workflows/schedule-runner.yml@68e23bef45a1e671dcac77c9ae33465b6da2e8fd
 
   application:
     needs: schedule
-    uses: corioders/cstd-next/.github/workflows/deploy.yml@6cfc58f4dd667e7b280f5622e0636845d339b04e
+    uses: corioders/cstd-next/.github/workflows/deploy.yml@68e23bef45a1e671dcac77c9ae33465b6da2e8fd
     with:
       runner-label: ${{ needs.schedule.outputs.runner-label }}
       app-directory: template.cfworkers
