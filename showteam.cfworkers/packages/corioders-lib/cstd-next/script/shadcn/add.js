@@ -6,7 +6,17 @@ import path from "node:path";
 import { synchronizeCanonicalShadcnNormalization } from "./canonical.js";
 import { normalizeShadcnSource } from "./codemods.js";
 import { applyLearnedPatch, readShadcnStyle, registryItemsFromArguments } from "./patches.js";
-import { changedFiles, copyFiles, getSessionDirectory, loadLocalEnvironment, NORMALIZED_EXTENSIONS, replaceDirectory, run, snapshotFiles } from "./session.js";
+import {
+	changedFiles,
+	compatibilityTestPath,
+	copyFiles,
+	getSessionDirectory,
+	loadLocalEnvironment,
+	NORMALIZED_EXTENSIONS,
+	replaceDirectory,
+	run,
+	snapshotFiles,
+} from "./session.js";
 
 const cwd = process.cwd();
 loadLocalEnvironment(cwd);
@@ -79,7 +89,7 @@ const patchResults = [];
 for (const registryItem of registryItems) {
 	const result = applyLearnedPatch({ cwd, patchDirectory, registryItem, style });
 	patchResults.push({ registryItem, status: result.status });
-	if (result.status === "invalid" || result.status === "stale") {
+	if (result.status === "invalid" || result.status === "stale" || result.status === "unverified") {
 		patchErrors.push(result.error);
 	}
 }
@@ -99,7 +109,24 @@ if (sourceFiles.length > 0) {
 copyFiles(cwd, sourceFiles, path.join(sessionDirectory, "normalized"));
 fs.writeFileSync(
 	path.join(sessionDirectory, "session.json"),
-	`${JSON.stringify({ cwd, installedFiles, patchResults, registryItems, sourceFiles, style }, null, "\t")}\n`,
+	`${JSON.stringify(
+		{
+			compatibilityTestHashes: Object.fromEntries(
+				registryItems.map((registryItem) => {
+					const testPath = compatibilityTestPath(registryItem);
+					return [testPath, before.get(testPath) ?? null];
+				}),
+			),
+			cwd,
+			installedFiles,
+			patchResults,
+			registryItems,
+			sourceFiles,
+			style,
+		},
+		null,
+		"\t",
+	)}\n`,
 );
 
 const biomeResult =
@@ -118,6 +145,11 @@ if (patchErrors.length > 0 || biomeResult.status !== 0 || typecheckResult.status
 		console.error(`- ${path.join(cwd, relativePath)}`);
 	}
 	console.error("Fix only generic compatibility errors in those installed files. Do not change branding, content, demo data, layout, or styling.");
+	if (registryItems.length === 1) {
+		console.error(
+			`Add or update ${compatibilityTestPath(registryItems[0])} to render the block, exercise every interactive state, and fail on browser console or page errors.`,
+		);
+	}
 	console.error("Then run `pnpm shadcn:patch`; it will verify, commit, and push the style-specific patch to canonical cstd-next.");
 	process.exit(1);
 }

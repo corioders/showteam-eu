@@ -1,0 +1,452 @@
+diff --git a/src/components/dashboard3.tsx b/src/components/dashboard3.tsx
+index 89afc48..67308b8 100644
+--- a/src/components/dashboard3.tsx
++++ b/src/components/dashboard3.tsx
+@@ -24,7 +24,7 @@ import {
+ 	Zap,
+ } from "lucide-react";
+ import * as React from "react";
+-import type { TooltipProps } from "recharts";
++import type { TooltipContentProps } from "recharts";
+ import { Area, AreaChart, Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
+ 
+ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+@@ -35,6 +35,7 @@ import {
+ 	DropdownMenu,
+ 	DropdownMenuCheckboxItem,
+ 	DropdownMenuContent,
++	DropdownMenuGroup,
+ 	DropdownMenuItem,
+ 	DropdownMenuLabel,
+ 	DropdownMenuSeparator,
+@@ -315,7 +316,9 @@ const periodLabels: Record<TimePeriod, string> = {
+ };
+ 
+ function getDataForPeriod(period: TimePeriod) {
+-	if (period === "6months") return fullYearData.slice(0, 6);
++	if (period === "6months") {
++		return fullYearData.slice(0, 6);
++	}
+ 	return fullYearData;
+ }
+ 
+@@ -441,9 +444,13 @@ const orders: Order[] = [
+ const tableHeadClassName = "text-xs font-medium text-muted-foreground sm:text-sm";
+ 
+ const statusStyles: Record<OrderStatus, string> = {
++	// biome-ignore lint/style/useNamingConvention: Registry demo labels intentionally match their displayed values.
+ 	Processing: "bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-900/30 dark:text-amber-400 dark:ring-amber-400/20",
++	// biome-ignore lint/style/useNamingConvention: Registry demo labels intentionally match their displayed values.
+ 	Shipped: "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-900/30 dark:text-blue-400 dark:ring-blue-400/20",
++	// biome-ignore lint/style/useNamingConvention: Registry demo labels intentionally match their displayed values.
+ 	Delivered: "bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-900/30 dark:text-emerald-400 dark:ring-emerald-400/20",
++	// biome-ignore lint/style/useNamingConvention: Registry demo labels intentionally match their displayed values.
+ 	Cancelled: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/10 dark:bg-red-900/30 dark:text-red-400 dark:ring-red-400/20",
+ };
+ 
+@@ -466,6 +473,7 @@ const SidebarLogo = ({ logo }: { logo: SidebarData["logo"] }) => {
+ 			<SidebarMenuItem>
+ 				<SidebarMenuButton size="lg" tooltip={logo.title} render={<a href={logo.href} target="_blank" rel="noopener noreferrer" className="min-w-0" />}>
+ 					<div className="flex aspect-square size-8 items-center justify-center rounded-sm bg-primary">
++						{/* biome-ignore lint/plugin/no-native-img: Registry demo logo is a runtime-configured remote URL without build-time image metadata. */}
+ 						<img src={logo.src} alt={logo.alt} width={24} height={24} className="size-6 text-primary-foreground invert dark:invert-0" />
+ 					</div>
+ 					<div className="flex min-w-0 flex-col gap-0.5 leading-none">
+@@ -485,7 +493,7 @@ const NavMenuItem = ({ item }: { item: NavItem }) => {
+ 	if (!hasChildren) {
+ 		return (
+ 			<SidebarMenuItem>
+-				<SidebarMenuButton isActive={item.isActive} tooltip={item.label} render={<a href={item.href} />}>
++				<SidebarMenuButton isActive={item.isActive ?? false} tooltip={item.label} render={<a href={item.href} />}>
+ 					<Icon className="size-4" aria-hidden="true" />
+ 					<span>{item.label}</span>
+ 				</SidebarMenuButton>
+@@ -495,16 +503,16 @@ const NavMenuItem = ({ item }: { item: NavItem }) => {
+ 
+ 	return (
+ 		<Collapsible defaultOpen={true} className="group/collapsible" render={<SidebarMenuItem />}>
+-			<CollapsibleTrigger render={<SidebarMenuButton isActive={item.isActive} tooltip={item.label} />}>
++			<CollapsibleTrigger render={<SidebarMenuButton isActive={item.isActive ?? false} tooltip={item.label} />}>
+ 				<Icon className="size-4" aria-hidden="true" />
+ 				<span>{item.label}</span>
+ 				<ChevronRight className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" aria-hidden="true" />
+ 			</CollapsibleTrigger>
+ 			<CollapsibleContent>
+ 				<SidebarMenuSub>
+-					{item.children!.map((child) => (
++					{item.children?.map((child) => (
+ 						<SidebarMenuSubItem key={child.label}>
+-							<SidebarMenuSubButton isActive={child.isActive} render={<a href={child.href} />}>
++							<SidebarMenuSubButton isActive={child.isActive ?? false} render={<a href={child.href} />}>
+ 								{child.label}
+ 							</SidebarMenuSubButton>
+ 						</SidebarMenuSubItem>
+@@ -537,33 +545,39 @@ const NavUser = ({ user }: { user: UserData }) => {
+ 						<ChevronsUpDown className="ml-auto size-4" aria-hidden="true" />
+ 					</DropdownMenuTrigger>
+ 					<DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg" side="bottom" align="end" sideOffset={4}>
+-						<DropdownMenuLabel className="p-0 font-normal">
+-							<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+-								<Avatar className="size-8 rounded-lg">
+-									<AvatarImage src={user.avatar} alt={user.name} />
+-									<AvatarFallback className="rounded-lg">
+-										{user.name
+-											.split(" ")
+-											.map((n) => n[0])
+-											.join("")}
+-									</AvatarFallback>
+-								</Avatar>
+-								<div className="grid flex-1 text-left text-sm leading-tight">
+-									<span className="truncate font-medium">{user.name}</span>
+-									<span className="truncate text-muted-foreground text-xs">{user.email}</span>
++						<DropdownMenuGroup>
++							<DropdownMenuLabel className="p-0 font-normal">
++								<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
++									<Avatar className="size-8 rounded-lg">
++										<AvatarImage src={user.avatar} alt={user.name} />
++										<AvatarFallback className="rounded-lg">
++											{user.name
++												.split(" ")
++												.map((n) => n[0])
++												.join("")}
++										</AvatarFallback>
++									</Avatar>
++									<div className="grid flex-1 text-left text-sm leading-tight">
++										<span className="truncate font-medium">{user.name}</span>
++										<span className="truncate text-muted-foreground text-xs">{user.email}</span>
++									</div>
+ 								</div>
+-							</div>
+-						</DropdownMenuLabel>
++							</DropdownMenuLabel>
++						</DropdownMenuGroup>
+ 						<DropdownMenuSeparator />
+-						<DropdownMenuItem>
+-							<User className="mr-2 size-4" aria-hidden="true" />
+-							Account
+-						</DropdownMenuItem>
++						<DropdownMenuGroup>
++							<DropdownMenuItem>
++								<User className="mr-2 size-4" aria-hidden="true" />
++								Account
++							</DropdownMenuItem>
++						</DropdownMenuGroup>
+ 						<DropdownMenuSeparator />
+-						<DropdownMenuItem>
+-							<LogOut className="mr-2 size-4" aria-hidden="true" />
+-							Log out
+-						</DropdownMenuItem>
++						<DropdownMenuGroup>
++							<DropdownMenuItem>
++								<LogOut className="mr-2 size-4" aria-hidden="true" />
++								Log out
++							</DropdownMenuItem>
++						</DropdownMenuGroup>
+ 					</DropdownMenuContent>
+ 				</DropdownMenu>
+ 			</SidebarMenuItem>
+@@ -619,8 +633,7 @@ const DashboardHeader = () => {
+ 						className="h-9 w-full pr-14 pl-9 text-sm"
+ 					/>
+ 					<kbd className="pointer-events-none absolute top-1/2 right-2 hidden -translate-y-1/2 rounded-md border bg-muted px-1.5 py-0.5 font-medium text-[10px] text-muted-foreground sm:inline-flex">
+-						{"\u2318"}
+-						{"\u00a0"}K
++						\u2318 \u00a0K
+ 					</kbd>
+ 				</div>
+ 				<DropdownMenu>
+@@ -633,17 +646,21 @@ const DashboardHeader = () => {
+ 						</span>
+ 					</DropdownMenuTrigger>
+ 					<DropdownMenuContent align="end" className="w-80 sm:w-96">
+-						<DropdownMenuLabel className="font-medium text-base">Notifications</DropdownMenuLabel>
+-						<DropdownMenuSeparator />
+-						{headerNotificationItems.map((item) => (
+-							<DropdownMenuItem key={item.id} className="cursor-default flex-col items-start gap-1 py-3" onSelect={(event: Event) => event.preventDefault()}>
+-								<span className="font-medium text-foreground">{item.title}</span>
+-								<span className="font-normal text-muted-foreground text-xs leading-snug">{item.body}</span>
+-								<span className="text-[10px] text-muted-foreground/80">{item.time}</span>
+-							</DropdownMenuItem>
+-						))}
++						<DropdownMenuGroup>
++							<DropdownMenuLabel className="font-medium text-base">Notifications</DropdownMenuLabel>
++							<DropdownMenuSeparator />
++							{headerNotificationItems.map((item) => (
++								<DropdownMenuItem key={item.id} className="cursor-default flex-col items-start gap-1 py-3" onSelect={(event) => event.preventDefault()}>
++									<span className="font-medium text-foreground">{item.title}</span>
++									<span className="font-normal text-muted-foreground text-xs leading-snug">{item.body}</span>
++									<span className="text-[10px] text-muted-foreground/80">{item.time}</span>
++								</DropdownMenuItem>
++							))}
++						</DropdownMenuGroup>
+ 						<DropdownMenuSeparator />
+-						<DropdownMenuItem className="justify-center text-center font-medium">Mark all as read</DropdownMenuItem>
++						<DropdownMenuGroup>
++							<DropdownMenuItem className="justify-center text-center font-medium">Mark all as read</DropdownMenuItem>
++						</DropdownMenuGroup>
+ 					</DropdownMenuContent>
+ 				</DropdownMenu>
+ 			</div>
+@@ -656,10 +673,12 @@ function CustomTooltip({
+ 	payload,
+ 	label,
+ 	colors,
+-}: TooltipProps<number, string> & {
++}: Partial<TooltipContentProps<number, string>> & {
+ 	colors: { primary: string; secondary: string };
+ }) {
+-	if (!active || !payload?.length) return null;
++	if (!active || payload === undefined || payload.length === 0) {
++		return null;
++	}
+ 
+ 	const thisYear = payload.find((p) => p.dataKey === "thisYear")?.value || 0;
+ 	const prevYear = payload.find((p) => p.dataKey === "prevYear")?.value || 0;
+@@ -698,7 +717,9 @@ const RevenueFlowChart = () => {
+ 	const [period, setPeriod] = React.useState<TimePeriod>("6months");
+ 
+ 	React.useEffect(() => {
+-		if (typeof window === "undefined") return;
++		if (typeof window === "undefined") {
++			return;
++		}
+ 		const params = new URLSearchParams(window.location.search);
+ 		const nextPeriod = params.get("period");
+ 		if (nextPeriod === "6months" || nextPeriod === "year") {
+@@ -707,7 +728,9 @@ const RevenueFlowChart = () => {
+ 	}, []);
+ 
+ 	React.useEffect(() => {
+-		if (typeof window === "undefined") return;
++		if (typeof window === "undefined") {
++			return;
++		}
+ 		const params = new URLSearchParams(window.location.search);
+ 		if (period !== "6months") {
+ 			params.set("period", period);
+@@ -744,16 +767,18 @@ const RevenueFlowChart = () => {
+ 						<MoreHorizontal className="size-4" aria-hidden="true" />
+ 					</DropdownMenuTrigger>
+ 					<DropdownMenuContent align="end" className="w-48">
+-						<DropdownMenuLabel>Time Period</DropdownMenuLabel>
+-						<DropdownMenuSeparator />
+-						{(Object.keys(periodLabels) as TimePeriod[]).map((key) => (
+-							<DropdownMenuCheckboxItem key={key} checked={period === key} onCheckedChange={() => setPeriod(key)}>
+-								{periodLabels[key]}
+-							</DropdownMenuCheckboxItem>
+-						))}
+-						<DropdownMenuSeparator />
+-						<DropdownMenuItem onSelect={(event: Event) => event.preventDefault()}>Export chart data</DropdownMenuItem>
+-						<DropdownMenuItem onSelect={(event: Event) => event.preventDefault()}>Open in reporting</DropdownMenuItem>
++						<DropdownMenuGroup>
++							<DropdownMenuLabel>Time Period</DropdownMenuLabel>
++							<DropdownMenuSeparator />
++							{(Object.keys(periodLabels) as TimePeriod[]).map((key) => (
++								<DropdownMenuCheckboxItem key={key} checked={period === key} onCheckedChange={() => setPeriod(key)}>
++									{periodLabels[key]}
++								</DropdownMenuCheckboxItem>
++							))}
++							<DropdownMenuSeparator />
++							<DropdownMenuItem onSelect={(event) => event.preventDefault()}>Export chart data</DropdownMenuItem>
++							<DropdownMenuItem onSelect={(event) => event.preventDefault()}>Open in reporting</DropdownMenuItem>
++						</DropdownMenuGroup>
+ 					</DropdownMenuContent>
+ 				</DropdownMenu>
+ 			</div>
+@@ -817,8 +842,10 @@ const StatsCardsVertical = () => {
+ 										</defs>
+ 										<Tooltip
+ 											content={({ active, payload }) => {
+-												if (!active || !payload?.length) return null;
+-												const value = payload[0].value as number;
++												if (!active || payload?.length === 0) {
++													return null;
++												}
++												const value = payload[0]?.value as number;
+ 												const formatted = stat.format === "currency" ? currencyFormatter.format(value) : numberFormatter.format(value);
+ 												return (
+ 													<div className="rounded-md border border-border bg-popover px-2 py-1 shadow-lg">
+@@ -858,7 +885,9 @@ const RecentTransactionsTable = ({ className }: { className?: string }) => {
+ 	const pageSize = 6;
+ 
+ 	React.useEffect(() => {
+-		if (typeof window === "undefined") return;
++		if (typeof window === "undefined") {
++			return;
++		}
+ 		const params = new URLSearchParams(window.location.search);
+ 		const nextStatus = params.get("status");
+ 		if (nextStatus && (nextStatus === "all" || orderStatuses.includes(nextStatus as OrderStatus))) {
+@@ -872,7 +901,9 @@ const RecentTransactionsTable = ({ className }: { className?: string }) => {
+ 	}, []);
+ 
+ 	const filteredOrders = React.useMemo(() => {
+-		if (statusFilter === "all") return orders;
++		if (statusFilter === "all") {
++			return orders;
++		}
+ 		return orders.filter((order) => order.status === statusFilter);
+ 	}, [statusFilter]);
+ 
+@@ -881,14 +912,12 @@ const RecentTransactionsTable = ({ className }: { className?: string }) => {
+ 	const paginatedOrders = React.useMemo(() => {
+ 		const startIndex = (currentPage - 1) * pageSize;
+ 		return filteredOrders.slice(startIndex, startIndex + pageSize);
+-	}, [filteredOrders, currentPage, pageSize]);
++	}, [filteredOrders, currentPage]);
+ 
+ 	React.useEffect(() => {
+-		setCurrentPage(1);
+-	}, [statusFilter]);
+-
+-	React.useEffect(() => {
+-		if (!isHydrated || typeof window === "undefined") return;
++		if (!isHydrated || typeof window === "undefined") {
++			return;
++		}
+ 		const params = new URLSearchParams(window.location.search);
+ 		if (statusFilter !== "all") {
+ 			params.set("status", statusFilter);
+@@ -909,7 +938,7 @@ const RecentTransactionsTable = ({ className }: { className?: string }) => {
+ 		setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+ 	};
+ 
+-	const startRow = filteredOrders.length ? (currentPage - 1) * pageSize + 1 : 0;
++	const startRow = filteredOrders.length > 0 ? (currentPage - 1) * pageSize + 1 : 0;
+ 	const endRow = Math.min(currentPage * pageSize, filteredOrders.length);
+ 
+ 	return (
+@@ -923,19 +952,34 @@ const RecentTransactionsTable = ({ className }: { className?: string }) => {
+ 				</div>
+ 
+ 				<DropdownMenu>
+-					<DropdownMenuTrigger render={<Button variant="outline" size="sm" className="h-8 gap-1.5 sm:h-9 sm:gap-2" />}>
++					<DropdownMenuTrigger render={<Button variant="outline" size="sm" className="h-8 gap-1.5 sm:h-9 sm:gap-2" aria-label="Filter by status" />}>
+ 						<span className="text-xs sm:text-sm">{statusFilter === "all" ? "All" : statusFilter}</span>
+ 					</DropdownMenuTrigger>
+ 					<DropdownMenuContent align="end" className="w-[180px]">
+-						<DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+-						<DropdownMenuCheckboxItem checked={statusFilter === "all"} onCheckedChange={() => setStatusFilter("all")}>
+-							All Statuses
+-						</DropdownMenuCheckboxItem>
+-						{orderStatuses.map((status) => (
+-							<DropdownMenuCheckboxItem key={status} checked={statusFilter === status} onCheckedChange={() => setStatusFilter(status)}>
+-								{status}
++						<DropdownMenuGroup>
++							<DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
++							<DropdownMenuCheckboxItem
++								checked={statusFilter === "all"}
++								onCheckedChange={() => {
++									setStatusFilter("all");
++									setCurrentPage(1);
++								}}
++							>
++								All Statuses
+ 							</DropdownMenuCheckboxItem>
+-						))}
++							{orderStatuses.map((status) => (
++								<DropdownMenuCheckboxItem
++									key={status}
++									checked={statusFilter === status}
++									onCheckedChange={() => {
++										setStatusFilter(status);
++										setCurrentPage(1);
++									}}
++								>
++									{status}
++								</DropdownMenuCheckboxItem>
++							))}
++						</DropdownMenuGroup>
+ 					</DropdownMenuContent>
+ 				</DropdownMenu>
+ 			</div>
+
+diff --git a/src/components/ui/chart.tsx b/src/components/ui/chart.tsx
+index 50b3799..153291a 100644
+--- a/src/components/ui/chart.tsx
++++ b/src/components/ui/chart.tsx
+@@ -1,8 +1,11 @@
++// biome-ignore-all lint/security/noDangerouslySetInnerHtml: Chart styles are derived only from the local ChartConfig supplied by application code.
++// biome-ignore-all lint/suspicious/noArrayIndexKey: Recharts payload entries do not expose a stable unique identifier.
++// biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Tooltip rendering follows the upstream Recharts data model.
+ "use client";
+ 
+ import { cn } from "cn";
+ import * as React from "react";
+-import type { TooltipValueType } from "recharts";
++import type { TooltipContentProps, TooltipValueType } from "recharts";
+ import * as RechartsPrimitive from "recharts";
+ 
+ // Format: { THEME_NAME: CSS_SELECTOR }
+@@ -29,6 +32,7 @@ function useChart() {
+ 	const context = React.useContext(ChartContext);
+ 
+ 	if (!context) {
++		// biome-ignore lint/plugin/no-throw: Preserve upstream Shadcnblocks behavior; adapt only when project semantics require it.
+ 		throw new Error("useChart must be used within a <ChartContainer />");
+ 	}
+ 
+@@ -74,7 +78,7 @@ function ChartContainer({
+ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
+ 	const colorConfig = Object.entries(config).filter(([, config]) => config.theme ?? config.color);
+ 
+-	if (!colorConfig.length) {
++	if (colorConfig.length === 0) {
+ 		return null;
+ 	}
+ 
+@@ -116,7 +120,7 @@ function ChartTooltipContent({
+ 	color,
+ 	nameKey,
+ 	labelKey,
+-}: React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
++}: TooltipContentProps<TooltipValueType, TooltipNameType> &
+ 	React.ComponentProps<"div"> & {
+ 		hideLabel?: boolean;
+ 		hideIndicator?: boolean;
+@@ -127,7 +131,7 @@ function ChartTooltipContent({
+ 	const { config } = useChart();
+ 
+ 	const tooltipLabel = React.useMemo(() => {
+-		if (hideLabel || !payload?.length) {
++		if (hideLabel || payload === undefined || payload.length === 0) {
+ 			return null;
+ 		}
+ 
+@@ -147,7 +151,7 @@ function ChartTooltipContent({
+ 		return <div className={cn("font-medium", labelClassName)}>{value}</div>;
+ 	}, [label, labelFormatter, payload, hideLabel, labelClassName, config, labelKey]);
+ 
+-	if (!active || !payload?.length) {
++	if (!active || payload === undefined || payload.length === 0) {
+ 		return null;
+ 	}
+ 
+@@ -231,7 +235,7 @@ function ChartLegendContent({
+ } & RechartsPrimitive.DefaultLegendContentProps) {
+ 	const { config } = useChart();
+ 
+-	if (!payload?.length) {
++	if (payload === undefined || payload.length === 0) {
+ 		return null;
+ 	}
+ 
+
+diff --git a/src/components/ui/sidebar.tsx b/src/components/ui/sidebar.tsx
+index 8af9137..5f31d53 100644
+--- a/src/components/ui/sidebar.tsx
++++ b/src/components/ui/sidebar.tsx
+@@ -1,3 +1,5 @@
++// biome-ignore-all lint/suspicious/noDocumentCookie: The state is intentionally persisted for seven days and the Cookie Store API is not supported in every target browser.
++// biome-ignore-all lint/correctness/useExhaustiveDependencies: Base UI state setters are stable and retain upstream dependency declarations.
+ "use client";
+ 
+ import { mergeProps } from "@base-ui/react/merge-props";
+@@ -37,6 +39,7 @@ const SidebarContext = React.createContext<SidebarContextProps | null>(null);
+ function useSidebar() {
+ 	const context = React.useContext(SidebarContext);
+ 	if (!context) {
++		// biome-ignore lint/plugin/no-throw: Preserve upstream Shadcnblocks behavior; adapt only when project semantics require it.
+ 		throw new Error("useSidebar must be used within a SidebarProvider.");
+ 	}
+ 

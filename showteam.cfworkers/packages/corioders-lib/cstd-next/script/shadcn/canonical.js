@@ -68,14 +68,15 @@ export function synchronizeCanonicalShadcnNormalization({ canonicalRepository = 
 	if (subtreeStatus.stdout.trim() !== "") {
 		return { error: new Error(`Local changes exist in ${subtreePrefix}; commit or revert them before installing the block.`), status: "diverged" };
 	}
-
 	const splitResult = run("git", ["subtree", "split", "--prefix", subtreePrefix, "HEAD"], { allowFailure: true, capture: true, cwd: gitRoot });
 	const localSubtreeCommit = splitResult.stdout.trim().split("\n").at(-1);
 	if (splitResult.status !== 0 || !localSubtreeCommit) {
 		return { error: new Error("Unable to determine the current cstd-next subtree revision."), status: "error" };
 	}
 	const canonicalCommit = run("git", ["rev-parse", "FETCH_HEAD"], { capture: true, cwd: gitRoot }).stdout.trim();
-	if (localSubtreeCommit === canonicalCommit) {
+	const localTree = run("git", ["rev-parse", `${localSubtreeCommit}^{tree}`], { capture: true, cwd: gitRoot }).stdout.trim();
+	const canonicalTree = run("git", ["rev-parse", `${canonicalCommit}^{tree}`], { capture: true, cwd: gitRoot }).stdout.trim();
+	if (localSubtreeCommit === canonicalCommit || localTree === canonicalTree) {
 		return { error: null, status: "current" };
 	}
 	const ancestryResult = run("git", ["merge-base", "--is-ancestor", localSubtreeCommit, "FETCH_HEAD"], { allowFailure: true, capture: true, cwd: gitRoot });

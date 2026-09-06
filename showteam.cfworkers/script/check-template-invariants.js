@@ -154,6 +154,41 @@ if (tagCacheIds.length !== 2) {
 }
 
 const deployWorkflow = read("../.github/workflows/deploy.yml");
+const scheduleRunnerWorkflow = read("../.github/workflows/schedule-runner.yml");
+const workflowsDirectory = path.join(workspaceDirectory, "..", ".github", "workflows");
+const directWindowsRunnerPattern = /runs-on:\s*\[\s*self-hosted\s*,\s*["']?win24-wsl(?:-poland20)?["']?\s*\]/;
+for (const workflowName of fs.readdirSync(workflowsDirectory)) {
+	if (!workflowName.endsWith(".yml") && !workflowName.endsWith(".yaml")) {
+		continue;
+	}
+	if (directWindowsRunnerPattern.test(fs.readFileSync(path.join(workflowsDirectory, workflowName), "utf8"))) {
+		errors.push(`${workflowName} must reserve a dynamic worker through schedule-runner.yml instead of targeting win24-wsl directly.`);
+	}
+}
+requireMatch(scheduleRunnerWorkflow, /runs-on:\s*\[self-hosted, corioders-self-hosted-scheduler\]/, "The runner scheduler must use the dedicated scheduler label.");
+const scheduledWorkflows = [["deploy.yml", deployWorkflow]];
+if (fs.existsSync(path.join(workflowsDirectory, "validate.yml"))) {
+	scheduledWorkflows.push(["validate.yml", read("../.github/workflows/validate.yml")]);
+}
+for (const [workflowName, workflow] of scheduledWorkflows) {
+	requireMatch(workflow, /uses:\s*\.\/\.github\/workflows\/schedule-runner\.yml/, `${workflowName} must reserve a runner through schedule-runner.yml.`);
+	requireMatch(
+		workflow,
+		/runs-on:\s*\[self-hosted, "\$\{\{ needs\.[^.]+\.outputs\.runner-label \}\}"\]/,
+		`${workflowName} must target the scheduler's dynamic runner label.`,
+	);
+}
+if (/opennextjs-cloudflare populateCache remote/.test(deployWorkflow)) {
+	errors.push("The deploy workflow must not use the hanging OpenNext remote cache helper.");
+}
+requireMatch(
+	deployWorkflow,
+	/name: Resolve external build inputs\s+run: pnpm resolve-build-inputs/,
+	"The deploy workflow must resolve external build inputs before building.",
+);
+if (deployWorkflow.indexOf("name: Resolve external build inputs") > deployWorkflow.indexOf("name: Validate, build, and run browser tests")) {
+	errors.push("The deploy workflow must resolve external build inputs before cache lookup and build.");
+}
 requireMatch(
 	deployWorkflow,
 	/APP_ENV: \$\{\{ github\.ref_name == 'deploy' && 'production' \|\| 'preview' \}\}/,
@@ -191,7 +226,7 @@ const packageJson = JSON.parse(read("package.json"));
 if (packageJson.scripts?.["resolve-build-inputs"] !== "node script/resolve-external-build-inputs.js") {
 	errors.push("package.json must expose the external build-input resolver.");
 }
-for (const scriptName of ["preview", "deploy", "logs", "logs:preview", "shadcn:search", "shadcn:add", "shadcn:patch"]) {
+for (const scriptName of ["dev", "preview", "deploy", "logs", "logs:preview", "shadcn:search", "shadcn:add", "shadcn:patch"]) {
 	if (!/^infisical run(?: --env=[a-z]+)? -- /.test(packageJson.scripts?.[scriptName] ?? "")) {
 		errors.push(`package.json script ${scriptName} must inject Infisical secrets.`);
 	}
@@ -228,6 +263,34 @@ try {
 	errors.push(`biome.jsonc must remain valid JSONC: ${error instanceof Error ? error.message : String(error)}.`);
 }
 
+const agentRules = read("AGENTS.md");
+for (const [pattern, message] of [
+	[/SHADCN-ONLY UI IS MANDATORY/, "AGENTS.md must require shadcn-only UI."],
+	[/DO NOT RESTYLE REGISTRY CODE/, "AGENTS.md must forbid restyling registry code."],
+	[/Do not create a custom UI component, custom styled substitute, or bespoke visual implementation/, "AGENTS.md must forbid custom UI implementations."],
+	[/treat every generated component and block file as immutable vendor UI/, "AGENTS.md must make installed registry UI immutable."],
+	[/Never hand-create a visual `\.tsx` component/, "AGENTS.md must forbid hand-created TSX UI components."],
+	[/Application-authored route, feature, and wiring files must not contain visual `className`/, "AGENTS.md must forbid app-authored visual styling."],
+	[
+		/A page assembled from shadcn primitives with new layout classes or bespoke markup is custom UI and is forbidden/,
+		"AGENTS.md must forbid bespoke primitive composition.",
+	],
+	[/every `className`\/`style` byte-for-byte unchanged from the post-install result/, "AGENTS.md must preserve registry visual code byte-for-byte."],
+	[
+		/Any JSX-structure or visual-style diff outside an approved compatibility patch is a failed implementation/,
+		"AGENTS.md must reject structural or visual registry drift.",
+	],
+	[/If shadcn truly has no applicable primitive, stop and ask the user/, "AGENTS.md must require user direction instead of a custom UI fallback."],
+	[
+		/generic compatibility fixes required after `shadcn:add` reports an unknown or stale incompatibility/,
+		"AGENTS.md must limit registry edits to compatibility patches.",
+	],
+	[/shadcn:patch` rejects a missing or unchanged test/, "AGENTS.md must require a fresh browser compatibility test before patching."],
+	[/fail on browser `console\.error` or `pageerror`/, "AGENTS.md must require Shadcn compatibility tests to reject browser errors."],
+	[/Never target `win24-wsl` or a concrete worker label directly/, "AGENTS.md must forbid bypassing the dynamic runner scheduler."],
+]) {
+	requireMatch(agentRules, pattern, message);
+}
 const appPackage = JSON.parse(read("apps/web/package.json"));
 if (!appPackage.scripts?.prebuild?.includes("cstd-next-clean-images")) {
 	errors.push("apps/web/package.json must keep cstd-next-clean-images in prebuild.");
