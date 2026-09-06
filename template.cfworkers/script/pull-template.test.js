@@ -11,7 +11,7 @@ const remoteBindingsPattern = /remoteBindings: true/;
 const cloudflareTokenGuardPattern = /process\.env\["CLOUDFLARE_API_TOKEN"\]/;
 const consumerPayloadCliPattern = /seed-ci\.ts/;
 const formattedCloudflareContextPattern = /CloudflareContext[^\n]* =\n\tisCLI/;
-const isolatedValidationPattern = /CSTD_D1_PERSIST_PATH/;
+const sharedInvariantPattern = /shared scheduler and deploy workflow/;
 const customValidationEnvironmentPattern = /PAYLOAD_SECRET: local-ci-secret/;
 const localValidationPathPattern = /CSTD_D1_PERSIST_PATH="\.wrangler\/state\/v3"/;
 const consumerD1SnapshotPattern = /Consumer-only D1 snapshot/;
@@ -50,13 +50,14 @@ test("pulls template updates across consumer renames without manual conflicts", 
 			path.join(templateRoot, ".github/workflows/deploy.yml"),
 			`# Deploys template.cfworkers\non:\n  push:\n    branches:\n      - deploy\nsteps:\n  - name: Validate, build, and run browser tests\n    env:\n      CSTD_D1_PERSIST_PATH: ${runnerTempExpression}/cstd-d1-${runIdExpression}-${runAttemptExpression}\n    run: pnpm validate:ci\n    working-directory: template.cfworkers\n  - name: Template-only payload migration\n`,
 		);
+		write(path.join(templateRoot, ".github/workflows/validate.yml"), "name: Validate template\n");
 		fs.copyFileSync(pullTemplate, path.join(templateRoot, "pull_template.sh"));
 		fs.chmodSync(path.join(templateRoot, "pull_template.sh"), 0o755);
 		write(path.join(templateRoot, "TODO.md"), "template task\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true };\nexport default options;\n");
 		write(
 			path.join(templateRoot, "template.cfworkers/script/check-template-invariants.js"),
-			"requireMatch(deployWorkflow, /Resolve external build inputs/);\nrequireMatch(deployWorkflow, /APP_ENV/);\n",
+			'const deployWorkflow = read("../.github/workflows/deploy.yml");\nrequireMatch(deployWorkflow, /APP_ENV/);\nconst packageJson = {};\n',
 		);
 		write(
 			path.join(templateRoot, "template.cfworkers/apps/web/payload.config.ts"),
@@ -94,7 +95,11 @@ test("pulls template updates across consumer renames without manual conflicts", 
 			path.join(consumerRoot, "showteam.cfworkers/apps/web/wrangler.jsonc"),
 			'{"name":"showteam-eu","r2_buckets":[{"binding":"NEXT_INC_CACHE_R2_BUCKET","bucket_name":"showteam-next-cache"}],"d1_databases":[{"binding":"D1"}],"env":{"preview":{"name":"showteam-eu-preview","r2_buckets":[{"binding":"NEXT_INC_CACHE_R2_BUCKET","bucket_name":"showteam-preview-next-cache"}]}}}\n',
 		);
-		write(path.join(consumerRoot, "showteam.cfworkers/script/check-template-invariants.js"), "requireMatch(deployWorkflow, /APP_ENV/);\n");
+		write(
+			path.join(consumerRoot, "showteam.cfworkers/script/check-template-invariants.js"),
+			'const deployWorkflow = read("../.github/workflows/deploy.yml");\nrequireMatch(deployWorkflow, /APP_ENV/);\nrequireMatch(deployWorkflow, /Infisical/);\nconst packageJson = {};\n',
+		);
+		write(path.join(consumerRoot, ".github/workflows/validate.yml"), "name: Consumer legacy validate\n");
 		fs.rmSync(path.join(consumerRoot, "TODO.md"));
 		git(consumerRoot, "add", "-A");
 		git(consumerRoot, "commit", "-m", "initialize consumer");
@@ -107,7 +112,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true, remoteBindings: true };\nexport default options;\n");
 		write(
 			path.join(templateRoot, "template.cfworkers/script/check-template-invariants.js"),
-			"requireMatch(deployWorkflow, /CSTD_D1_PERSIST_PATH/);\nrequireMatch(deployWorkflow, /Resolve external build inputs/);\nrequireMatch(deployWorkflow, /APP_ENV/);\n",
+			'const deployWorkflow = read("../.github/workflows/deploy.yml");\nrequireMatch(deployWorkflow, /CSTD_D1_PERSIST_PATH/);\nrequireMatch(deployWorkflow, /APP_ENV/);\nconst packageJson = {};\n',
 		);
 		write(
 			path.join(templateRoot, "template.cfworkers/apps/web/payload.config.ts"),
@@ -117,7 +122,8 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		git(templateRoot, "add", ".");
 		git(templateRoot, "commit", "-m", "update template");
 
-		const result = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
+		const cleanBootstrapEnvironment = { ...process.env, ["CSTD_TEMPLATE_PULL_BOOTSTRAPPED"]: "" };
+		const result = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8", env: cleanBootstrapEnvironment });
 		assert.equal(result.status, 0, `${result.stdout}${result.stderr}`);
 		const templateWorkflowPath = path.join(templateRoot, ".github/workflows/deploy.yml");
 		write(
@@ -128,7 +134,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		);
 		git(templateRoot, "add", ".github/workflows/deploy.yml");
 		git(templateRoot, "commit", "-m", "align local D1 state");
-		const localStateResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
+		const localStateResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8", env: cleanBootstrapEnvironment });
 		assert.equal(localStateResult.status, 0, `${localStateResult.stdout}${localStateResult.stderr}`);
 		const consumerWorkflowPath = path.join(consumerRoot, ".github/workflows/deploy.yml");
 		write(
@@ -148,7 +154,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		);
 		git(templateRoot, "add", ".github/workflows/deploy.yml");
 		git(templateRoot, "commit", "-m", "use Wrangler v3 state");
-		const versionedLocalStateResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
+		const versionedLocalStateResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8", env: cleanBootstrapEnvironment });
 		assert.equal(versionedLocalStateResult.status, 0, `${versionedLocalStateResult.stdout}${versionedLocalStateResult.stderr}`);
 		const monolithicWorkflow = fs.readFileSync(consumerWorkflowPath, "utf8");
 		assert.match(monolithicWorkflow, customValidationEnvironmentPattern);
@@ -190,9 +196,14 @@ jobs:
     secrets: inherit
 `,
 		);
-		git(templateRoot, "add", ".github/workflows/deploy.yml");
+		fs.rmSync(path.join(templateRoot, ".github/workflows/validate.yml"));
+		write(
+			path.join(templateRoot, "template.cfworkers/script/check-template-invariants.js"),
+			'const deployWorkflow = read("../.github/workflows/deploy.yml");\nerrors.push("shared scheduler and deploy workflow");\nconst packageJson = {};\n',
+		);
+		git(templateRoot, "add", "-A");
 		git(templateRoot, "commit", "-m", "use shared deploy workflow");
-		const sharedWorkflowResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8" });
+		const sharedWorkflowResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8", env: cleanBootstrapEnvironment });
 		assert.equal(sharedWorkflowResult.status, 0, `${sharedWorkflowResult.stdout}${sharedWorkflowResult.stderr}`);
 		assert.equal(fs.existsSync(path.join(consumerRoot, "TODO.md")), false);
 		assert.equal(fs.readFileSync(path.join(consumerRoot, "pull_template.sh"), "utf8"), fs.readFileSync(pullTemplate, "utf8"));
@@ -209,7 +220,10 @@ jobs:
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), cloudflareTokenGuardPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), consumerPayloadCliPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), formattedCloudflareContextPattern);
-		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/script/check-template-invariants.js"), "utf8"), isolatedValidationPattern);
+		assert.equal(fs.existsSync(path.join(consumerRoot, ".github/workflows/validate.yml")), false);
+		const consumerInvariant = fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/script/check-template-invariants.js"), "utf8");
+		assert.match(consumerInvariant, sharedInvariantPattern);
+		assert.equal(consumerInvariant.includes("Infisical"), false);
 		assert.equal(
 			fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/script/pull-template.test.js"), "utf8"),
 			'const templateDirectory = "template.cfworkers";\n',

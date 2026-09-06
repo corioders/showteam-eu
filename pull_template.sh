@@ -125,6 +125,31 @@ for candidate in ./*.cfworkers; do
 	consumer_directory=${candidate#./}
 done
 
+normalize_deploy_invariant_transition() {
+	local base_file=$1 ours_file=$2 theirs_file=$3
+	node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'
+import fs from "node:fs";
+
+const [basePath, oursPath, theirsPath] = process.argv.slice(2);
+let base = fs.readFileSync(basePath, "utf8");
+let ours = fs.readFileSync(oursPath, "utf8");
+const theirs = fs.readFileSync(theirsPath, "utf8");
+const sharedInvariant = /shared scheduler and deploy workflow/;
+if (sharedInvariant.test(base) || sharedInvariant.test(ours) || !sharedInvariant.test(theirs)) {
+	process.exit(0);
+}
+const sectionPattern = /const deployWorkflow = read\("\.\.\/\.github\/workflows\/deploy\.yml"\);[\s\S]*?(?=const packageJson =)/;
+const sharedSection = theirs.match(sectionPattern)?.[0];
+if (!sharedSection || !sectionPattern.test(base) || !sectionPattern.test(ours)) {
+	process.exit(1);
+}
+base = base.replace(sectionPattern, sharedSection);
+ours = ours.replace(sectionPattern, sharedSection);
+fs.writeFileSync(basePath, base);
+fs.writeFileSync(oursPath, ours);
+NODE
+}
+
 auto_resolve_bootstrap_replacements() {
 	local unmerged_path=$1
 	local temporary_directory base_file ours_file theirs_file result_file project_name
@@ -143,6 +168,13 @@ auto_resolve_bootstrap_replacements() {
 	git show ":1:$unmerged_path" >"$base_file"
 	git show ":2:$unmerged_path" >"$ours_file"
 	git show ":3:$unmerged_path" >"$theirs_file"
+
+	if [[ $unmerged_path == *.cfworkers/script/check-template-invariants.js ]]; then
+		normalize_deploy_invariant_transition "$base_file" "$ours_file" "$theirs_file" || {
+			rm -r -- "$temporary_directory"
+			return 1
+		}
+	fi
 	sed -i.bak \
 		-e "s/template\\.cfworkers/$consumer_directory/g" \
 		-e "s/template-cfworkers/$project_name-cfworkers/g" \
@@ -387,6 +419,13 @@ auto_resolve_renamed_template_path() {
 		"$base_file" "$theirs_file"
 	rm -- "$base_file.bak" "$theirs_file.bak"
 
+	if [[ $target_path == *.cfworkers/script/check-template-invariants.js ]]; then
+		normalize_deploy_invariant_transition "$base_file" "$ours_file" "$theirs_file" || {
+			rm -r -- "$temporary_directory"
+			return 1
+		}
+	fi
+
 	if node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'
 import fs from "node:fs";
 
@@ -472,6 +511,9 @@ while IFS= read -r unmerged_path; do
 			fi
 			;;
 		bootstrap_project.sh | encrypt_template_env.sh)
+			git rm --quiet --force -- "$unmerged_path"
+			;;
+		.github/workflows/schedule-runner.yml | .github/workflows/validate.yml)
 			git rm --quiet --force -- "$unmerged_path"
 			;;
 		template.cfworkers/*)
