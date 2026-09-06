@@ -59,6 +59,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		write(path.join(templateRoot, "TODO.md"), "template task\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true };\nexport default options;\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/tests/e2e/payload.spec.ts"), 'test("template Payload login", () => {});\n');
+		write(path.join(templateRoot, "template.cfworkers/apps/web/scripts/seed-payload-admin.ts"), 'const username = "corioders";\n');
 		write(path.join(templateRoot, "template.cfworkers/apps/web/playwright.config.ts"), 'const username = "corioders";\n');
 		write(
 			path.join(templateRoot, "template.cfworkers/apps/web/wrangler.jsonc"),
@@ -83,6 +84,10 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		fs.renameSync(
 			path.join(consumerRoot, "showteam.cfworkers/apps/web/tests/e2e/payload.spec.ts"),
 			path.join(consumerRoot, "showteam.cfworkers/apps/web/tests/e2e/payload-auth.spec.ts"),
+		);
+		fs.renameSync(
+			path.join(consumerRoot, "showteam.cfworkers/apps/web/scripts/seed-payload-admin.ts"),
+			path.join(consumerRoot, "showteam.cfworkers/apps/web/scripts/seed-ci.ts"),
 		);
 		write(
 			path.join(consumerRoot, ".github/workflows/deploy.yml"),
@@ -214,6 +219,7 @@ jobs:
 			'{"name":"template-cfworkers","services":[{"binding":"WORKER_SELF_REFERENCE","service":"template-cfworkers"},{"binding":"CORIODERS_TELEMETRY","service":"corioders-dashboard-cfworkers"}],"env":{"preview":{"name":"template-cfworkers-preview","services":[{"binding":"WORKER_SELF_REFERENCE","service":"template-cfworkers-preview"}]}}}\n',
 		);
 		write(path.join(templateRoot, "template.cfworkers/apps/web/tests/e2e/payload.spec.ts"), 'test("updated template Payload login", () => {});\n');
+		write(path.join(templateRoot, "template.cfworkers/apps/web/scripts/seed-payload-admin.ts"), 'const username = "core users";\n');
 		write(path.join(templateRoot, "template.cfworkers/apps/web/playwright.config.ts"), 'const username = "core users";\n');
 		fs.rmSync(path.join(templateRoot, ".github/workflows/validate.yml"));
 		write(
@@ -237,6 +243,8 @@ jobs:
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/wrangler.jsonc"), "utf8"), normalizedWorkerNamesPattern);
 		assert.equal(fs.existsSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/tests/e2e/payload.spec.ts")), false);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/tests/e2e/payload-auth.spec.ts"), "utf8"), payloadAuthTestPattern);
+		assert.equal(fs.existsSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/scripts/seed-payload-admin.ts")), false);
+		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/scripts/seed-ci.ts"), "utf8"), coreUsersPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/playwright.config.ts"), "utf8"), coreUsersPattern);
 		assert.equal(sharedWorkflow.includes("Template-only payload migration"), false);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/next.config.ts"), "utf8"), remoteBindingsPattern);
