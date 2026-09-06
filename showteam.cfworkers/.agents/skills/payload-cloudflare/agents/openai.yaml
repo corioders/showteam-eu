@@ -1,4 +1,0 @@
-interface:
-  display_name: "Payload on Cloudflare"
-  short_description: "Integrate Payload CMS with Next.js and Cloudflare D1/R2"
-  default_prompt: "Integrate or maintain Payload CMS using the project Cloudflare pattern."
