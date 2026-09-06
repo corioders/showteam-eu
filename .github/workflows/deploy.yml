@@ -1,6 +1,6 @@
 # Deploys showteam.cfworkers to Cloudflare Workers.
-# Pull requests upload an isolated preview and deploy the latest build to a shared
-# Worker with observable logs; the 'deploy' branch publishes production.
+# Main/payload pushes and pull requests validate and upload previews; the
+# 'deploy' branch publishes production.
 #
 # Infisical supplies deployment secrets through the repository's OIDC identity.
 # Preserve the durable D1/R2 resources named in apps/web/wrangler.jsonc.
@@ -14,6 +14,8 @@ name: Deploy
 on:
   push:
     branches:
+      - main
+      - payload
       - deploy
   pull_request:
   workflow_dispatch:

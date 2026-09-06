@@ -102,6 +102,11 @@ requireMatch(nextConfig, /cacheComponents:\s*true/, "apps/web/next.config.ts mus
 requireMatch(nextConfig, /reactCompiler:\s*true/, "apps/web/next.config.ts must keep the React compiler enabled.");
 requireMatch(nextConfig, /initOpenNextCloudflareForDev\(\{/, "apps/web/next.config.ts must initialize the Cloudflare development context with explicit options.");
 requireMatch(nextConfig, /CSTD_D1_PERSIST_PATH/, "apps/web/next.config.ts must isolate persisted Cloudflare state when a path is provided.");
+requireMatch(
+	nextConfig,
+	/remoteBindings:\s*Boolean\(process\.env\["CLOUDFLARE_API_TOKEN"\]\)/,
+	"apps/web/next.config.ts must enable remote bindings only when Cloudflare authentication is available.",
+);
 if (/cacheComponents:\s*false/.test(nextConfig)) {
 	errors.push("apps/web/next.config.ts must not disable Cache Components.");
 }
@@ -155,6 +160,11 @@ if (tagCacheIds.length !== 2) {
 
 const deployWorkflow = read("../.github/workflows/deploy.yml");
 const scheduleRunnerWorkflow = read("../.github/workflows/schedule-runner.yml");
+requireMatch(
+	deployWorkflow,
+	/push:\s*\n\s+branches:\s*\n\s+- main\s*\n\s+- payload\s*\n\s+- deploy/,
+	"The deploy workflow must validate every pushed main and payload commit while preserving deploy production pushes.",
+);
 const workflowsDirectory = path.join(workspaceDirectory, "..", ".github", "workflows");
 const directWindowsRunnerPattern = /runs-on:\s*\[\s*self-hosted\s*,\s*["']?win24-wsl(?:-poland20)?["']?\s*\]/;
 for (const workflowName of fs.readdirSync(workflowsDirectory)) {
