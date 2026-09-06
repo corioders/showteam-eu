@@ -218,7 +218,7 @@ requireMatch(
 );
 requireMatch(
 	sharedDeployWorkflow,
-	/workers\/scripts\/\$DEPLOYMENT_WORKER_NAME\/settings[\s\S]*wrangler deploy "\$BOOTSTRAP_FILE"[\s\S]*Validate, build, and run browser tests/,
+	/workers\/scripts\/\$DEPLOYMENT_WORKER_NAME\/settings[\s\S]*wrangler deploy --config "\$BOOTSTRAP_DIRECTORY\/wrangler\.jsonc"[\s\S]*Validate, build, and run browser tests/,
 	"A newly created Worker must receive a bootstrap deployment before validation resolves it as a service binding.",
 );
 requireMatch(sharedDeployWorkflow, /PLAYWRIGHT_CACHE="\$RUNNER_TEMP\/ms-playwright"/, "Shared Playwright installation must use writable runner storage.");
