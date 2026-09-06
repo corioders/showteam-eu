@@ -444,6 +444,29 @@ auto_resolve_renamed_template_path() {
 		}
 	fi
 
+	if node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'
+import fs from "node:fs";
+
+const [basePath, oursPath, theirsPath] = process.argv.slice(2);
+const base = fs.readFileSync(basePath, "utf8");
+let ours = fs.readFileSync(oursPath, "utf8");
+const theirs = fs.readFileSync(theirsPath, "utf8");
+const previousUsername = '"corioders"';
+const nextUsername = '"core users"';
+if (base.replaceAll(previousUsername, nextUsername) !== theirs || !ours.includes(previousUsername)) {
+	process.exit(1);
+}
+ours = ours.replaceAll(previousUsername, nextUsername);
+fs.writeFileSync(oursPath, ours);
+NODE
+	then
+		cp "$ours_file" "$target_path"
+		git add -- "$target_path"
+		git rm --quiet --force -- "$template_path"
+		rm -r -- "$temporary_directory"
+		return 0
+	fi
+
 	if [[ $target_path == *.cfworkers/apps/web/wrangler.jsonc ]] && node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'
 import fs from "node:fs";
 
