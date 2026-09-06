@@ -11,6 +11,7 @@ const payloadBranchPattern = /- payload/;
 const remoteBindingsPattern = /remoteBindings: true/;
 const cloudflareTokenGuardPattern = /process\.env\["CLOUDFLARE_API_TOKEN"\]/;
 const consumerPayloadCliPattern = /seed-ci\.ts/;
+const formattedCloudflareContextPattern = /CloudflareContext[^\n]* =\n\tisCLI/;
 
 function git(cwd, ...args) {
 	const result = spawnSync("git", args, { cwd, encoding: "utf8" });
@@ -36,7 +37,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true };\nexport default options;\n");
 		write(
 			path.join(templateRoot, "template.cfworkers/apps/web/payload.config.ts"),
-			'const isCLI = process.argv.some((value) => value.endsWith("seed-payload-admin.ts"));\nconst cloudflare: CloudflareContext =\n\tisCLI || !isProduction || process.env["CSTD_D1_PERSIST_PATH"] ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });\n',
+			'const isCLI = process.argv.some((value) => value.endsWith("seed-payload-admin.ts"));\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env["CSTD_D1_PERSIST_PATH"] ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });\n',
 		);
 		git(templateRoot, "add", ".");
 		git(templateRoot, "commit", "-m", "initial template");
@@ -49,7 +50,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		write(path.join(consumerRoot, ".github/workflows/deploy.yml"), "# Deploys showteam.cfworkers\non:\n  push:\n    branches:\n      - deploy\n");
 		write(
 			path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"),
-			'const isCLI = process.argv.some((value) => value.endsWith("seed-ci.ts"));\nconst cloudflare: CloudflareContext =\n\tisCLI || !isProduction || process.env.CSTD_D1_PERSIST_PATH ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });\n',
+			'const isCLI = process.argv.some((value) => value.endsWith("seed-ci.ts"));\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env.CSTD_D1_PERSIST_PATH ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });\n',
 		);
 		fs.rmSync(path.join(consumerRoot, "TODO.md"));
 		git(consumerRoot, "add", "-A");
@@ -63,7 +64,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true, remoteBindings: true };\nexport default options;\n");
 		write(
 			path.join(templateRoot, "template.cfworkers/apps/web/payload.config.ts"),
-			'const isCLI = process.argv.some((value) => value.endsWith("seed-payload-admin.ts"));\nconst cloudflare: CloudflareContext =\n\tisCLI || !isProduction || process.env["CSTD_D1_PERSIST_PATH"] || !process.env["CLOUDFLARE_API_TOKEN"]\n\t\t? await getCloudflareContextFromWrangler()\n\t\t: await getCloudflareContext({ async: true });\n',
+			'const isCLI = process.argv.some((value) => value.endsWith("seed-payload-admin.ts"));\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env["CSTD_D1_PERSIST_PATH"] || !process.env["CLOUDFLARE_API_TOKEN"]\n\t\t? await getCloudflareContextFromWrangler()\n\t\t: await getCloudflareContext({ async: true });\n',
 		);
 		write(path.join(templateRoot, "template.cfworkers/script/pull-template.test.js"), 'const templateDirectory = "template.cfworkers";\n');
 		git(templateRoot, "add", ".");
@@ -78,6 +79,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/next.config.ts"), "utf8"), remoteBindingsPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), cloudflareTokenGuardPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), consumerPayloadCliPattern);
+		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), formattedCloudflareContextPattern);
 		assert.equal(
 			fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/script/pull-template.test.js"), "utf8"),
 			'const templateDirectory = "template.cfworkers";\n',
