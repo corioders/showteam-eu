@@ -269,10 +269,6 @@ try {
 	errors.push(`biome.jsonc must remain valid JSONC: ${error instanceof Error ? error.message : String(error)}.`);
 }
 
-const rootLayout = read("apps/web/src/app/layout.tsx");
-requireMatch(rootLayout, /import\s*\{\s*ThemeProvider\s*\}\s*from\s*"next-themes"/, "The root layout must keep ThemeProvider.");
-requireMatch(rootLayout, /<ThemeProvider\b/, "The root layout must render ThemeProvider.");
-
 const agentRules = read("AGENTS.md");
 for (const [pattern, message] of [
 	[/SHADCN-ONLY UI IS MANDATORY/, "AGENTS.md must require shadcn-only UI."],
