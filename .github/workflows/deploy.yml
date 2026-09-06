@@ -28,8 +28,8 @@ jobs:
     with:
       runner-label: ${{ needs.schedule.outputs.runner-label }}
       app-directory: template.cfworkers
-      worker-name: template-cfworkers-web
-      preview-worker-name: template-cfworkers-web-preview
+      worker-name: template-cfworkers
+      preview-worker-name: template-cfworkers-preview
       production-cache-bucket: template-cfworkers-next-inc-cache-r2-bucket
       preview-cache-bucket: template-cfworkers-preview-next-inc-cache-r2-bucket
       deploy-enabled: ${{ github.repository != 'corioders/cstd-nextjs-template' }}
