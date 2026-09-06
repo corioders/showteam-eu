@@ -16,7 +16,7 @@ const customValidationEnvironmentPattern = /PAYLOAD_SECRET: local-ci-secret/;
 const localValidationPathPattern = /CSTD_D1_PERSIST_PATH="\.wrangler\/state\/v3"/;
 const consumerD1SnapshotPattern = /Consumer-only D1 snapshot/;
 const templatePayloadSeedPattern = /New template Payload seed/;
-const sharedDeployWorkflowPattern = /corioders\/cstd-next\/\.github\/workflows\/deploy\.yml@1{40}/;
+const sharedDeployWorkflowPattern = /\.\/\.github\/workflows\/_deploy\.yml/;
 const consumerDeployInputsPattern = /worker-name: showteam-eu[\s\S]+preview-worker-name: showteam-eu-preview[\s\S]+payload: true/;
 const consumerPayloadCommandsPattern = /payload-d1-binding: D1[\s\S]+payload-local-migrate-command: pnpm migrate:local[\s\S]+payload-seed-production: false/;
 const installPlaywrightInputPattern = /install-playwright: true/;
@@ -180,10 +180,10 @@ on:
       - deploy
 jobs:
   schedule:
-    uses: corioders/cstd-next/.github/workflows/schedule-runner.yml@${"1".repeat(40)}
+    uses: ./.github/workflows/_schedule-runner.yml
   application:
     needs: schedule
-    uses: corioders/cstd-next/.github/workflows/deploy.yml@${"1".repeat(40)}
+    uses: ./.github/workflows/_deploy.yml
     with:
       runner-label: ${runnerTempExpression}
       app-directory: template.cfworkers

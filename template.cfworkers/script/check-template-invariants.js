@@ -187,13 +187,15 @@ for (const workflowName of fs.readdirSync(workflowsDirectory)) {
 }
 for (const obsoleteWorkflow of ["schedule-runner.yml", "validate.yml"]) {
 	if (fs.existsSync(path.join(workflowsDirectory, obsoleteWorkflow))) {
-		errors.push(`${obsoleteWorkflow} must live only in cstd-next; applications keep one thin deploy workflow.`);
+		errors.push(`${obsoleteWorkflow} is obsolete; applications use the underscored reusable workflows.`);
 	}
 }
-const schedulerReference = deployWorkflow.match(/uses:\s*corioders\/cstd-next\/\.github\/workflows\/schedule-runner\.yml@([0-9a-f]{40})/);
-const deployReference = deployWorkflow.match(/uses:\s*corioders\/cstd-next\/\.github\/workflows\/deploy\.yml@([0-9a-f]{40})/);
-if (!schedulerReference || !deployReference || schedulerReference[1] !== deployReference[1]) {
-	errors.push("The deploy workflow must pin the shared scheduler and deploy workflow to the same cstd-next commit SHA.");
+requireMatch(deployWorkflow, /uses:\s*\.\/\.github\/workflows\/_schedule-runner\.yml/, "The deploy workflow must call the local shared scheduler.");
+requireMatch(deployWorkflow, /uses:\s*\.\/\.github\/workflows\/_deploy\.yml/, "The deploy workflow must call the local shared deploy workflow.");
+for (const reusableWorkflow of ["_schedule-runner.yml", "_deploy.yml"]) {
+	if (!fs.existsSync(path.join(workflowsDirectory, reusableWorkflow))) {
+		errors.push(`${reusableWorkflow} must be distributed with the template.`);
+	}
 }
 requireMatch(deployWorkflow, /needs:\s*schedule/, "The application workflow must wait for the shared scheduler.");
 requireMatch(
