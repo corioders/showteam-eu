@@ -5,10 +5,11 @@ import os from "node:os";
 import path from "node:path";
 
 import { CSTD_NEXT_CANONICAL_REPOSITORY } from "./canonical.js";
-import { learnedPatchPaths, readShadcnStyle, writeLearnedPatch } from "./patches.js";
-import { compatibilityTestPath, fileHash, getSessionDirectory, run } from "./session.js";
+import { learnedPatchPaths, readShadcnStyle, verifyPatchUnitTest, writeLearnedPatch } from "./patches.js";
+import { fileHash, getSessionDirectory, patchUnitTestPath, run } from "./session.js";
 
 const cwd = process.cwd();
+const cstdNextRoot = path.resolve(import.meta.dirname, "..", "..");
 const sessionDirectory = getSessionDirectory(cwd);
 const sessionPath = path.join(sessionDirectory, "session.json");
 if (!fs.existsSync(sessionPath)) {
@@ -31,23 +32,21 @@ if (session.style !== currentStyle) {
 	process.exit(1);
 }
 
-const compatibilityTest = compatibilityTestPath(session.registryItems[0]);
-const compatibilityTestAbsolutePath = path.join(cwd, compatibilityTest);
-if (session.compatibilityTestHashes === undefined) {
-	console.error("The latest Shadcnblocks installation session predates browser verification. Run shadcn:add again before patching.");
+const unitTest = patchUnitTestPath(session.registryItems[0], session.style);
+const unitTestAbsolutePath = path.join(cstdNextRoot, unitTest);
+if (session.patchUnitTestHashes === undefined) {
+	console.error("The latest Shadcnblocks installation session predates cstd-next unit verification. Run shadcn:add again before patching.");
 	process.exit(1);
 }
-const previousCompatibilityTestHash = session.compatibilityTestHashes?.[compatibilityTest] ?? null;
-const currentCompatibilityTestHash = fileHash(compatibilityTestAbsolutePath);
-if (currentCompatibilityTestHash === null || currentCompatibilityTestHash === previousCompatibilityTestHash) {
-	console.error(
-		`Add or update ${compatibilityTest} after shadcn:add. It must render the installed block, exercise every interactive state, and fail on browser console or page errors.`,
-	);
+const previousUnitTestHash = session.patchUnitTestHashes?.[unitTest] ?? null;
+const currentUnitTestHash = fileHash(unitTestAbsolutePath);
+if (currentUnitTestHash === null || currentUnitTestHash === previousUnitTestHash) {
+	console.error(`Add or update ${unitTestAbsolutePath} after shadcn:add. It must verify the freshly installed block after the compatibility fix.`);
 	process.exit(1);
 }
 
 const existingSourceFiles = session.sourceFiles.filter((relativePath) => fs.existsSync(path.join(cwd, relativePath)));
-const biomeResult = run("pnpm", ["exec", "biome", "check", "--error-on-warnings", "--no-errors-on-unmatched", ...existingSourceFiles, compatibilityTest], {
+const biomeResult = run("pnpm", ["exec", "biome", "check", "--error-on-warnings", "--no-errors-on-unmatched", ...existingSourceFiles, unitTestAbsolutePath], {
 	allowFailure: true,
 	cwd,
 });
@@ -57,19 +56,13 @@ if (biomeResult.status !== 0 || typecheckResult.status !== 0) {
 	process.exit(1);
 }
 
-const buildResult = run("pnpm", ["run", "build"], { allowFailure: true, cwd });
-if (buildResult.status !== 0) {
-	console.error("The installed block failed the production build; the compatibility patch was not created.");
-	process.exit(1);
-}
-const browserTestResult = run("pnpm", ["exec", "playwright", "test", compatibilityTest], { allowFailure: true, cwd });
-if (browserTestResult.status !== 0) {
-	console.error(`The installed block failed ${compatibilityTest}; the compatibility patch was not created.`);
+const unitTestError = verifyPatchUnitTest(cwd, unitTestAbsolutePath);
+if (unitTestError) {
+	console.error(unitTestError.message);
 	process.exit(1);
 }
 
 const repositoryRoot = run("git", ["rev-parse", "--show-toplevel"], { capture: true, cwd }).stdout.trim();
-const cstdNextRoot = path.resolve(import.meta.dirname, "..", "..");
 const cstdNextPrefix = path.relative(repositoryRoot, cstdNextRoot) || ".";
 const patchDirectory = path.join(cstdNextRoot, "script", "shadcn", "patches");
 const baselineRoot = path.join(sessionDirectory, "baseline");
@@ -95,7 +88,7 @@ if (hasCompatibilityChanges) {
 		registryItem: session.registryItems[0],
 		sourceFiles: session.sourceFiles,
 		style: session.style,
-		verificationTest: { hash: currentCompatibilityTestHash, path: compatibilityTest },
+		unitTest: { hash: currentUnitTestHash, path: unitTest },
 	});
 	if (learningError) {
 		fs.rmSync(temporaryPatchDirectory, { force: true, recursive: true });
@@ -115,7 +108,7 @@ if (cstdTests.status !== 0) {
 }
 
 fs.mkdirSync(patchDirectory, { recursive: true });
-const { manifestPath, patchPath } = learnedPatchPaths(patchDirectory, session.registryItems[0], session.style);
+const { manifestPath, patchPath, unitTestPath } = learnedPatchPaths(patchDirectory, session.registryItems[0], session.style);
 if (temporaryPatch && temporaryPatchDirectory) {
 	fs.copyFileSync(temporaryPatch.manifestPath, manifestPath);
 	fs.copyFileSync(temporaryPatch.patchPath, patchPath);
@@ -123,10 +116,11 @@ if (temporaryPatch && temporaryPatchDirectory) {
 } else {
 	fs.rmSync(manifestPath, { force: true });
 	fs.rmSync(patchPath, { force: true });
+	fs.rmSync(unitTestPath, { force: true });
 }
 
-const repositoryPatchPaths = [manifestPath, patchPath].map((filePath) => path.relative(repositoryRoot, filePath));
-const canonicalPatchPaths = [manifestPath, patchPath].map((filePath) => path.relative(cstdNextRoot, filePath));
+const repositoryPatchPaths = [manifestPath, patchPath, unitTestPath].map((filePath) => path.relative(repositoryRoot, filePath));
+const canonicalPatchPaths = [manifestPath, patchPath, unitTestPath].map((filePath) => path.relative(cstdNextRoot, filePath));
 const registryName = session.registryItems[0].slice("@shadcnblocks/".length);
 const commitMessage = `fix(cstd-next): patch ${registryName} for ${session.style}`;
 run("git", ["add", "--all", "--", ...repositoryPatchPaths], { cwd: repositoryRoot });

@@ -1,6 +1,7 @@
 export function registryItemsFromArguments(arguments_: string[]): string[];
 export function readShadcnStyle(cwd: string): [string, null] | [null, Error];
-export function learnedPatchPaths(patchDirectory: string, registryItem: string, style: string): { manifestPath: string; patchPath: string };
+export function learnedPatchPaths(patchDirectory: string, registryItem: string, style: string): { manifestPath: string; patchPath: string; unitTestPath: string };
+export function verifyPatchUnitTest(currentRoot: string, unitTestPath: string): Error | null;
 
 interface LearnedPatchOptions {
 	baselineRoot: string;
@@ -9,7 +10,7 @@ interface LearnedPatchOptions {
 	registryItem: string;
 	sourceFiles: string[];
 	style: string;
-	verificationTest: { hash: string; path: string };
+	unitTest: { hash: string; path: string };
 }
 
 interface LearnedPatchResult {

@@ -6,7 +6,7 @@ import { afterAll, describe, expect, it } from "vitest";
 
 import { checkCanonicalShadcnNormalization, synchronizeCanonicalShadcnNormalization } from "../script/shadcn/canonical.js";
 import { applyLearnedPatch, readShadcnStyle, registryItemsFromArguments, writeLearnedPatch } from "../script/shadcn/patches.js";
-import { compatibilityTestPath, fileHash, loadLocalEnvironment, run, snapshotFiles } from "../script/shadcn/session.js";
+import { fileHash, loadLocalEnvironment, patchUnitTestPath, run, snapshotFiles } from "../script/shadcn/session.js";
 
 const fixtureDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "cstd-shadcn-session-"));
 
@@ -43,10 +43,10 @@ describe("Shadcnblocks installation snapshots", () => {
 		expect(result.stdout).toBe("n\n");
 	});
 
-	it("uses one deterministic browser test per registry block and detects changes", () => {
-		const testPath = compatibilityTestPath("@shadcnblocks/dashboard3");
+	it("uses one deterministic cstd-next unit test per registry patch and detects changes", () => {
+		const testPath = patchUnitTestPath("@shadcnblocks/dashboard3", "base-mira");
 		const absoluteTestPath = path.join(fixtureDirectory, testPath);
-		expect(testPath).toBe("tests/e2e/shadcn/dashboard3.spec.ts");
+		expect(testPath).toBe("script/shadcn/patches/base-mira__shadcnblocks__dashboard3.test.js");
 		expect(fileHash(absoluteTestPath)).toBeNull();
 		fs.mkdirSync(path.dirname(absoluteTestPath), { recursive: true });
 		fs.writeFileSync(absoluteTestPath, "test v1\n");
@@ -64,6 +64,8 @@ describe("Shadcnblocks installation snapshots", () => {
 		const relativePath = "src/components/dashboard9.tsx";
 		const upstream = 'export const status = "pending";\n';
 		const fixed = 'export const status = "compatible";\n';
+		const unitTestRelativePath = "script/shadcn/patches/base-mira__shadcnblocks__dashboard9.test.js";
+		const unitTestPath = path.join(patchDirectory, path.basename(unitTestRelativePath));
 		for (const [root, source] of [
 			[baselineRoot, upstream],
 			[fixedRoot, fixed],
@@ -73,6 +75,12 @@ describe("Shadcnblocks installation snapshots", () => {
 			fs.writeFileSync(path.join(root, relativePath), source);
 		}
 		run("git", ["init", "--initial-branch=main"], { capture: true, cwd: installRepository });
+		fs.mkdirSync(patchDirectory, { recursive: true });
+		fs.writeFileSync(
+			unitTestPath,
+			'import fs from "node:fs"; import path from "node:path"; const source = fs.readFileSync(path.join(process.argv[2], "src/components/dashboard9.tsx"), "utf8"); if (!source.includes("compatible")) process.exit(1);\n',
+		);
+		const unitTestHash = fileHash(unitTestPath) ?? "";
 
 		const [learnedPatch, learningError] = writeLearnedPatch({
 			baselineRoot,
@@ -81,16 +89,16 @@ describe("Shadcnblocks installation snapshots", () => {
 			registryItem: "@shadcnblocks/dashboard9",
 			sourceFiles: [relativePath],
 			style: "base-mira",
-			verificationTest: { hash: "browser-test-hash", path: "tests/e2e/shadcn/dashboard9.spec.ts" },
+			unitTest: { hash: unitTestHash, path: unitTestRelativePath },
 		});
 
 		expect(learningError).toBeNull();
 		expect(learnedPatch?.changedFiles).toEqual([relativePath]);
 		expect(fs.readFileSync(learnedPatch?.patchPath ?? "", "utf8")).not.toContain(fixtureDirectory);
 		expect(path.basename(learnedPatch?.patchPath ?? "")).toBe("base-mira__shadcnblocks__dashboard9.patch");
-		expect(JSON.parse(fs.readFileSync(learnedPatch?.manifestPath ?? "", "utf8")).verificationTest).toEqual({
-			hash: "browser-test-hash",
-			path: "tests/e2e/shadcn/dashboard9.spec.ts",
+		expect(JSON.parse(fs.readFileSync(learnedPatch?.manifestPath ?? "", "utf8")).unitTest).toEqual({
+			hash: unitTestHash,
+			path: unitTestRelativePath,
 		});
 		const applicationResult = applyLearnedPatch({ cwd: installRoot, patchDirectory, registryItem: "@shadcnblocks/dashboard9", style: "base-mira" });
 		expect(applicationResult).toEqual({ changedFiles: [relativePath], status: "applied" });
@@ -105,7 +113,7 @@ describe("Shadcnblocks installation snapshots", () => {
 		fs.writeFileSync(path.join(installRoot, relativePath), upstream);
 		const legacyManifest = JSON.parse(fs.readFileSync(learnedPatch?.manifestPath ?? "", "utf8"));
 		legacyManifest.formatVersion = 2;
-		delete legacyManifest.verificationTest;
+		delete legacyManifest.unitTest;
 		fs.writeFileSync(learnedPatch?.manifestPath ?? "", `${JSON.stringify(legacyManifest)}\n`);
 		expect(applyLearnedPatch({ cwd: installRoot, patchDirectory, registryItem: "@shadcnblocks/dashboard9", style: "base-mira" })).toMatchObject({
 			status: "unverified",
@@ -113,7 +121,7 @@ describe("Shadcnblocks installation snapshots", () => {
 		expect(fs.readFileSync(path.join(installRoot, relativePath), "utf8")).toBe(fixed);
 	});
 
-	it("refuses to learn a compatibility patch without browser-test evidence", () => {
+	it("refuses to learn a compatibility patch without cstd-next unit-test evidence", () => {
 		const [learnedPatch, learningError] = writeLearnedPatch({
 			baselineRoot: fixtureDirectory,
 			currentRoot: fixtureDirectory,
@@ -122,11 +130,11 @@ describe("Shadcnblocks installation snapshots", () => {
 			sourceFiles: [],
 			style: "base-mira",
 			// @ts-expect-error Runtime validation protects JavaScript callers and stale sessions.
-			verificationTest: undefined,
+			unitTest: undefined,
 		});
 
 		expect(learnedPatch).toBeNull();
-		expect(learningError?.message).toContain("browser compatibility test is required");
+		expect(learningError?.message).toContain("cstd-next unit test is required");
 	});
 
 	it("reads and validates the components.json style", () => {

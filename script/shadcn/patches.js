@@ -5,7 +5,7 @@ import path from "node:path";
 
 import { run } from "./session.js";
 
-const PATCH_FORMAT_VERSION = 3;
+const PATCH_FORMAT_VERSION = 4;
 const SHADCNBLOCKS_ITEM = /^@shadcnblocks\/[A-Za-z0-9._-]+$/;
 const SHADCN_STYLE = /^[A-Za-z0-9._-]+$/;
 
@@ -22,11 +22,31 @@ function patchPaths(patchDirectory, registryItem, style) {
 	return {
 		manifestPath: path.join(patchDirectory, `${baseName}.json`),
 		patchPath: path.join(patchDirectory, `${baseName}.patch`),
+		unitTestPath: path.join(patchDirectory, `${baseName}.test.js`),
 	};
 }
 
 export function learnedPatchPaths(patchDirectory, registryItem, style) {
 	return patchPaths(patchDirectory, registryItem, style);
+}
+
+export function verifyPatchUnitTest(currentRoot, unitTestPath) {
+	if (!fs.existsSync(unitTestPath)) {
+		return new Error(`Missing patch unit test: ${unitTestPath}`);
+	}
+	const result = run(process.execPath, [unitTestPath, currentRoot], { allowFailure: true, capture: true, cwd: currentRoot });
+	if (result.status !== 0) {
+		return new Error(result.stderr.trim() || result.stdout.trim() || `Patch unit test failed: ${unitTestPath}`);
+	}
+	return null;
+}
+
+function verifyManifestUnitTest(manifest, patchDirectory, currentRoot) {
+	const unitTestPath = path.join(patchDirectory, path.basename(manifest.unitTest.path));
+	if (hashFile(unitTestPath) !== manifest.unitTest.hash) {
+		return new Error(`Patch unit test is missing or changed for ${manifest.registryItem}.`);
+	}
+	return verifyPatchUnitTest(currentRoot, unitTestPath);
 }
 
 function createFilePatch(baselinePath, currentPath, relativePath, cwd) {
@@ -102,15 +122,15 @@ export function readShadcnStyle(cwd) {
 	return [components.style, null];
 }
 
-export function writeLearnedPatch({ baselineRoot, currentRoot, patchDirectory, registryItem, sourceFiles, style, verificationTest }) {
+export function writeLearnedPatch({ baselineRoot, currentRoot, patchDirectory, registryItem, sourceFiles, style, unitTest }) {
 	if (!SHADCNBLOCKS_ITEM.test(registryItem)) {
 		return [null, new Error(`Unsupported registry item: ${registryItem}`)];
 	}
 	if (!SHADCN_STYLE.test(style)) {
 		return [null, new Error(`Unsupported Shadcn style: ${style}`)];
 	}
-	if (typeof verificationTest?.path !== "string" || typeof verificationTest.hash !== "string") {
-		return [null, new Error("A passing browser compatibility test is required before learning a Shadcnblocks patch.")];
+	if (typeof unitTest?.path !== "string" || typeof unitTest.hash !== "string") {
+		return [null, new Error("A passing cstd-next unit test is required before learning a Shadcnblocks patch.")];
 	}
 
 	const changedFiles = [];
@@ -146,10 +166,7 @@ export function writeLearnedPatch({ baselineRoot, currentRoot, patchDirectory, r
 	const { manifestPath, patchPath } = patchPaths(patchDirectory, registryItem, style);
 	fs.mkdirSync(patchDirectory, { recursive: true });
 	fs.writeFileSync(patchPath, patch);
-	fs.writeFileSync(
-		manifestPath,
-		`${JSON.stringify({ formatVersion: PATCH_FORMAT_VERSION, registryItem, style, baselineHashes, changedFiles, verificationTest }, null, "\t")}\n`,
-	);
+	fs.writeFileSync(manifestPath, `${JSON.stringify({ formatVersion: PATCH_FORMAT_VERSION, registryItem, style, baselineHashes, changedFiles, unitTest }, null, "\t")}\n`);
 	return [{ changedFiles, manifestPath, patchPath }, null];
 }
 
@@ -170,13 +187,13 @@ export function applyLearnedPatch({ cwd, patchDirectory, registryItem, style }) 
 	} catch {
 		return { error: `Learned patch manifest is invalid for ${registryItem}.`, status: "invalid" };
 	}
-	const requiresBrowserVerification = manifest.formatVersion === 2;
+	const hasUnitTest = manifest.formatVersion === PATCH_FORMAT_VERSION;
 	if (
-		(!requiresBrowserVerification && manifest.formatVersion !== PATCH_FORMAT_VERSION) ||
+		![2, 3, PATCH_FORMAT_VERSION].includes(manifest.formatVersion) ||
 		manifest.registryItem !== registryItem ||
 		manifest.style !== style ||
 		typeof manifest.baselineHashes !== "object" ||
-		(!requiresBrowserVerification && (typeof manifest.verificationTest?.path !== "string" || typeof manifest.verificationTest.hash !== "string"))
+		(hasUnitTest && (typeof manifest.unitTest?.path !== "string" || typeof manifest.unitTest.hash !== "string"))
 	) {
 		return { error: `Learned patch manifest is invalid for ${registryItem}.`, status: "invalid" };
 	}
@@ -198,12 +215,16 @@ export function applyLearnedPatch({ cwd, patchDirectory, registryItem, style }) 
 		return { error: `Learned patch no longer applies cleanly for ${registryItem} with style ${style}: ${checkResult.stderr.trim()}`, status: "stale" };
 	}
 	run("git", ["apply", "--whitespace=nowarn", ...directoryArguments, patchPath], { cwd: applyCwd });
-	if (requiresBrowserVerification) {
+	if (!hasUnitTest) {
 		return {
 			changedFiles: manifest.changedFiles,
-			error: `${registryItem} compatibility for style ${style} predates required browser verification.`,
+			error: `${registryItem} compatibility for style ${style} predates required cstd-next unit verification.`,
 			status: "unverified",
 		};
+	}
+	const unitTestError = verifyManifestUnitTest(manifest, patchDirectory, cwd);
+	if (unitTestError) {
+		return { error: unitTestError.message, status: "invalid" };
 	}
 	return { changedFiles: manifest.changedFiles, status: "applied" };
 }
