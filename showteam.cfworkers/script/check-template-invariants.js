@@ -193,6 +193,11 @@ if (/opennextjs-cloudflare populateCache remote/.test(deployWorkflow)) {
 }
 requireMatch(
 	deployWorkflow,
+	/name: Validate, build, and run browser tests\s+env:\s+CSTD_D1_PERSIST_PATH:/,
+	"The deploy workflow must isolate D1 during validation while leaving deployment bindings remote.",
+);
+requireMatch(
+	deployWorkflow,
 	/name: Resolve external build inputs\s+run: pnpm resolve-build-inputs/,
 	"The deploy workflow must resolve external build inputs before building.",
 );

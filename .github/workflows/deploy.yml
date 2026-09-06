@@ -203,6 +203,8 @@ jobs:
           touch "$CACHE_DIRECTORY/.complete"
 
       - name: Validate, build, and run browser tests
+        env:
+          CSTD_D1_PERSIST_PATH: ${{ runner.temp }}/cstd-d1-${{ github.run_id }}-${{ github.run_attempt }}
         run: pnpm validate:ci
         working-directory: showteam.cfworkers
         env:
