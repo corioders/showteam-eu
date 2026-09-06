@@ -187,7 +187,7 @@ for (const reusableWorkflow of ["_schedule-runner.yml", "_deploy.yml"]) {
 	}
 }
 const sharedDeployWorkflow = read("../.github/workflows/_deploy.yml");
-requireMatch(sharedDeployWorkflow, /payload-local-admin-username:[\s\S]*default:\s*corioders/, "Shared validation must default the local Payload username.");
+requireMatch(sharedDeployWorkflow, /payload-local-admin-username:[\s\S]*default:\s*core users/, "Shared validation must default the local Payload username.");
 requireMatch(sharedDeployWorkflow, /payload-local-admin-password:[\s\S]*default:\s*admin/, "Shared validation must default the local Payload password.");
 requireMatch(
 	sharedDeployWorkflow,

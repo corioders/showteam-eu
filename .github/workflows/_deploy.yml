@@ -89,7 +89,7 @@ on:
         type: string
       payload-local-admin-username:
         description: Local Payload administrator username used by validation.
-        default: corioders
+        default: core users
         type: string
       payload-local-admin-password:
         description: Local Payload administrator password used by validation.
