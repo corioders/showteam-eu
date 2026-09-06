@@ -57,6 +57,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		fs.copyFileSync(pullTemplate, path.join(templateRoot, "pull_template.sh"));
 		fs.chmodSync(path.join(templateRoot, "pull_template.sh"), 0o755);
 		write(path.join(templateRoot, "TODO.md"), "template task\n");
+		write(path.join(templateRoot, "template.cfworkers/apps/web/src/app/layout.tsx"), 'const applicationName = "Template";\nconst shared = true;\n');
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true };\nexport default options;\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/tests/e2e/payload.spec.ts"), 'test("template Payload login", () => {});\n');
 		write(path.join(templateRoot, "template.cfworkers/apps/web/scripts/seed-payload-admin.ts"), 'const username = "corioders";\n');
@@ -109,6 +110,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 			path.join(consumerRoot, "showteam.cfworkers/apps/web/package.json"),
 			'{"scripts":{"migrate:local":"payload migrate","seed:local":"tsx scripts/seed-ci.ts","deploy:database:preview":"payload migrate","seed:preview":"tsx scripts/seed-ci.ts","deploy:database":"payload migrate"}}\n',
 		);
+		write(path.join(consumerRoot, "showteam.cfworkers/apps/web/src/app/layout.tsx"), 'const applicationName = "Showteam";\nconst shared = true;\n');
 		write(
 			path.join(consumerRoot, "showteam.cfworkers/apps/web/wrangler.jsonc"),
 			'{"name":"showteam-eu","services":[{"binding":"CORIODERS_TELEMETRY","service":"corioders-dashboard-cfworkers-web"}],"r2_buckets":[{"binding":"NEXT_INC_CACHE_R2_BUCKET","bucket_name":"showteam-next-cache"}],"d1_databases":[{"binding":"D1"}],"env":{"preview":{"name":"showteam-eu-preview","r2_buckets":[{"binding":"NEXT_INC_CACHE_R2_BUCKET","bucket_name":"showteam-preview-next-cache"}]}}}\n',
@@ -128,6 +130,10 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		);
 		write(path.join(templateRoot, "TODO.md"), "updated template task\n");
 		write(path.join(templateRoot, "template.cfworkers/CONSUMERS.toml"), "version = 1\n");
+		write(
+			path.join(templateRoot, "template.cfworkers/apps/web/src/app/layout.tsx"),
+			'const applicationName = "Template";\nconst shared = true;\nconst developmentTools = true;\n',
+		);
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true, remoteBindings: true };\nexport default options;\n");
 		write(
 			path.join(templateRoot, "template.cfworkers/script/check-template-invariants.js"),
@@ -234,6 +240,10 @@ jobs:
 		assert.equal(sharedWorkflowResult.status, 0, `${sharedWorkflowResult.stdout}${sharedWorkflowResult.stderr}`);
 		assert.equal(fs.existsSync(path.join(consumerRoot, "TODO.md")), false);
 		assert.equal(fs.existsSync(path.join(consumerRoot, "showteam.cfworkers/CONSUMERS.toml")), false);
+		assert.equal(
+			fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/src/app/layout.tsx"), "utf8"),
+			'const applicationName = "Showteam";\nconst shared = true;\nconst developmentTools = true;\n',
+		);
 		assert.equal(fs.readFileSync(path.join(consumerRoot, "pull_template.sh"), "utf8"), fs.readFileSync(pullTemplate, "utf8"));
 		assert.equal(spawnSync("git", ["ls-files", "template.cfworkers"], { cwd: consumerRoot, encoding: "utf8" }).stdout, "");
 		const sharedWorkflow = fs.readFileSync(path.join(consumerRoot, ".github/workflows/deploy.yml"), "utf8");

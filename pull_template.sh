@@ -49,6 +49,16 @@ strip_template_maintainer_agent_rules() {
 	git add -- AGENTS.md
 }
 
+remove_consumer_registry() {
+	[[ -n $consumer_directory ]] || return 0
+	local registry_path
+	for registry_path in template.cfworkers/CONSUMERS.toml "$consumer_directory/CONSUMERS.toml"; do
+		if git ls-files --error-unmatch -- "$registry_path" >/dev/null 2>&1; then
+			git rm --quiet --force -- "$registry_path"
+		fi
+	done
+}
+
 auto_resolve_agent_rules() {
 	local temporary_directory base_file ours_file theirs_file result_file
 
@@ -92,9 +102,7 @@ continue_template_merge() {
 	if [[ -n $consumer_directory ]]; then
 		local project_name staged_path template_path target_path
 		project_name=${consumer_directory%.cfworkers}
-		if [[ -e $consumer_directory/CONSUMERS.toml ]]; then
-			git rm --quiet --force -- "$consumer_directory/CONSUMERS.toml"
-		fi
+		remove_consumer_registry
 		while IFS= read -r -d '' template_path; do
 			if [[ $template_path == template.cfworkers/CONSUMERS.toml ]]; then
 				git rm --quiet --force -- "$template_path"
@@ -440,6 +448,8 @@ NODE
 	return 1
 }
 
+manual_resolution_path=""
+
 auto_resolve_renamed_template_path() {
 	local template_path=$1 temporary_directory base_file ours_file theirs_file result_file target_path project_name
 
@@ -632,12 +642,17 @@ NODE
 		rm -r -- "$temporary_directory"
 		return 0
 	fi
+	git merge-file --diff3 --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file" || true
+	cp "$result_file" "$target_path"
+	git rm --quiet --force -- "$template_path"
+	manual_resolution_path=$target_path
 	rm -r -- "$temporary_directory"
-	return 1
+	return 2
 }
 
 pull_output=$(git -c merge.directoryRenames=true pull --no-rebase --no-commit --no-ff --autostash template "$template_branch" 2>&1)
 pull_status=$?
+remove_consumer_registry
 if (( pull_status == 0 )); then
 	printf '%s\n' "$pull_output"
 	if git rev-parse --verify --quiet MERGE_HEAD >/dev/null; then
@@ -675,7 +690,10 @@ while IFS= read -r unmerged_path; do
 			git rm --quiet --force -- "$unmerged_path"
 			;;
 		template.cfworkers/*)
-			auto_resolve_renamed_template_path "$unmerged_path" || manual_paths+=("$unmerged_path")
+			manual_resolution_path=""
+			if ! auto_resolve_renamed_template_path "$unmerged_path"; then
+				manual_paths+=("${manual_resolution_path:-$unmerged_path}")
+			fi
 			;;
 		*.cfworkers/.infisical.json)
 			git checkout --ours -- "$unmerged_path"
