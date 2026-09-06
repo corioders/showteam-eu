@@ -155,19 +155,17 @@ const migration = [
 	[oldValidation, inlineValidation],
 	[inlineValidation, localValidation],
 	[localValidation, versionedLocalValidation],
-].find(([from, to]) => base.includes(from) && ours.includes(from) && theirs.includes(to) && theirs.replace(to, from) === base);
+].find(([from, to]) => base.includes(from) && ours.includes(from) && theirs.includes(to));
 if (!migration) {
 	process.exit(1);
 }
 
+fs.writeFileSync(basePath, base.replace(migration[0], migration[1]));
 ours = ours.replace(migration[0], migration[1]);
 fs.writeFileSync(oursPath, ours);
 NODE
 	then
-		cp "$ours_file" "$unmerged_path"
-		git add -- "$unmerged_path"
-		rm -r -- "$temporary_directory"
-		return 0
+		:
 	fi
 
 	if git merge-file --quiet --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file"; then
@@ -175,6 +173,73 @@ NODE
 		git add -- "$unmerged_path"
 		rm -r -- "$temporary_directory"
 		return 0
+	fi
+	if [[ $unmerged_path == .github/workflows/deploy.yml ]]; then
+		git merge-file --diff3 --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file" || true
+		if node - "$result_file" <<'NODE'
+import fs from "node:fs";
+
+const [resultPath] = process.argv.slice(2);
+const source = fs.readFileSync(resultPath, "utf8");
+const conflictPattern = /^<<<<<<<.*\n([\s\S]*?)^\|\|\|\|\|\|\|.*\n([\s\S]*?)^=======\n([\s\S]*?)^>>>>>>>.*$/gm;
+let conflictCount = 0;
+let valid = true;
+
+function parseSteps(section, allowConsumerPrefix = false) {
+	const firstStep = section.search(/^\s+- name: /m);
+	if (firstStep < 0) {
+		return allowConsumerPrefix ? { blocks: [], prefix: section, steps: new Map() } : null;
+	}
+	if (!allowConsumerPrefix && section.slice(0, firstStep).trim()) {
+		return null;
+	}
+	const prefix = section.slice(0, firstStep);
+	const blocks = section.slice(firstStep).split(/(?=^\s+- name: )/m);
+	const steps = new Map();
+	for (const block of blocks) {
+		const name = block.match(/^\s+- name: (.+)$/m)?.[1];
+		if (!name || steps.has(name)) {
+			return null;
+		}
+		steps.set(name, block);
+	}
+	return { blocks, prefix, steps };
+}
+
+const resolved = source.replace(conflictPattern, (_match, oursSection, baseSection, theirsSection) => {
+	conflictCount += 1;
+	const ours = parseSteps(oursSection, true);
+	const base = parseSteps(baseSection);
+	const theirs = parseSteps(theirsSection);
+	if (!ours || !base || !theirs) {
+		valid = false;
+		return _match;
+	}
+	for (const [name, theirsBlock] of theirs.steps) {
+		const baseBlock = base.steps.get(name);
+		if (baseBlock && baseBlock !== theirsBlock) {
+			valid = false;
+			return _match;
+		}
+	}
+	const additions = theirs.blocks.filter((block) => {
+		const name = block.match(/^\s+- name: (.+)$/m)?.[1];
+		return name && !base.steps.has(name) && !ours.steps.has(name);
+	});
+	return `${ours.prefix}${ours.blocks.join("")}${additions.join("")}`;
+});
+
+if (!valid || conflictCount === 0 || resolved.includes("<<<<<<<")) {
+	process.exit(1);
+}
+fs.writeFileSync(resultPath, resolved);
+NODE
+		then
+			cp "$result_file" "$unmerged_path"
+			git add -- "$unmerged_path"
+			rm -r -- "$temporary_directory"
+			return 0
+		fi
 	fi
 	if [[ $unmerged_path == *.cfworkers/script/check-template-invariants.js ]] &&
 		git merge-file --union --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file" &&
