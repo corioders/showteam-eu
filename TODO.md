@@ -1,3 +1,4 @@
 - [ ] Naprawić maskowane, nieklikalne URL-e i komendę logów w podsumowaniu preview deployu oraz zmigrować consumerów.
 - [ ] Ustandaryzować nazwy Workerów Cloudflare jako <projekt>-cfworkers i <projekt>-cfworkers-preview we wszystkich consumerach; tworzyć docelowy Worker przed buildem używającym service bindingów.
 - [ ] Dodać deklaratywną synchronizację sekretów runtime z Infisical do Workerów preview i production.
+- [ ] Obsługiwać produkcyjne custom domains przez Workers Domains API bez wymagania legacy Zone Routes.
