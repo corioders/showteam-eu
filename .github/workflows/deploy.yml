@@ -28,12 +28,19 @@ jobs:
     with:
       runner-label: ${{ needs.schedule.outputs.runner-label }}
       app-directory: showteam.cfworkers
-      worker-name: showteam-eu
-      preview-worker-name: showteam-eu-preview
+      worker-name: showteam-eu-cfworkers
+      preview-worker-name: showteam-eu-cfworkers-preview
       production-cache-bucket: showteam-next-cache
       preview-cache-bucket: showteam-preview-next-cache
       deploy-enabled: ${{ github.repository != 'corioders/cstd-nextjs-template' }}
       payload: true
+      payload-d1-binding: D1
+      payload-local-migrate-command: pnpm migrate:local
+      payload-local-seed-command: pnpm seed:local
+      payload-preview-migrate-command: pnpm deploy:database:preview
+      payload-preview-seed-command: pnpm seed:preview
+      payload-production-migrate-command: pnpm deploy:database
+      payload-seed-production: false
       payload-d1-binding: D1
       payload-local-migrate-command: pnpm migrate:local
       payload-local-seed-command: pnpm seed:local

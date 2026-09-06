@@ -507,6 +507,9 @@ jobs:
       - name: Display preview URLs
         if: inputs.deploy-enabled && success() && github.ref_name != 'deploy'
         run: |
+          SHARED_URL="https://$(printf '%s' "${SHARED_URL#https://}" | tr '[:lower:]' '[:upper:]')"
+          PREVIEW_URL="https://$(printf '%s' "${PREVIEW_URL#https://}" | tr '[:lower:]' '[:upper:]')"
+          ALIAS_URL="https://$(printf '%s' "${ALIAS_URL#https://}" | tr '[:lower:]' '[:upper:]')"
           {
             echo "## Preview Deployment"
             echo ""
@@ -516,7 +519,7 @@ jobs:
             echo ""
             echo "Reproduce server errors on the shared Worker, then run:"
             echo ""
-            echo "pnpm --dir $APP_DIRECTORY/apps/web logs:preview"
+            echo 'pnpm --dir ./*.cfworkers/apps/web logs:preview'
             echo ""
             echo "---"
             echo "_Branch:_ ${{ github.ref_name }}"

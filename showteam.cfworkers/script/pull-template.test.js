@@ -17,7 +17,8 @@ const localValidationPathPattern = /CSTD_D1_PERSIST_PATH="\.wrangler\/state\/v3"
 const consumerD1SnapshotPattern = /Consumer-only D1 snapshot/;
 const templatePayloadSeedPattern = /New template Payload seed/;
 const sharedDeployWorkflowPattern = /\.\/\.github\/workflows\/_deploy\.yml/;
-const consumerDeployInputsPattern = /worker-name: showteam-eu[\s\S]+preview-worker-name: showteam-eu-preview[\s\S]+payload: true/;
+const consumerDeployInputsPattern = /worker-name: showteam-eu-cfworkers[\s\S]+preview-worker-name: showteam-eu-cfworkers-preview[\s\S]+payload: true/;
+const normalizedWorkerNamesPattern = /"name":"showteam-eu-cfworkers"[\s\S]+"service":"corioders-dashboard-cfworkers"[\s\S]+"name":"showteam-eu-cfworkers-preview"/;
 const consumerPayloadCommandsPattern = /payload-d1-binding: D1[\s\S]+payload-local-migrate-command: pnpm migrate:local[\s\S]+payload-seed-production: false/;
 const installPlaywrightInputPattern = /install-playwright: true/;
 const productionHealthInputPattern = /production-health-url: https:\/\/showteam\.example\/health/;
@@ -56,6 +57,10 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		write(path.join(templateRoot, "TODO.md"), "template task\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true };\nexport default options;\n");
 		write(
+			path.join(templateRoot, "template.cfworkers/apps/web/wrangler.jsonc"),
+			'{"name":"template-cfworkers-web","services":[{"binding":"WORKER_SELF_REFERENCE","service":"template-cfworkers-web"},{"binding":"CORIODERS_TELEMETRY","service":"corioders-dashboard-cfworkers-web"}],"env":{"preview":{"name":"template-cfworkers-web-preview","services":[{"binding":"WORKER_SELF_REFERENCE","service":"template-cfworkers-web-preview"}]}}}\n',
+		);
+		write(
 			path.join(templateRoot, "template.cfworkers/script/check-template-invariants.js"),
 			'const deployWorkflow = read("../.github/workflows/deploy.yml");\nrequireMatch(deployWorkflow, /APP_ENV/);\nconst packageJson = {};\n',
 		);
@@ -93,7 +98,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		);
 		write(
 			path.join(consumerRoot, "showteam.cfworkers/apps/web/wrangler.jsonc"),
-			'{"name":"showteam-eu","r2_buckets":[{"binding":"NEXT_INC_CACHE_R2_BUCKET","bucket_name":"showteam-next-cache"}],"d1_databases":[{"binding":"D1"}],"env":{"preview":{"name":"showteam-eu-preview","r2_buckets":[{"binding":"NEXT_INC_CACHE_R2_BUCKET","bucket_name":"showteam-preview-next-cache"}]}}}\n',
+			'{"name":"showteam-eu","services":[{"binding":"CORIODERS_TELEMETRY","service":"corioders-dashboard-cfworkers-web"}],"r2_buckets":[{"binding":"NEXT_INC_CACHE_R2_BUCKET","bucket_name":"showteam-next-cache"}],"d1_databases":[{"binding":"D1"}],"env":{"preview":{"name":"showteam-eu-preview","r2_buckets":[{"binding":"NEXT_INC_CACHE_R2_BUCKET","bucket_name":"showteam-preview-next-cache"}]}}}\n',
 		);
 		write(
 			path.join(consumerRoot, "showteam.cfworkers/script/check-template-invariants.js"),
@@ -196,6 +201,10 @@ jobs:
     secrets: inherit
 `,
 		);
+		write(
+			path.join(templateRoot, "template.cfworkers/apps/web/wrangler.jsonc"),
+			'{"name":"template-cfworkers","services":[{"binding":"WORKER_SELF_REFERENCE","service":"template-cfworkers"},{"binding":"CORIODERS_TELEMETRY","service":"corioders-dashboard-cfworkers"}],"env":{"preview":{"name":"template-cfworkers-preview","services":[{"binding":"WORKER_SELF_REFERENCE","service":"template-cfworkers-preview"}]}}}\n',
+		);
 		fs.rmSync(path.join(templateRoot, ".github/workflows/validate.yml"));
 		write(
 			path.join(templateRoot, "template.cfworkers/script/check-template-invariants.js"),
@@ -215,6 +224,7 @@ jobs:
 		assert.match(sharedWorkflow, consumerPayloadCommandsPattern);
 		assert.match(sharedWorkflow, installPlaywrightInputPattern);
 		assert.match(sharedWorkflow, productionHealthInputPattern);
+		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/wrangler.jsonc"), "utf8"), normalizedWorkerNamesPattern);
 		assert.equal(sharedWorkflow.includes("Template-only payload migration"), false);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/next.config.ts"), "utf8"), remoteBindingsPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), cloudflareTokenGuardPattern);

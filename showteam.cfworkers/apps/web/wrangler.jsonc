@@ -1,7 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": ".open-next/worker.js",
-	"name": "showteam-eu",
+	"name": "showteam-eu-cfworkers",
 	"compatibility_date": "2026-05-05",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
 	"vars": {
@@ -29,7 +29,7 @@
 			"/kontakt"
 		]
 	},
-	"services": [{ "binding": "CORIODERS_TELEMETRY", "service": "corioders-dashboard-cfworkers-web" }],
+	"services": [{ "binding": "CORIODERS_TELEMETRY", "service": "corioders-dashboard-cfworkers" }],
 	"d1_databases": [
 		{
 			"binding": "D1",
@@ -56,13 +56,13 @@
 	],
 	"env": {
 		"preview": {
-			"name": "showteam-eu-preview",
+			"name": "showteam-eu-cfworkers-preview",
 			"vars": {
 				"APP_ENV": "preview",
-				"PUBLIC_SITE_URL": "https://showteam-eu-preview.corioders.workers.dev",
+				"PUBLIC_SITE_URL": "https://showteam-eu-cfworkers-preview.corioders.workers.dev",
 				"VAPID_PUBLIC_KEY": "BDlvHyOIFUaED8IieFcgE_3Vek2R1sJ_Jt2pi-QLkzGk_Mw0ZAUuQSOPKXloLnjgur-YuC6iE4Ob_a46vopDg_k"
 			},
-			"services": [{ "binding": "CORIODERS_TELEMETRY", "service": "corioders-dashboard-cfworkers-web-preview" }],
+			"services": [{ "binding": "CORIODERS_TELEMETRY", "service": "corioders-dashboard-cfworkers-preview" }],
 			"d1_databases": [
 				{
 					"binding": "D1",

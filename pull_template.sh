@@ -190,19 +190,31 @@ const base = fs.readFileSync(basePath, "utf8");
 const ours = fs.readFileSync(oursPath, "utf8");
 let result = fs.readFileSync(theirsPath, "utf8");
 const sharedWorkflowPattern = /uses:\s*(?:corioders\/cstd-next\/\.github\/workflows\/deploy\.yml@[0-9a-f]{40}|\.\/\.github\/workflows\/_deploy\.yml)/;
-if (sharedWorkflowPattern.test(base) || sharedWorkflowPattern.test(ours) || !sharedWorkflowPattern.test(result)) {
-	process.exit(1);
-}
-
 const webDirectory = path.join(consumerDirectory, "apps", "web");
 const packageJson = JSON.parse(fs.readFileSync(path.join(webDirectory, "package.json"), "utf8"));
 const wrangler = fs.readFileSync(path.join(webDirectory, "wrangler.jsonc"), "utf8");
 const scripts = packageJson.scripts ?? {};
 const workerNames = [...wrangler.matchAll(/"name"\s*:\s*"([^"]+)"/g)].map((match) => match[1]);
-const productionWorkerName = workerNames[0];
-const previewWorkerName = workerNames[1] ?? (productionWorkerName ? `${productionWorkerName}-preview` : null);
+const configuredWorkerName = workerNames[0];
+const normalizedWorkerName = configuredWorkerName?.replace(/-web$/, "");
+const productionWorkerName = normalizedWorkerName ? (normalizedWorkerName.endsWith("-cfworkers") ? normalizedWorkerName : `${normalizedWorkerName}-cfworkers`) : null;
+const previewWorkerName = productionWorkerName ? `${productionWorkerName}-preview` : null;
+if (!(productionWorkerName && previewWorkerName)) {
+	process.exit(1);
+}
+
+if (sharedWorkflowPattern.test(base) && sharedWorkflowPattern.test(ours) && sharedWorkflowPattern.test(result)) {
+	const normalizeWorkerInputs = (source) => source.replace(/^(\s+(?:worker-name|preview-worker-name):)\s*.+$/gm, "$1 __WORKER__");
+	if (normalizeWorkerInputs(base) !== normalizeWorkerInputs(result)) {
+		process.exit(1);
+	}
+	result = ours;
+} else if (sharedWorkflowPattern.test(base) || sharedWorkflowPattern.test(ours) || !sharedWorkflowPattern.test(result)) {
+	process.exit(1);
+}
+
 const cacheBuckets = [...wrangler.matchAll(/"binding"\s*:\s*"NEXT_INC_CACHE_R2_BUCKET"[\s\S]*?"bucket_name"\s*:\s*"([^"]+)"/g)].map((match) => match[1]);
-if (!productionWorkerName || !previewWorkerName || cacheBuckets.length < 2) {
+if (cacheBuckets.length < 2) {
 	process.exit(1);
 }
 
@@ -424,6 +436,55 @@ auto_resolve_renamed_template_path() {
 			rm -r -- "$temporary_directory"
 			return 1
 		}
+	fi
+
+	if [[ $target_path == *.cfworkers/apps/web/wrangler.jsonc ]] && node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'
+import fs from "node:fs";
+
+const [basePath, oursPath, theirsPath] = process.argv.slice(2);
+const base = fs.readFileSync(basePath, "utf8");
+let ours = fs.readFileSync(oursPath, "utf8");
+const theirs = fs.readFileSync(theirsPath, "utf8");
+const firstWorkerName = (source) => source.match(/"name"\s*:\s*"([^"]+)"/)?.[1];
+const baseWorkerName = firstWorkerName(base);
+const nextWorkerName = firstWorkerName(theirs);
+const currentWorkerName = firstWorkerName(ours);
+if (!(baseWorkerName && nextWorkerName && currentWorkerName)) {
+	process.exit(1);
+}
+
+function normalizeTemplateWorkerNames(source, workerName, telemetryWorkerName) {
+	const projectResourcePrefix = workerName.replace(/-web$/, "");
+	return source
+		.replaceAll(`"${workerName}-preview"`, '"__SELF_PREVIEW__"')
+		.replaceAll(`"${workerName}"`, '"__SELF_PRODUCTION__"')
+		.replaceAll(projectResourcePrefix, "__PROJECT_RESOURCE__")
+		.replaceAll(`"${telemetryWorkerName}-preview"`, '"__TELEMETRY_PREVIEW__"')
+		.replaceAll(`"${telemetryWorkerName}"`, '"__TELEMETRY_PRODUCTION__"');
+}
+
+const oldTelemetryWorkerName = "corioders-dashboard-cfworkers-web";
+const nextTelemetryWorkerName = "corioders-dashboard-cfworkers";
+if (
+	normalizeTemplateWorkerNames(base, baseWorkerName, oldTelemetryWorkerName) !==
+	normalizeTemplateWorkerNames(theirs, nextWorkerName, nextTelemetryWorkerName)
+) {
+	process.exit(1);
+}
+
+const normalizedWorkerName = currentWorkerName.replace(/-web$/, "");
+const productionWorkerName = normalizedWorkerName.endsWith("-cfworkers") ? normalizedWorkerName : `${normalizedWorkerName}-cfworkers`;
+ours = ours
+	.replaceAll(currentWorkerName, productionWorkerName)
+	.replaceAll(oldTelemetryWorkerName, nextTelemetryWorkerName);
+fs.writeFileSync(oursPath, ours);
+NODE
+	then
+		cp "$ours_file" "$target_path"
+		git add -- "$target_path"
+		git rm --quiet --force -- "$template_path"
+		rm -r -- "$temporary_directory"
+		return 0
 	fi
 
 	if node - "$base_file" "$ours_file" "$theirs_file" <<'NODE'

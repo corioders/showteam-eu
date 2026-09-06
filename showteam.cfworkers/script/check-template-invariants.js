@@ -196,6 +196,12 @@ requireMatch(
 );
 requireMatch(sharedDeployWorkflow, /PLAYWRIGHT_CACHE="\$RUNNER_TEMP\/ms-playwright"/, "Shared Playwright installation must use writable runner storage.");
 requireMatch(sharedDeployWorkflow, /format\('deploy-preview-\{0\}', github\.ref\)/, "Shared preview concurrency must be isolated per Git ref.");
+requireMatch(
+	sharedDeployWorkflow,
+	/SHARED_URL="https:\/\/\$\(printf '%s' "\$\{SHARED_URL#https:\/\/\}" \| tr '\[:lower:\]' '\[:upper:\]'\)"/,
+	"Preview summary URLs must avoid GitHub secret masking without changing their DNS targets.",
+);
+requireMatch(sharedDeployWorkflow, /pnpm --dir \.\/\*\.cfworkers\/apps\/web logs:preview/, "Preview log instructions must not expose a maskable project path.");
 requireMatch(deployWorkflow, /needs:\s*schedule/, "The application workflow must wait for the shared scheduler.");
 requireMatch(
 	deployWorkflow,
