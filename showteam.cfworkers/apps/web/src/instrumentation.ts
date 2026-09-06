@@ -1,3 +1,5 @@
+import { telemetryEnvironmentFromAppEnvironment } from "@/telemetry/environment";
+
 export async function register(): Promise<void> {
 	if (process.env["NEXT_RUNTIME"] !== "nodejs" || process.env["CORIODERS_TELEMETRY_DISABLED"] === "1") {
 		return;
@@ -13,7 +15,7 @@ export async function register(): Promise<void> {
 		]);
 		const traceExporter = new CoriodersTraceExporter();
 		const resource = resources.resourceFromAttributes({
-			"deployment.environment.name": process.env["APP_ENV"] ?? "development",
+			"deployment.environment.name": telemetryEnvironmentFromAppEnvironment(process.env["APP_ENV"]),
 			"service.name": "showteam-cfworkers-web",
 		});
 		const provider = new sdk.BasicTracerProvider({

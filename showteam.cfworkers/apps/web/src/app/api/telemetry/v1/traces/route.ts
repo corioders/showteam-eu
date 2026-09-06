@@ -1,5 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
+import { stampTelemetryEnvironment, telemetryEnvironmentFromAppEnvironment } from "@/telemetry/environment";
+
 const maximumPayloadBytes = 1_000_000;
 
 export async function POST(request: Request): Promise<Response> {
@@ -10,10 +12,17 @@ export async function POST(request: Request): Promise<Response> {
 		return new Response(null, { status: 415 });
 	}
 
-	const payload = await request.arrayBuffer();
-	if (payload.byteLength === 0 || payload.byteLength > maximumPayloadBytes) {
+	const payloadBytes = await request.arrayBuffer();
+	if (payloadBytes.byteLength === 0 || payloadBytes.byteLength > maximumPayloadBytes) {
 		return new Response(null, { status: 413 });
 	}
+	let payload: unknown;
+	try {
+		payload = JSON.parse(new TextDecoder().decode(payloadBytes));
+	} catch {
+		return new Response(null, { status: 400 });
+	}
+	const stampedPayload = stampTelemetryEnvironment(payload, telemetryEnvironmentFromAppEnvironment(process.env["APP_ENV"]));
 
 	const { env } = await getCloudflareContext({ async: true });
 	if (env.CORIODERS_TELEMETRY === undefined) {
@@ -22,7 +31,7 @@ export async function POST(request: Request): Promise<Response> {
 
 	try {
 		const response = await env.CORIODERS_TELEMETRY.fetch("https://corioders-telemetry.invalid/v1/traces", {
-			body: payload,
+			body: JSON.stringify(stampedPayload),
 			headers: { "content-type": "application/json" },
 			method: "POST",
 		});
