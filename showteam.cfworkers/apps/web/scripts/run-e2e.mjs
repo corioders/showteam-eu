@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { cp, mkdir, rm } from "node:fs/promises";
+import { createServer } from "node:net";
 import { availableParallelism } from "node:os";
 import path from "node:path";
 
@@ -36,6 +37,27 @@ function terminateChildren(signal) {
 	}
 }
 
+function findAvailablePort() {
+	return new Promise((resolve, reject) => {
+		const server = createServer();
+		server.once("error", reject);
+		server.listen(0, "127.0.0.1", () => {
+			const address = server.address();
+			server.close((error) => {
+				if (error) {
+					reject(error);
+					return;
+				}
+				if (!address || typeof address === "string") {
+					reject(new Error("Failed to allocate an E2E port."));
+					return;
+				}
+				resolve(address.port);
+			});
+		});
+	});
+}
+
 process.once("SIGINT", () => terminateChildren("SIGINT"));
 process.once("SIGTERM", () => terminateChildren("SIGTERM"));
 
@@ -44,9 +66,6 @@ if (shardCount === 1) {
 } else {
 	const sourceStateDirectory = path.resolve(".wrangler/state/v3");
 	const shardStateRoot = path.resolve(".wrangler/e2e-shards");
-	const runId = BigInt(process.env.GITHUB_RUN_ID || 0);
-	const runAttempt = BigInt(process.env.GITHUB_RUN_ATTEMPT || 0);
-	const basePort = 10_000 + Number((runId + runAttempt * 7919n) % 10_000n) * 4;
 
 	if (!runsAgainstExternalUrl) {
 		await rm(shardStateRoot, { force: true, recursive: true });
@@ -61,7 +80,7 @@ if (shardCount === 1) {
 				const shardStateDirectory = path.join(shardStateRoot, String(shardIndex));
 				await cp(sourceStateDirectory, shardStateDirectory, { recursive: true });
 				environment.CSTD_D1_PERSIST_PATH = shardStateDirectory;
-				environment.CSTD_E2E_PORT = String(basePort + shardIndex - 1);
+				environment.CSTD_E2E_PORT = String(await findAvailablePort());
 			}
 			shardRuns.push(runPlaywright(["--workers=1", `--shard=${shardIndex}/${shardCount}`, `--output=test-results/shard-${shardIndex}`], environment));
 		}
