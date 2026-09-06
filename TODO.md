@@ -1,0 +1,2 @@
+- [ ] Przenieść wspólne CI/deploy do reusable workflows w `cstd-next`: osobny scheduler, jeden deploy obsługujący preview/production, cienkie entrypointy template przypięte do SHA i jawne inputs per aplikacja.
+- [ ] Przenieść generyczne ulepszenia Payload D1 z Showteam do profilu `payload` template, w tym snapshot/migrate/seed preview, oraz ujednolicić ścieżkę snapshotu z `CSTD_D1_PERSIST_PATH`.
