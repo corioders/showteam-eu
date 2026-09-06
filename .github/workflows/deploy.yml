@@ -118,6 +118,12 @@ jobs:
           fi
         working-directory: showteam.cfworkers
 
+      - name: Display OIDC claims
+        run: |
+          OIDC_RESPONSE=$(curl --fail --silent --show-error --header "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https%3A%2F%2Fgithub.com%2Fcorioders")
+          OIDC_TOKEN=$(node -e 'process.stdout.write(JSON.parse(process.argv[1]).value)' "$OIDC_RESPONSE")
+          OIDC_TOKEN="$OIDC_TOKEN" node -e 'const claims = JSON.parse(Buffer.from(process.env.OIDC_TOKEN.split(".")[1], "base64url")); console.log(JSON.stringify({ aud: claims.aud, environment: claims.environment, iss: claims.iss, repository: claims.repository, sub: claims.sub }))'
+
       - name: Fetch deployment secrets from Infisical
         uses: Infisical/secrets-action@77ab1f4ccd183a543cb5b42435fbd181189f4995 # v1.0.16
         with:
