@@ -151,6 +151,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 				.readFileSync(templateWorkflowPath, "utf8")
 				.replace(`CSTD_D1_PERSIST_PATH="${runnerTempExpression}/cstd-d1-${runIdExpression}-${runAttemptExpression}"`, 'CSTD_D1_PERSIST_PATH=".wrangler/state"'),
 		);
+		write(path.join(templateRoot, "template.cfworkers/CONSUMERS.toml"), "version = 1\nupdated = true\n");
 		git(templateRoot, "add", ".github/workflows/deploy.yml");
 		git(templateRoot, "commit", "-m", "align local D1 state");
 		const localStateResult = spawnSync(consumerPullTemplate, ["template", "main"], { cwd: consumerRoot, encoding: "utf8", env: cleanBootstrapEnvironment });
