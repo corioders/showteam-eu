@@ -209,6 +209,11 @@ requireMatch(sharedDeployWorkflow, /payload-local-admin-password:[\s\S]*default:
 requireMatch(sharedDeployWorkflow, /runtime-secret-names:[\s\S]*default:\s*""/, "Shared deploys must accept explicit runtime secret names.");
 requireMatch(
 	sharedDeployWorkflow,
+	/production-custom-domain:[\s\S]*Attach production custom domain[\s\S]*workers\/domains/,
+	"Shared production deploys must attach custom domains through the account-level Workers Domains API.",
+);
+requireMatch(
+	sharedDeployWorkflow,
 	/Prepare runtime secrets[\s\S]*Required runtime secret is missing/,
 	"Declared runtime secrets must fail validation when Infisical does not provide them.",
 );
