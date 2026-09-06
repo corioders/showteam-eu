@@ -152,9 +152,7 @@ jobs:
         working-directory: template.cfworkers
 
       - name: Validate, build, and run browser tests
-        env:
-          CSTD_D1_PERSIST_PATH: ${{ runner.temp }}/cstd-d1-${{ github.run_id }}-${{ github.run_attempt }}
-        run: pnpm validate:ci
+        run: CSTD_D1_PERSIST_PATH="${{ runner.temp }}/cstd-d1-${{ github.run_id }}-${{ github.run_attempt }}" pnpm validate:ci
         working-directory: template.cfworkers
 
       - name: Apply Payload database migrations
