@@ -140,6 +140,14 @@ auto_resolve_bootstrap_replacements() {
 		rm -r -- "$temporary_directory"
 		return 0
 	fi
+	if [[ $unmerged_path == *.cfworkers/script/check-template-invariants.js ]] &&
+		git merge-file --union --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file" &&
+		node --check "$result_file"; then
+		cp "$result_file" "$unmerged_path"
+		git add -- "$unmerged_path"
+		rm -r -- "$temporary_directory"
+		return 0
+	fi
 	rm -r -- "$temporary_directory"
 	return 1
 }
@@ -204,6 +212,15 @@ NODE
 	fi
 
 	if git merge-file --quiet --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file"; then
+		cp "$result_file" "$target_path"
+		git add -- "$target_path"
+		git rm --quiet --force -- "$template_path"
+		rm -r -- "$temporary_directory"
+		return 0
+	fi
+	if [[ $target_path == *.cfworkers/script/check-template-invariants.js ]] &&
+		git merge-file --union --stdout "$ours_file" "$base_file" "$theirs_file" >"$result_file" &&
+		node --check "$result_file"; then
 		cp "$result_file" "$target_path"
 		git add -- "$target_path"
 		git rm --quiet --force -- "$template_path"

@@ -12,6 +12,7 @@ const remoteBindingsPattern = /remoteBindings: true/;
 const cloudflareTokenGuardPattern = /process\.env\["CLOUDFLARE_API_TOKEN"\]/;
 const consumerPayloadCliPattern = /seed-ci\.ts/;
 const formattedCloudflareContextPattern = /CloudflareContext[^\n]* =\n\tisCLI/;
+const isolatedValidationPattern = /CSTD_D1_PERSIST_PATH/;
 
 function git(cwd, ...args) {
 	const result = spawnSync("git", args, { cwd, encoding: "utf8" });
@@ -36,6 +37,10 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		write(path.join(templateRoot, "TODO.md"), "template task\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true };\nexport default options;\n");
 		write(
+			path.join(templateRoot, "template.cfworkers/script/check-template-invariants.js"),
+			"requireMatch(deployWorkflow, /Resolve external build inputs/);\nrequireMatch(deployWorkflow, /APP_ENV/);\n",
+		);
+		write(
 			path.join(templateRoot, "template.cfworkers/apps/web/payload.config.ts"),
 			'const isCLI = process.argv.some((value) => value.endsWith("seed-payload-admin.ts"));\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env["CSTD_D1_PERSIST_PATH"] ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });\n',
 		);
@@ -52,6 +57,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 			path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"),
 			'const isCLI = process.argv.some((value) => value.endsWith("seed-ci.ts"));\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env.CSTD_D1_PERSIST_PATH ? await getCloudflareContextFromWrangler() : await getCloudflareContext({ async: true });\n',
 		);
+		write(path.join(consumerRoot, "showteam.cfworkers/script/check-template-invariants.js"), "requireMatch(deployWorkflow, /APP_ENV/);\n");
 		fs.rmSync(path.join(consumerRoot, "TODO.md"));
 		git(consumerRoot, "add", "-A");
 		git(consumerRoot, "commit", "-m", "initialize consumer");
@@ -62,6 +68,10 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		);
 		write(path.join(templateRoot, "TODO.md"), "updated template task\n");
 		write(path.join(templateRoot, "template.cfworkers/apps/web/next.config.ts"), "const options = { persist: true, remoteBindings: true };\nexport default options;\n");
+		write(
+			path.join(templateRoot, "template.cfworkers/script/check-template-invariants.js"),
+			"requireMatch(deployWorkflow, /CSTD_D1_PERSIST_PATH/);\nrequireMatch(deployWorkflow, /Resolve external build inputs/);\nrequireMatch(deployWorkflow, /APP_ENV/);\n",
+		);
 		write(
 			path.join(templateRoot, "template.cfworkers/apps/web/payload.config.ts"),
 			'const isCLI = process.argv.some((value) => value.endsWith("seed-payload-admin.ts"));\nconst cloudflare: CloudflareContext & { dispose?: () => Promise<void> } =\n\tisCLI || !isProduction || process.env["CSTD_D1_PERSIST_PATH"] || !process.env["CLOUDFLARE_API_TOKEN"]\n\t\t? await getCloudflareContextFromWrangler()\n\t\t: await getCloudflareContext({ async: true });\n',
@@ -80,6 +90,7 @@ test("pulls template updates across consumer renames without manual conflicts", 
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), cloudflareTokenGuardPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), consumerPayloadCliPattern);
 		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/apps/web/payload.config.ts"), "utf8"), formattedCloudflareContextPattern);
+		assert.match(fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/script/check-template-invariants.js"), "utf8"), isolatedValidationPattern);
 		assert.equal(
 			fs.readFileSync(path.join(consumerRoot, "showteam.cfworkers/script/pull-template.test.js"), "utf8"),
 			'const templateDirectory = "template.cfworkers";\n',
