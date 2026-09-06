@@ -44,7 +44,9 @@ if (shardCount === 1) {
 } else {
 	const sourceStateDirectory = path.resolve(".wrangler/state/v3");
 	const shardStateRoot = path.resolve(".wrangler/e2e-shards");
-	const basePort = 3100;
+	const runId = BigInt(process.env.GITHUB_RUN_ID || 0);
+	const runAttempt = BigInt(process.env.GITHUB_RUN_ATTEMPT || 0);
+	const basePort = 10_000 + Number((runId + runAttempt * 7919n) % 10_000n) * 4;
 
 	if (!runsAgainstExternalUrl) {
 		await rm(shardStateRoot, { force: true, recursive: true });
