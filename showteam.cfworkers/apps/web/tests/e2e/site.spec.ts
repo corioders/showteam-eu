@@ -257,8 +257,8 @@ test("stay booking administration stays private", async ({ request }) => {
 test("stays use a separate date-range booking flow", async ({ page }) => {
 	await page.goto("/noclegi");
 	await expect(page.getByRole("heading", { name: "Noclegi nad wodą." })).toBeVisible();
-	await expect(page.getByLabel("Kontener mieszkalny").filter({ visible: true })).toHaveCount(1);
-	await expect(page.getByLabel("Domek holenderski").filter({ visible: true })).toHaveCount(1);
+	await expect(page.getByRole("checkbox", { name: "Kontener mieszkalny" }).filter({ visible: true })).toHaveCount(1);
+	await expect(page.getByRole("checkbox", { name: "Domek holenderski" }).filter({ visible: true })).toHaveCount(1);
 	await expect(page.getByLabel("Przyjazd").filter({ visible: true })).toHaveCount(1);
 	await expect(page.getByLabel("Wyjazd").filter({ visible: true })).toHaveCount(1);
 });

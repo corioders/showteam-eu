@@ -4,10 +4,11 @@ import { StaticImage } from "cstd-next/media/image/static-image.jsx";
 import { Menu, Phone } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 import logo from "@/app/_assets/showteam-logo.svg";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const links = [
 	{ href: "/", label: "Start" },
@@ -24,6 +25,7 @@ const applicationLink = { href: "/zgloszenie", label: "Jedź z nami" };
 
 export function SiteHeader() {
 	const pathname = usePathname();
+	const [menuOpen, setMenuOpen] = useState(false);
 	return (
 		<header className="site-header fixed inset-x-0 top-0 z-40 border-white/10 border-b bg-neutral-950/75 backdrop-blur-xl">
 			<div className="site-container flex h-20 items-center justify-between">
@@ -46,7 +48,7 @@ export function SiteHeader() {
 				</nav>
 
 				<div className="ml-auto flex items-center gap-2">
-					<Button asChild={true} size="sm" className="hidden min-[360px]:inline-flex">
+					<Button asChild={true} size="sm" className="hidden min-h-11 min-[360px]:inline-flex">
 						<Link href={applicationLink.href}>{applicationLink.label}</Link>
 					</Button>
 					<Button asChild={true} size="sm" className="hidden 2xl:inline-flex">
@@ -56,7 +58,7 @@ export function SiteHeader() {
 					</Button>
 				</div>
 
-				<Sheet>
+				<Sheet open={menuOpen} onOpenChange={setMenuOpen}>
 					<SheetTrigger render={<Button variant="ghost" size="icon" className="2xl:hidden" aria-label="Otwórz menu" />}>
 						<Menu />
 					</SheetTrigger>
@@ -70,22 +72,18 @@ export function SiteHeader() {
 							<span className="eyebrow mt-8 mb-4">Idź do</span>
 							<nav className="grid grid-cols-2 border-white/10 border-t border-l" aria-label="Menu mobilne">
 								{[...links, applicationLink].map((link, index) => (
-									<SheetClose
+									<Link
 										key={link.href}
-										nativeButton={false}
-										render={
-											<Link
-												href={link.href}
-												aria-current={pathname === link.href ? "page" : undefined}
-												className={`group flex min-h-20 flex-col justify-between border-white/10 border-r border-b p-3 font-black font-display uppercase transition-colors hover:bg-orange-500 hover:text-black focus-visible:bg-orange-500 focus-visible:text-black focus-visible:outline-none sm:min-h-24 ${pathname === link.href ? "bg-orange-500 text-black" : ""}`}
-											/>
-										}
+										href={link.href}
+										aria-current={pathname === link.href ? "page" : undefined}
+										onClick={() => setMenuOpen(false)}
+										className={`group flex min-h-20 flex-col justify-between border-white/10 border-r border-b p-3 font-black font-display uppercase transition-colors hover:bg-orange-500 hover:text-black focus-visible:bg-orange-500 focus-visible:text-black focus-visible:outline-none sm:min-h-24 ${pathname === link.href ? "bg-orange-500 text-black" : ""}`}
 									>
 										<span className="font-mono text-[.6rem] text-white/30 tracking-wider group-hover:text-black/55 group-focus-visible:text-black/55">
 											{String(index + 1).padStart(2, "0")}
 										</span>
 										<span className="text-[1.35rem] leading-none tracking-[-.03em] sm:text-[1.65rem]">{link.label}</span>
-									</SheetClose>
+									</Link>
 								))}
 							</nav>
 							<Button asChild={true} className="mt-6 min-h-12">
