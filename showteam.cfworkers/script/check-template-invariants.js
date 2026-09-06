@@ -194,6 +194,11 @@ requireMatch(
 	/Validate, build, and run browser tests[\s\S]*PAYLOAD_ADMIN_USERNAME:/,
 	"Shared validation must isolate local Payload credentials from Infisical deployment credentials.",
 );
+requireMatch(
+	sharedDeployWorkflow,
+	/Ensure deployment Worker exists[\s\S]*DEPLOYMENT_WORKER_NAME:[\s\S]*inputs\.worker-name[\s\S]*inputs\.preview-worker-name[\s\S]*Validate, build, and run browser tests/,
+	"The production or preview Worker must exist before validation builds resolve remote service bindings.",
+);
 requireMatch(sharedDeployWorkflow, /PLAYWRIGHT_CACHE="\$RUNNER_TEMP\/ms-playwright"/, "Shared Playwright installation must use writable runner storage.");
 requireMatch(sharedDeployWorkflow, /format\('deploy-preview-\{0\}', github\.ref\)/, "Shared preview concurrency must be isolated per Git ref.");
 requireMatch(
