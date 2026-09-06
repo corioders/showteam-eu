@@ -2,6 +2,7 @@ import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import Script from "next/script";
 import { ThemeProvider } from "next-themes";
 import type { ReactNode } from "react";
 
@@ -26,6 +27,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
 	return (
 		<html lang="en" suppressHydrationWarning={true}>
+			<head>
+				{process.env.NODE_ENV === "development" && <Script src="//unpkg.com/react-grab/dist/index.global.js" crossOrigin="anonymous" strategy="beforeInteractive" />}
+			</head>
 			<body className={`${geist.variable} bg-background font-sans text-foreground antialiased`}>
 				<ThemeProvider attribute="class" defaultTheme="system" enableSystem={true}>
 					{children}
