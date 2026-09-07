@@ -145,7 +145,7 @@ for (const binding of ["NEXT_INC_CACHE_R2_BUCKET", "NEXT_TAG_CACHE_D1"]) {
 }
 
 const tagCacheIds = [...wranglerConfig.matchAll(/"binding"\s*:\s*"NEXT_TAG_CACHE_D1"[\s\S]{0,300}?"database_id"\s*:\s*"([^"]*)"/g)].map((match) => match[1]);
-const sourceTemplate = fs.existsSync(path.join(workspaceDirectory, "CONSUMERS.md"));
+const sourceTemplate = fs.existsSync(path.join(workspaceDirectory, "CONSUMERS.toml"));
 const databaseIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const allowedPlaceholders = new Set(["REPLACE_WITH_PRODUCTION_D1_DATABASE_ID", "REPLACE_WITH_PREVIEW_D1_DATABASE_ID"]);
 if (tagCacheIds.length !== 2) {

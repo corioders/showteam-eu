@@ -100,7 +100,7 @@ export function synchronizeCanonicalShadcnNormalization({ canonicalRepository = 
 		}
 	}
 
-	const pullResult = run("git", ["subtree", "pull", "--prefix", subtreePrefix, canonicalRepository, "main", "--squash"], {
+	const pullResult = run("git", ["subtree", "pull", "--prefix", subtreePrefix, canonicalRepository, "main"], {
 		allowFailure: true,
 		capture: true,
 		cwd: gitRoot,
