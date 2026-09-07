@@ -145,7 +145,7 @@ for (const binding of ["NEXT_INC_CACHE_R2_BUCKET", "NEXT_TAG_CACHE_D1"]) {
 }
 
 const tagCacheIds = [...wranglerConfig.matchAll(/"binding"\s*:\s*"NEXT_TAG_CACHE_D1"[\s\S]{0,300}?"database_id"\s*:\s*"([^"]*)"/g)].map((match) => match[1]);
-const sourceTemplate = fs.existsSync(path.join(workspaceDirectory, "CONSUMERS.md"));
+const sourceTemplate = fs.existsSync(path.join(workspaceDirectory, "CONSUMERS.toml"));
 const databaseIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const allowedPlaceholders = new Set(["REPLACE_WITH_PRODUCTION_D1_DATABASE_ID", "REPLACE_WITH_PREVIEW_D1_DATABASE_ID"]);
 if (tagCacheIds.length !== 2) {
@@ -283,7 +283,11 @@ if (fs.existsSync(path.join(workspaceDirectory, "apps/web/payload.config.ts"))) 
 		"Payload import-map generation must be explicit instead of rewriting files during development.",
 	);
 	requireMatch(payloadConfig, /typescript:\s*\{[^}]*autoGenerate:\s*false/, "Payload type generation must be explicit instead of rewriting files during development.");
-	requireMatch(payloadConfig, /!process\.env\["CLOUDFLARE_API_TOKEN"\]/, "Payload builds without Cloudflare authentication must use local bindings.");
+	requireMatch(
+		payloadConfig,
+		/isNextBuild\s*&&\s*!process\.env\["CLOUDFLARE_API_TOKEN"\]/,
+		"Payload builds without Cloudflare authentication must use local bindings without selecting Wrangler in the deployed Worker.",
+	);
 }
 
 const biomeConfig = read("biome.jsonc");
