@@ -1,0 +1,16 @@
+{
+	"formatVersion": 4,
+	"registryItem": "@shadcnblocks/logos19",
+	"style": "base-vega",
+	"baselineHashes": {
+		"package.json": "0bde4a571e38c117034e85f676b290d68a28f468f1d10cb30f2c9984d495055e",
+		"src/components/logos19.tsx": "b3aaf4118391c8900a215d59ba3c4b44437bcf99e1407f4c057a94d9beefd0b6"
+	},
+	"changedFiles": [
+		"src/components/logos19.tsx"
+	],
+	"unitTest": {
+		"hash": "d5ac53242e63752a5ca5e53c1f7e00b056bb98fcce8ccd275c53abfd2a463588",
+		"path": "script/shadcn/patches/base-vega__shadcnblocks__logos19.test.js"
+	}
+}

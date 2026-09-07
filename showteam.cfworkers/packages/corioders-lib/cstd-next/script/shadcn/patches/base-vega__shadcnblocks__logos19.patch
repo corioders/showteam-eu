@@ -1,0 +1,30 @@
+diff --git a/src/components/logos19.tsx b/src/components/logos19.tsx
+index ae84046..ad689be 100644
+--- a/src/components/logos19.tsx
++++ b/src/components/logos19.tsx
+@@ -1,5 +1,6 @@
+ "use client";
+ 
++import { StaticImage } from "cstd-next/media/image/static-image.jsx";
+ import Marquee from "react-fast-marquee";
+ 
+ import { cn } from "@/lib/utils";
+@@ -107,9 +108,15 @@ const Logos19 = (props: Props) => {
+ 	return (
+ 		<section className={cn("py-16", className)}>
+ 			<Marquee gradient={true} gradientWidth={64} autoFill={true} pauseOnHover={true} speed={40}>
+-				{logos.map((logo, index) => (
+-					<div key={`${logo.src}-${index}`} className="mx-8 flex aspect-3/1 w-28 items-center justify-center sm:w-32 lg:mx-10">
+-						<img src={logo.src} alt={logo.alt} className={cn(logo.className, "h-auto max-h-7 w-auto object-contain dark:invert")} />
++				{logos.map((logo) => (
++					<div key={logo.src} className="mx-8 flex aspect-3/1 w-28 items-center justify-center sm:w-32 lg:mx-10">
++						<StaticImage
++							src={logo.src}
++							alt={logo.alt}
++							sizes="(min-width: 1024px) 128px, 112px"
++							loading="lazy"
++							className={cn(logo.className, "h-auto max-h-7 w-auto object-contain dark:invert")}
++						/>
+ 					</div>
+ 				))}
+ 			</Marquee>
