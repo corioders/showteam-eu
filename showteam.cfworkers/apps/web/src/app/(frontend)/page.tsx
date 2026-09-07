@@ -1,5 +1,5 @@
 // biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
-import { ArrowDown, ArrowRight, ArrowUpRight, Facebook, Instagram, MapPin, Music2, Plane, Waves, Wind } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUpRight, Facebook, Instagram, MapPin, Music2, Plane } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -9,6 +9,7 @@ import { Editable } from "@/components/editor/editable";
 import { EditableImage, PageContentEditor } from "@/components/editor/page-content-editor";
 import { GalleryGrid } from "@/components/gallery-grid";
 import { HeroVideo } from "@/components/hero-video";
+import { MarqueeLogos1 } from "@/components/marquee-logos-1";
 import { OfferCard } from "@/components/offer-card";
 import { Button } from "@/components/ui/button";
 import { getOffers } from "@/lib/cms";
@@ -87,18 +88,7 @@ async function HomeContent() {
 				</div>
 			</section>
 
-			<div className="overflow-hidden border-white/10 border-y bg-sky-300 py-4 text-neutral-950">
-				<div className="marquee-track flex w-max items-center gap-8 whitespace-nowrap font-black font-display text-xl uppercase tracking-tight">
-					{[0, 1].map((copy) => (
-						<div className="flex items-center gap-8" key={copy} aria-hidden={copy === 1}>
-							<Editable field="ticker" />
-							<Waves className="size-5" />
-							<Wind className="size-5" />
-							<span className="text-orange-600">●</span>
-						</div>
-					))}
-				</div>
-			</div>
+			<MarqueeLogos1 />
 
 			<section className="relative isolate overflow-hidden border-red-950 border-b bg-black py-10">
 				<EditableImage field="legacyImageUrl" alt="" className="-z-10 object-contain object-center opacity-75 sm:object-cover" sizes="100vw" />
