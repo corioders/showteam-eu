@@ -60,8 +60,8 @@ export function changedFiles(before, after) {
 	return [...after].filter(([relativePath, hash]) => before.get(relativePath) !== hash).map(([relativePath]) => relativePath);
 }
 
-export function compatibilityTestPath(registryItem) {
-	return path.join("tests", "e2e", "shadcn", `${registryItem.slice("@shadcnblocks/".length)}.spec.ts`);
+export function patchUnitTestPath(registryItem, style) {
+	return path.join("script", "shadcn", "patches", `${style}__${registryItem.slice(1).replaceAll("/", "__")}.test.js`);
 }
 
 export function fileHash(filePath) {
