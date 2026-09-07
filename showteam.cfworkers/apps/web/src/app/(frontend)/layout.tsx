@@ -2,6 +2,7 @@
 // biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
 import type { Metadata } from "next";
 import { Inter, Oswald } from "next/font/google";
+import Script from "next/script";
 import { Suspense } from "react";
 
 import { AnalyticsTracker } from "@/components/analytics-tracker";
@@ -34,6 +35,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
 	return (
 		<html lang="pl" className={`${inter.variable} ${oswald.variable}`}>
+			<head>
+				{process.env.NODE_ENV === "development" && <Script src="//unpkg.com/react-grab/dist/index.global.js" crossOrigin="anonymous" strategy="beforeInteractive" />}
+			</head>
 			<body>
 				<Suspense fallback={null}>
 					<AnalyticsTracker />
