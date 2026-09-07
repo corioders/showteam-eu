@@ -146,7 +146,10 @@ describe("Shadcnblocks installation snapshots", () => {
 	});
 
 	it("extracts only purchased registry items from shadcn arguments", () => {
-		expect(registryItemsFromArguments(["@shadcnblocks/dashboard9", "-y", "button"])).toEqual(["@shadcnblocks/dashboard9"]);
+		expect(registryItemsFromArguments(["@shadcnblocks/dashboard9", "@shadcnblocks/marquee/marquee-logos-1", "-y", "button"])).toEqual([
+			"@shadcnblocks/dashboard9",
+			"@shadcnblocks/marquee/marquee-logos-1",
+		]);
 	});
 
 	it("detects newer normalization in canonical cstd-next", () => {

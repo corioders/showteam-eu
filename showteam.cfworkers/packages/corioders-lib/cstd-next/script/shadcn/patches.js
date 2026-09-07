@@ -6,7 +6,7 @@ import path from "node:path";
 import { run } from "./session.js";
 
 const PATCH_FORMAT_VERSION = 4;
-const SHADCNBLOCKS_ITEM = /^@shadcnblocks\/[A-Za-z0-9._-]+$/;
+const SHADCNBLOCKS_ITEM = /^@shadcnblocks\/[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*$/;
 const SHADCN_STYLE = /^[A-Za-z0-9._-]+$/;
 
 function hashFile(filePath) {
