@@ -10,7 +10,7 @@
 		"src/components/marquee-logos-1.tsx"
 	],
 	"unitTest": {
-		"hash": "8e6213dbe35bf0289d42bab395cbebf91ff239a190594e0716143dd5793ffec5",
+		"hash": "4441d993138e8a867478b03ec8331a178a12f10ad664ee81037fc1f10a704a13",
 		"path": "script/shadcn/patches/base-vega__shadcnblocks__marquee__marquee-logos-1.test.js"
 	}
 }

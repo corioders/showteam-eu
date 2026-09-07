@@ -8,12 +8,16 @@ if (!appRoot) {
 
 const marquee = fs.readFileSync(path.join(appRoot, "src/components/marquee-logos-1.tsx"), "utf8");
 
-if (!marquee.includes('import { StaticImage } from "cstd-next/media/image/static-image.jsx";')) {
-	throw new Error("Marquee logos must use the platform StaticImage component.");
+if (!marquee.includes('import { OptimizedImage } from "cstd-next/media/image/optimized-image.jsx";')) {
+	throw new Error("Marquee logos must use the runtime-safe platform OptimizedImage component.");
 }
 
 if (marquee.includes("<img ")) {
 	throw new Error("Marquee logos must not render native image elements.");
+}
+
+if (marquee.includes("<StaticImage")) {
+	throw new Error("Runtime-rendered marquee logos must not require static prerendering.");
 }
 
 if (!marquee.includes("export const MarqueeLogos1")) {
