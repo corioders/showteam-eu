@@ -1,7 +1,7 @@
 // biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
+import { ReactGrab } from "cstd-next/react/react-grab.jsx";
 import type { Metadata, Viewport } from "next";
 import { Inter, Oswald } from "next/font/google";
-import Script from "next/script";
 import { Suspense } from "react";
 import "../globals.css";
 import "../(payload)/custom.css";
@@ -13,9 +13,7 @@ export const viewport: Viewport = { themeColor: "#080a0b", width: "device-width"
 export default function OperationsLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="pl" className={`${inter.variable} ${oswald.variable}`}>
-			<head>
-				{process.env.NODE_ENV === "development" && <Script src="//unpkg.com/react-grab/dist/index.global.js" crossOrigin="anonymous" strategy="beforeInteractive" />}
-			</head>
+			{process.env.NODE_ENV === "development" && <ReactGrab />}
 			<body>
 				<Suspense fallback={null}>{children}</Suspense>
 			</body>
