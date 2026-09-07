@@ -1,0 +1,16 @@
+{
+	"formatVersion": 4,
+	"registryItem": "@shadcnblocks/marquee/marquee-logos-1",
+	"style": "base-vega",
+	"baselineHashes": {
+		"src/components/kibo-ui/marquee/index.tsx": "2442da6010eefa16679186d798bc2d308d5f37fde3df5ea1dd0a90473c1b1b21",
+		"src/components/marquee-logos-1.tsx": "bb955d5764781fa38bacd01ddea0f2aba4149c458d1a367fab388d411cecf45f"
+	},
+	"changedFiles": [
+		"src/components/marquee-logos-1.tsx"
+	],
+	"unitTest": {
+		"hash": "8e6213dbe35bf0289d42bab395cbebf91ff239a190594e0716143dd5793ffec5",
+		"path": "script/shadcn/patches/base-vega__shadcnblocks__marquee__marquee-logos-1.test.js"
+	}
+}
