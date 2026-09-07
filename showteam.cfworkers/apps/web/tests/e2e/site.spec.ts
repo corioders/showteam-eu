@@ -379,6 +379,8 @@ test("inline page editing preserves host elements and pending drafts", async ({ 
 	await page.getByLabel("Edytuj: eyebrow").fill("Noclegi po zmianie");
 	await page.getByRole("button", { name: "Zapisz zmiany" }).click();
 	await expect.poll(() => savedEyebrow).toBe("Noclegi po zmianie");
+	await expect(page.getByRole("status")).toHaveText("Treść strony została zapisana.");
+	await page.waitForLoadState("networkidle");
 
 	await page.goto("/");
 	const homeUrl = page.url();
