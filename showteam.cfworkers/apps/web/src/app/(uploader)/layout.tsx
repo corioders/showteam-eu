@@ -1,7 +1,7 @@
 // biome-ignore-all lint/style/noDefaultExport: Next.js, Payload, and tool configs require default exports.
+import { ReactGrab } from "cstd-next/react/react-grab.jsx";
 import type { Metadata, Viewport } from "next";
 import { Inter, Oswald } from "next/font/google";
-import Script from "next/script";
 import "../globals.css";
 
 const inter = Inter({ subsets: ["latin", "latin-ext"], variable: "--font-body", display: "swap" });
@@ -21,9 +21,7 @@ export const viewport: Viewport = { themeColor: "#ff6900", width: "device-width"
 export default function UploaderLayout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="pl" className={`${inter.variable} ${oswald.variable}`}>
-			<head>
-				{process.env.NODE_ENV === "development" && <Script src="//unpkg.com/react-grab/dist/index.global.js" crossOrigin="anonymous" strategy="beforeInteractive" />}
-			</head>
+			{process.env.NODE_ENV === "development" && <ReactGrab />}
 			<body>{children}</body>
 		</html>
 	);
