@@ -10,7 +10,6 @@ import { EditableImage, PageContentEditor } from "@/components/editor/page-conte
 import { GalleryGrid } from "@/components/gallery-grid";
 import { HeroVideo } from "@/components/hero-video";
 import { OfferCard } from "@/components/offer-card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getOffers } from "@/lib/cms";
 import { getGallery } from "@/lib/gallery";
@@ -38,7 +37,6 @@ async function HomeContent() {
 				<div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/20" />
 				<div className="site-container relative flex min-h-[calc(100svh-5rem)] flex-col justify-end pt-20 pb-10 md:pb-16">
 					<div className="mb-20 flex flex-wrap items-center gap-3 md:mb-24">
-						<Badge render={<Editable field="heroBadge" />} />
 						<nav
 							className="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold text-white/60 text-xs uppercase tracking-[0.15em]"
 							aria-label="Lokalizacje SHOWteam"

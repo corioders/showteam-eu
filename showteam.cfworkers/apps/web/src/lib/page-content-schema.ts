@@ -1,7 +1,6 @@
 // biome-ignore-all lint/performance/useTopLevelRegex: Legacy SHOWteam behavior is preserved during the structural template migration.
 export const pageContentDefaults = {
 	home: {
-		heroBadge: "Sezon 2026/2027",
 		heroVideoUrl: "/media/hero-boat-trimmed.mp4",
 		heroPosterUrl: "/media/hero-boat-poster.jpg",
 		locationPorebaLabel: "Poręba",
