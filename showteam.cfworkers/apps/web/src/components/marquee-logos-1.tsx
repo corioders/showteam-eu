@@ -1,4 +1,4 @@
-import { StaticImage } from "cstd-next/media/image/static-image.jsx";
+import { OptimizedImage } from "cstd-next/media/image/optimized-image.jsx";
 
 import { Marquee, MarqueeContent, MarqueeItem } from "@/components/kibo-ui/marquee";
 
@@ -33,7 +33,13 @@ export const MarqueeLogos1 = () => (
 			<MarqueeContent>
 				{logos.map((logo) => (
 					<MarqueeItem key={logo.alt}>
-						<StaticImage alt={logo.alt} className="mx-4 h-6 max-w-24 object-contain opacity-80 grayscale dark:invert" loading="lazy" sizes="96px" src={logo.src} />
+						<OptimizedImage
+							alt={logo.alt}
+							className="mx-4 h-6 max-w-24 object-contain opacity-80 grayscale dark:invert"
+							loading="lazy"
+							sizes="96px"
+							src={{ contentHash: logo.src, height: 24, img: { src: logo.src }, width: 96 }}
+						/>
 					</MarqueeItem>
 				))}
 			</MarqueeContent>
