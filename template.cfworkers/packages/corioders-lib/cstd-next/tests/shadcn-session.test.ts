@@ -196,7 +196,7 @@ describe("Shadcnblocks installation snapshots", () => {
 		fs.writeFileSync(path.join(projectRoot, "README.md"), "initial\n");
 		run("git", ["add", "."], { cwd: projectRoot });
 		run("git", ["commit", "-m", "initial project"], { capture: true, cwd: projectRoot });
-		run("git", ["subtree", "add", "--prefix", "packages/cstd-next", canonicalRoot, "main", "--squash"], { capture: true, cwd: projectRoot });
+		run("git", ["subtree", "add", "--prefix", "packages/cstd-next", canonicalRoot, "main"], { capture: true, cwd: projectRoot });
 
 		fs.writeFileSync(path.join(canonicalRoot, "script", "shadcn", "patches", "new.patch"), "patch\n");
 		run("git", ["add", "."], { cwd: canonicalRoot });

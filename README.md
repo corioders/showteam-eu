@@ -44,7 +44,7 @@ The script proposes the clone directory name as the project name and asks for co
 an explicit name can still be passed as `./bootstrap_project.sh myproject`. Use
 `./bootstrap_project.sh --template-branch payload myproject` for a Payload-ready application;
 the default is `main`. It registers
-the renamed `cstd-ts` and `cstd-next` directories as pullable git subtrees, creates or resumes a delete-protected Infisical project
+the renamed `cstd-ts` and `cstd-next` directories as pullable git subtrees with their full upstream histories, creates or resumes a delete-protected Infisical project
 with the same name, copies the template's `dev` secrets, and configures a read-only GitHub Actions identity using OIDC. It discovers
 the GitHub owner, Cloudflare account and workers.dev subdomain (prompting when a value is missing or ambiguous), creates the private
 GitHub repository, least-privilege Cloudflare setup and deploy tokens, isolated production/preview D1 and R2 resources, stores the
@@ -101,14 +101,15 @@ normally. To move changes between this repository and the upstream libraries:
 ```bash
 # pull upstream changes in
 git subtree pull --prefix <project>.cfworkers/packages/corioders-lib/cstd-ts \
-  git@github.com:corioders/cstd-ts.git main --squash
+  cstd-ts main
 
 # push local changes back upstream
 git subtree push --prefix <project>.cfworkers/packages/corioders-lib/cstd-ts \
-  git@github.com:corioders/cstd-ts.git main
+  cstd-ts main
 ```
 
-Same for `cstd-next` with `git@github.com:corioders/cstd-next.git`.
+Same for the `cstd-next` remote. Template updates use `co-pull-template`; every
+repository has `template`, `cstd-next`, and `cstd-ts` remotes configured.
 
 <!-- BEGIN:template-env-docs -->
 

@@ -83,24 +83,60 @@ register_subtree() {
 	local source_prefix=$1
 	local target_prefix=$2
 	local package_name=$3
-	local repository=$4
-	local split_commit
+	local remote_name=$4
+	local registration_commit registration_message registered_split
+	local split_commit upstream_commit upstream_tree subtree_tree mainline_commit tree join_commit
 
-	if git log -1 --format=%B --fixed-strings --grep="git-subtree-dir: $target_prefix" | grep -Fxq "git-subtree-dir: $target_prefix"; then
-		return
+	registration_commit=$(git log -1 --format=%H --fixed-strings --grep="git-subtree-dir: $target_prefix")
+	if [[ -n "$registration_commit" ]]; then
+		registration_message=$(git show -s --format=%B "$registration_commit")
+		registered_split=$(sed -n 's/^git-subtree-split: //p' <<<"$registration_message" | tail -1)
+		if grep -q '^git-subtree-mainline: ' <<<"$registration_message" &&
+			[[ -n "$registered_split" ]] && git merge-base --is-ancestor "$registered_split" HEAD 2>/dev/null
+		then
+			return
+		fi
 	fi
 	if [[ ! -d "$source_prefix" ]]; then
 		echo "Cannot register $package_name subtree: missing $source_prefix." >&2
 		exit 1
 	fi
 
-	git fetch --no-tags "$repository" main
-	split_commit=$(git subtree split --prefix "$source_prefix" HEAD)
-	git commit --allow-empty \
-		-m "chore: register $package_name subtree" \
-		-m "git-subtree-dir: $target_prefix
-git-subtree-split: $split_commit"
+	git fetch --no-tags "$remote_name" main:refs/remotes/"$remote_name"/main
+	upstream_commit=$(git rev-parse refs/remotes/"$remote_name"/main)
+	split_commit=$(git subtree split --quiet --prefix "$source_prefix" HEAD)
+	upstream_tree=$(git rev-parse "$upstream_commit^{tree}")
+	subtree_tree=$(git rev-parse "$split_commit^{tree}")
+	if [[ "$subtree_tree" != "$upstream_tree" ]]; then
+		echo "Cannot register $package_name subtree: $source_prefix differs from $remote_name/main." >&2
+		exit 1
+	fi
+
+	mainline_commit=$(git rev-parse HEAD)
+	tree=$(git write-tree)
+	join_commit=$(printf '%s\n\n%s\n' \
+		"chore: register $package_name subtree history" \
+		"git-subtree-dir: $target_prefix
+git-subtree-mainline: $mainline_commit
+git-subtree-split: $upstream_commit" |
+		git commit-tree "$tree" -p "$mainline_commit" -p "$upstream_commit")
+	git reset --soft "$join_commit"
 	git push -u origin HEAD:main
+}
+
+ensure_remote() {
+	local remote_name=$1
+	local repository=$2
+	local current_repository
+
+	if current_repository=$(git remote get-url "$remote_name" 2>/dev/null); then
+		if [[ "$current_repository" != "$repository" ]]; then
+			echo "Refusing to replace unrelated $remote_name remote: $current_repository" >&2
+			exit 1
+		fi
+		return
+	fi
+	git remote add "$remote_name" "$repository"
 }
 
 gh auth status >/dev/null
@@ -303,6 +339,9 @@ fi
 if ! git remote get-url origin >/dev/null 2>&1; then
 	git remote add origin "$TARGET_REMOTE"
 fi
+ensure_remote template git@github.com:corioders/cstd-nextjs-template.git
+ensure_remote cstd-next git@github.com:corioders/cstd-next.git
+ensure_remote cstd-ts git@github.com:corioders/cstd-ts.git
 
 CURRENT_BRANCH=$(git branch --show-current)
 if [[ -z "$CURRENT_BRANCH" ]]; then
@@ -581,12 +620,12 @@ register_subtree \
 	"$PROJECT_NAME.cfworkers/packages/corioders-lib/cstd-ts" \
 	"$PROJECT_NAME.cfworkers/packages/corioders-lib/cstd-ts" \
 	"cstd-ts" \
-	"git@github.com:corioders/cstd-ts.git"
+	"cstd-ts"
 register_subtree \
 	"$PROJECT_NAME.cfworkers/packages/corioders-lib/cstd-next" \
 	"$PROJECT_NAME.cfworkers/packages/corioders-lib/cstd-next" \
 	"cstd-next" \
-	"git@github.com:corioders/cstd-next.git"
+	"cstd-next"
 
 git push -u origin HEAD:main
 
